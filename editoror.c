@@ -20,12 +20,25 @@ extern ssize_t write(int,const void*,size_t);//2
 typedef void WINDOW;
 extern WINDOW*initscr(void);
 extern int endwin(void);
-extern int wgetch(WINDOW*);//5
+extern int wgetch(WINDOW*);//2
 typedef unsigned mmask_t;
 extern mmask_t mousemask(mmask_t,mmask_t*);
 extern int noecho(void);
-extern int printw(const char*,...);//3
 #define ALL_MOUSE_EVENTS 0xfffff
+extern int move(int,int);//3
+extern int getcury(const WINDOW*);//2
+extern int getcurx(const WINDOW*);//2
+extern int getmaxy(const WINDOW*);
+//#include<poll.h>
+typedef unsigned int nfds_t;
+struct pollfd{
+	int fd;
+	short events;
+	short revents;
+};
+extern int poll(struct pollfd[],nfds_t,int);
+#define POLLIN 0x0001
+struct pollfd stdinfd={0,POLLIN,0};
 
 #define NULL 0
 typedef enum{true=1,false=0}bool;
@@ -33,6 +46,9 @@ typedef struct{
 	char*str;
 	char**t;
 }inst;
+
+#define mx_pt 100
+int maxy;
 
 char terms[][3]={"r0"};
 char*_r0_0[]={terms[0],"#0",0};char*_ex[]={"exit",0};
@@ -73,25 +89,31 @@ void out_wr(int f){
 		i++;
 	}while(true);
 }
+int ach(WINDOW*w){
+	if(poll(&stdinfd,1,0)<1)return 0;
+	return wgetch(w);
+}
 int nr_end_test(WINDOW*w,char t){
 	int nr=0;
-	int x=wgetch(w);
+	int x=ach(w);
 	if(x==t)return -1;
 	while(x>47&&x<58){
 		nr*=10;
 		nr+=x-48;
-		x=wgetch(w);
+		x=ach(w);
 	}
 	if(x!=t)return -1;
 	return nr;
 }
-int mouse_test(WINDOW*w){
+int mouse_test(WINDOW*w,int*x,int*y){
 	int a=nr_end_test(w,';');
 	if(a==-1)return -1;
-	int x=nr_end_test(w,';');
-	if(x==-1)return -1;
-	int y=nr_end_test(w,'M');
-	if(y==-1)return -1;
+	x[0]=nr_end_test(w,';');
+	if(x[0]==-1)return -1;
+	//if(x>maxx)return -1;
+	y[0]=nr_end_test(w,'M');
+	if(y[0]==-1)return -1;
+	//if(y>maxy)return -1;
 	return a;
 }
 void loopin(WINDOW*w){
@@ -99,12 +121,19 @@ void loopin(WINDOW*w){
 	do{
 		c=wgetch(w);
 		if(c=='\e'){
-			c=wgetch(w);if(c=='['){
-				c=wgetch(w);if(c=='<'){
-					int m=mouse_test(w);
-					if(m==0){printw("0");}
-					else if(m==64){printw("64");}
-					else if(m==65){printw("65");}
+			c=ach(w);if(c=='['){
+				c=ach(w);if(c=='<'){
+					int x;int y;
+					int m=mouse_test(w,&x,&y);
+					if(m==0){move(y-1,x-1);}
+					else if(m==64){
+						y=getcury(w);
+						if(y<maxy)move(y+1,getcurx(w));
+					}
+					else if(m==65){
+						y=getcury(w);
+						if(y>0)move(y-1,getcurx(w));
+					}
 				}
 			}
 		}
@@ -112,7 +141,6 @@ void loopin(WINDOW*w){
 }
 int main(int argc,char**argv){
 	if(argc==2){
-#define mx_pt 100
 		int m=mx_pt;
 		char*nm=argv[1];
 		int s=strlen(nm);
@@ -139,6 +167,7 @@ int main(int argc,char**argv){
 		}
 	}
 	WINDOW*w=initscr();
+	maxy=getmaxy(w);
 	noecho();
 	mousemask(ALL_MOUSE_EVENTS,NULL);
 	loopin(w);
