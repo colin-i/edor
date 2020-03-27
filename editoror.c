@@ -25,10 +25,17 @@ typedef unsigned mmask_t;
 extern mmask_t mousemask(mmask_t,mmask_t*);
 extern int noecho(void);
 #define ALL_MOUSE_EVENTS 0xfffff
-extern int move(int,int);//3
-extern int getcury(const WINDOW*);//2
-extern int getcurx(const WINDOW*);//2
-extern int getmaxy(const WINDOW*);
+extern int wmove(WINDOW*,int,int);//3
+extern int getcury(const WINDOW*);//3
+extern int getcurx(const WINDOW*);//3
+extern int getmaxy(const WINDOW*);//3
+extern int getmaxx(const WINDOW*);
+extern WINDOW*newwin(int,int,int,int);
+extern int printw(const char*,...);
+extern int refresh(void);//2
+extern int mvprintw(int,int,const char*,...);
+extern WINDOW*stdscr;//2
+extern int move(int,int);
 //#include<poll.h>
 typedef unsigned int nfds_t;
 struct pollfd{
@@ -39,6 +46,9 @@ struct pollfd{
 extern int poll(struct pollfd[],nfds_t,int);
 #define POLLIN 0x0001
 struct pollfd stdinfd={0,POLLIN,0};
+//#include <stdlib.h>
+void*malloc(size_t);
+void free(void*);
 
 #define NULL 0
 typedef enum{true=1,false=0}bool;
@@ -46,9 +56,6 @@ typedef struct{
 	char*str;
 	char**t;
 }inst;
-
-#define mx_pt 100
-int maxy;
 
 char terms[][3]={"r0"};
 char*_r0_0[]={terms[0],"#0",0};char*_ex[]={"exit",0};
@@ -113,7 +120,7 @@ int mouse_test(WINDOW*w,int*x,int*y){
 	//if(x>maxx)return -1;
 	y[0]=nr_end_test(w,'M');
 	if(y[0]==-1)return -1;
-	//if(y>maxy)return -1;
+	if(y[0]>getmaxy(w))return -1;
 	return a;
 }
 void loopin(WINDOW*w){
@@ -125,51 +132,56 @@ void loopin(WINDOW*w){
 				c=ach(w);if(c=='<'){
 					int x;int y;
 					int m=mouse_test(w,&x,&y);
-					if(m==0){move(y-1,x-1);}
+					if(m==0){wmove(w,y-1,x-1);}
 					else if(m==64){
 						y=getcury(w);
-						if(y<maxy)move(y+1,getcurx(w));
+						if(y<getmaxy(w))wmove(w,y+1,getcurx(w));
 					}
 					else if(m==65){
 						y=getcury(w);
-						if(y>0)move(y-1,getcurx(w));
+						if(y>0)wmove(w,y-1,getcurx(w));
 					}
 				}
 			}
+		}
+		else if(c=='h'){
+			if((getcurx(stdscr)|getcury(stdscr))==0)printw("q is for quitting");
+			refresh();
 		}
 	}while(c!='q');
 }
 int main(int argc,char**argv){
 	if(argc==2){
-		int m=mx_pt;
-		char*nm=argv[1];
-		int s=strlen(nm);
-		if(m==s)m--;
+		int n=strlen(argv[1]);
 		char*ext=".s";
-		int e=strlen(ext);
-		m-=e;
-		int n=m<s?m:s;
-		char out[mx_pt+1];
-		int i=0;
-		for(;i<n;i++){
-			out[i]=nm[i];
-		}
-		for(int j=0;j<e;j++){
-			out[i]=ext[j];i++;
-		}
-		out[i]=0;
-		inst instr[1];
-		instr[0]=instrs[0];
-		int f=open(out,O_WRONLY|O_CREAT|O_TRUNC,S_IRUSR|S_IWUSR);
-		if(f!=-1){
-			out_wr(f);
-			close(f);
+                int e=strlen(ext);
+		int p=n+e+1;
+		char*s=(char*)malloc(p);
+		if(s){
+			p--;
+			s[p]=0;
+			while(e){
+				e--;p--;
+				s[p]=ext[e];
+			}
+			while(p){
+				p--;
+				s[p]=argv[1][p];
+			}
+			int f=open(s,O_WRONLY|O_CREAT|O_TRUNC,S_IRUSR|S_IWUSR);
+			if(f!=-1){
+				out_wr(f);
+				close(f);
+			}
+			free(s);
 		}
 	}
-	WINDOW*w=initscr();
-	maxy=getmaxy(w);
+	WINDOW*w1=initscr();
+	int y=getmaxy(w1);
+	WINDOW*w=newwin(y-1,getmaxx(w1),0,0);
 	noecho();
 	mousemask(ALL_MOUSE_EVENTS,NULL);
+	mvprintw(y-1,0,"h for help");refresh();move(0,0);
 	loopin(w);
 	endwin();
 }
