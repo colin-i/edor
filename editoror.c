@@ -1,11 +1,9 @@
 //#include <string.h>
 typedef unsigned int size_t;
-extern size_t strlen(const char*);//3
-extern char*strchr(const char*,int);
-extern char*strrchr(const char*,int);
-extern char*strstr(const char*,const char*);
+size_t strlen(const char*);//5
+char*strstr(const char*,const char*);
 //#include <fcntl.h>
-extern int open(const char*,int,...);
+int open(const char*,int,...);
 //sys/types.h
 typedef unsigned short mode_t;
 //asm-generic/fcntl.h
@@ -17,39 +15,39 @@ typedef unsigned short mode_t;
 #define S_IRUSR 00400
 #define S_IWUSR 00200
 //#include <unistd.h>
-extern int close(int);
+int close(int);
 typedef int ssize_t;
-extern ssize_t write(int,const void*,size_t);//2
+ssize_t write(int,const void*,size_t);//2
 typedef long off_t;
-extern off_t lseek(int,off_t,int);
-extern ssize_t read(int,void*,size_t);
+off_t lseek(int,off_t,int);
+ssize_t read(int,void*,size_t);
 //#include <bits/seek_constants.h>
 #define SEEK_SET 0
 #define SEEK_END 2
 //#include<curses.h>
 typedef void WINDOW;
-extern WINDOW*initscr(void);
-extern int endwin(void);
-extern int wgetch(WINDOW*);//2
+WINDOW*initscr(void);
+int endwin(void);
+int wgetch(WINDOW*);//2
+int getch(void);
 typedef unsigned mmask_t;
-extern mmask_t mousemask(mmask_t,mmask_t*);
-extern int noecho(void);
+mmask_t mousemask(mmask_t,mmask_t*);
+int noecho(void);
 #define ALL_MOUSE_EVENTS 0xfffff
-extern int wmove(WINDOW*,int,int);//4
-extern int getcury(const WINDOW*);//3
-extern int getcurx(const WINDOW*);//3
-extern int getmaxy(const WINDOW*);//4
-extern int getmaxx(const WINDOW*);//2
-extern WINDOW*newwin(int,int,int,int);
-extern int printw(const char*,...);
-extern int doupdate(void);
-extern int wnoutrefresh(WINDOW*);//2
-extern int mvprintw(int,int,const char*,...);
-extern WINDOW*stdscr;//2
-extern int move(int,int);
-extern int mvwprintw(WINDOW*,int,int,const char*,...);
-extern int werase(WINDOW*);
-extern int wrefresh(WINDOW*);
+int wmove(WINDOW*,int,int);//5
+int move(int,int);//2
+int getcury(const WINDOW*);//3
+int getcurx(const WINDOW*);//3
+int getmaxy(const WINDOW*);//4
+int getmaxx(const WINDOW*);//3
+WINDOW*newwin(int,int,int,int);
+int doupdate(void);
+int wnoutrefresh(WINDOW*);//4
+int mvprintw(int,int,const char*,...);//3
+int mvwprintw(WINDOW*,int,int,const char*,...);//2
+extern WINDOW*stdscr;
+int werase(WINDOW*);
+int clrtoeol(void);
 //#include<poll.h>
 typedef unsigned int nfds_t;
 struct pollfd{
@@ -57,12 +55,13 @@ struct pollfd{
 	short events;
 	short revents;
 };
-extern int poll(struct pollfd[],nfds_t,int);
+int poll(struct pollfd[],nfds_t,int);
 #define POLLIN 0x0001
 struct pollfd stdinfd={0,POLLIN,0};
 //#include <stdlib.h>
-void*malloc(size_t);
-void free(void*);
+void*malloc(size_t);//2
+void free(void*);//2
+void*realloc(void*,size_t);
 
 #define NULL 0
 typedef enum{true=1,false=0}bool;
@@ -73,6 +72,8 @@ typedef struct{
 
 char ln_term[3]="\n";
 int ln_term_sze;
+char*text_w=NULL;
+int help_rows;
 
 char terms[][3]={"r0"};
 char*_r0_0[]={terms[0],"#0",0};char*_ex[]={"exit",0};
@@ -140,6 +141,53 @@ int mouse_test(WINDOW*w,int*x,int*y){
 	if(y[0]>getmaxy(w))return -1;
 	return a;
 }
+void tab_grow(WINDOW*w,int r,char*a){
+	int max=getmaxx(w);int c=0;
+	int sz=strlen(a);int j=0;int i=0;
+	for(;i<sz&&c<max;i++)if(a[i]=='\t'){
+		a[i]=0;mvwprintw(w,r,c,a+j);a[i]='\t';
+		c+=i-j+6;sz-=5;j=i+1;
+	}
+	if(c<max){
+		char e=a[i];
+		a[i]=0;mvwprintw(w,r,c,a+j);a[i]=e;
+	}
+}
+void printpage(WINDOW*w,char*str){
+	int i=0;int maxy=getmaxy(w);
+	int maxx=getmaxx(w);
+	do{
+		char store;int jump;char*b=NULL;
+		char*a=strstr(str,ln_term);
+		if(a){
+			int sz=a-str;jump=sz+ln_term_sze;
+			if(sz>maxx)b=str+maxx;
+			else b=a;
+		}else if(strlen(str)>maxx)b=str+maxx;
+		if(b){store=b[0];b[0]=0;}
+		tab_grow(w,i,str);
+		if(b)b[0]=store;
+		if(a)str+=jump;
+		else break;
+		i++;
+	}while(i<maxy);
+}
+void helpin(WINDOW*w){
+	int c;
+	do{
+		c=getch();
+	}while(c!='q');
+	for(int i=0;i<help_rows;i++){
+		move(i,0);
+		clrtoeol();
+	}
+	wnoutrefresh(stdscr);
+	printpage(w,text_w);
+}
+void helprows(char*s){
+	mvprintw(help_rows,0,s);
+	help_rows++;
+}
 void loopin(WINDOW*w){
 	int c;
 	do{
@@ -162,89 +210,117 @@ void loopin(WINDOW*w){
 			}
 		}
 		else if(c=='h'){
-			if((getcurx(stdscr)|getcury(stdscr))==0){
-				werase(w);wrefresh(w);
-				printw("q is for quitting");
-			}
-			wnoutrefresh(stdscr);doupdate();
+			//if((getcurx(stdscr)|getcury(stdscr))==0){
+			int cy=getcury(w);int cx=getcurx(w);
+			werase(w);
+			help_rows=0;
+			helprows("q is for quitting");
+			helprows("mouse/touch press or v.scroll");
+			wnoutrefresh(w);
+			//}
+			wnoutrefresh(stdscr);
+			doupdate();
+			helpin(w);
+			wmove(w,cy,cx);
 		}
 	}while(c!='q');
 }
-void printpage(WINDOW*w,char*str){
-	int i=0;int maxy=getmaxy(w);
-	int maxx=getmaxx(w);
-	do{
-		char store;int jump;
-		char*a=strstr(str,ln_term);
-		if(a){
-			int sz=a-str;jump=sz+ln_term_sze;
-			if(sz>maxx)a=str+maxx;
-		}else if(strlen(str)>maxx)a=str+maxx;
-		if(a){store=a[0];a[0]=0;}
-		mvwprintw(w,i,0,str);
-		if(a){a[0]=store;str+=jump;}
-		else break;
-		i++;
-	}while(i<maxy);
+void normalize(){
+	int sz=strlen(text_w);
+	char*norm=(char*)malloc(2*sz+1);
+	if(norm){
+		int j=0;
+		for(int i=0;i<sz;i++){
+			char a=text_w[i];
+			if(a=='\n'){
+				if(ln_term_sze==2){if(i==0||text_w[i-1]!='\r'){norm[j]='\r';j++;}}
+				else if(ln_term[0]=='\r')a='\r';
+			}else if(a=='\r'){
+				if(ln_term_sze==2){if(i+1==sz||text_w[i+1]!='\n'){norm[j]=a;j++;a='\n';}}
+				else if(ln_term[0]=='\n')a='\n';
+			}
+			norm[j]=a;j++;
+		}
+		free(text_w);text_w=norm;
+	}
 }
 void startpage(WINDOW*w,char*f){
 	int fd=open(f,O_RDONLY);
 	if(fd!=-1){
 		int size=lseek(fd,0,SEEK_END);
-		char*str=malloc(size+1);
-		if(str){
+		char*tx=realloc(text_w,size+1);
+		if(tx){
+			text_w=tx;
 			lseek(fd,0,SEEK_SET);
-			read(fd,str,size);
-			str[size]=0;
+			read(fd,text_w,size);
+			text_w[size]=0;
 			//
-			char*a=strchr(str,'\r');
-			if(a){
-				ln_term[0]='\r';
-				a=strrchr(str,'\n');
-				if(a){ln_term[1]='\n';ln_term[2]=0;}
-				else ln_term[1]=0;
+			for(int i=size-1;i>-1;i--){
+				if(text_w[i]=='\n'){
+					if(i&&text_w[i-1]=='\r'){
+						ln_term[0]='\r';
+						ln_term[1]='\n';
+						ln_term[2]=0;
+						break;
+					}
+					else break;
+				}else if(text_w[i]=='\r'){
+					ln_term[0]='\r';
+					break;
+				}
 			}
 			ln_term_sze=strlen(ln_term);
-			printpage(w,str);
+			//
+			normalize();
+			printpage(w,text_w);
 			wmove(w,0,0);
 		}
 		close(fd);
 	}
 }
-int main(int argc,char**argv){
-	WINDOW*w1=initscr();
-	int y=getmaxy(w1);
-	WINDOW*w=newwin(y-1,getmaxx(w1),0,0);
-	noecho();
-	mousemask(ALL_MOUSE_EVENTS,NULL);
-	if(argc==2){
-		startpage(w,argv[1]);
-		int n=strlen(argv[1]);
-		char*ext=".s";
-                int e=strlen(ext);
-		int p=n+e+1;
-		char*s=(char*)malloc(p);
-		if(s){
-			p--;
-			s[p]=0;
-			while(e){
-				e--;p--;
-				s[p]=ext[e];
-			}
-			while(p){
-				p--;
-				s[p]=argv[1][p];
-			}
-			int f=open(s,O_WRONLY|O_CREAT|O_TRUNC,S_IRUSR|S_IWUSR);
-			if(f!=-1){
-				out_wr(f);
-				close(f);
-			}
-			free(s);
+void out_f(char*str){
+	int n=strlen(str);
+	char*ext=".s";
+        int e=strlen(ext);
+	int p=n+e+1;
+	char*s=(char*)malloc(p);
+	if(s){
+		p--;
+		s[p]=0;
+		while(e){
+			e--;p--;
+			s[p]=ext[e];
 		}
+		while(p){
+			p--;
+			s[p]=str[p];
+		}
+		int f=open(s,O_WRONLY|O_CREAT|O_TRUNC,S_IRUSR|S_IWUSR);
+		if(f!=-1){
+			out_wr(f);
+			close(f);
+		}
+		free(s);
 	}
-	mvprintw(y-1,0,"h for help");
-	wnoutrefresh(w1);move(0,0);
-	loopin(w);
-	endwin();
+}
+int main(int argc,char**argv){
+	text_w=(char*)malloc(1);
+	if(text_w){
+		text_w[0]=0;
+		WINDOW*w1=initscr();
+		noecho();
+		mousemask(ALL_MOUSE_EVENTS,NULL);
+		int y=getmaxy(w1);
+		WINDOW*w=newwin(y-1,getmaxx(w1),0,0);
+		if(argc==2){
+			startpage(w,argv[1]);
+			out_f(argv[1]);
+		}
+		mvprintw(y-1,0,"h for help");
+		wnoutrefresh(w1);
+		move(0,0);
+		loopin(w);
+		endwin();
+	}
+	free(text_w);
 }
