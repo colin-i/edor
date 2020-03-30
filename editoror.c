@@ -62,6 +62,9 @@ struct pollfd stdinfd={0,POLLIN,0};
 void*malloc(size_t);//2
 void free(void*);//2
 void*realloc(void*,size_t);
+//#include<stdio.h>
+int printf(const char*,...);//5
+int getchar(void);
 
 #define NULL 0
 typedef enum{true=1,false=0}bool;
@@ -144,9 +147,16 @@ int mouse_test(WINDOW*w,int*x,int*y){
 void tab_grow(WINDOW*w,int r,char*a){
 	int max=getmaxx(w);int c=0;
 	int sz=strlen(a);int j=0;int i=0;
-	for(;i<sz&&c<max;i++)if(a[i]=='\t'){
-		a[i]=0;mvwprintw(w,r,c,a+j);a[i]='\t';
-		c+=i-j+6;sz-=5;j=i+1;
+	for(;i<sz&&c<max;i++){
+		char z=a[i];
+		if(z=='\t'){
+			a[i]=0;mvwprintw(w,r,c,a+j);a[i]='\t';
+			c+=i-j+6;sz-=5;j=i+1;
+		}else if(z<32||z>=127){
+			a[i]='?';char aux=a[i+1];a[i+1]=0;
+			mvwprintw(w,r,c,a+j);a[i+1]=aux;a[i]=z;
+			c+=i-j+1;j=i+1;
+		}
 	}
 	if(c<max){
 		char e=a[i];
@@ -225,26 +235,31 @@ void loopin(WINDOW*w){
 		}
 	}while(c!='q');
 }
-void normalize(){
+int normalize(){
+	int ok=0;
 	int sz=strlen(text_w);
-	char*norm=(char*)malloc(2*sz+1);
+	char*norm=(char*)malloc(2*sz-1);
 	if(norm){
 		int j=0;
 		for(int i=0;i<sz;i++){
 			char a=text_w[i];
 			if(a=='\n'){
-				if(ln_term_sze==2){if(i==0||text_w[i-1]!='\r'){norm[j]='\r';j++;}}
-				else if(ln_term[0]=='\r')a='\r';
+				if(ln_term_sze==2){if(i==0||text_w[i-1]!='\r'){norm[j]='\r';j++;ok=-1;}}
+				else if(ln_term[0]=='\r'){a='\r';ok=-1;}
 			}else if(a=='\r'){
-				if(ln_term_sze==2){if(i+1==sz||text_w[i+1]!='\n'){norm[j]=a;j++;a='\n';}}
-				else if(ln_term[0]=='\n')a='\n';
+				if(ln_term_sze==2){if(i+1==sz||text_w[i+1]!='\n'){norm[j]=a;j++;a='\n';ok=-1;}}
+				else if(ln_term[0]=='\n'){a='\n';ok=-1;}
 			}
 			norm[j]=a;j++;
 		}
+		norm[j]=0;
 		free(text_w);text_w=norm;
+		if(!ok)ok=1;
 	}
+	return ok;
 }
-void startpage(WINDOW*w,char*f){
+int startpage(char*f){
+	int ok=1;
 	int fd=open(f,O_RDONLY);
 	if(fd!=-1){
 		int size=lseek(fd,0,SEEK_END);
@@ -271,12 +286,11 @@ void startpage(WINDOW*w,char*f){
 			}
 			ln_term_sze=strlen(ln_term);
 			//
-			normalize();
-			printpage(w,text_w);
-			wmove(w,0,0);
+			ok=normalize();
 		}
 		close(fd);
 	}
+	return ok;
 }
 void out_f(char*str){
 	int n=strlen(str);
@@ -307,20 +321,36 @@ int main(int argc,char**argv){
 	text_w=(char*)malloc(1);
 	if(text_w){
 		text_w[0]=0;
-		WINDOW*w1=initscr();
-		noecho();
-		mousemask(ALL_MOUSE_EVENTS,NULL);
-		int y=getmaxy(w1);
-		WINDOW*w=newwin(y-1,getmaxx(w1),0,0);
+		int ok=1;
 		if(argc==2){
-			startpage(w,argv[1]);
-			out_f(argv[1]);
+			ok=startpage(argv[1]);
+			if(ok){
+				if(ok<1){
+					printf("Normalize line endings to ");
+					if(ln_term_sze==2)printf("\\r\\n");
+					else if(ln_term[0]=='\n')printf("\\n");
+					else printf("\\r");
+					printf("? n=no, default=yes\n");
+					int c=getchar();
+					if(c=='n')ok=0;
+				}
+				if(ok)out_f(argv[1]);
+			}
 		}
-		mvprintw(y-1,0,"h for help");
-		wnoutrefresh(w1);
-		move(0,0);
-		loopin(w);
-		endwin();
+		if(ok){
+			WINDOW*w1=initscr();
+			noecho();
+			mousemask(ALL_MOUSE_EVENTS,NULL);
+			int y=getmaxy(w1);
+			WINDOW*w=newwin(y-1,getmaxx(w1),0,0);
+			printpage(w,text_w);
+			wmove(w,0,0);
+			mvprintw(y-1,0,"h for help");
+			wnoutrefresh(w1);
+			move(0,0);
+			loopin(w);
+			endwin();
+		}
 	}
 	free(text_w);
 }
