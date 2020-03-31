@@ -34,12 +34,12 @@ typedef unsigned mmask_t;
 mmask_t mousemask(mmask_t,mmask_t*);
 int noecho(void);
 #define ALL_MOUSE_EVENTS 0xfffff
-int wmove(WINDOW*,int,int);//5
+int wmove(WINDOW*,int,int);//9
 int move(int,int);//2
-int getcury(const WINDOW*);//3
-int getcurx(const WINDOW*);//3
-int getmaxy(const WINDOW*);//4
-int getmaxx(const WINDOW*);//3
+int getcury(const WINDOW*);//7
+int getcurx(const WINDOW*);//7
+int getmaxy(const WINDOW*);//5
+int getmaxx(const WINDOW*);//4
 WINDOW*newwin(int,int,int,int);
 int doupdate(void);
 int wnoutrefresh(WINDOW*);//4
@@ -216,6 +216,19 @@ void loopin(WINDOW*w){
 						y=getcury(w);
 						if(y>0)wmove(w,y-1,getcurx(w));
 					}
+				}
+				else if(c=='A'){
+					int y=getcury(w);
+					if(y>0)wmove(w,y-1,getcurx(w));
+				}else if(c=='B'){
+					int y=getcury(w);
+					if(y+1<getmaxy(w))wmove(w,y+1,getcurx(w));
+				}else if(c=='C'){
+					int x=getcurx(w);
+					if(x+1<getmaxx(w))wmove(w,getcury(w),x+1);
+				}else if(c=='D'){
+					int x=getcurx(w);
+					if(x>0)wmove(w,getcury(w),x-1);
 				}
 			}
 		}
