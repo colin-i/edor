@@ -48,6 +48,13 @@ int mvwprintw(WINDOW*,int,int,const char*,...);//2
 extern WINDOW*stdscr;
 int werase(WINDOW*);
 int clrtoeol(void);
+int attrset(int);//2
+int start_color(void);
+int init_pair(short,short,short);
+#define COLOR_BLACK 0
+#define COLOR_WHITE 7
+#define ERR -1
+int COLOR_PAIR(int);
 //#include<poll.h>
 typedef unsigned int nfds_t;
 struct pollfd{
@@ -356,12 +363,17 @@ int main(int argc,char**argv){
 			mousemask(ALL_MOUSE_EVENTS,NULL);
 			int y=getmaxy(w1);
 			WINDOW*w=newwin(y-1,getmaxx(w1),0,0);
-			printpage(w,text_w);
-			wmove(w,0,0);
-			mvprintw(y-1,0,"h for help");
-			wnoutrefresh(w1);
-			move(0,0);
-			loopin(w);
+			if(w){
+				printpage(w,text_w);
+				wmove(w,0,0);
+				start_color();
+				if(init_pair(1,COLOR_BLACK,COLOR_WHITE)!=ERR)
+					attrset(COLOR_PAIR(1));
+				mvprintw(y-1,0,"h for help");
+				wnoutrefresh(w1);
+				move(0,0);attrset(0);
+				loopin(w);
+			}
 			endwin();
 		}
 	}
