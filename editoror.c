@@ -35,7 +35,7 @@ mmask_t mousemask(mmask_t,mmask_t*);
 int noecho(void);
 #define ALL_MOUSE_EVENTS 0xfffff
 int wmove(WINDOW*,int,int);//9
-int move(int,int);//2
+int move(int,int);
 int getcury(const WINDOW*);//7
 int getcurx(const WINDOW*);//7
 int getmaxy(const WINDOW*);//5
@@ -371,7 +371,7 @@ int main(int argc,char**argv){
 					attrset(COLOR_PAIR(1));
 				mvprintw(y-1,0,"h for help");
 				wnoutrefresh(w1);
-				move(0,0);attrset(0);
+				attrset(0);
 				loopin(w);
 			}
 			endwin();
