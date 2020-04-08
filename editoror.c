@@ -34,10 +34,10 @@ typedef unsigned mmask_t;
 mmask_t mousemask(mmask_t,mmask_t*);
 int noecho(void);
 #define ALL_MOUSE_EVENTS 0xfffff
-int wmove(WINDOW*,int,int);//9
+int wmove(WINDOW*,int,int);//10
 int move(int,int);
 int getcury(const WINDOW*);//7
-int getcurx(const WINDOW*);//7
+int getcurx(const WINDOW*);//8
 int getmaxy(const WINDOW*);//5
 int getmaxx(const WINDOW*);//4
 WINDOW*newwin(int,int,int,int);
@@ -46,7 +46,7 @@ int wnoutrefresh(WINDOW*);//4
 int mvprintw(int,int,const char*,...);//3
 int mvwprintw(WINDOW*,int,int,const char*,...);//2
 extern WINDOW*stdscr;
-int werase(WINDOW*);
+int werase(WINDOW*);//3
 int clrtoeol(void);
 int attrset(int);//2
 int start_color(void);
@@ -83,6 +83,7 @@ typedef struct{
 char ln_term[3]="\n";
 int ln_term_sze;
 char*text_w=NULL;
+char*text__w;
 int help_rows;
 
 char terms[][3]={"r0"};
@@ -189,6 +190,37 @@ void printpage(WINDOW*w,char*str){
 		i++;
 	}while(i<maxy);
 }
+void print_page(WINDOW*w){
+        printpage(w,text__w);
+}
+void printlpage(WINDOW*w){
+	if(text_w!=text__w){
+		text__w-=ln_term_sze;
+		while(text__w!=text_w){
+			text__w--;
+			if(text__w[0]==ln_term[0]){
+				text__w+=ln_term_sze;
+				break;
+			}
+		}
+		werase(w);
+		print_page(w);
+	}
+}
+void printrpage(WINDOW*w){
+	char*a=strstr(text__w,ln_term);
+	if(a){
+		text__w=a+ln_term_sze;
+		werase(w);
+		print_page(w);
+	}
+}
+void tmove(WINDOW*w,int y){
+	int x=getcurx(w);
+	if(y)printrpage(w);
+	else printlpage(w);
+	wmove(w,y,x);
+}
 void helpin(WINDOW*w){
 	int c;
 	do{
@@ -199,7 +231,7 @@ void helpin(WINDOW*w){
 		clrtoeol();
 	}
 	wnoutrefresh(stdscr);
-	printpage(w,text_w);
+	print_page(w);
 }
 void helprows(char*s){
 	mvprintw(help_rows,0,s);
@@ -227,9 +259,11 @@ void loopin(WINDOW*w){
 				else if(c=='A'){
 					int y=getcury(w);
 					if(y>0)wmove(w,y-1,getcurx(w));
+					else tmove(w,y);
 				}else if(c=='B'){
 					int y=getcury(w);
 					if(y+1<getmaxy(w))wmove(w,y+1,getcurx(w));
+					else tmove(w,y);
 				}else if(c=='C'){
 					int x=getcurx(w);
 					if(x+1<getmaxx(w))wmove(w,getcury(w),x+1);
@@ -365,6 +399,7 @@ int main(int argc,char**argv){
 			WINDOW*w=newwin(y-1,getmaxx(w1),0,0);
 			if(w){
 				printpage(w,text_w);
+				text__w=text_w;
 				wmove(w,0,0);
 				start_color();
 				if(init_pair(1,COLOR_BLACK,COLOR_WHITE)!=ERR)
