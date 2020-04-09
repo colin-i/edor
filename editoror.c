@@ -48,7 +48,7 @@ int wnoutrefresh(WINDOW*);//4
 int mvprintw(int,int,const char*,...);//3
 int mvwprintw(WINDOW*,int,int,const char*,...);//2
 extern WINDOW*stdscr;//3
-int werase(WINDOW*);//3
+int werase(WINDOW*);//2
 int clrtoeol(void);
 int attrset(int);//2
 int start_color(void);
@@ -334,7 +334,7 @@ bool loopin(WINDOW*w){
 			}
 			wmove(w,cy,cx);
 		}else if(c==KEY_RESIZE){
-			werase(stdscr);
+			//werase(stdscr);
 			return true;
 		}
 	}while(c!='q');
