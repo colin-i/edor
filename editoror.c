@@ -298,11 +298,10 @@ bool loopin(WINDOW*w){
 					if(x+1<getmaxx(w))wmove(w,getcury(w),x+1);
 					else{
 						int r=getcury(w);
-						if(r<maxrows){
-							if(x_right[r]){
-								xtext++;
-								txmove(w,x);
-							}
+						bool b=r<maxrows?x_right[r]:true;
+						if(b){
+							xtext++;
+							txmove(w,x);
 						}
 					}
 				}else if(c=='D'){
