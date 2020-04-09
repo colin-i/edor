@@ -69,9 +69,9 @@ int poll(struct pollfd[],nfds_t,int);
 #define POLLIN 0x0001
 struct pollfd stdinfd={0,POLLIN,0};
 //#include <stdlib.h>
-void*malloc(size_t);//4
-void free(void*);//2
-void*realloc(void*,size_t);
+void*malloc(size_t);//3
+void free(void*);//4
+void*realloc(void*,size_t);//2
 //#include<stdio.h>
 int printf(const char*,...);//5
 int getchar(void);
@@ -90,8 +90,7 @@ char*text_w=NULL;
 char*text__w;
 int help_rows;
 int xtext=0;
-bool*x_right;
-#define maxrows 1000
+bool*x_right=NULL;
 
 char terms[][3]={"r0"};
 char*_r0_0[]={terms[0],"#0",0};char*_ex[]={"exit",0};
@@ -161,10 +160,8 @@ int mouse_test(WINDOW*w,int*x,int*y){
 }
 void tab_grow(WINDOW*w,int r,char*a){
 	int sz=strlen(a);
-	if(r<maxrows){
-		x_right[r]=xtext<sz;
-		if(!x_right[r])return;
-	}
+	x_right[r]=xtext<sz;
+	if(!x_right[r])return;
 	int max=getmaxx(w);
 	int c=0;int cr=0;
 	int i=xtext;int j=i;
@@ -296,13 +293,9 @@ bool loopin(WINDOW*w){
 				}else if(c=='C'){
 					int x=getcurx(w);
 					if(x+1<getmaxx(w))wmove(w,getcury(w),x+1);
-					else{
-						int r=getcury(w);
-						bool b=r<maxrows?x_right[r]:true;
-						if(b){
-							xtext++;
-							txmove(w,x);
-						}
+					else if(x_right[getcury(w)]){
+						xtext++;
+						txmove(w,x);
 					}
 				}else if(c=='D'){
 					int x=getcurx(w);
@@ -445,24 +438,25 @@ int main(int argc,char**argv){
 			WINDOW*w1=initscr();
 			noecho();
 			mousemask(ALL_MOUSE_EVENTS,NULL);
-			x_right=(bool*)malloc(maxrows);
-			if(x_right){
-				start_color();
-				if(init_pair(1,COLOR_BLACK,COLOR_WHITE)!=ERR){
-					bool loops=false;
-					do{
-						WINDOW*w=newwin(getmaxy(w1)-1,getmaxx(w1),0,0);
-						if(w){
-							printpage(w,text_w);
-							text__w=text_w;
-							wmove(w,0,0);
-							printhelp();
-							loops=loopin(w);
-							delwin(w);
-						}
-					}while(loops);
-				}
-				free(x_right);
+			start_color();
+			if(init_pair(1,COLOR_BLACK,COLOR_WHITE)!=ERR){
+				bool loops=false;
+				do{
+					int r=getmaxy(w1)-1;
+					char*a=realloc(x_right,r);
+					if(!a)break;
+					x_right=a;
+					WINDOW*w=newwin(r,getmaxx(w1),0,0);
+					if(w){
+						printpage(w,text_w);
+						text__w=text_w;
+						wmove(w,0,0);
+						printhelp();
+						loops=loopin(w);
+						delwin(w);
+					}else break;
+				}while(loops);
+				if(x_right)free(x_right);
 			}
 			endwin();
 		}
