@@ -30,22 +30,24 @@ WINDOW*initscr(void);
 int endwin(void);
 int wgetch(WINDOW*);//2
 int getch(void);
+int ungetch(int);
 typedef unsigned mmask_t;
 mmask_t mousemask(mmask_t,mmask_t*);
 int noecho(void);
 #define ALL_MOUSE_EVENTS 0xfffff
-int wmove(WINDOW*,int,int);//10
-int move(int,int);
-int getcury(const WINDOW*);//7
+int wmove(WINDOW*,int,int);//11
+int move(int,int);//2
+int getcury(const WINDOW*);//11
 int getcurx(const WINDOW*);//8
-int getmaxy(const WINDOW*);//5
+int getmaxy(const WINDOW*);//6
 int getmaxx(const WINDOW*);//4
 WINDOW*newwin(int,int,int,int);
+int delwin(WINDOW*);
 int doupdate(void);
 int wnoutrefresh(WINDOW*);//4
 int mvprintw(int,int,const char*,...);//3
 int mvwprintw(WINDOW*,int,int,const char*,...);//2
-extern WINDOW*stdscr;
+extern WINDOW*stdscr;//3
 int werase(WINDOW*);//3
 int clrtoeol(void);
 int attrset(int);//2
@@ -55,6 +57,7 @@ int init_pair(short,short,short);
 #define COLOR_WHITE 7
 #define ERR -1
 int COLOR_PAIR(int);
+#define KEY_RESIZE 410
 //#include<poll.h>
 typedef unsigned int nfds_t;
 struct pollfd{
@@ -66,7 +69,7 @@ int poll(struct pollfd[],nfds_t,int);
 #define POLLIN 0x0001
 struct pollfd stdinfd={0,POLLIN,0};
 //#include <stdlib.h>
-void*malloc(size_t);//2
+void*malloc(size_t);//4
 void free(void*);//2
 void*realloc(void*,size_t);
 //#include<stdio.h>
@@ -74,7 +77,8 @@ int printf(const char*,...);//5
 int getchar(void);
 
 #define NULL 0
-typedef enum{true=1,false=0}bool;
+typedef char bool;
+enum{false=0,true=1};
 typedef struct{
 	char*str;
 	char**t;
@@ -85,6 +89,9 @@ int ln_term_sze;
 char*text_w=NULL;
 char*text__w;
 int help_rows;
+int xtext=0;
+bool*x_right;
+#define maxrows 1000
 
 char terms[][3]={"r0"};
 char*_r0_0[]={terms[0],"#0",0};char*_ex[]={"exit",0};
@@ -153,18 +160,26 @@ int mouse_test(WINDOW*w,int*x,int*y){
 	return a;
 }
 void tab_grow(WINDOW*w,int r,char*a){
-	int max=getmaxx(w);int c=0;
-	int sz=strlen(a);int j=0;int i=0;
-	for(;i<sz&&c<max;i++){
+	int sz=strlen(a);
+	if(r<maxrows){
+		x_right[r]=xtext<sz;
+		if(!x_right[r])return;
+	}
+	int max=getmaxx(w);
+	int c=0;int cr=0;
+	int i=xtext;int j=i;
+	for(;i<sz&&c<max&&cr<max;i++){
 		char z=a[i];
 		if(z=='\t'){
 			a[i]=0;mvwprintw(w,r,c,a+j);a[i]='\t';
-			c+=i-j+6;sz-=5;j=i+1;
+			c+=i-j+6;j=i+1;
+			cr+=5;
 		}else if(z<32||z>=127){
 			a[i]='?';char aux=a[i+1];a[i+1]=0;
 			mvwprintw(w,r,c,a+j);a[i+1]=aux;a[i]=z;
 			c+=i-j+1;j=i+1;
 		}
+		cr++;
 	}
 	if(c<max){
 		char e=a[i];
@@ -193,6 +208,15 @@ void printpage(WINDOW*w,char*str){
 void print_page(WINDOW*w){
         printpage(w,text__w);
 }
+void refreshpage(WINDOW*w){
+	werase(w);
+	print_page(w);
+}
+void txmove(WINDOW*w,int x){
+	int y=getcury(w);
+	refreshpage(w);
+	wmove(w,y,x);
+}
 void printlpage(WINDOW*w){
 	if(text_w!=text__w){
 		text__w-=ln_term_sze;
@@ -203,41 +227,46 @@ void printlpage(WINDOW*w){
 				break;
 			}
 		}
-		werase(w);
-		print_page(w);
+		refreshpage(w);
 	}
 }
 void printrpage(WINDOW*w){
 	char*a=strstr(text__w,ln_term);
 	if(a){
 		text__w=a+ln_term_sze;
-		werase(w);
-		print_page(w);
+		refreshpage(w);
 	}
 }
 void tmove(WINDOW*w,int y){
 	int x=getcurx(w);
 	if(y)printrpage(w);
 	else printlpage(w);
-	wmove(w,y,x);
+	wmove(w,y,x);//print changed cursor
 }
-void helpin(WINDOW*w){
+bool helpin(WINDOW*w){
 	int c;
 	do{
 		c=getch();
+		if(c==KEY_RESIZE)return true;
 	}while(c!='q');
-	for(int i=0;i<help_rows;i++){
+	for(int i=1;i<=help_rows;i++){
 		move(i,0);
 		clrtoeol();
 	}
 	wnoutrefresh(stdscr);
 	print_page(w);
+	return false;
 }
 void helprows(char*s){
-	mvprintw(help_rows,0,s);
-	help_rows++;
+	mvprintw(getcury(stdscr)+1,0,s);
 }
-void loopin(WINDOW*w){
+void printhelp(){
+	attrset(COLOR_PAIR(1));
+	mvprintw(getmaxy(stdscr)-1,0,"h for help");
+	wnoutrefresh(stdscr);
+	attrset(0);
+}
+bool loopin(WINDOW*w){
 	int c;
 	do{
 		c=wgetch(w);
@@ -267,9 +296,22 @@ void loopin(WINDOW*w){
 				}else if(c=='C'){
 					int x=getcurx(w);
 					if(x+1<getmaxx(w))wmove(w,getcury(w),x+1);
+					else{
+						int r=getcury(w);
+						if(r<maxrows){
+							if(x_right[r]){
+								xtext++;
+								txmove(w,x);
+							}
+						}
+					}
 				}else if(c=='D'){
 					int x=getcurx(w);
 					if(x>0)wmove(w,getcury(w),x-1);
+					else if(xtext>0){
+						xtext--;
+						txmove(w,x);
+					}
 				}
 			}
 		}
@@ -278,16 +320,25 @@ void loopin(WINDOW*w){
 			int cy=getcury(w);int cx=getcurx(w);
 			werase(w);
 			help_rows=0;
+			move(0,0);
 			helprows("q is for quitting");
 			helprows("mouse/touch press or v.scroll");
+			help_rows=getcury(stdscr);
 			wnoutrefresh(w);
 			//}
 			wnoutrefresh(stdscr);
 			doupdate();
-			helpin(w);
+			if(helpin(w)){
+				ungetch('h');
+				return true;
+			}
 			wmove(w,cy,cx);
+		}else if(c==KEY_RESIZE){
+			werase(stdscr);
+			return true;
 		}
 	}while(c!='q');
+	return false;
 }
 int normalize(){
 	int ok=0;
@@ -395,19 +446,24 @@ int main(int argc,char**argv){
 			WINDOW*w1=initscr();
 			noecho();
 			mousemask(ALL_MOUSE_EVENTS,NULL);
-			int y=getmaxy(w1);
-			WINDOW*w=newwin(y-1,getmaxx(w1),0,0);
-			if(w){
-				printpage(w,text_w);
-				text__w=text_w;
-				wmove(w,0,0);
+			x_right=(bool*)malloc(maxrows);
+			if(x_right){
 				start_color();
-				if(init_pair(1,COLOR_BLACK,COLOR_WHITE)!=ERR)
-					attrset(COLOR_PAIR(1));
-				mvprintw(y-1,0,"h for help");
-				wnoutrefresh(w1);
-				attrset(0);
-				loopin(w);
+				if(init_pair(1,COLOR_BLACK,COLOR_WHITE)!=ERR){
+					bool loops=false;
+					do{
+						WINDOW*w=newwin(getmaxy(w1)-1,getmaxx(w1),0,0);
+						if(w){
+							printpage(w,text_w);
+							text__w=text_w;
+							wmove(w,0,0);
+							printhelp();
+							loops=loopin(w);
+							delwin(w);
+						}
+					}while(loops);
+				}
+				free(x_right);
 			}
 			endwin();
 		}
