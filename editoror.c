@@ -37,7 +37,7 @@ typedef unsigned mmask_t;
 mmask_t mousemask(mmask_t,mmask_t*);
 int noecho(void);
 #define ALL_MOUSE_EVENTS 0xfffff
-int wmove(WINDOW*,int,int);//6
+int wmove(WINDOW*,int,int);//7
 int move(int,int);//2
 int getcury(const WINDOW*);//11
 int getcurx(const WINDOW*);//6
@@ -246,7 +246,8 @@ void bmove(WINDOW*w,int r,int c,bool back){
 							}
 							j++;
 						}
-						txmove(w,c);
+						refreshpage(w);
+						wmove(w,r,c);
 					}
 				}
 				return;
