@@ -1,7 +1,7 @@
 //#include <string.h>
 typedef unsigned int size_t;
-size_t strlen(const char*);//5
-char*strstr(const char*,const char*);
+size_t strlen(const char*);//6
+char*strchr(const char*,int);
 //#include <fcntl.h>
 int open(const char*,int,...);
 //sys/types.h
@@ -71,9 +71,9 @@ int poll(struct pollfd[],nfds_t,int);
 #define POLLIN 0x0001
 struct pollfd stdinfd={0,POLLIN,0};
 //#include <stdlib.h>
-void*malloc(size_t);//3
-void free(void*);//5
-void*realloc(void*,size_t);//3
+void*malloc(size_t);//4
+void free(void*);//6
+void*realloc(void*,size_t);//4
 //#include<stdio.h>
 int printf(const char*,...);//5
 int getchar(void);
@@ -88,9 +88,9 @@ typedef struct{
 
 char ln_term[3]="\n";
 int ln_term_sze;
-char*text_w=NULL;
-char*text__w;
-int xtext=0;
+char**rows;
+int rows_tot=1;
+int xtext;int ytext;
 bool*x_right=NULL;
 int*tabs=NULL;
 #define tab_sz 6
@@ -190,31 +190,28 @@ void tab_grow(WINDOW*w,int r,char*a){
 		a[i]=0;mvwprintw(w,r,c,a+j);a[i]=e;
 	}
 }
-void printpage(WINDOW*w,char*str){
-	int i=0;int maxy=getmaxy(w);
-	int maxx=getmaxx(w);
-	do{
-		char store;int jump;char*b=NULL;
-		char*a=strstr(str,ln_term);
-		if(a){
-			int sz=a-str;jump=sz+ln_term_sze;
-			if(sz>maxx)b=str+maxx;
-			else b=a;
-		}else if(strlen(str)>maxx)b=str+maxx;
-		if(b){store=b[0];b[0]=0;}
-		tab_grow(w,i,str);
-		if(b)b[0]=store;
-		if(a)str+=jump;
-		else break;
-		i++;
-	}while(i<maxy);
-}
-void print_page(WINDOW*w){
-        printpage(w,text__w);
+void printpage(WINDOW*w){
+        int i=0;int maxy=getmaxy(w);
+        int maxx=xtext+getmaxx(w);
+        do{
+		int j=ytext+i;
+		char*str=rows[j];
+		j++;
+		char*str2=rows[j];
+		bool last=j==rows_tot;
+		if(!last)str2-=ln_term_sze;
+		int sz=str2-str;
+		if(sz>maxx)sz=maxx;
+		char stor=str[sz];str[sz]=0;
+                tab_grow(w,i,str);
+		str[sz]=stor;
+		if(last)break;
+                i++;
+        }while(i<maxy);
 }
 void refreshpage(WINDOW*w){
 	werase(w);
-	print_page(w);
+	printpage(w);
 }
 void txmove(WINDOW*w,int x){
 	int y=getcury(w);
@@ -258,30 +255,12 @@ void bmove(WINDOW*w,int r,int c,bool back){
 void amove(WINDOW*w,int r,int c){
 	bmove(w,r,c,true);
 }
-void printlpage(WINDOW*w){
-	if(text_w!=text__w){
-		text__w-=ln_term_sze;
-		while(text__w!=text_w){
-			text__w--;
-			if(text__w[0]==ln_term[0]){
-				text__w+=ln_term_sze;
-				break;
-			}
-		}
-		refreshpage(w);
-	}
-}
-void printrpage(WINDOW*w){
-	char*a=strstr(text__w,ln_term);
-	if(a){
-		text__w=a+ln_term_sze;
-		refreshpage(w);
-	}
-}
 void tmove(WINDOW*w,int y,bool right){
 	int x=getcurx(w);
-	if(right)printrpage(w);
-	else printlpage(w);
+	if(right){
+		if(ytext+1<rows_tot){ytext++;refreshpage(w);}
+	}
+	else if(ytext){ytext--;refreshpage(w);}
 	amove(w,y,x);//print changed cursor
 }
 bool helpin(WINDOW*w){
@@ -296,7 +275,7 @@ bool helpin(WINDOW*w){
 		clrtoeol();
 	}
 	wnoutrefresh(stdscr);
-	print_page(w);
+	printpage(w);
 	return false;
 }
 void helprows(char*s){
@@ -395,77 +374,107 @@ bool loopin(WINDOW*w){
 			}
 			wmove(w,cy,cx);
 		}else if(c==KEY_RESIZE){
-			//werase(stdscr);
 			return true;
 		}
 		else if(c=='c'){if(textfile)out_f();}
 	}while(c!='q');
 	return false;
 }
-int normalize(){
+int normalize(int*size,char**c){
 	int ok=0;
+	char*text_w=c[0];
 	int sz=strlen(text_w);
-	char*norm=(char*)malloc(2*sz-1);
+	char*norm=(char*)malloc(2*sz+1);//-1 ok but,when sz=0,not ok
 	if(norm){
 		int j=0;
 		for(int i=0;i<sz;i++){
 			char a=text_w[i];
 			if(a=='\n'){
-				if(ln_term_sze==2){if(i==0||text_w[i-1]!='\r'){norm[j]='\r';j++;ok=-1;}}
+				rows_tot++;
+				if(ln_term_sze==2){
+					norm[j]='\r';j++;ok=-1;
+				}
 				else if(ln_term[0]=='\r'){a='\r';ok=-1;}
 			}else if(a=='\r'){
-				if(ln_term_sze==2){if(i+1==sz||text_w[i+1]!='\n'){norm[j]=a;j++;a='\n';ok=-1;}}
+				rows_tot++;
+				if(ln_term_sze==2){
+					if(((i+1)<sz)&&text_w[i+1]=='\n'){
+						norm[j]=a;j++;i++;
+						a='\n';}
+					else{norm[j]=a;j++;a='\n';ok=-1;}
+				}
 				else if(ln_term[0]=='\n'){a='\n';ok=-1;}
 			}
 			norm[j]=a;j++;
 		}
-		norm[j]=0;
-		free(text_w);text_w=norm;
+		norm[j]=0;size[0]=j;
+		free(text_w);c[0]=norm;
 		if(!ok)ok=1;
 	}
 	return ok;
 }
-int startpage(char*f){
+bool rows_init(char*a){
+	char**m=(char**)realloc(rows,(rows_tot+1)*sizeof(char*));
+	if(m){
+		rows=m;
+		for(int i=0;i<rows_tot;i++){
+			rows[i]=a;
+			a=strchr(a,ln_term[0])+ln_term_sze;
+		}
+		return true;
+	}
+	return false;
+}
+int startpage(char*f,char**c){
 	int ok=1;
 	int fd=open(f,O_RDONLY);
 	if(fd!=-1){
 		int size=lseek(fd,0,SEEK_END);
-		char*tx=realloc(text_w,size+1);
+		char*tx=realloc(c[0],size+1);
 		if(tx){
-			text_w=tx;
+			c[0]=tx;
 			lseek(fd,0,SEEK_SET);
-			read(fd,text_w,size);
-			text_w[size]=0;
+			read(fd,tx,size);
+			tx[size]=0;
 			//
 			for(int i=size-1;i>-1;i--){
-				if(text_w[i]=='\n'){
-					if(i&&text_w[i-1]=='\r'){
+				if(tx[i]=='\n'){
+					if(i&&tx[i-1]=='\r'){
 						ln_term[0]='\r';
 						ln_term[1]='\n';
 						ln_term[2]=0;
 						break;
 					}
 					else break;
-				}else if(text_w[i]=='\r'){
+				}else if(tx[i]=='\r'){
 					ln_term[0]='\r';
 					break;
 				}
 			}
 			ln_term_sze=strlen(ln_term);
-			//
-			ok=normalize();
+			int sz;
+			ok=normalize(&sz,c);
+			if(ok){
+				tx=c[0];
+				if(rows_init(tx))rows[rows_tot]=&tx[sz];
+				else ok=0;
+			}
 		}
 		close(fd);
 	}
 	return ok;
 }
 int main(int argc,char**argv){
-	text_w=(char*)malloc(1);
-	if(text_w){
-		text_w[0]=0;
+	int ret=0;
+	char*text_w=(char*)malloc(1);
+	if(!text_w)return ret;
+	text_w[0]=0;
+	rows=(char**)malloc(2*sizeof(char*));
+	if(rows){
+		rows[0]=text_w;rows[1]=text_w;
 		int ok=1;
 		if(argc==2){
-			ok=startpage(argv[1]);
+			ok=startpage(argv[1],&text_w);
 			if(ok){
 				if(ok<1){
 					printf("Normalize line endings to ");
@@ -497,8 +506,8 @@ int main(int argc,char**argv){
 					tabs=(int*)a;
 					WINDOW*w=newwin(r,c,0,0);
 					if(w){
-						printpage(w,text_w);
-						text__w=text_w;
+						xtext=0;ytext=0;
+						printpage(w);
 						wmove(w,0,0);
 						printhelp();
 						loops=loopin(w);
@@ -512,6 +521,8 @@ int main(int argc,char**argv){
 			}
 			endwin();
 		}
+		free(rows);
 	}
 	free(text_w);
+	return ret;
 }
