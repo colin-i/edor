@@ -37,9 +37,9 @@ typedef unsigned mmask_t;
 mmask_t mousemask(mmask_t,mmask_t*);
 int noecho(void);
 #define ALL_MOUSE_EVENTS 0xfffff
-int wmove(WINDOW*,int,int);//7
+int wmove(WINDOW*,int,int);//9
 int move(int,int);//2
-int getcury(const WINDOW*);//11
+int getcury(const WINDOW*);//13
 int getcurx(const WINDOW*);//6
 int getmaxy(const WINDOW*);//5
 int getmaxx(const WINDOW*);//5
@@ -317,8 +317,10 @@ bool loopin(WINDOW*w){
 	do{
 		c=wgetch(w);
 		if(c=='\e'){
-			c=ach(w);if(c=='['){
-				c=ach(w);if(c=='<'){
+			c=ach(w);
+			if(c=='['){
+				c=ach(w);
+				if(c=='<'){
 					int x;int y;
 					int m=mouse_test(w,&x,&y);
 					if(m==0){amove(w,y-1,x-1);}
@@ -353,6 +355,20 @@ bool loopin(WINDOW*w){
 						xtext--;
 						txmove(w,x);
 					}
+				}else if(c=='H'){
+					xtext=0;int y=getcury(w);
+					refreshpage(w);
+					wmove(w,y,0);
+				}else if(c=='F'){
+					int y=getcury(w);
+					int r=ytext+y;
+					xtext=0;
+					if(r<rows_tot){
+						xtext=rows[r+1]-rows[r];
+						if(r+1<rows_tot)xtext-=ln_term_sze;
+					}
+					refreshpage(w);
+					wmove(w,y,0);
 				}
 			}
 		}
