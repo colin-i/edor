@@ -1,3 +1,5 @@
+typedef char bool;
+
 //#include <string.h>
 typedef unsigned int size_t;
 size_t strlen(const char*);//6
@@ -28,7 +30,7 @@ ssize_t read(int,void*,size_t);
 typedef void WINDOW;
 WINDOW*initscr(void);
 int endwin(void);
-int wgetch(WINDOW*);//2
+int wgetch(WINDOW*);
 int getch(void);
 int ungetch(int);
 typedef unsigned int chtype;
@@ -36,12 +38,12 @@ chtype winch(WINDOW*);
 typedef unsigned mmask_t;
 mmask_t mousemask(mmask_t,mmask_t*);
 int noecho(void);
-#define ALL_MOUSE_EVENTS 0xfffff
-int wmove(WINDOW*,int,int);//9
+#define ALL_MOUSE_EVENTS 0xFffFFff
+int wmove(WINDOW*,int,int);//11
 int move(int,int);//2
 int getcury(const WINDOW*);//13
 int getcurx(const WINDOW*);//6
-int getmaxy(const WINDOW*);//5
+int getmaxy(const WINDOW*);//6
 int getmaxx(const WINDOW*);//5
 WINDOW*newwin(int,int,int,int);
 int delwin(WINDOW*);
@@ -59,9 +61,32 @@ int init_pair(short,short,short);
 #define COLOR_WHITE 7
 #define ERR -1
 int COLOR_PAIR(int);
+int keypad(WINDOW*,bool);
+typedef unsigned int mmask_t;
+typedef struct
+{
+    short id;
+    int x,y,z;
+    mmask_t bstate;
+}
+MEVENT;
+#define OK 0
+#define BUTTON1_CLICKED 0x4
+#define BUTTON5_PRESSED 0x200000
+#define BUTTON4_PRESSED 0x10000
+#define KEY_UP 259
+#define KEY_DOWN 258
+#define KEY_LEFT 260
+#define KEY_RIGHT 261
+#define KEY_HOME 262
+#define KEY_END 360
+#define KEY_PPAGE 339
+#define KEY_NPAGE 338
+#define KEY_MOUSE 409
 #define KEY_RESIZE 410
+int getmouse(MEVENT*);
 //#include<poll.h>
-typedef unsigned int nfds_t;
+/*typedef unsigned int nfds_t;
 struct pollfd{
 	int fd;
 	short events;
@@ -69,7 +94,7 @@ struct pollfd{
 };
 int poll(struct pollfd[],nfds_t,int);
 #define POLLIN 0x0001
-struct pollfd stdinfd={0,POLLIN,0};
+struct pollfd stdinfd={0,POLLIN,0};*/
 //#include <stdlib.h>
 void*malloc(size_t);//4
 void free(void*);//6
@@ -79,12 +104,7 @@ int printf(const char*,...);//5
 int getchar(void);
 
 #define NULL 0
-typedef char bool;
 enum{false=0,true=1};
-typedef struct{
-	char*str;
-	char**t;
-}inst;
 
 char ln_term[3]="\n";
 int ln_term_sze;
@@ -95,12 +115,17 @@ bool*x_right=NULL;
 int*tabs=NULL;
 #define tab_sz 6
 
+typedef struct{
+	char*str;
+	char**t;
+}inst;
 char*textfile=NULL;
 char terms[][3]={"r0"};
 char*_r0_0[]={terms[0],"#0",0};char*_ex[]={"exit",0};
 inst instrs[]={
 	{"mov",_r0_0},{"b",_ex},0
 };
+
 bool out_chr(int f,char c){
 	ssize_t s=write(f,&c,1);
 	if(s!=1)return true;
@@ -135,7 +160,7 @@ void out_wr(int f){
 		i++;
 	}while(true);
 }
-int ach(WINDOW*w){
+/*int ach(WINDOW*w){
 	if(poll(&stdinfd,1,0)<1)return 0;
 	return wgetch(w);
 }
@@ -161,7 +186,7 @@ int mouse_test(WINDOW*w,int*x,int*y){
 	if(y[0]==-1)return -1;
 	if(y[0]>getmaxy(w))return -1;
 	return a;
-}
+}*/
 void tab_grow(WINDOW*w,int r,char*a){
 	int sz=strlen(a);
 	x_right[r]=xtext<sz;
@@ -316,7 +341,64 @@ bool loopin(WINDOW*w){
 	int c;
 	do{
 		c=wgetch(w);
-		if(c=='\e'){
+		if(c==KEY_MOUSE){
+			MEVENT e;
+			int a=getmouse(&e);
+			if(a==OK){
+				if(e.bstate&BUTTON1_CLICKED)amove(w,e.y-1,e.x-1);
+				else if(e.bstate&BUTTON5_PRESSED)tmove(w,getcury(w),false);
+				else if(e.bstate&BUTTON4_PRESSED)tmove(w,getcury(w),true);
+			}
+		}else if(c==KEY_UP){
+			int y=getcury(w);
+			if(y>0)amove(w,y-1,getcurx(w));
+			else tmove(w,y,false);
+		}else if(c==KEY_DOWN){
+			int y=getcury(w);
+			if(y+1<getmaxy(w))amove(w,y+1,getcurx(w));
+			else tmove(w,y,true);
+		}else if(c==KEY_LEFT){
+			int x=getcurx(w);
+			if(x>0)amove(w,getcury(w),x-1);
+			else if(xtext>0){
+				xtext--;
+				txmove(w,x);
+			}
+		}else if(c==KEY_RIGHT){
+			int x=getcurx(w);
+			if(x+1<getmaxx(w))bmove(w,getcury(w),x+1,false);
+			else if(x_right[getcury(w)]){
+				xtext++;
+				txmove(w,x);
+			}
+		}else if(c==KEY_HOME){
+			xtext=0;int y=getcury(w);
+			refreshpage(w);
+			wmove(w,y,0);
+		}else if(c==KEY_END){
+			int y=getcury(w);
+			int r=ytext+y;
+			xtext=0;
+			if(r<rows_tot){
+				xtext=rows[r+1]-rows[r];
+				if(r+1<rows_tot)xtext-=ln_term_sze;
+			}
+			refreshpage(w);
+			wmove(w,y,0);
+		}else if(c==KEY_PPAGE){
+			int y=getcury(w);int x=getcurx(w);
+			ytext-=getmaxy(w);
+			if(ytext<0)ytext=0;
+			refreshpage(w);
+			amove(w,y,x);
+		}else if(c==KEY_NPAGE){
+			int y=getcury(w);int x=getcurx(w);
+			ytext+=getmaxy(w);
+			if(ytext+1>rows_tot)ytext=rows_tot-1;
+			refreshpage(w);
+			wmove(w,y,x);
+		}
+		/*if(c=='\e'){
 			c=ach(w);
 			if(c=='['){
 				c=ach(w);
@@ -371,7 +453,7 @@ bool loopin(WINDOW*w){
 					wmove(w,y,0);
 				}
 			}
-		}
+		}*/
 		else if(c=='h'){
 			//if((getcurx(stdscr)|getcury(stdscr))==0){
 			int cy=getcury(w);int cx=getcurx(w);
@@ -522,6 +604,7 @@ int main(int argc,char**argv){
 					tabs=(int*)a;
 					WINDOW*w=newwin(r,c,0,0);
 					if(w){
+						keypad(w,true);
 						xtext=0;ytext=0;
 						printpage(w);
 						wmove(w,0,0);
