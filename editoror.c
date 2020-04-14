@@ -43,7 +43,7 @@ int wmove(WINDOW*,int,int);//11
 int move(int,int);//2
 int getcury(const WINDOW*);//13
 int getcurx(const WINDOW*);//6
-int getmaxy(const WINDOW*);//6
+int getmaxy(const WINDOW*);//7
 int getmaxx(const WINDOW*);//5
 WINDOW*newwin(int,int,int,int);
 int delwin(WINDOW*);
@@ -51,7 +51,7 @@ int doupdate(void);
 int wnoutrefresh(WINDOW*);//4
 int mvprintw(int,int,const char*,...);//3
 int mvwprintw(WINDOW*,int,int,const char*,...);//2
-extern WINDOW*stdscr;//3
+extern WINDOW*stdscr;//5
 int werase(WINDOW*);//2
 int clrtoeol(void);
 int attrset(int);//2
@@ -61,7 +61,7 @@ int init_pair(short,short,short);
 #define COLOR_WHITE 7
 #define ERR -1
 int COLOR_PAIR(int);
-int keypad(WINDOW*,bool);
+int keypad(WINDOW*,bool);//2
 typedef unsigned int mmask_t;
 typedef struct
 {
@@ -74,16 +74,16 @@ MEVENT;
 #define BUTTON1_CLICKED 0x4
 #define BUTTON5_PRESSED 0x200000
 #define BUTTON4_PRESSED 0x10000
-#define KEY_UP 259
-#define KEY_DOWN 258
-#define KEY_LEFT 260
-#define KEY_RIGHT 261
-#define KEY_HOME 262
-#define KEY_END 360
-#define KEY_PPAGE 339
-#define KEY_NPAGE 338
-#define KEY_MOUSE 409
-#define KEY_RESIZE 410
+#define KEY_UP 0403
+#define KEY_DOWN 0402
+#define KEY_LEFT 0404
+#define KEY_RIGHT 0405
+#define KEY_HOME 0406
+#define KEY_END 0550
+#define KEY_PPAGE 0523
+#define KEY_NPAGE 0522
+#define KEY_MOUSE 0631
+#define KEY_RESIZE 0632
 int getmouse(MEVENT*);
 //#include<poll.h>
 /*typedef unsigned int nfds_t;
@@ -114,6 +114,9 @@ int xtext;int ytext;
 bool*x_right=NULL;
 int*tabs=NULL;
 #define tab_sz 6
+int yhelp;
+char helptext[]="\nq is for quitting\nc = compile file\narrows,home/end,page up/down\nmouse/touch press or v.scroll";
+bool helpend;
 
 typedef struct{
 	char*str;
@@ -288,23 +291,52 @@ void tmove(WINDOW*w,int y,bool right){
 	else if(ytext){ytext--;refreshpage(w);}
 	amove(w,y,x);//print changed cursor
 }
+void helpclear(){
+	int r=getcury(stdscr);
+	for(int i=0;i<=r;i++){
+		move(i,0);
+		clrtoeol();
+	}
+}
+void helpshow(int n){
+	yhelp=n;
+	move(0,0);	
+	int i=0;int j=0;int y=0;
+	do{
+		helpend=helptext[i]==0;
+		if(helptext[i]=='\n'||helpend){
+			if(n)n--;
+			else{
+				helptext[i]=0;
+				mvprintw(y,0,&helptext[j]);
+				if(!helpend)helptext[i]='\n';
+				y=getcury(stdscr)+1;
+				if(getmaxy(stdscr)-2<y)break;
+			}
+		 	j=i+1;
+		}
+		i++;
+	}while(!helpend);
+}
+void hmove(int n){
+	if(helpend&&(n>0))return;
+	n+=yhelp;
+	if(n<0)return;
+	helpclear();
+	helpshow(n);
+}
 bool helpin(WINDOW*w){
 	int c;
 	do{
 		c=getch();
-		if(c==KEY_RESIZE)return true;
+		if(c==KEY_DOWN)hmove(1);
+		else if(c==KEY_UP)hmove(-1);
+		else if(c==KEY_RESIZE)return true;
 	}while(c!='q');
-	int r=getcury(stdscr);
-	for(int i=1;i<=r;i++){
-		move(i,0);
-		clrtoeol();
-	}
+	helpclear();
 	wnoutrefresh(stdscr);
 	printpage(w);
 	return false;
-}
-void helprows(char*s){
-	mvprintw(getcury(stdscr)+1,0,s);
 }
 void printhelp(){
 	attrset(COLOR_PAIR(1));
@@ -458,10 +490,7 @@ bool loopin(WINDOW*w){
 			//if((getcurx(stdscr)|getcury(stdscr))==0){
 			int cy=getcury(w);int cx=getcurx(w);
 			werase(w);
-			move(0,0);
-			helprows("q is for quitting");
-			helprows("c = compile file");
-			helprows("mouse/touch press or v.scroll");
+			helpshow(0);
 			wnoutrefresh(w);
 			//}
 			wnoutrefresh(stdscr);
@@ -588,9 +617,10 @@ int main(int argc,char**argv){
 		}
 		if(ok){
 			WINDOW*w1=initscr();
-			noecho();
+			keypad(stdscr,true);	
 			mousemask(ALL_MOUSE_EVENTS,NULL);
 			start_color();
+			noecho();
 			if(init_pair(1,COLOR_BLACK,COLOR_WHITE)!=ERR){
 				bool loops=false;
 				do{
