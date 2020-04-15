@@ -40,18 +40,19 @@ mmask_t mousemask(mmask_t,mmask_t*);
 int noecho(void);
 #define ALL_MOUSE_EVENTS 0xFffFFff
 int wmove(WINDOW*,int,int);//11
-int move(int,int);//2
-int getcury(const WINDOW*);//13
-int getcurx(const WINDOW*);//6
-int getmaxy(const WINDOW*);//7
+int move(int,int);//6
+int getcury(const WINDOW*);//14
+int getcurx(const WINDOW*);//7
+int getmaxy(const WINDOW*);//9
 int getmaxx(const WINDOW*);//5
 WINDOW*newwin(int,int,int,int);
 int delwin(WINDOW*);
 int doupdate(void);
 int wnoutrefresh(WINDOW*);//4
-int mvprintw(int,int,const char*,...);//3
+int mvprintw(int,int,const char*,...);
 int mvwprintw(WINDOW*,int,int,const char*,...);//2
-extern WINDOW*stdscr;//5
+int printw(const char*,...);//2
+extern WINDOW*stdscr;//9
 int werase(WINDOW*);//2
 int clrtoeol(void);
 int attrset(int);//2
@@ -115,7 +116,7 @@ bool*x_right=NULL;
 int*tabs=NULL;
 #define tab_sz 6
 int yhelp;
-char helptext[]="\nq is for quitting\nc = compile file\narrows,home/end,page up/down\nmouse/touch press or v.scroll";
+char helptext[]="\nq is for quitting\narrows,home/end,page up/down\nc = compile file\nmouse/touch press or v.scroll";
 bool helpend;
 
 typedef struct{
@@ -297,6 +298,22 @@ void helpclear(){
 		move(i,0);
 		clrtoeol();
 	}
+	move(getmaxy(stdscr)-2,0);
+	printw("   ");
+}
+void printinverted(char*s){
+	attrset(COLOR_PAIR(1));
+	printw(s);
+	//attrset here,cause,print"   "
+	attrset(0);
+}
+void helpposition(){
+	int x=getcurx(stdscr);int y=getcury(stdscr);
+	move(getmaxy(stdscr)-2,0);
+	if(helpend)printinverted("BOT");
+	else if(!yhelp)printinverted("TOP");
+	else printw(":  ");
+	move(y,x);
 }
 void helpshow(int n){
 	yhelp=n;
@@ -311,12 +328,13 @@ void helpshow(int n){
 				mvprintw(y,0,&helptext[j]);
 				if(!helpend)helptext[i]='\n';
 				y=getcury(stdscr)+1;
-				if(getmaxy(stdscr)-2<y)break;
+				if(getmaxy(stdscr)-3<y)break;
 			}
 		 	j=i+1;
 		}
 		i++;
 	}while(!helpend);
+	helpposition();
 }
 void hmove(int n){
 	if(helpend&&(n>0))return;
@@ -339,10 +357,9 @@ bool helpin(WINDOW*w){
 	return false;
 }
 void printhelp(){
-	attrset(COLOR_PAIR(1));
-	mvprintw(getmaxy(stdscr)-1,0,"h for help");
+	move(getmaxy(stdscr)-1,0);
+	printinverted("h for help");
 	wnoutrefresh(stdscr);
-	attrset(0);
 }
 void out_f(){
 	int n=strlen(textfile);
@@ -430,62 +447,6 @@ bool loopin(WINDOW*w){
 			refreshpage(w);
 			wmove(w,y,x);
 		}
-		/*if(c=='\e'){
-			c=ach(w);
-			if(c=='['){
-				c=ach(w);
-				if(c=='<'){
-					int x;int y;
-					int m=mouse_test(w,&x,&y);
-					if(m==0){amove(w,y-1,x-1);}
-					else if(m==64){
-						y=getcury(w);
-						tmove(w,y,true);
-					}
-					else if(m==65){
-						y=getcury(w);
-						tmove(w,y,false);
-					}
-				}
-				else if(c=='A'){
-					int y=getcury(w);
-					if(y>0)amove(w,y-1,getcurx(w));
-					else tmove(w,y,false);
-				}else if(c=='B'){
-					int y=getcury(w);
-					if(y+1<getmaxy(w))amove(w,y+1,getcurx(w));
-					else tmove(w,y,true);
-				}else if(c=='C'){
-					int x=getcurx(w);
-					if(x+1<getmaxx(w))bmove(w,getcury(w),x+1,false);
-					else if(x_right[getcury(w)]){
-						xtext++;
-						txmove(w,x);
-					}
-				}else if(c=='D'){
-					int x=getcurx(w);
-					if(x>0)amove(w,getcury(w),x-1);
-					else if(xtext>0){
-						xtext--;
-						txmove(w,x);
-					}
-				}else if(c=='H'){
-					xtext=0;int y=getcury(w);
-					refreshpage(w);
-					wmove(w,y,0);
-				}else if(c=='F'){
-					int y=getcury(w);
-					int r=ytext+y;
-					xtext=0;
-					if(r<rows_tot){
-						xtext=rows[r+1]-rows[r];
-						if(r+1<rows_tot)xtext-=ln_term_sze;
-					}
-					refreshpage(w);
-					wmove(w,y,0);
-				}
-			}
-		}*/
 		else if(c=='h'){
 			//if((getcurx(stdscr)|getcury(stdscr))==0){
 			int cy=getcury(w);int cx=getcurx(w);
