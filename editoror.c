@@ -4,6 +4,7 @@ typedef char bool;
 typedef unsigned int size_t;
 size_t strlen(const char*);//6
 char*strchr(const char*,int);
+int strcmp(const char*,const char*);//4
 //#include <fcntl.h>
 int open(const char*,int,...);
 //sys/types.h
@@ -39,12 +40,12 @@ typedef unsigned mmask_t;
 mmask_t mousemask(mmask_t,mmask_t*);
 int noecho(void);
 #define ALL_MOUSE_EVENTS 0xFffFFff
-int wmove(WINDOW*,int,int);//11
+int wmove(WINDOW*,int,int);//13
 int move(int,int);//6
-int getcury(const WINDOW*);//14
-int getcurx(const WINDOW*);//7
-int getmaxy(const WINDOW*);//9
-int getmaxx(const WINDOW*);//5
+int getcury(const WINDOW*);//16
+int getcurx(const WINDOW*);//9
+int getmaxy(const WINDOW*);//10
+int getmaxx(const WINDOW*);//6
 WINDOW*newwin(int,int,int,int);
 int delwin(WINDOW*);
 int doupdate(void);
@@ -86,6 +87,7 @@ MEVENT;
 #define KEY_MOUSE 0631
 #define KEY_RESIZE 0632
 int getmouse(MEVENT*);
+const char*keyname(int);
 //#include<poll.h>
 /*typedef unsigned int nfds_t;
 struct pollfd{
@@ -116,8 +118,12 @@ bool*x_right=NULL;
 int*tabs=NULL;
 #define tab_sz 6
 int yhelp;
-char helptext[]="\nq is for quitting\narrows,home/end,page up/down\nc = compile file\nmouse/touch press or v.scroll";
 bool helpend;
+char helptext[]="\nq is for quitting"
+"\narrows,home/end,page up/down"
+"\nc = compile file"
+"\nmouse/touch press or v.scroll"
+"\nalt arrows,ctrl home/end";
 
 typedef struct{
 	char*str;
@@ -241,11 +247,6 @@ void printpage(WINDOW*w){
 void refreshpage(WINDOW*w){
 	werase(w);
 	printpage(w);
-}
-void txmove(WINDOW*w,int x){
-	int y=getcury(w);
-	refreshpage(w);
-	wmove(w,y,x);
 }
 void bmove(WINDOW*w,int r,int c,bool back){
 	wmove(w,r,c);
@@ -386,6 +387,37 @@ void out_f(){
 		free(s);
 	}
 }
+void sumove(WINDOW*w,int y){tmove(w,y,false);}
+void sdmove(WINDOW*w,int y){tmove(w,y,true);}
+void slmove(WINDOW*w,int x,bool notabs){
+	int y=getcury(w);
+	if(xtext>0){
+		xtext--;
+		refreshpage(w);
+		if(notabs)wmove(w,y,x);
+		else amove(w,y,x);
+	}
+}
+void srmove(WINDOW*w,int x){
+	int y=getcury(w);
+	if(x_right[y]){
+		xtext++;
+		refreshpage(w);
+		amove(w,y,x);
+	}
+}
+int end(WINDOW*w,int r){
+	char*s=rows[r+1];char*b=rows[r];
+	if(r+1<rows_tot)s-=ln_term_sze;
+	int n=getmaxx(w)-1;int m=0;
+	while(s>b&&(s-b!=xtext)){
+		s--;
+		m+=s[0]=='\t'?tab_sz:1;
+		if(m>=n)break;
+	}
+	xtext=s-b;
+	return m;
+}
 bool loopin(WINDOW*w){
 	int c;
 	do{
@@ -401,39 +433,30 @@ bool loopin(WINDOW*w){
 		}else if(c==KEY_UP){
 			int y=getcury(w);
 			if(y>0)amove(w,y-1,getcurx(w));
-			else tmove(w,y,false);
+			else sumove(w,y);
 		}else if(c==KEY_DOWN){
 			int y=getcury(w);
 			if(y+1<getmaxy(w))amove(w,y+1,getcurx(w));
-			else tmove(w,y,true);
+			else sdmove(w,y);
 		}else if(c==KEY_LEFT){
 			int x=getcurx(w);
 			if(x>0)amove(w,getcury(w),x-1);
-			else if(xtext>0){
-				xtext--;
-				txmove(w,x);
-			}
+			else slmove(w,x,true);
 		}else if(c==KEY_RIGHT){
 			int x=getcurx(w);
 			if(x+1<getmaxx(w))bmove(w,getcury(w),x+1,false);
-			else if(x_right[getcury(w)]){
-				xtext++;
-				txmove(w,x);
-			}
+			else srmove(w,x);
 		}else if(c==KEY_HOME){
 			xtext=0;int y=getcury(w);
 			refreshpage(w);
 			wmove(w,y,0);
 		}else if(c==KEY_END){
 			int y=getcury(w);
-			int r=ytext+y;
-			xtext=0;
-			if(r<rows_tot){
-				xtext=rows[r+1]-rows[r];
-				if(r+1<rows_tot)xtext-=ln_term_sze;
-			}
+			int r=ytext+y;int x;
+			if(r<rows_tot)x=end(w,r);
+			else{xtext=0;x=0;}
 			refreshpage(w);
-			wmove(w,y,0);
+			wmove(w,y,x);
 		}else if(c==KEY_PPAGE){
 			int y=getcury(w);int x=getcurx(w);
 			ytext-=getmaxy(w);
@@ -465,6 +488,27 @@ bool loopin(WINDOW*w){
 			return true;
 		}
 		else if(c=='c'){if(textfile)out_f();}
+		else{
+			const char*s=keyname(c);
+			if(!strcmp(s,"kUP3"))sumove(w,getcury(w));
+			else if(!strcmp(s,"kDN3"))sdmove(w,getcury(w));
+			else if(!strcmp(s,"kLFT3"))slmove(w,getcurx(w),false);
+			else if(!strcmp(s,"kRIT3"))srmove(w,getcurx(w));
+			else if(!strcmp(s,"kHOM5")){
+				ytext=0;xtext=0;
+				refreshpage(w);
+				wmove(w,0,0);
+			}else if(!strcmp(s,"kEND5")){
+				int a=rows_tot-1;
+				ytext=a-getmaxy(w)+1;
+				if(ytext<0)ytext=0;
+				int y=a-ytext;
+				int x=end(w,a);
+				refreshpage(w);
+				//moved by curses,but not if last is new line
+				wmove(w,y,x);
+			}
+		}
 	}while(c!='q');
 	return false;
 }
