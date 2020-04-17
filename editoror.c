@@ -51,9 +51,9 @@ WINDOW*newwin(int,int,int,int);
 int delwin(WINDOW*);
 int doupdate(void);
 int wnoutrefresh(WINDOW*);//4
-int mvaddstr(int,int,const char*,...);
-int mvwaddstr(WINDOW*,int,int,const char*,...);//3
-int addstr(const char*,...);//3
+int mvaddstr(int,int,const char*);
+int mvwaddstr(WINDOW*,int,int,const char*);//3
+int addstr(const char*);//3
 extern WINDOW*stdscr;//9
 int werase(WINDOW*);//2
 int clrtoeol(void);
@@ -105,7 +105,7 @@ void free(void*);//7
 void*realloc(void*,size_t);//5
 char*getenv(const char*);
 //#include<stdio.h>
-int printf(const char*,...);//5
+int puts(const char*);//5
 int sprintf(char*,const char*,...);
 int getchar(void);
 
@@ -677,11 +677,11 @@ int main(int argc,char**argv){
 				ok=startpage(argv[1],&text_w);
 				if(ok){
 					if(ok<1){
-						printf("Normalize line endings to ");
-						if(ln_term_sze==2)printf("\\r\\n");
-						else if(ln_term[0]=='\n')printf("\\n");
-						else printf("\\r");
-						printf("? n=no, default=yes\n");
+						puts("Normalize line endings to ");
+						if(ln_term_sze==2)puts("\\r\\n");
+						else if(ln_term[0]=='\n')puts("\\n");
+						else puts("\\r");
+						puts("? n=no, default=yes\n");
 						int c=getchar();
 						if(c=='n')ok=0;
 					}
