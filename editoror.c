@@ -2,11 +2,12 @@ typedef char bool;
 
 //#include <string.h>
 typedef unsigned int size_t;
-size_t strlen(const char*);//6
+size_t strlen(const char*);//8
 char*strchr(const char*,int);
 int strcmp(const char*,const char*);//4
+void*memcpy(void*,const void*,size_t);
 //#include <fcntl.h>
-int open(const char*,int,...);
+int open(const char*,int,...);//3
 //sys/types.h
 typedef unsigned short mode_t;
 //asm-generic/fcntl.h
@@ -18,9 +19,9 @@ typedef unsigned short mode_t;
 #define S_IRUSR 00400
 #define S_IWUSR 00200
 //#include <unistd.h>
-int close(int);
+int close(int);//2
 typedef int ssize_t;
-ssize_t write(int,const void*,size_t);//2
+ssize_t write(int,const void*,size_t);//3
 typedef long off_t;
 off_t lseek(int,off_t,int);
 ssize_t read(int,void*,size_t);
@@ -31,7 +32,7 @@ ssize_t read(int,void*,size_t);
 typedef void WINDOW;
 WINDOW*initscr(void);
 int endwin(void);
-int wgetch(WINDOW*);
+int wgetch(WINDOW*);//2
 int getch(void);
 int ungetch(int);
 typedef unsigned int chtype;
@@ -42,17 +43,17 @@ int noecho(void);
 #define ALL_MOUSE_EVENTS 0xFffFFff
 int wmove(WINDOW*,int,int);//13
 int move(int,int);//6
-int getcury(const WINDOW*);//16
-int getcurx(const WINDOW*);//9
+int getcury(const WINDOW*);//17
+int getcurx(const WINDOW*);//10
 int getmaxy(const WINDOW*);//10
 int getmaxx(const WINDOW*);//6
 WINDOW*newwin(int,int,int,int);
 int delwin(WINDOW*);
 int doupdate(void);
 int wnoutrefresh(WINDOW*);//4
-int mvprintw(int,int,const char*,...);
-int mvwprintw(WINDOW*,int,int,const char*,...);//2
-int printw(const char*,...);//2
+int mvaddstr(int,int,const char*,...);
+int mvwaddstr(WINDOW*,int,int,const char*,...);//3
+int addstr(const char*,...);//3
 extern WINDOW*stdscr;//9
 int werase(WINDOW*);//2
 int clrtoeol(void);
@@ -100,10 +101,12 @@ int poll(struct pollfd[],nfds_t,int);
 struct pollfd stdinfd={0,POLLIN,0};*/
 //#include <stdlib.h>
 void*malloc(size_t);//4
-void free(void*);//6
-void*realloc(void*,size_t);//4
+void free(void*);//7
+void*realloc(void*,size_t);//5
+char*getenv(const char*);
 //#include<stdio.h>
 int printf(const char*,...);//5
+int sprintf(char*,const char*,...);
 int getchar(void);
 
 #define NULL 0
@@ -121,9 +124,13 @@ int yhelp;
 bool helpend;
 char helptext[]="\nq is for quitting"
 "\narrows,home/end,page up/down"
-"\nc = compile file"
+"\nb = compile file"
 "\nmouse/touch press or v.scroll"
-"\nalt arrows,ctrl home/end";
+"\nalt arrows,ctrl home/end"
+"\nv = visual mode"
+"\n    c = copy";
+void*cutbuf=NULL;
+int cutbuf_sz=0;
 
 typedef struct{
 	char*str;
@@ -208,21 +215,21 @@ void tab_grow(WINDOW*w,int r,char*a){
 	for(;i<sz&&c<max&&cr<max;i++){
 		char z=a[i];
 		if(z=='\t'){
-			a[i]=0;mvwprintw(w,r,c,a+j);a[i]='\t';
+			a[i]=0;mvwaddstr(w,r,c,a+j);a[i]='\t';
 			c+=i-j;
 			ptr[ptr[0]+1]=c;ptr[0]++;
 			j=i+1;
 			c+=tab_sz;cr+=tab_sz-1;
 		}else if(z<32||z>=127){
 			a[i]='?';char aux=a[i+1];a[i+1]=0;
-			mvwprintw(w,r,c,a+j);a[i+1]=aux;a[i]=z;
+			mvwaddstr(w,r,c,a+j);a[i+1]=aux;a[i]=z;
 			c+=i-j+1;j=i+1;
 		}
 		cr++;
 	}
 	if(c<max){
 		char e=a[i];
-		a[i]=0;mvwprintw(w,r,c,a+j);a[i]=e;
+		a[i]=0;mvwaddstr(w,r,c,a+j);a[i]=e;
 	}
 }
 void printpage(WINDOW*w){
@@ -300,11 +307,11 @@ void helpclear(){
 		clrtoeol();
 	}
 	move(getmaxy(stdscr)-2,0);
-	printw("   ");
+	addstr("   ");
 }
 void printinverted(char*s){
 	attrset(COLOR_PAIR(1));
-	printw(s);
+	addstr(s);
 	//attrset here,cause,print"   "
 	attrset(0);
 }
@@ -313,7 +320,7 @@ void helpposition(){
 	move(getmaxy(stdscr)-2,0);
 	if(helpend)printinverted("BOT");
 	else if(!yhelp)printinverted("TOP");
-	else printw(":  ");
+	else addstr(":  ");
 	move(y,x);
 }
 void helpshow(int n){
@@ -326,7 +333,7 @@ void helpshow(int n){
 			if(n)n--;
 			else{
 				helptext[i]=0;
-				mvprintw(y,0,&helptext[j]);
+				mvaddstr(y,0,&helptext[j]);
 				if(!helpend)helptext[i]='\n';
 				y=getcury(stdscr)+1;
 				if(getmaxy(stdscr)-3<y)break;
@@ -418,95 +425,128 @@ int end(WINDOW*w,int r){
 	xtext=s-b;
 	return m;
 }
+//-1 different key,0move key,1resize
+int movment(int c,WINDOW*w){
+	if(c==KEY_MOUSE){
+		MEVENT e;
+		int a=getmouse(&e);
+		if(a==OK){
+			if(e.bstate&BUTTON1_CLICKED)amove(w,e.y-1,e.x-1);
+			else if(e.bstate&BUTTON5_PRESSED)tmove(w,getcury(w),false);
+			else if(e.bstate&BUTTON4_PRESSED)tmove(w,getcury(w),true);
+		}
+	}else if(c==KEY_UP){
+		int y=getcury(w);
+		if(y>0)amove(w,y-1,getcurx(w));
+		else sumove(w,y);
+	}else if(c==KEY_DOWN){
+		int y=getcury(w);
+		if(y+1<getmaxy(w))amove(w,y+1,getcurx(w));
+		else sdmove(w,y);
+	}else if(c==KEY_LEFT){
+		int x=getcurx(w);
+		if(x>0)amove(w,getcury(w),x-1);
+		else slmove(w,x,true);
+	}else if(c==KEY_RIGHT){
+		int x=getcurx(w);
+		if(x+1<getmaxx(w))bmove(w,getcury(w),x+1,false);
+		else srmove(w,x);
+	}else if(c==KEY_HOME){
+		xtext=0;int y=getcury(w);
+		refreshpage(w);
+		wmove(w,y,0);
+	}else if(c==KEY_END){
+		int y=getcury(w);
+		int r=ytext+y;int x;
+		if(r<rows_tot)x=end(w,r);
+		else{xtext=0;x=0;}
+		refreshpage(w);
+		wmove(w,y,x);
+	}else if(c==KEY_PPAGE){
+		int y=getcury(w);int x=getcurx(w);
+		ytext-=getmaxy(w);
+		if(ytext<0)ytext=0;
+		refreshpage(w);
+		amove(w,y,x);
+	}else if(c==KEY_NPAGE){
+		int y=getcury(w);int x=getcurx(w);
+		ytext+=getmaxy(w);
+		if(ytext+1>rows_tot)ytext=rows_tot-1;
+		refreshpage(w);
+		wmove(w,y,x);
+	}else if(c==KEY_RESIZE){
+		return 1;
+	}
+	else{
+		const char*s=keyname(c);
+		if(!strcmp(s,"kUP3"))sumove(w,getcury(w));
+		else if(!strcmp(s,"kDN3"))sdmove(w,getcury(w));
+		else if(!strcmp(s,"kLFT3"))slmove(w,getcurx(w),false);
+		else if(!strcmp(s,"kRIT3"))srmove(w,getcurx(w));
+		else if(!strcmp(s,"kHOM5")){
+			ytext=0;xtext=0;
+			refreshpage(w);
+			wmove(w,0,0);
+		}else if(!strcmp(s,"kEND5")){
+			int a=rows_tot-1;
+			ytext=a-getmaxy(w)+1;
+			if(ytext<0)ytext=0;
+			int y=a-ytext;
+			int x=end(w,a);
+			refreshpage(w);
+			//moved by curses, but no addstr for line breaks
+			wmove(w,y,x);
+		}else return -1;
+	}
+	return 0;
+}
+void writemembuf(int ybsel,int xbsel,int yesel,int xesel){
+	char*b=rows[ybsel]+xbsel;
+	char*e=rows[yesel]+xesel+1;
+	int sz=e-b;
+	if(cutbuf_sz<sz){
+		void*v=realloc(cutbuf,sz);
+		if(!v)return;
+		cutbuf=v;cutbuf_sz=sz;
+	}
+	memcpy(cutbuf,b,sz);
+}
 bool loopin(WINDOW*w){
 	int c;
 	do{
 		c=wgetch(w);
-		if(c==KEY_MOUSE){
-			MEVENT e;
-			int a=getmouse(&e);
-			if(a==OK){
-				if(e.bstate&BUTTON1_CLICKED)amove(w,e.y-1,e.x-1);
-				else if(e.bstate&BUTTON5_PRESSED)tmove(w,getcury(w),false);
-				else if(e.bstate&BUTTON4_PRESSED)tmove(w,getcury(w),true);
+		int a=movment(c,w);
+		if(a>0)return true;
+		if(a){
+			if(c=='b'){if(textfile)out_f();}
+			else if(c=='v'){
+				int ybsel=ytext+getcury(w);
+				int xbsel=xtext+getcurx(w);
+				int yesel=ybsel;int xesel=xbsel;
+				int b;
+				do{
+					b=wgetch(w);
+					int z=movment(b,w);
+					if(z>0)return true;
+					else if(z){
+						if(b=='c')writemembuf(ybsel,xbsel,yesel,xesel);
+					}
+				}while(!b);
 			}
-		}else if(c==KEY_UP){
-			int y=getcury(w);
-			if(y>0)amove(w,y-1,getcurx(w));
-			else sumove(w,y);
-		}else if(c==KEY_DOWN){
-			int y=getcury(w);
-			if(y+1<getmaxy(w))amove(w,y+1,getcurx(w));
-			else sdmove(w,y);
-		}else if(c==KEY_LEFT){
-			int x=getcurx(w);
-			if(x>0)amove(w,getcury(w),x-1);
-			else slmove(w,x,true);
-		}else if(c==KEY_RIGHT){
-			int x=getcurx(w);
-			if(x+1<getmaxx(w))bmove(w,getcury(w),x+1,false);
-			else srmove(w,x);
-		}else if(c==KEY_HOME){
-			xtext=0;int y=getcury(w);
-			refreshpage(w);
-			wmove(w,y,0);
-		}else if(c==KEY_END){
-			int y=getcury(w);
-			int r=ytext+y;int x;
-			if(r<rows_tot)x=end(w,r);
-			else{xtext=0;x=0;}
-			refreshpage(w);
-			wmove(w,y,x);
-		}else if(c==KEY_PPAGE){
-			int y=getcury(w);int x=getcurx(w);
-			ytext-=getmaxy(w);
-			if(ytext<0)ytext=0;
-			refreshpage(w);
-			amove(w,y,x);
-		}else if(c==KEY_NPAGE){
-			int y=getcury(w);int x=getcurx(w);
-			ytext+=getmaxy(w);
-			if(ytext+1>rows_tot)ytext=rows_tot-1;
-			refreshpage(w);
-			wmove(w,y,x);
-		}
-		else if(c=='h'){
-			//if((getcurx(stdscr)|getcury(stdscr))==0){
-			int cy=getcury(w);int cx=getcurx(w);
-			werase(w);
-			helpshow(0);
-			wnoutrefresh(w);
-			//}
-			wnoutrefresh(stdscr);
-			doupdate();
-			if(helpin(w)){
-				ungetch('h');
-				return true;
-			}
-			wmove(w,cy,cx);
-		}else if(c==KEY_RESIZE){
-			return true;
-		}
-		else if(c=='c'){if(textfile)out_f();}
-		else{
-			const char*s=keyname(c);
-			if(!strcmp(s,"kUP3"))sumove(w,getcury(w));
-			else if(!strcmp(s,"kDN3"))sdmove(w,getcury(w));
-			else if(!strcmp(s,"kLFT3"))slmove(w,getcurx(w),false);
-			else if(!strcmp(s,"kRIT3"))srmove(w,getcurx(w));
-			else if(!strcmp(s,"kHOM5")){
-				ytext=0;xtext=0;
-				refreshpage(w);
-				wmove(w,0,0);
-			}else if(!strcmp(s,"kEND5")){
-				int a=rows_tot-1;
-				ytext=a-getmaxy(w)+1;
-				if(ytext<0)ytext=0;
-				int y=a-ytext;
-				int x=end(w,a);
-				refreshpage(w);
-				//moved by curses,but not if last is new line
-				wmove(w,y,x);
+			else if(c=='h'){
+				//if((getcurx(stdscr)|getcury(stdscr))==0){
+				int cy=getcury(w);int cx=getcurx(w);
+				werase(w);
+				helpshow(0);
+				wnoutrefresh(w);
+				//}
+				wnoutrefresh(stdscr);
+				doupdate();
+				if(helpin(w)){
+					ungetch('h');
+					return true;
+				}
+				wmove(w,cy,cx);
 			}
 		}
 	}while(c!='q');
@@ -596,67 +636,102 @@ int startpage(char*f,char**c){
 	}
 	return ok;
 }
-int main(int argc,char**argv){
-	int ret=0;
-	char*text_w=(char*)malloc(1);
-	if(!text_w)return ret;
-	text_w[0]=0;
-	rows=(char**)malloc(2*sizeof(char*));
-	if(rows){
-		rows[0]=text_w;rows[1]=text_w;
-		int ok=1;
-		if(argc==2){
-			ok=startpage(argv[1],&text_w);
-			if(ok){
-				if(ok<1){
-					printf("Normalize line endings to ");
-					if(ln_term_sze==2)printf("\\r\\n");
-					else if(ln_term[0]=='\n')printf("\\n");
-					else printf("\\r");
-					printf("? n=no, default=yes\n");
-					int c=getchar();
-					if(c=='n')ok=0;
-				}
-				if(ok)textfile=argv[1];
-			}
-		}
-		if(ok){
-			WINDOW*w1=initscr();
-			keypad(stdscr,true);	
-			mousemask(ALL_MOUSE_EVENTS,NULL);
-			start_color();
-			noecho();
-			if(init_pair(1,COLOR_BLACK,COLOR_WHITE)!=ERR){
-				bool loops=false;
-				do{
-					int r=getmaxy(w1)-1;
-					char*a=realloc(x_right,r);
-					if(!a)break;
-					x_right=a;
-					int c=getmaxx(w1);
-					a=realloc(tabs,(1+c)*r*sizeof(int));
-					if(!a)break;
-					tabs=(int*)a;
-					WINDOW*w=newwin(r,c,0,0);
-					if(w){
-						keypad(w,true);
-						xtext=0;ytext=0;
-						printpage(w);
-						wmove(w,0,0);
-						printhelp();
-						loops=loopin(w);
-						delwin(w);
-					}else break;
-				}while(loops);
-				if(x_right){
-					free(x_right);
-					if(tabs)free(tabs);
-				}
-			}
-			endwin();
-		}
-		free(rows);
+int setfilebuf(char*s,char*cutbuf_file){
+	size_t sz=strlen(s);int i=sz-1;
+	while(i>=0){
+		char a=s[i];
+		if(a=='/'||a=='\\')break;
+		i--;
 	}
-	free(text_w);
-	return ret;
+	char*h=getenv("HOME");
+	if(!h)return 0;
+	size_t l=strlen(h);
+	if(!l)return 0;
+	i++;sz-=i;
+	if(l+sz+7>128)return 0;
+	sprintf(cutbuf_file,"%s/.%sinfo",h,&s[i]);
+	return l-1;
+}
+void writefilebuf(char*cutbuf_file,int off){
+	if(cutbuf_file[0]&&cutbuf_sz){
+		int f=open(cutbuf_file,O_WRONLY|O_TRUNC);
+		if(f==-1){
+			cutbuf_file[off]='.';
+			f=open(cutbuf_file+off,O_WRONLY|O_TRUNC);
+			if(f==-1)return;
+		}
+		write(f,cutbuf,cutbuf_sz);
+		close(f);
+	}
+	if(cutbuf)free(cutbuf);
+}
+int main(int argc,char**argv){
+	char*text_w=(char*)malloc(1);
+	if(text_w){
+		text_w[0]=0;
+		rows=(char**)malloc(2*sizeof(char*));
+		if(rows){
+			rows[0]=text_w;rows[1]=text_w;
+			int ok=1;
+			if(argc==2){
+				ok=startpage(argv[1],&text_w);
+				if(ok){
+					if(ok<1){
+						printf("Normalize line endings to ");
+						if(ln_term_sze==2)printf("\\r\\n");
+						else if(ln_term[0]=='\n')printf("\\n");
+						else printf("\\r");
+						printf("? n=no, default=yes\n");
+						int c=getchar();
+						if(c=='n')ok=0;
+					}
+					if(ok)textfile=argv[1];
+				}
+			}
+			if(ok){
+				WINDOW*w1=initscr();
+				keypad(stdscr,true);	
+				mousemask(ALL_MOUSE_EVENTS,NULL);
+				start_color();
+				noecho();
+				if(init_pair(1,COLOR_BLACK,COLOR_WHITE)!=ERR){
+					char cutbuf_file[128];
+					cutbuf_file[0]=0;
+					int off=setfilebuf(argv[0],cutbuf_file);
+					bool loops=false;
+					do{
+						int r=getmaxy(w1)-1;
+						char*a=realloc(x_right,r);
+						if(!a)break;
+						x_right=a;
+						int c=getmaxx(w1);
+						a=realloc(tabs,(1+c)*r*sizeof(int));
+						if(!a)break;
+						tabs=(int*)a;
+						WINDOW*w=newwin(r,c,0,0);
+						if(w){
+							keypad(w,true);
+							xtext=0;ytext=0;
+							printpage(w);
+							wmove(w,0,0);
+							printhelp();
+							loops=loopin(w);
+							delwin(w);
+						}else break;
+					}while(loops);
+					if(x_right){
+						free(x_right);
+						if(tabs){
+							free(tabs);
+							writefilebuf(cutbuf_file,off);
+						}
+					}
+				}
+				endwin();
+			}
+			free(rows);
+		}
+		free(text_w);
+	}
+	return 0;
 }
