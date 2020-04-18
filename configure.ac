@@ -1,13 +1,11 @@
 #                                               -*- Autoconf -*-
 # Process this file with autoconf to produce a configure script.
-
 AC_PREREQ([2.69])
 AC_INIT([editoror], [0.1], [BUG-REPORT-ADDRESS])
-AC_CONFIG_SRCDIR([editoror.c])
+AC_CONFIG_SRCDIR([main.c])
 #AC_CONFIG_HEADERS([config.h])
 
 AC_CONFIG_AUX_DIR([build-aux])
-AM_INIT_AUTOMAKE
 # Add debug support
 #AC_ARG_ENABLE(debug,
 #  AS_HELP_STRING([--enable-debug],[enable debugging, default: no]),
@@ -27,5 +25,10 @@ AC_PROG_CC
 
 # Checks for library functions.
 
+AM_INIT_AUTOMAKE
+
 AC_CONFIG_FILES([Makefile])
+
+AC_SUBST([PROJ], 'editoror')
+
 AC_OUTPUT

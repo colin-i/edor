@@ -4,10 +4,10 @@ typedef char bool;
 typedef unsigned int size_t;
 size_t strlen(const char*);//8
 char*strchr(const char*,int);
-int strcmp(const char*,const char*);//4
+int strcmp(const char*,const char*);//6
 void*memcpy(void*,const void*,size_t);
 //#include <fcntl.h>
-int open(const char*,int,...);//3
+int open(const char*,int,...);//4
 //sys/types.h
 typedef unsigned short mode_t;
 //asm-generic/fcntl.h
@@ -19,11 +19,11 @@ typedef unsigned short mode_t;
 #define S_IRUSR 00400
 #define S_IWUSR 00200
 //#include <unistd.h>
-int close(int);//2
+int close(int);//3
 typedef int ssize_t;
 ssize_t write(int,const void*,size_t);//3
 typedef long off_t;
-off_t lseek(int,off_t,int);
+off_t lseek(int,off_t,int);//2
 ssize_t read(int,void*,size_t);
 //#include <bits/seek_constants.h>
 #define SEEK_SET 0
@@ -32,8 +32,8 @@ ssize_t read(int,void*,size_t);
 typedef void WINDOW;
 WINDOW*initscr(void);
 int endwin(void);
-int wgetch(WINDOW*);//2
 int getch(void);
+int wgetch(WINDOW*);//2
 int ungetch(int);
 typedef unsigned int chtype;
 chtype winch(WINDOW*);
@@ -41,20 +41,20 @@ typedef unsigned mmask_t;
 mmask_t mousemask(mmask_t,mmask_t*);
 int noecho(void);
 #define ALL_MOUSE_EVENTS 0xFffFFff
-int wmove(WINDOW*,int,int);//13
 int move(int,int);//6
-int getcury(const WINDOW*);//17
-int getcurx(const WINDOW*);//10
+int wmove(WINDOW*,int,int);//12
+int getcury(const WINDOW*);//19
+int getcurx(const WINDOW*);//12
 int getmaxy(const WINDOW*);//10
 int getmaxx(const WINDOW*);//6
 WINDOW*newwin(int,int,int,int);
 int delwin(WINDOW*);
 int doupdate(void);
 int wnoutrefresh(WINDOW*);//4
+int addstr(const char*);//3
 int mvaddstr(int,int,const char*);
 int mvwaddstr(WINDOW*,int,int,const char*);//3
-int addstr(const char*);//3
-extern WINDOW*stdscr;//9
+extern WINDOW*stdscr;//12
 int werase(WINDOW*);//2
 int clrtoeol(void);
 int attrset(int);//2
@@ -179,7 +179,7 @@ void out_wr(int f){
 }
 /*int ach(WINDOW*w){
 	if(poll(&stdinfd,1,0)<1)return 0;
-	return wgetch(w);
+	return wget ch(w);
 }
 int nr_end_test(WINDOW*w,char t){
 	int nr=0;
@@ -201,7 +201,7 @@ int mouse_test(WINDOW*w,int*x,int*y){
 	//if(x>maxx)return -1;
 	y[0]=nr_end_test(w,'M');
 	if(y[0]==-1)return -1;
-	if(y[0]>getmaxy(w))return -1;
+	if(y[0]>get maxy(w))return -1;
 	return a;
 }*/
 void tab_grow(WINDOW*w,int r,char*a){
@@ -312,7 +312,7 @@ void helpclear(){
 void printinverted(char*s){
 	attrset(COLOR_PAIR(1));
 	addstr(s);
-	//attrset here,cause,print"   "
+	//attr set here,cause,print"   "
 	attrset(0);
 }
 void helpposition(){
@@ -494,7 +494,7 @@ int movment(int c,WINDOW*w){
 			int y=a-ytext;
 			int x=end(w,a);
 			refreshpage(w);
-			//moved by curses, but no addstr for line breaks
+			//moved by curses, but no add str for line breaks
 			wmove(w,y,x);
 		}else return -1;
 	}
@@ -502,7 +502,7 @@ int movment(int c,WINDOW*w){
 }
 void writemembuf(int ybsel,int xbsel,int yesel,int xesel){
 	char*b=rows[ybsel]+xbsel;
-	char*e=rows[yesel]+xesel+1;
+	char*e=rows[yesel]+xesel;
 	int sz=e-b;
 	if(cutbuf_sz<sz){
 		void*v=realloc(cutbuf,sz);
@@ -521,8 +521,18 @@ bool loopin(WINDOW*w){
 			if(c=='b'){if(textfile)out_f();}
 			else if(c=='v'){
 				int ybsel=ytext+getcury(w);
+				if(ybsel>rows_tot-1)ybsel=rows_tot-1;
 				int xbsel=xtext+getcurx(w);
-				int yesel=ybsel;int xesel=xbsel;
+				int sz=rows[ybsel+1]-rows[ybsel];
+				bool a=ybsel!=rows_tot-1;
+				if(a)sz-=ln_term_sze;
+				int n=1;
+				if(xbsel>sz){
+					xbsel=sz;
+					if(a)n=ln_term_sze;
+					else n=0;
+				}
+				int yesel=ybsel;int xesel=xbsel+n;
 				int b;
 				do{
 					b=wgetch(w);
@@ -534,12 +544,10 @@ bool loopin(WINDOW*w){
 				}while(!b);
 			}
 			else if(c=='h'){
-				//if((getcurx(stdscr)|getcury(stdscr))==0){
 				int cy=getcury(w);int cx=getcurx(w);
 				werase(w);
 				helpshow(0);
 				wnoutrefresh(w);
-				//}
 				wnoutrefresh(stdscr);
 				doupdate();
 				if(helpin(w)){
