@@ -42,7 +42,7 @@ mmask_t mousemask(mmask_t,mmask_t*);
 int noecho(void);
 #define ALL_MOUSE_EVENTS 0xFffFFff
 int move(int,int);//6
-int wmove(WINDOW*,int,int);//12
+int wmove(WINDOW*,int,int);//11
 int getcury(const WINDOW*);//20
 int getcurx(const WINDOW*);//13
 int getmaxy(const WINDOW*);//10
@@ -473,7 +473,7 @@ int movment(int c,WINDOW*w){
 		ytext+=getmaxy(w);
 		if(ytext+1>rows_tot)ytext=rows_tot-1;
 		refreshpage(w);
-		wmove(w,y,x);
+		amove(w,y,x);
 	}else if(c==KEY_RESIZE){
 		return 1;
 	}
