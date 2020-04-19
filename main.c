@@ -500,7 +500,27 @@ int movment(int c,WINDOW*w){
 	}
 	return 0;
 }
+void fixmembuf(int*y,int*x){
+	if(y[0]>rows_tot-1)y[0]=rows_tot-1;
+	int r=y[0];
+	int sz=rows[r+1]-rows[r];
+	if(r<rows_tot-1)sz-=ln_term_sze;
+	if(x[0]>sz)x[0]=sz;
+}
+int set2membuf(int yesel,int xesel){
+	int sz=rows[yesel+1]-rows[yesel];
+	bool a=yesel<rows_tot-1;
+	if(a)sz-=ln_term_sze;
+	if(xesel==sz){
+		if(a)return ln_term_sze;
+		return 0;
+	}
+	return 1;
+}
 void writemembuf(int ybsel,int xbsel,int yesel,int xesel){
+	fixmembuf(&ybsel,&xbsel);
+	fixmembuf(&yesel,&xesel);
+	xesel+=set2membuf(yesel,xesel);
 	char*b=rows[ybsel]+xbsel;
 	char*e=rows[yesel]+xesel;
 	int sz=e-b;
@@ -510,6 +530,15 @@ void writemembuf(int ybsel,int xbsel,int yesel,int xesel){
 		cutbuf=v;cutbuf_sz=sz;
 	}
 	memcpy(cutbuf,b,sz);
+}
+void set1membuf(int y,int x,int*yb,int*xb,int*ye,int*xe){
+	bool a=false;
+	if(y<yb[0])a=true;
+	else if(y>yb[0]){}
+	else if(x<xb[0])a=true;
+	if(a){ye[0]=yb[0];xe[0]=xb[0];
+		yb[0]=y;xb[0]=x;}
+	else{ye[0]=y;xe[0]=x;}
 }
 bool loopin(WINDOW*w){
 	int c;
@@ -521,27 +550,21 @@ bool loopin(WINDOW*w){
 			if(c=='b'){if(textfile)out_f();}
 			else if(c=='v'){
 				int ybsel=ytext+getcury(w);
-				if(ybsel>rows_tot-1)ybsel=rows_tot-1;
 				int xbsel=xtext+getcurx(w);
-				int sz=rows[ybsel+1]-rows[ybsel];
-				bool a=ybsel!=rows_tot-1;
-				if(a)sz-=ln_term_sze;
-				int n=1;
-				if(xbsel>sz){
-					xbsel=sz;
-					if(a)n=ln_term_sze;
-					else n=0;
-				}
-				int yesel=ybsel;int xesel=xbsel+n;
-				int b;
+				int yesel=ybsel;int xesel=xbsel;
+				int z;
 				do{
-					b=wgetch(w);
-					int z=movment(b,w);
+					int b=wgetch(w);
+					z=movment(b,w);
 					if(z>0)return true;
 					else if(z){
 						if(b=='c')writemembuf(ybsel,xbsel,yesel,xesel);
+					}else{
+						int y=ytext+getcury(w);
+						int x=xtext+getcurx(w);
+						set1membuf(y,x,&ybsel,&xbsel,&yesel,&xesel);
 					}
-				}while(!b);
+				}while(!z);
 			}
 			else if(c=='h'){
 				int cy=getcury(w);int cx=getcurx(w);
@@ -661,15 +684,16 @@ int setfilebuf(char*s,char*cutbuf_file){
 	return l-1;
 }
 void writefilebuf(char*cutbuf_file,int off){
-	if(cutbuf_file[0]&&cutbuf_sz){
+	if(cutbuf_file[0]){
 		int f=open(cutbuf_file,O_WRONLY|O_TRUNC);
 		if(f==-1){
 			cutbuf_file[off]='.';
 			f=open(cutbuf_file+off,O_WRONLY|O_TRUNC);
-			if(f==-1)return;
 		}
-		write(f,cutbuf,cutbuf_sz);
-		close(f);
+		if(f!=-1){
+			write(f,cutbuf,cutbuf_sz);
+			close(f);
+		}
 	}
 	if(cutbuf)free(cutbuf);
 }
