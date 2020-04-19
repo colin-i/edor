@@ -212,7 +212,7 @@ void tab_grow(WINDOW*w,int r,char*a){
 	int*ptr=&tabs[(1+max)*r];ptr[0]=0;
 	int c=0;int cr=0;
 	int i=xtext;int j=i;
-	for(;i<sz&&c<max&&cr<max;i++){
+	for(;i<sz&&cr<max;i++){
 		char z=a[i];
 		if(z=='\t'){
 			a[i]=0;mvwaddstr(w,r,c,a+j);a[i]='\t';
@@ -419,8 +419,15 @@ int end(WINDOW*w,int r){
 	int n=getmaxx(w)-1;int m=0;
 	while(s>b&&(s-b!=xtext)){
 		s--;
-		m+=s[0]=='\t'?tab_sz:1;
-		if(m>=n)break;
+		bool b=s[0]=='\t';
+		m+=b?tab_sz:1;
+		if(m>=n){
+			if(m>n){
+				s++;
+				m-=tab_sz;
+			}
+			break;
+		}
 	}
 	xtext=s-b;
 	return m;
