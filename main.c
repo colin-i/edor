@@ -43,8 +43,8 @@ int noecho(void);
 #define ALL_MOUSE_EVENTS 0xFffFFff
 int move(int,int);//6
 int wmove(WINDOW*,int,int);//12
-int getcury(const WINDOW*);//19
-int getcurx(const WINDOW*);//12
+int getcury(const WINDOW*);//20
+int getcurx(const WINDOW*);//13
 int getmaxy(const WINDOW*);//10
 int getmaxx(const WINDOW*);//6
 WINDOW*newwin(int,int,int,int);
