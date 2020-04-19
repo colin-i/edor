@@ -68,9 +68,9 @@ int keypad(WINDOW*,bool);//2
 typedef unsigned int mmask_t;
 typedef struct
 {
-    short id;
-    int x,y,z;
-    mmask_t bstate;
+	short id;
+	int x,y,z;
+	mmask_t bstate;
 }
 MEVENT;
 #define OK 0
@@ -233,9 +233,9 @@ void tab_grow(WINDOW*w,int r,char*a){
 	}
 }
 void printpage(WINDOW*w){
-        int i=0;int maxy=getmaxy(w);
-        int maxx=xtext+getmaxx(w);
-        do{
+	int i=0;int maxy=getmaxy(w);
+	int maxx=xtext+getmaxx(w);
+	do{
 		int j=ytext+i;
 		char*str=rows[j];
 		j++;
@@ -245,11 +245,11 @@ void printpage(WINDOW*w){
 		int sz=str2-str;
 		if(sz>maxx)sz=maxx;
 		char stor=str[sz];str[sz]=0;
-                tab_grow(w,i,str);
+		tab_grow(w,i,str);
 		str[sz]=stor;
 		if(last)break;
-                i++;
-        }while(i<maxy);
+		i++;
+	}while(i<maxy);
 }
 void refreshpage(WINDOW*w){
 	werase(w);
@@ -338,7 +338,7 @@ void helpshow(int n){
 				y=getcury(stdscr)+1;
 				if(getmaxy(stdscr)-3<y)break;
 			}
-		 	j=i+1;
+			j=i+1;
 		}
 		i++;
 	}while(!helpend);
@@ -372,7 +372,7 @@ void printhelp(){
 void out_f(){
 	int n=strlen(textfile);
 	char*ext=".s";
-        int e=strlen(ext);
+	int e=strlen(ext);
 	int p=n+e+1;
 	char*s=(char*)malloc(p);
 	if(s){
