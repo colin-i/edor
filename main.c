@@ -37,33 +37,35 @@ int wgetch(WINDOW*);//2
 int ungetch(int);
 typedef unsigned int chtype;
 chtype winch(WINDOW*);
+chtype mvwinch(WINDOW*,int,int);//4
 typedef unsigned mmask_t;
 mmask_t mousemask(mmask_t,mmask_t*);
 int noecho(void);
 #define ALL_MOUSE_EVENTS 0xFffFFff
 int move(int,int);//6
-int wmove(WINDOW*,int,int);//11
+int wmove(WINDOW*,int,int);//12
 int getcury(const WINDOW*);//20
 int getcurx(const WINDOW*);//13
-int getmaxy(const WINDOW*);//10
-int getmaxx(const WINDOW*);//6
+int getmaxy(const WINDOW*);//11
+int getmaxx(const WINDOW*);//7
 WINDOW*newwin(int,int,int,int);
 int delwin(WINDOW*);
 int doupdate(void);
 int wnoutrefresh(WINDOW*);//4
 int addstr(const char*);//3
 int mvaddstr(int,int,const char*);
-int mvwaddstr(WINDOW*,int,int,const char*);//3
+int mvwaddstr(WINDOW*,int,int,const char*);//4
 extern WINDOW*stdscr;//12
 int werase(WINDOW*);//2
 int clrtoeol(void);
 int attrset(int);//2
+int wattrset(WINDOW*,int);//2
 int start_color(void);
 int init_pair(short,short,short);
 #define COLOR_BLACK 0
 #define COLOR_WHITE 7
 #define ERR -1
-int COLOR_PAIR(int);
+int COLOR_PAIR(int);//2
 int keypad(WINDOW*,bool);//2
 typedef unsigned int mmask_t;
 typedef struct
@@ -101,8 +103,8 @@ int poll(struct pollfd[],nfds_t,int);
 struct pollfd stdinfd={0,POLLIN,0};*/
 //#include <stdlib.h>
 void*malloc(size_t);//4
-void free(void*);//7
-void*realloc(void*,size_t);//5
+void free(void*);//8
+void*realloc(void*,size_t);//6
 char*getenv(const char*);
 //#include<stdio.h>
 int puts(const char*);//5
@@ -119,6 +121,7 @@ int rows_tot=1;
 int xtext;int ytext;
 bool*x_right=NULL;
 int*tabs=NULL;
+int tabs_rsz;
 #define tab_sz 6
 int yhelp;
 bool helpend;
@@ -131,6 +134,7 @@ char helptext[]="\nq is for quitting"
 "\n    c = copy";
 void*cutbuf=NULL;
 int cutbuf_sz=0;
+char*mapsel=NULL;
 
 typedef struct{
 	char*str;
@@ -208,9 +212,9 @@ void tab_grow(WINDOW*w,int r,char*a){
 	int sz=strlen(a);
 	x_right[r]=xtext<sz;
 	if(!x_right[r])return;
-	int max=getmaxx(w);
-	int*ptr=&tabs[(1+max)*r];ptr[0]=0;
+	int*ptr=&tabs[tabs_rsz*r];ptr[0]=0;
 	int c=0;int cr=0;
+	int max=getmaxx(w);
 	int i=xtext;int j=i;
 	for(;i<sz&&cr<max;i++){
 		char z=a[i];
@@ -255,12 +259,11 @@ void refreshpage(WINDOW*w){
 	werase(w);
 	printpage(w);
 }
-void bmove(WINDOW*w,int r,int c,bool back){
+bool bmove(WINDOW*w,int r,int c,bool back){
 	wmove(w,r,c);
-	int chr=winch(w);
+	char chr=winch(w);
 	if(chr==' '){
-		int max=getmaxx(w);
-		int*ptr=&tabs[(1+max)*r];
+		int*ptr=&tabs[tabs_rsz*r];
 		int delim=ptr[0]+1;
 		for(int i=1;i<delim;i++){
 			int t=ptr[i];
@@ -268,6 +271,7 @@ void bmove(WINDOW*w,int r,int c,bool back){
 				if(back)wmove(w,r,t);
 				else{
 					c=t+tab_sz;
+					int max=getmaxx(w);
 					if(c<max)wmove(w,r,c);
 					else{
 						int t1=ptr[1];
@@ -282,12 +286,14 @@ void bmove(WINDOW*w,int r,int c,bool back){
 						}
 						refreshpage(w);
 						wmove(w,r,c);
+						return false;
 					}
 				}
-				return;
+				return true;
 			}
 		}
 	}
+	return true;
 }
 void amove(WINDOW*w,int r,int c){
 	bmove(w,r,c,true);
@@ -432,31 +438,31 @@ int end(WINDOW*w,int r){
 	xtext=s-b;
 	return m;
 }
-//-1 different key,0move key,1resize
+//1resize,0diff key,-,1refreh,2press,3back,4forward
 int movment(int c,WINDOW*w){
 	if(c==KEY_MOUSE){
 		MEVENT e;
 		int a=getmouse(&e);
 		if(a==OK){
-			if(e.bstate&BUTTON1_CLICKED)amove(w,e.y-1,e.x-1);
+			if(e.bstate&BUTTON1_CLICKED){amove(w,e.y-1,e.x-1);return -2;}
 			else if(e.bstate&BUTTON5_PRESSED)tmove(w,getcury(w),false);
 			else if(e.bstate&BUTTON4_PRESSED)tmove(w,getcury(w),true);
 		}
 	}else if(c==KEY_UP){
 		int y=getcury(w);
-		if(y>0)amove(w,y-1,getcurx(w));
+		if(y>0){amove(w,y-1,getcurx(w));return -3;}
 		else sumove(w,y);
 	}else if(c==KEY_DOWN){
 		int y=getcury(w);
-		if(y+1<getmaxy(w))amove(w,y+1,getcurx(w));
+		if(y+1<getmaxy(w)){amove(w,y+1,getcurx(w));return -4;}
 		else sdmove(w,y);
 	}else if(c==KEY_LEFT){
 		int x=getcurx(w);
-		if(x>0)amove(w,getcury(w),x-1);
+		if(x>0){amove(w,getcury(w),x-1);return -3;}
 		else slmove(w,x,true);
 	}else if(c==KEY_RIGHT){
 		int x=getcurx(w);
-		if(x+1<getmaxx(w))bmove(w,getcury(w),x+1,false);
+		if(x+1<getmaxx(w)){if(bmove(w,getcury(w),x+1,false))return -4;}
 		else srmove(w,x);
 	}else if(c==KEY_HOME){
 		xtext=0;int y=getcury(w);
@@ -503,9 +509,9 @@ int movment(int c,WINDOW*w){
 			refreshpage(w);
 			//moved by curses, but no add str for line breaks
 			wmove(w,y,x);
-		}else return -1;
+		}else return 0;
 	}
-	return 0;
+	return -1;
 }
 void fixmembuf(int*y,int*x){
 	if(y[0]>rows_tot-1)y[0]=rows_tot-1;
@@ -538,14 +544,83 @@ void writemembuf(int ybsel,int xbsel,int yesel,int xesel){
 	}
 	memcpy(cutbuf,b,sz);
 }
-void set1membuf(int y,int x,int*yb,int*xb,int*ye,int*xe){
-	bool a=false;
-	if(y<yb[0])a=true;
-	else if(y>yb[0]){}
-	else if(x<xb[0])a=true;
-	if(a){ye[0]=yb[0];xe[0]=xb[0];
-		yb[0]=y;xb[0]=x;}
-	else{ye[0]=y;xe[0]=x;}
+void set1membuf(int y,int x,bool*orig,int*yb,int*xb,int*ye,int*xe){
+	if(orig[0]){
+		if(y<yb[0]){
+			ye[0]=yb[0];xe[0]=xb[0];xb[0]=x;orig[0]=false;
+			yb[0]=y;
+		}
+		else if(y>yb[0]){
+			ye[0]=y;xe[0]=x;
+		}
+		else if(x<xb[0]){
+			ye[0]=yb[0];xe[0]=xb[0];xb[0]=x;orig[0]=false;
+		}
+		else{
+			ye[0]=y;xe[0]=x;
+		}
+	}else{
+		if(ye[0]<y){
+			yb[0]=ye[0];xb[0]=xe[0];xe[0]=x;orig[0]=true;
+			ye[0]=y;
+		}
+		else if(ye[0]>y){
+			yb[0]=y;xb[0]=x;
+		}
+		else if(xe[0]<x){
+			yb[0]=ye[0];xb[0]=xe[0];xe[0]=x;orig[0]=true;
+		}
+		else{
+			yb[0]=y;xb[0]=x;
+		}
+	}
+}
+void printsel(WINDOW*w,int ybsel,int xbsel,int yesel,int xesel){
+	int cright=getmaxx(w)-1;
+	int rb;int cb;
+	if(ybsel<ytext){
+		rb=0;cb=0;}
+	else{
+		rb=ybsel-ytext;
+		if(xbsel<=xtext)cb=0;
+		else if(xbsel<=xtext+cright)cb=xbsel-xtext;
+		else{ybsel++;cb=0;}
+	}
+	int re;int ce;
+	int rdown=getmaxy(w)-1;
+	int ydown=ytext+rdown;
+	if(yesel>ydown){
+		re=rdown;ce=cright;}
+	else{
+		re=yesel-ytext;
+		int xright=xtext+cright;
+		if(xright<=xesel)ce=xright;
+		else if(xtext<=xesel)ce=xesel-xtext;
+		else{yesel--;ce=xright;}
+	}
+	int i=0;
+	if(rb==re){
+		for(int c=cb;c<=ce;c++){
+			mapsel[i]=mvwinch(w,rb,c);i++;}
+	}else{
+		for(int c=cb;c<=cright;c++){
+			mapsel[i]=mvwinch(w,rb,c);i++;}
+		for(int r=rb+1;r<re;r++){
+			for(int c=0;c<=cright;c++){
+				mapsel[i]=mvwinch(w,r,c);i++;
+			}
+		}
+		for(int c=0;c<=ce;c++){
+			mapsel[i]=mvwinch(w,re,c);i++;}
+	}
+	mapsel[i]=0;
+	wattrset(w,COLOR_PAIR(1));
+	mvwaddstr(w,rb,cb,mapsel);
+	wattrset(w,0);
+}
+bool testrefresh(int z,bool orig){
+	if(z>-2)return false;
+	return z==-2||(z==-3&&orig)||!orig;
 }
 bool loopin(WINDOW*w){
 	int c;
@@ -553,25 +628,31 @@ bool loopin(WINDOW*w){
 		c=wgetch(w);
 		int a=movment(c,w);
 		if(a>0)return true;
-		if(a){
+		if(!a){
 			if(c=='b'){if(textfile)out_f();}
 			else if(c=='v'){
 				int ybsel=ytext+getcury(w);
 				int xbsel=xtext+getcurx(w);
 				int yesel=ybsel;int xesel=xbsel;
-				int z;
+				int z;bool orig=true;
 				do{
 					int b=wgetch(w);
 					z=movment(b,w);
 					if(z>0)return true;
-					else if(z){
-						if(b=='c')writemembuf(ybsel,xbsel,yesel,xesel);
-					}else{
-						int y=ytext+getcury(w);
-						int x=xtext+getcurx(w);
-						set1membuf(y,x,&ybsel,&xbsel,&yesel,&xesel);
+					else{
+						int r=getcury(w);int c=getcurx(w);
+						if(!z){
+							if(b=='c')writemembuf(ybsel,xbsel,yesel,xesel);
+							refreshpage(w);
+						}else{
+							if(testrefresh(z,orig))refreshpage(w);
+							int y=ytext+r;int x=xtext+c;
+							set1membuf(y,x,&orig,&ybsel,&xbsel,&yesel,&xesel);
+							printsel(w,ybsel,xbsel,yesel,xesel);
+						}
+						wmove(w,r,c);
 					}
-				}while(!z);
+				}while(z);
 			}
 			else if(c=='h'){
 				int cy=getcury(w);int cx=getcurx(w);
@@ -744,9 +825,14 @@ int main(int argc,char**argv){
 						if(!a)break;
 						x_right=a;
 						int c=getmaxx(w1);
-						a=realloc(tabs,(1+c)*r*sizeof(int));
+						tabs_rsz=1+(c/tab_sz);
+						if(c%tab_sz)tabs_rsz++;
+						a=realloc(tabs,tabs_rsz*r*sizeof(int));
 						if(!a)break;
 						tabs=(int*)a;
+						a=realloc(mapsel,(c*r)+1);
+						if(!a)break;
+						mapsel=a;
 						WINDOW*w=newwin(r,c,0,0);
 						if(w){
 							keypad(w,true);
@@ -762,7 +848,10 @@ int main(int argc,char**argv){
 						free(x_right);
 						if(tabs){
 							free(tabs);
-							writefilebuf(cutbuf_file,off);
+							if(mapsel){
+								free(mapsel);
+								writefilebuf(cutbuf_file,off);
+							}
 						}
 					}
 				}
