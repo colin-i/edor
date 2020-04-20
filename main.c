@@ -584,7 +584,7 @@ void printsel(WINDOW*w,int ybsel,int xbsel,int yesel,int xesel){
 		rb=ybsel-ytext;
 		if(xbsel<=xtext)cb=0;
 		else if(xbsel<=xtext+cright)cb=xbsel-xtext;
-		else{ybsel++;cb=0;}
+		else{rb++;cb=0;}
 	}
 	int re;int ce;
 	int rdown=getmaxy(w)-1;
@@ -594,9 +594,9 @@ void printsel(WINDOW*w,int ybsel,int xbsel,int yesel,int xesel){
 	else{
 		re=yesel-ytext;
 		int xright=xtext+cright;
-		if(xright<=xesel)ce=xright;
+		if(xright<=xesel)ce=cright;
 		else if(xtext<=xesel)ce=xesel-xtext;
-		else{yesel--;ce=xright;}
+		else{re--;ce=cright;}
 	}
 	int i=0;
 	if(rb==re){
