@@ -37,7 +37,8 @@ int wgetch(WINDOW*);//2
 int ungetch(int);
 typedef unsigned int chtype;
 chtype winch(WINDOW*);
-chtype mvwinch(WINDOW*,int,int);//4
+int mvwinnstr(WINDOW*,int,int,char*,int);//2
+int mvwinstr(WINDOW*,int,int,char*);//2
 typedef unsigned mmask_t;
 mmask_t mousemask(mmask_t,mmask_t*);
 int noecho(void);
@@ -46,16 +47,17 @@ int move(int,int);//6
 int wmove(WINDOW*,int,int);//12
 int getcury(const WINDOW*);//20
 int getcurx(const WINDOW*);//13
-int getmaxy(const WINDOW*);//11
-int getmaxx(const WINDOW*);//7
+int getmaxy(const WINDOW*);//12
+int getmaxx(const WINDOW*);//8
 WINDOW*newwin(int,int,int,int);
 int delwin(WINDOW*);
-int doupdate(void);
-int wnoutrefresh(WINDOW*);//4
+int doupdate(void);//2
+int wnoutrefresh(WINDOW*);//6
 int addstr(const char*);//3
 int mvaddstr(int,int,const char*);
 int mvwaddstr(WINDOW*,int,int,const char*);//4
-extern WINDOW*stdscr;//12
+int mvaddch(int,int,const chtype);
+extern WINDOW*stdscr;//15
 int werase(WINDOW*);//2
 int clrtoeol(void);
 int attrset(int);//2
@@ -575,15 +577,34 @@ void set1membuf(int y,int x,bool*orig,int*yb,int*xb,int*ye,int*xe){
 		}
 	}
 }
+int c_to_x(int c,int r){
+	int*p=&tabs[tabs_rsz*r];
+	int n=p[0];int x=c;
+	for(int i=0;i<n;i++){
+		p++;
+		if(p[0]<c)x-=tab_sz-1;
+		else break;
+	}
+	return x;
+}
+int x_to_c(int x,int r){                  int*p=&tabs[tabs_rsz*r];                  int n=p[0];
+	for(int i=0;i<n;i++){
+		p++;
+		if(p[0]<x)x+=tab_sz-1;
+		else break;
+	}
+	return x;
+}
 void printsel(WINDOW*w,int ybsel,int xbsel,int yesel,int xesel){
-	int cright=getmaxx(w)-1;
+	int wd=getmaxx(w);
+	int cright=wd-1;
 	int rb;int cb;
 	if(ybsel<ytext){
 		rb=0;cb=0;}
 	else{
 		rb=ybsel-ytext;
 		if(xbsel<=xtext)cb=0;
-		else if(xbsel<=xtext+cright)cb=xbsel-xtext;
+		else if(xbsel<=xtext+c_to_x(cright,rb))cb=x_to_c(xbsel-xtext,rb);
 		else{rb++;cb=0;}
 	}
 	int re;int ce;
@@ -593,27 +614,19 @@ void printsel(WINDOW*w,int ybsel,int xbsel,int yesel,int xesel){
 		re=rdown;ce=cright;}
 	else{
 		re=yesel-ytext;
-		int xright=xtext+cright;
-		if(xright<=xesel)ce=cright;
-		else if(xtext<=xesel)ce=xesel-xtext;
+		if(xtext+c_to_x(cright,re)<=xesel)ce=cright;
+		else if(xtext<=xesel)ce=x_to_c(xesel-xtext,re);
 		else{re--;ce=cright;}
 	}
-	int i=0;
 	if(rb==re){
-		for(int c=cb;c<=ce;c++){
-			mapsel[i]=mvwinch(w,rb,c);i++;}
+		mvwinnstr(w,rb,cb,mapsel,ce-cb+1);
 	}else{
-		for(int c=cb;c<=cright;c++){
-			mapsel[i]=mvwinch(w,rb,c);i++;}
+		int i=mvwinstr(w,rb,cb,mapsel);
 		for(int r=rb+1;r<re;r++){
-			for(int c=0;c<=cright;c++){
-				mapsel[i]=mvwinch(w,r,c);i++;
-			}
+			i+=mvwinstr(w,r,0,&mapsel[i]);
 		}
-		for(int c=0;c<=ce;c++){
-			mapsel[i]=mvwinch(w,re,c);i++;}
+		mvwinnstr(w,re,0,&mapsel[i],ce+1);
 	}
-	mapsel[i]=0;
 	wattrset(w,COLOR_PAIR(1));
 	mvwaddstr(w,rb,cb,mapsel);
 	wattrset(w,0);
@@ -621,6 +634,10 @@ void printsel(WINDOW*w,int ybsel,int xbsel,int yesel,int xesel){
 bool testrefresh(int z,bool orig){
 	if(z>-2)return false;
 	return z==-2||(z==-3&&orig)||!orig;
+}
+void visual(char a){
+	mvaddch(getmaxy(stdscr)-1,getmaxx(stdscr)-1,a);
+	wnoutrefresh(stdscr);
 }
 bool loopin(WINDOW*w){
 	int c;
@@ -631,8 +648,12 @@ bool loopin(WINDOW*w){
 		if(!a){
 			if(c=='b'){if(textfile)out_f();}
 			else if(c=='v'){
-				int ybsel=ytext+getcury(w);
-				int xbsel=xtext+getcurx(w);
+				visual('V');
+				wnoutrefresh(w);
+				doupdate();
+				int r=getcury(w);
+				int ybsel=ytext+r;
+				int xbsel=xtext+c_to_x(getcurx(w),r);
 				int yesel=ybsel;int xesel=xbsel;
 				int z;bool orig=true;
 				do{
@@ -643,10 +664,11 @@ bool loopin(WINDOW*w){
 						int r=getcury(w);int c=getcurx(w);
 						if(!z){
 							if(b=='c')writemembuf(ybsel,xbsel,yesel,xesel);
+							visual(' ');
 							refreshpage(w);
 						}else{
 							if(testrefresh(z,orig))refreshpage(w);
-							int y=ytext+r;int x=xtext+c;
+							int y=ytext+r;int x=xtext+c_to_x(c,r);
 							set1membuf(y,x,&orig,&ybsel,&xbsel,&yesel,&xesel);
 							printsel(w,ybsel,xbsel,yesel,xesel);
 						}
