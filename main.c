@@ -7,7 +7,7 @@ char*strchr(const char*,int);
 int strcmp(const char*,const char*);//6
 void*memcpy(void*,const void*,size_t);
 //#include <fcntl.h>
-int open(const char*,int,...);//4
+int open(const char*,int,...);//5
 //sys/types.h
 typedef unsigned short mode_t;
 //asm-generic/fcntl.h
@@ -19,12 +19,12 @@ typedef unsigned short mode_t;
 #define S_IRUSR 00400
 #define S_IWUSR 00200
 //#include <unistd.h>
-int close(int);//3
+int close(int);//4
 typedef int ssize_t;
 ssize_t write(int,const void*,size_t);//3
 typedef long off_t;
-off_t lseek(int,off_t,int);//2
-ssize_t read(int,void*,size_t);
+off_t lseek(int,off_t,int);//4
+ssize_t read(int,void*,size_t);//2
 //#include <bits/seek_constants.h>
 #define SEEK_SET 0
 #define SEEK_END 2
@@ -106,7 +106,7 @@ struct pollfd stdinfd={0,POLLIN,0};*/
 //#include <stdlib.h>
 void*malloc(size_t);//4
 void free(void*);//8
-void*realloc(void*,size_t);//6
+void*realloc(void*,size_t);//7
 char*getenv(const char*);
 //#include<stdio.h>
 int puts(const char*);//5
@@ -116,9 +116,13 @@ int getchar(void);
 #define NULL 0
 enum{false=0,true=1};
 
+typedef struct{
+	char*data;
+	int sz;
+}row;
 char ln_term[3]="\n";
 int ln_term_sze;
-char**rows;
+row*rows;
 int rows_tot=1;
 int xtext;int ytext;
 bool*x_right=NULL;
@@ -129,7 +133,7 @@ int yhelp;
 bool helpend;
 char helptext[]="\nq is for quitting"
 "\narrows,home/end,page up/down"
-"\nb = compile file"
+"\nb = build file"
 "\nmouse/touch press or v.scroll"
 "\nalt arrows,ctrl home/end"
 "\nv = visual mode"
@@ -243,17 +247,13 @@ void printpage(WINDOW*w){
 	int maxx=xtext+getmaxx(w);
 	do{
 		int j=ytext+i;
-		char*str=rows[j];
-		j++;
-		char*str2=rows[j];
-		bool last=j==rows_tot;
-		if(!last)str2-=ln_term_sze;
-		int sz=str2-str;
+		char*str=rows[j].data;
+		int sz=rows[j].sz;
 		if(sz>maxx)sz=maxx;
 		char stor=str[sz];str[sz]=0;
 		tab_grow(w,i,str);
 		str[sz]=stor;
-		if(last)break;
+		if(j+1==rows_tot)break;
 		i++;
 	}while(i<maxy);
 }
@@ -422,8 +422,8 @@ void srmove(WINDOW*w,int x){
 	}
 }
 int end(WINDOW*w,int r){
-	char*s=rows[r+1];char*b=rows[r];
-	if(r+1<rows_tot)s-=ln_term_sze;
+	char*b=rows[r].data;
+	char*s=b+rows[r].sz;
 	int n=getmaxx(w)-1;int m=0;
 	while(s>b&&(s-b!=xtext)){
 		s--;
@@ -518,16 +518,12 @@ int movment(int c,WINDOW*w){
 void fixmembuf(int*y,int*x){
 	if(y[0]>rows_tot-1)y[0]=rows_tot-1;
 	int r=y[0];
-	int sz=rows[r+1]-rows[r];
-	if(r<rows_tot-1)sz-=ln_term_sze;
+	int sz=rows[r].sz;
 	if(x[0]>sz)x[0]=sz;
 }
 int set2membuf(int yesel,int xesel){
-	int sz=rows[yesel+1]-rows[yesel];
-	bool a=yesel<rows_tot-1;
-	if(a)sz-=ln_term_sze;
-	if(xesel==sz){
-		if(a)return ln_term_sze;
+	if(xesel==rows[yesel].sz){
+		if(yesel<rows_tot-1)return ln_term_sze;
 		return 0;
 	}
 	return 1;
@@ -536,8 +532,8 @@ void writemembuf(int ybsel,int xbsel,int yesel,int xesel){
 	fixmembuf(&ybsel,&xbsel);
 	fixmembuf(&yesel,&xesel);
 	xesel+=set2membuf(yesel,xesel);
-	char*b=rows[ybsel]+xbsel;
-	char*e=rows[yesel]+xesel;
+	char*b=rows[ybsel].data+xbsel;
+	char*e=rows[yesel].data+xesel;
 	int sz=e-b;
 	if(cutbuf_sz<sz){
 		void*v=realloc(cutbuf,sz);
@@ -727,12 +723,14 @@ int normalize(int*size,char**c){
 	return ok;
 }
 bool rows_init(char*a){
-	char**m=(char**)realloc(rows,(rows_tot+1)*sizeof(char*));
+	row*m=(row*)realloc(rows,rows_tot*sizeof(row));
 	if(m){
-		rows=m;
-		for(int i=0;i<rows_tot;i++){
-			rows[i]=a;
-			a=strchr(a,ln_term[0])+ln_term_sze;
+		rows=m;rows[0].data=a;int sz;
+		for(int i=1;i<rows_tot;i++){
+			sz=strchr(a,ln_term[0])-a;
+			rows[i-1].sz=sz;
+			a+=sz+ln_term_sze;
+			rows[i].data=a;
 		}
 		return true;
 	}
@@ -769,7 +767,7 @@ int startpage(char*f,char**c){
 			ok=normalize(&sz,c);
 			if(ok){
 				tx=c[0];
-				if(rows_init(tx))rows[rows_tot]=&tx[sz];
+				if(rows_init(tx))rows[rows_tot-1].sz=(&tx[sz])-rows[rows_tot-1].data;
 				else ok=0;
 			}
 		}
@@ -777,7 +775,28 @@ int startpage(char*f,char**c){
 	}
 	return ok;
 }
-int setfilebuf(char*s,char*cutbuf_file){
+char*getfilebuf(char*cutbuf_file,int off){
+	int f=open(cutbuf_file,O_RDONLY);
+	if(f==-1){
+		cutbuf_file[off]='.';
+		cutbuf_file+=off;
+		f=open(cutbuf_file,O_RDONLY);
+	}
+	if(f!=-1){
+		int sz=lseek(f,0,SEEK_END);
+		if(sz){
+			void*v=realloc(cutbuf,sz);
+			if(v){
+				cutbuf=v;
+				lseek(f,0,SEEK_SET);
+				cutbuf_sz=read(f,cutbuf,sz);
+			}
+		}
+		close(f);
+	}
+	return cutbuf_file;
+}
+char*setfilebuf(char*s,char*cutbuf_file){
 	size_t sz=strlen(s);int i=sz-1;
 	while(i>=0){
 		char a=s[i];
@@ -785,21 +804,17 @@ int setfilebuf(char*s,char*cutbuf_file){
 		i--;
 	}
 	char*h=getenv("HOME");
-	if(!h)return 0;
+	if(!h)return cutbuf_file;
 	size_t l=strlen(h);
-	if(!l)return 0;
+	if(!l)return cutbuf_file;
 	i++;sz-=i;
-	if(l+sz+7>128)return 0;
+	if(l+sz+7>128)return cutbuf_file;
 	sprintf(cutbuf_file,"%s/.%sinfo",h,&s[i]);
-	return l-1;
+	return getfilebuf(cutbuf_file,l-1);
 }
-void writefilebuf(char*cutbuf_file,int off){
+void writefilebuf(char*cutbuf_file){
 	if(cutbuf_file[0]){
 		int f=open(cutbuf_file,O_WRONLY|O_TRUNC);
-		if(f==-1){
-			cutbuf_file[off]='.';
-			f=open(cutbuf_file+off,O_WRONLY|O_TRUNC);
-		}
 		if(f!=-1){
 			write(f,cutbuf,cutbuf_sz);
 			close(f);
@@ -811,9 +826,9 @@ int main(int argc,char**argv){
 	char*text_w=(char*)malloc(1);
 	if(text_w){
 		text_w[0]=0;
-		rows=(char**)malloc(2*sizeof(char*));
+		rows=(row*)malloc(sizeof(row));
 		if(rows){
-			rows[0]=text_w;rows[1]=text_w;
+			rows[0].data=text_w;rows[0].sz=0;
 			int ok=1;
 			if(argc==2){
 				ok=startpage(argv[1],&text_w);
@@ -837,9 +852,10 @@ int main(int argc,char**argv){
 				start_color();
 				noecho();
 				if(init_pair(1,COLOR_BLACK,COLOR_WHITE)!=ERR){
-					char cutbuf_file[128];
+					char cutbuf_file_var[128];
+					char*cutbuf_file=cutbuf_file_var;
 					cutbuf_file[0]=0;
-					int off=setfilebuf(argv[0],cutbuf_file);
+					cutbuf_file=setfilebuf(argv[0],cutbuf_file);
 					bool loops=false;
 					do{
 						int r=getmaxy(w1)-1;
@@ -872,7 +888,7 @@ int main(int argc,char**argv){
 							free(tabs);
 							if(mapsel){
 								free(mapsel);
-								writefilebuf(cutbuf_file,off);
+								writefilebuf(cutbuf_file);
 							}
 						}
 					}
