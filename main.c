@@ -138,8 +138,9 @@ char helptext[]="\nq is for quitting"
 "\nalt arrows,ctrl home/end"
 "\nv = visual mode"
 "\n    c = copy";
-void*cutbuf=NULL;
+char*cutbuf=NULL;
 int cutbuf_sz=0;
+bool cutbuf_bool=false;
 char*mapsel=NULL;
 
 typedef struct{
@@ -538,9 +539,10 @@ void writemembuf(int ybsel,int xbsel,int yesel,int xesel){
 	if(cutbuf_sz<sz){
 		void*v=realloc(cutbuf,sz);
 		if(!v)return;
-		cutbuf=v;cutbuf_sz=sz;
+		cutbuf=v;
 	}
 	memcpy(cutbuf,b,sz);
+	cutbuf_sz=sz;
 }
 void set1membuf(int y,int x,bool*orig,int*yb,int*xb,int*ye,int*xe){
 	if(orig[0]){
@@ -659,8 +661,12 @@ bool loopin(WINDOW*w){
 					else{
 						int r=getcury(w);int c=getcurx(w);
 						if(!z){
-							if(b=='c')writemembuf(ybsel,xbsel,yesel,xesel);
-							visual(' ');
+							cutbuf_bool=b=='c';
+							if(cutbuf_bool){
+								writemembuf(ybsel,xbsel,yesel,xesel);
+								visual('C');
+							}
+							else visual(' ');
 							refreshpage(w);
 						}else{
 							if(testrefresh(z,orig))refreshpage(w);
@@ -685,59 +691,60 @@ bool loopin(WINDOW*w){
 				}
 				wmove(w,cy,cx);
 			}
-		}
+		}else if(cutbuf_bool){cutbuf_bool=false;visual(' ');}
 	}while(c!='q');
 	return false;
 }
-int normalize(int*size,char**c){
+int normalize(char**c,int*size,int*r){
 	int ok=0;
 	char*text_w=c[0];
 	int sz=strlen(text_w);
 	char*norm=(char*)malloc(2*sz+1);//-1 ok but,when sz=0,not ok
 	if(norm){
-		int j=0;
+		int j=0;ok=1;
 		for(int i=0;i<sz;i++){
 			char a=text_w[i];
 			if(a=='\n'){
-				rows_tot++;
+				r[0]++;
 				if(ln_term_sze==2){
 					norm[j]='\r';j++;ok=-1;
 				}
 				else if(ln_term[0]=='\r'){a='\r';ok=-1;}
 			}else if(a=='\r'){
-				rows_tot++;
+				r[0]++;
 				if(ln_term_sze==2){
-					if(((i+1)<sz)&&text_w[i+1]=='\n'){
+					bool rn=((i+1)<sz)&&text_w[i+1]=='\n';
+					if(rn){
 						norm[j]=a;j++;i++;
 						a='\n';}
 					else{norm[j]=a;j++;a='\n';ok=-1;}
 				}
-				else if(ln_term[0]=='\n'){a='\n';ok=-1;}
+				else if(ln_term[0]=='\n'){
+					bool rn=((i+1)<sz)&&text_w[i+1]=='\n';
+					if(rn){i++;a='\n';}
+					else{a='\n';ok=-1;}
+				}
 			}
 			norm[j]=a;j++;
 		}
 		norm[j]=0;size[0]=j;
 		free(text_w);c[0]=norm;
-		if(!ok)ok=1;
 	}
 	return ok;
 }
-bool rows_init(char*a){
-	row*m=(row*)realloc(rows,rows_tot*sizeof(row));
-	if(m){
-		rows=m;rows[0].data=a;int sz;
-		for(int i=1;i<rows_tot;i++){
-			sz=strchr(a,ln_term[0])-a;
-			rows[i-1].sz=sz;
-			a+=sz+ln_term_sze;
-			rows[i].data=a;
-		}
-		return true;
+void rows_init(char*a,int size){
+	char*b=&a[size];
+	rows[0].data=a;int sz;
+	for(int i=1;i<rows_tot;i++){
+		sz=strchr(a,ln_term[0])-a;
+		rows[i-1].sz=sz;
+		a+=sz+ln_term_sze;
+		rows[i].data=a;
 	}
-	return false;
+	rows[rows_tot-1].sz=b-a;
 }
 int startpage(char*f,char**c){
-	int ok=1;
+	int ok=0;
 	int fd=open(f,O_RDONLY);
 	if(fd!=-1){
 		int size=lseek(fd,0,SEEK_END);
@@ -764,10 +771,13 @@ int startpage(char*f,char**c){
 			}
 			ln_term_sze=strlen(ln_term);
 			int sz;
-			ok=normalize(&sz,c);
+			ok=normalize(c,&sz,&rows_tot);
 			if(ok){
-				tx=c[0];
-				if(rows_init(tx))rows[rows_tot-1].sz=(&tx[sz])-rows[rows_tot-1].data;
+				row*m=(row*)realloc(rows,rows_tot*sizeof(row));
+				if(m){
+					rows=m;
+					rows_init(c[0],sz);
+				}
 				else ok=0;
 			}
 		}
@@ -790,6 +800,7 @@ char*getfilebuf(char*cutbuf_file,int off){
 				cutbuf=v;
 				lseek(f,0,SEEK_SET);
 				cutbuf_sz=read(f,cutbuf,sz);
+				int r;normalize(&cutbuf,&cutbuf_sz,&r);
 			}
 		}
 		close(f);
