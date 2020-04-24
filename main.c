@@ -45,10 +45,10 @@ int noecho(void);
 #define ALL_MOUSE_EVENTS 0xFffFFff
 int move(int,int);//6
 int wmove(WINDOW*,int,int);//12
-int getcury(const WINDOW*);//20
+int getcury(const WINDOW*);//19
 int getcurx(const WINDOW*);//13
 int getmaxy(const WINDOW*);//12
-int getmaxx(const WINDOW*);//8
+int getmaxx(const WINDOW*);//9
 WINDOW*newwin(int,int,int,int);
 int delwin(WINDOW*);
 int doupdate(void);//2
@@ -72,7 +72,7 @@ int keypad(WINDOW*,bool);//2
 typedef unsigned int mmask_t;
 typedef struct
 {
-	short id;
+	short id;char pad[2];
 	int x,y,z;
 	mmask_t bstate;
 }
@@ -118,54 +118,55 @@ enum{false=0,true=1};
 
 typedef struct{
 	char*data;
-	int sz;
+	size_t sz;
 }row;
-char ln_term[3]="\n";
-int ln_term_sze;
-row*rows;
-int rows_tot=1;
-int xtext;int ytext;
-bool*x_right=NULL;
-int*tabs=NULL;
-int tabs_rsz;
+static char ln_term[3]="\n";
+static size_t ln_term_sze;
+static row*rows;
+static size_t rows_tot=1;
+static size_t xtext;
+static size_t ytext;
+static bool*x_right=NULL;
+static int*tabs=NULL;
+static int tabs_rsz;
 #define tab_sz 6
-int yhelp;
-bool helpend;
-char helptext[]="\nq is for quitting"
-"\narrows,home/end,page up/down"
+static int yhelp;
+static bool helpend;
+static char helptext[]="\nq is for quitting"
+"\narrows(+-alt),home/end(+-ctrl),page up/down"
 "\nb = build file"
 "\nmouse/touch press or v.scroll"
-"\nalt arrows,ctrl home/end"
 "\nv = visual mode"
 "\n    c = copy";
-char*cutbuf=NULL;
-int cutbuf_sz=0;
-bool cutbuf_bool=false;
-char*mapsel=NULL;
+static char*cutbuf=NULL;
+static size_t cutbuf_sz=0;
+static bool cutbuf_bool=false;
+static char*mapsel=NULL;
 
 typedef struct{
 	char*str;
 	char**t;
 }inst;
-char*textfile=NULL;
-char terms[][3]={"r0"};
-char*_r0_0[]={terms[0],"#0",0};char*_ex[]={"exit",0};
-inst instrs[]={
-	{"mov",_r0_0},{"b",_ex},0
+static char*textfile=NULL;
+static char terms[][3]={"r0"};
+static char*_r0_0[]={terms[0],"#0",0};
+static char*_ex[]={"exit",0};
+static inst instrs[]={
+	{"mov",_r0_0},{"b",_ex},{0}
 };
 
-bool out_chr(int f,char c){
+static bool out_chr(int f,char c){
 	ssize_t s=write(f,&c,1);
 	if(s!=1)return true;
 	return false;
 }
-bool out_wrt(int f,char*c){
-	int n=strlen(c);
-	ssize_t s=write(f,c,n);
+static bool out_wrt(int f,char*c){
+	size_t n=strlen(c);
+	size_t s=(size_t)write(f,c,n);
 	if(s!=n)return true;
 	return false;
 }
-void out_wr(int f){
+static void out_wr(int f){
 	if(out_wrt(f,".global main\n"))return;
 	if(out_wrt(f,".extern exit\n"))return;
 	if(out_wrt(f,"main:\n"))return;
@@ -215,14 +216,14 @@ int mouse_test(WINDOW*w,int*x,int*y){
 	if(y[0]>get maxy(w))return -1;
 	return a;
 }*/
-void tab_grow(WINDOW*w,int r,char*a){
-	int sz=strlen(a);
+static void tab_grow(WINDOW*w,int r,char*a){
+	size_t sz=strlen(a);
 	x_right[r]=xtext<sz;
 	if(!x_right[r])return;
 	int*ptr=&tabs[tabs_rsz*r];ptr[0]=0;
 	int c=0;int cr=0;
 	int max=getmaxx(w);
-	int i=xtext;int j=i;
+	size_t i=xtext;size_t j=i;
 	for(;i<sz&&cr<max;i++){
 		char z=a[i];
 		if(z=='\t'){
@@ -243,13 +244,13 @@ void tab_grow(WINDOW*w,int r,char*a){
 		a[i]=0;mvwaddstr(w,r,c,a+j);a[i]=e;
 	}
 }
-void printpage(WINDOW*w){
+static void printpage(WINDOW*w){
 	int i=0;int maxy=getmaxy(w);
-	int maxx=xtext+getmaxx(w);
+	size_t maxx=xtext+(size_t)getmaxx(w);
 	do{
-		int j=ytext+i;
+		size_t j=ytext+(size_t)i;
 		char*str=rows[j].data;
-		int sz=rows[j].sz;
+		size_t sz=rows[j].sz;
 		if(sz>maxx)sz=maxx;
 		char stor=str[sz];str[sz]=0;
 		tab_grow(w,i,str);
@@ -258,13 +259,13 @@ void printpage(WINDOW*w){
 		i++;
 	}while(i<maxy);
 }
-void refreshpage(WINDOW*w){
+static void refreshpage(WINDOW*w){
 	werase(w);
 	printpage(w);
 }
-bool bmove(WINDOW*w,int r,int c,bool back){
+static bool bmove(WINDOW*w,int r,int c,bool back){
 	wmove(w,r,c);
-	char chr=winch(w);
+	char chr=(char)winch(w);
 	if(chr==' '){
 		int*ptr=&tabs[tabs_rsz*r];
 		int delim=ptr[0]+1;
@@ -298,10 +299,10 @@ bool bmove(WINDOW*w,int r,int c,bool back){
 	}
 	return true;
 }
-void amove(WINDOW*w,int r,int c){
+static void amove(WINDOW*w,int r,int c){
 	bmove(w,r,c,true);
 }
-void tmove(WINDOW*w,int y,bool right){
+static void tmove(WINDOW*w,int y,bool right){
 	int x=getcurx(w);
 	if(right){
 		if(ytext+1<rows_tot){ytext++;refreshpage(w);}
@@ -309,7 +310,7 @@ void tmove(WINDOW*w,int y,bool right){
 	else if(ytext){ytext--;refreshpage(w);}
 	amove(w,y,x);//print changed cursor
 }
-void helpclear(){
+static void helpclear(){
 	int r=getcury(stdscr);
 	for(int i=0;i<=r;i++){
 		move(i,0);
@@ -318,13 +319,13 @@ void helpclear(){
 	move(getmaxy(stdscr)-2,0);
 	addstr("   ");
 }
-void printinverted(char*s){
+static void printinverted(char*s){
 	attrset(COLOR_PAIR(1));
 	addstr(s);
 	//attr set here,cause,print"   "
 	attrset(0);
 }
-void helpposition(){
+static void helpposition(){
 	int x=getcurx(stdscr);int y=getcury(stdscr);
 	move(getmaxy(stdscr)-2,0);
 	if(helpend)printinverted("BOT");
@@ -332,35 +333,38 @@ void helpposition(){
 	else addstr(":  ");
 	move(y,x);
 }
-void helpshow(int n){
+static void helpshow(int n){
 	yhelp=n;
 	move(0,0);	
 	int i=0;int j=0;int y=0;
+	int max=getmaxx(stdscr);int c=0;
 	do{
 		helpend=helptext[i]==0;
-		if(helptext[i]=='\n'||helpend){
+		bool newl=helptext[i]=='\n';
+		if(newl||helpend||c==max){
 			if(n)n--;
 			else{
-				helptext[i]=0;
+				char aux=helptext[i];helptext[i]=0;
 				mvaddstr(y,0,&helptext[j]);
-				if(!helpend)helptext[i]='\n';
-				y=getcury(stdscr)+1;
+				helptext[i]=aux;
+				y++;
 				if(getmaxy(stdscr)-3<y)break;
 			}
-			j=i+1;
-		}
+			j=i;if(newl)j++;
+			c=0;
+		}else c++;
 		i++;
 	}while(!helpend);
 	helpposition();
 }
-void hmove(int n){
+static void hmove(int n){
 	if(helpend&&(n>0))return;
 	n+=yhelp;
 	if(n<0)return;
 	helpclear();
 	helpshow(n);
 }
-bool helpin(WINDOW*w){
+static bool helpin(WINDOW*w){
 	int c;
 	do{
 		c=getch();
@@ -373,16 +377,16 @@ bool helpin(WINDOW*w){
 	printpage(w);
 	return false;
 }
-void printhelp(){
+static void printhelp(){
 	move(getmaxy(stdscr)-1,0);
 	printinverted("h for help");
 	wnoutrefresh(stdscr);
 }
-void out_f(){
-	int n=strlen(textfile);
+static void out_f(){
+	size_t n=strlen(textfile);
 	char*ext=".s";
-	int e=strlen(ext);
-	int p=n+e+1;
+	size_t e=strlen(ext);
+	size_t p=n+e+1;
 	char*s=(char*)malloc(p);
 	if(s){
 		p--;
@@ -403,9 +407,9 @@ void out_f(){
 		free(s);
 	}
 }
-void sumove(WINDOW*w,int y){tmove(w,y,false);}
-void sdmove(WINDOW*w,int y){tmove(w,y,true);}
-void slmove(WINDOW*w,int x,bool notabs){
+static void sumove(WINDOW*w,int y){tmove(w,y,false);}
+static void sdmove(WINDOW*w,int y){tmove(w,y,true);}
+static void slmove(WINDOW*w,int x,bool notabs){
 	int y=getcury(w);
 	if(xtext>0){
 		xtext--;
@@ -414,7 +418,7 @@ void slmove(WINDOW*w,int x,bool notabs){
 		else amove(w,y,x);
 	}
 }
-void srmove(WINDOW*w,int x){
+static void srmove(WINDOW*w,int x){
 	int y=getcury(w);
 	if(x_right[y]){
 		xtext++;
@@ -422,14 +426,14 @@ void srmove(WINDOW*w,int x){
 		amove(w,y,x);
 	}
 }
-int end(WINDOW*w,int r){
+static int end(WINDOW*w,size_t r){
 	char*b=rows[r].data;
 	char*s=b+rows[r].sz;
 	int n=getmaxx(w)-1;int m=0;
-	while(s>b&&(s-b!=xtext)){
+	while(s>b){
+		if((size_t)(s-b)==xtext)break;
 		s--;
-		bool b=s[0]=='\t';
-		m+=b?tab_sz:1;
+		m+=s[0]=='\t'?tab_sz:1;
 		if(m>=n){
 			if(m>n){
 				s++;
@@ -438,11 +442,11 @@ int end(WINDOW*w,int r){
 			break;
 		}
 	}
-	xtext=s-b;
+	xtext=(size_t)(s-b);
 	return m;
 }
 //1resize,0diff key,-,1refreh,2press,3back,4forward
-int movment(int c,WINDOW*w){
+static int movment(int c,WINDOW*w){
 	if(c==KEY_MOUSE){
 		MEVENT e;
 		int a=getmouse(&e);
@@ -473,20 +477,20 @@ int movment(int c,WINDOW*w){
 		wmove(w,y,0);
 	}else if(c==KEY_END){
 		int y=getcury(w);
-		int r=ytext+y;int x;
+		size_t r=ytext+(size_t)y;int x;
 		if(r<rows_tot)x=end(w,r);
 		else{xtext=0;x=0;}
 		refreshpage(w);
 		wmove(w,y,x);
 	}else if(c==KEY_PPAGE){
 		int y=getcury(w);int x=getcurx(w);
-		ytext-=getmaxy(w);
-		if(ytext<0)ytext=0;
+		size_t my=(size_t)getmaxy(w);
+		ytext=my>ytext?0:ytext-my;
 		refreshpage(w);
 		amove(w,y,x);
 	}else if(c==KEY_NPAGE){
 		int y=getcury(w);int x=getcurx(w);
-		ytext+=getmaxy(w);
+		ytext+=(size_t)getmaxy(w);
 		if(ytext+1>rows_tot)ytext=rows_tot-1;
 		refreshpage(w);
 		amove(w,y,x);
@@ -504,10 +508,10 @@ int movment(int c,WINDOW*w){
 			refreshpage(w);
 			wmove(w,0,0);
 		}else if(!strcmp(s,"kEND5")){
-			int a=rows_tot-1;
-			ytext=a-getmaxy(w)+1;
-			if(ytext<0)ytext=0;
-			int y=a-ytext;
+			size_t a=rows_tot-1;
+			size_t b=a-(size_t)getmaxy(w)+1;
+			ytext=b<=0?0:b;
+			int y=(int)(a-ytext);
 			int x=end(w,a);
 			refreshpage(w);
 			//moved by curses, but no add str for line breaks
@@ -516,26 +520,26 @@ int movment(int c,WINDOW*w){
 	}
 	return -1;
 }
-void fixmembuf(int*y,int*x){
+static void fixmembuf(size_t*y,size_t*x){
 	if(y[0]>rows_tot-1)y[0]=rows_tot-1;
-	int r=y[0];
-	int sz=rows[r].sz;
+	size_t r=y[0];
+	size_t sz=rows[r].sz;
 	if(x[0]>sz)x[0]=sz;
 }
-int set2membuf(int yesel,int xesel){
+static size_t set2membuf(size_t yesel,size_t xesel){
 	if(xesel==rows[yesel].sz){
 		if(yesel<rows_tot-1)return ln_term_sze;
 		return 0;
 	}
 	return 1;
 }
-void writemembuf(int ybsel,int xbsel,int yesel,int xesel){
+static void writemembuf(size_t ybsel,size_t xbsel,size_t yesel,size_t xesel){
 	fixmembuf(&ybsel,&xbsel);
 	fixmembuf(&yesel,&xesel);
 	xesel+=set2membuf(yesel,xesel);
 	char*b=rows[ybsel].data+xbsel;
 	char*e=rows[yesel].data+xesel;
-	int sz=e-b;
+	size_t sz=(size_t)(e-b);
 	if(cutbuf_sz<sz){
 		void*v=realloc(cutbuf,sz);
 		if(!v)return;
@@ -544,7 +548,7 @@ void writemembuf(int ybsel,int xbsel,int yesel,int xesel){
 	memcpy(cutbuf,b,sz);
 	cutbuf_sz=sz;
 }
-void set1membuf(int y,int x,bool*orig,int*yb,int*xb,int*ye,int*xe){
+static void set1membuf(size_t y,size_t x,bool*orig,size_t*yb,size_t*xb,size_t*ye,size_t*xe){
 	if(orig[0]){
 		if(y<yb[0]){
 			ye[0]=yb[0];xe[0]=xb[0];xb[0]=x;orig[0]=false;
@@ -575,7 +579,7 @@ void set1membuf(int y,int x,bool*orig,int*yb,int*xb,int*ye,int*xe){
 		}
 	}
 }
-int c_to_x(int c,int r){
+static size_t c_to_xc(int c,int r){
 	int*p=&tabs[tabs_rsz*r];
 	int n=p[0];int x=c;
 	for(int i=0;i<n;i++){
@@ -583,37 +587,39 @@ int c_to_x(int c,int r){
 		if(p[0]<c)x-=tab_sz-1;
 		else break;
 	}
-	return x;
+	return (size_t)x;
 }
-int x_to_c(int x,int r){                  int*p=&tabs[tabs_rsz*r];                  int n=p[0];
+static int xc_to_c(int col,int r){
+	int*p=&tabs[tabs_rsz*r];
+	int n=p[0];
 	for(int i=0;i<n;i++){
 		p++;
-		if(p[0]<x)x+=tab_sz-1;
+		if(p[0]<col)col+=tab_sz-1;
 		else break;
 	}
-	return x;
+	return col;
 }
-void printsel(WINDOW*w,int ybsel,int xbsel,int yesel,int xesel){
+static void printsel(WINDOW*w,size_t ybsel,size_t xbsel,size_t yesel,size_t xesel){
 	int wd=getmaxx(w);
 	int cright=wd-1;
 	int rb;int cb;
 	if(ybsel<ytext){
 		rb=0;cb=0;}
 	else{
-		rb=ybsel-ytext;
+		rb=(int)(ybsel-ytext);
 		if(xbsel<=xtext)cb=0;
-		else if(xbsel<=xtext+c_to_x(cright,rb))cb=x_to_c(xbsel-xtext,rb);
+		else if(xbsel<=xtext+c_to_xc(cright,rb))cb=xc_to_c((int)(xbsel-xtext),rb);
 		else{rb++;cb=0;}
 	}
 	int re;int ce;
 	int rdown=getmaxy(w)-1;
-	int ydown=ytext+rdown;
+	size_t ydown=ytext+(size_t)rdown;
 	if(yesel>ydown){
 		re=rdown;ce=cright;}
 	else{
-		re=yesel-ytext;
-		if(xtext+c_to_x(cright,re)<=xesel)ce=cright;
-		else if(xtext<=xesel)ce=x_to_c(xesel-xtext,re);
+		re=(int)(yesel-ytext);
+		if(xtext+c_to_xc(cright,re)<=xesel)ce=cright;
+		else if(xtext<=xesel)ce=xc_to_c((int)(xesel-xtext),re);
 		else{re--;ce=cright;}
 	}
 	if(rb==re){
@@ -629,15 +635,15 @@ void printsel(WINDOW*w,int ybsel,int xbsel,int yesel,int xesel){
 	mvwaddstr(w,rb,cb,mapsel);
 	wattrset(w,0);
 }
-bool testrefresh(int z,bool orig){
+static bool testrefresh(int z,bool orig){
 	if(z>-2)return false;
 	return z==-2||(z==-3&&orig)||!orig;
 }
-void visual(char a){
+static void visual(char a){
 	mvaddch(getmaxy(stdscr)-1,getmaxx(stdscr)-1,a);
 	wnoutrefresh(stdscr);
 }
-bool loopin(WINDOW*w){
+static bool loopin(WINDOW*w){
 	int c;
 	do{
 		c=wgetch(w);
@@ -649,17 +655,17 @@ bool loopin(WINDOW*w){
 				visual('V');
 				wnoutrefresh(w);
 				doupdate();
-				int r=getcury(w);
-				int ybsel=ytext+r;
-				int xbsel=xtext+c_to_x(getcurx(w),r);
-				int yesel=ybsel;int xesel=xbsel;
+				int rw=getcury(w);
+				size_t ybsel=ytext+(size_t)rw;
+				size_t xbsel=xtext+c_to_xc(getcurx(w),rw);
+				size_t yesel=ybsel;size_t xesel=xbsel;
 				int z;bool orig=true;
 				do{
 					int b=wgetch(w);
 					z=movment(b,w);
 					if(z>0)return true;
 					else{
-						int r=getcury(w);int c=getcurx(w);
+						int r=getcury(w);int col=getcurx(w);
 						if(!z){
 							cutbuf_bool=b=='c';
 							if(cutbuf_bool){
@@ -670,11 +676,11 @@ bool loopin(WINDOW*w){
 							refreshpage(w);
 						}else{
 							if(testrefresh(z,orig))refreshpage(w);
-							int y=ytext+r;int x=xtext+c_to_x(c,r);
+							size_t y=ytext+(size_t)r;size_t x=xtext+c_to_xc(col,r);
 							set1membuf(y,x,&orig,&ybsel,&xbsel,&yesel,&xesel);
 							printsel(w,ybsel,xbsel,yesel,xesel);
 						}
-						wmove(w,r,c);
+						wmove(w,r,col);
 					}
 				}while(z);
 			}
@@ -695,14 +701,14 @@ bool loopin(WINDOW*w){
 	}while(c!='q');
 	return false;
 }
-int normalize(char**c,int*size,int*r){
+static int normalize(char**c,size_t*size,size_t*r){
 	int ok=0;
 	char*text_w=c[0];
-	int sz=strlen(text_w);
+	size_t sz=strlen(text_w);
 	char*norm=(char*)malloc(2*sz+1);//-1 ok but,when sz=0,not ok
 	if(norm){
-		int j=0;ok=1;
-		for(int i=0;i<sz;i++){
+		size_t j=0;ok=1;
+		for(size_t i=0;i<sz;i++){
 			char a=text_w[i];
 			if(a=='\n'){
 				r[0]++;
@@ -732,27 +738,27 @@ int normalize(char**c,int*size,int*r){
 	}
 	return ok;
 }
-void rows_init(char*a,int size){
+static void rows_init(char*a,size_t size){
 	char*b=&a[size];
-	rows[0].data=a;int sz;
-	for(int i=1;i<rows_tot;i++){
-		sz=strchr(a,ln_term[0])-a;
+	rows[0].data=a;size_t sz;
+	for(size_t i=1;i<rows_tot;i++){
+		sz=(size_t)(strchr(a,ln_term[0])-a);
 		rows[i-1].sz=sz;
 		a+=sz+ln_term_sze;
 		rows[i].data=a;
 	}
-	rows[rows_tot-1].sz=b-a;
+	rows[rows_tot-1].sz=(size_t)(b-a);
 }
-int startpage(char*f,char**c){
+static int startpage(char*f,char**c){
 	int ok=0;
 	int fd=open(f,O_RDONLY);
 	if(fd!=-1){
-		int size=lseek(fd,0,SEEK_END);
-		char*tx=realloc(c[0],size+1);
+		off_t size=lseek(fd,0,SEEK_END);
+		char*tx=realloc(c[0],(size_t)(size+1));
 		if(tx){
 			c[0]=tx;
 			lseek(fd,0,SEEK_SET);
-			read(fd,tx,size);
+			read(fd,tx,(size_t)size);
 			tx[size]=0;
 			//
 			for(int i=size-1;i>-1;i--){
@@ -770,7 +776,7 @@ int startpage(char*f,char**c){
 				}
 			}
 			ln_term_sze=strlen(ln_term);
-			int sz;
+			size_t sz;
 			ok=normalize(c,&sz,&rows_tot);
 			if(ok){
 				row*m=(row*)realloc(rows,rows_tot*sizeof(row));
@@ -785,7 +791,7 @@ int startpage(char*f,char**c){
 	}
 	return ok;
 }
-char*getfilebuf(char*cutbuf_file,int off){
+static char*getfilebuf(char*cutbuf_file,size_t off){
 	int f=open(cutbuf_file,O_RDONLY);
 	if(f==-1){
 		cutbuf_file[off]='.';
@@ -793,37 +799,37 @@ char*getfilebuf(char*cutbuf_file,int off){
 		f=open(cutbuf_file,O_RDONLY);
 	}
 	if(f!=-1){
-		int sz=lseek(f,0,SEEK_END);
+		off_t sz=lseek(f,0,SEEK_END);
 		if(sz){
-			void*v=realloc(cutbuf,sz);
+			void*v=realloc(cutbuf,(size_t)sz);
 			if(v){
 				cutbuf=v;
 				lseek(f,0,SEEK_SET);
-				cutbuf_sz=read(f,cutbuf,sz);
-				int r;normalize(&cutbuf,&cutbuf_sz,&r);
+				cutbuf_sz=(size_t)read(f,cutbuf,(size_t)sz);
+				size_t r;normalize(&cutbuf,&cutbuf_sz,&r);
 			}
 		}
 		close(f);
 	}
 	return cutbuf_file;
 }
-char*setfilebuf(char*s,char*cutbuf_file){
-	size_t sz=strlen(s);int i=sz-1;
-	while(i>=0){
-		char a=s[i];
-		if(a=='/'||a=='\\')break;
+static char*setfilebuf(char*s,char*cutbuf_file){
+	size_t sz=strlen(s);size_t i=sz;
+	do{
 		i--;
-	}
+		char a=s[i];
+		if(a=='/'||a=='\\'){i++;break;}
+	}while(i);
 	char*h=getenv("HOME");
 	if(!h)return cutbuf_file;
 	size_t l=strlen(h);
 	if(!l)return cutbuf_file;
-	i++;sz-=i;
+	sz-=i;
 	if(l+sz+7>128)return cutbuf_file;
 	sprintf(cutbuf_file,"%s/.%sinfo",h,&s[i]);
 	return getfilebuf(cutbuf_file,l-1);
 }
-void writefilebuf(char*cutbuf_file){
+static void writefilebuf(char*cutbuf_file){
 	if(cutbuf_file[0]){
 		int f=open(cutbuf_file,O_WRONLY|O_TRUNC);
 		if(f!=-1){
@@ -870,16 +876,16 @@ int main(int argc,char**argv){
 					bool loops=false;
 					do{
 						int r=getmaxy(w1)-1;
-						char*a=realloc(x_right,r);
+						char*a=realloc(x_right,(size_t)r);
 						if(!a)break;
 						x_right=a;
 						int c=getmaxx(w1);
 						tabs_rsz=1+(c/tab_sz);
 						if(c%tab_sz)tabs_rsz++;
-						a=realloc(tabs,tabs_rsz*r*sizeof(int));
-						if(!a)break;
-						tabs=(int*)a;
-						a=realloc(mapsel,(c*r)+1);
+						void*b=realloc(tabs,sizeof(int)*(size_t)(r*tabs_rsz));
+						if(!b)break;
+						tabs=(int*)b;
+						a=realloc(mapsel,(size_t)((c*r)+1));
 						if(!a)break;
 						mapsel=a;
 						WINDOW*w=newwin(r,c,0,0);
