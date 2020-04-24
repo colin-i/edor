@@ -72,7 +72,7 @@ int keypad(WINDOW*,bool);//2
 typedef unsigned int mmask_t;
 typedef struct
 {
-	short id;char pad[2];
+	short id;// __attribute__((aligned(4)));
 	int x,y,z;
 	mmask_t bstate;
 }
