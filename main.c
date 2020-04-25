@@ -5,7 +5,7 @@ typedef unsigned int size_t;
 size_t strlen(const char*);//8
 char*strchr(const char*,int);
 int strcmp(const char*,const char*);//6
-void*memcpy(void*,const void*,size_t);
+void*memcpy(void*,const void*,size_t);//4
 //#include <fcntl.h>
 int open(const char*,int,...);//5
 //sys/types.h
@@ -533,20 +533,39 @@ static size_t set2membuf(size_t yesel,size_t xesel){
 	}
 	return 1;
 }
-static void writemembuf(size_t ybsel,size_t xbsel,size_t yesel,size_t xesel){
+static bool writemembuf(size_t ybsel,size_t xbsel,size_t yesel,size_t xesel){
 	fixmembuf(&ybsel,&xbsel);
 	fixmembuf(&yesel,&xesel);
 	xesel+=set2membuf(yesel,xesel);
-	char*b=rows[ybsel].data+xbsel;
-	char*e=rows[yesel].data+xesel;
-	size_t sz=(size_t)(e-b);
-	if(cutbuf_sz<sz){
-		void*v=realloc(cutbuf,sz);
-		if(!v)return;
+	row*b=&rows[ybsel];
+	bool one=ybsel==yesel;size_t size;
+	size_t sz1;
+	if(one)size=xesel-xbsel;
+	else{
+		sz1=b->sz+ln_term_sze-xbsel;
+		size=sz1+xesel;
+		for(size_t i=ybsel+1;i<yesel;i++){
+			size+=rows[i].sz+ln_term_sze;
+		}
+	}
+	if(cutbuf_sz<size){
+		void*v=realloc(cutbuf,size);
+		if(!v)return false;
 		cutbuf=v;
 	}
-	memcpy(cutbuf,b,sz);
-	cutbuf_sz=sz;
+	if(one)memcpy(cutbuf,b->data+xbsel,xesel-xbsel);
+	else{
+		memcpy(cutbuf,b->data+xbsel,sz1);
+		size_t sz=sz1;
+		for(size_t i=ybsel+1;i<yesel;i++){
+			size_t s=rows[i].sz+ln_term_sze;
+			memcpy(cutbuf+sz,rows[i].data,s);
+			sz+=s;
+		}
+		memcpy(cutbuf+sz,rows[yesel].data,xesel);
+	}
+	cutbuf_sz=size;
+	return true;
 }
 static void set1membuf(size_t y,size_t x,bool*orig,size_t*yb,size_t*xb,size_t*ye,size_t*xe){
 	if(orig[0]){
@@ -667,12 +686,12 @@ static bool loopin(WINDOW*w){
 					else{
 						int r=getcury(w);int col=getcurx(w);
 						if(!z){
+							char v=' ';
 							cutbuf_bool=b=='c';
 							if(cutbuf_bool){
-								writemembuf(ybsel,xbsel,yesel,xesel);
-								visual('C');
+								if(writemembuf(ybsel,xbsel,yesel,xesel))v='C';
 							}
-							else visual(' ');
+							visual(v);
 							refreshpage(w);
 						}else{
 							if(testrefresh(z,orig))refreshpage(w);
