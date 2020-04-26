@@ -2,10 +2,10 @@ typedef char bool;
 
 //#include <string.h>
 typedef unsigned int size_t;
-size_t strlen(const char*);//8
-char*strchr(const char*,int);
+size_t strlen(const char*);//7
+char*strchr(const char*,int);//3
 int strcmp(const char*,const char*);//6
-void*memcpy(void*,const void*,size_t);//4
+void*memcpy(void*,const void*,size_t);//12
 //#include <fcntl.h>
 int open(const char*,int,...);//5
 //sys/types.h
@@ -44,9 +44,9 @@ mmask_t mousemask(mmask_t,mmask_t*);
 int noecho(void);
 #define ALL_MOUSE_EVENTS 0xFffFFff
 int move(int,int);//6
-int wmove(WINDOW*,int,int);//12
-int getcury(const WINDOW*);//19
-int getcurx(const WINDOW*);//13
+int wmove(WINDOW*,int,int);//13
+int getcury(const WINDOW*);//20
+int getcurx(const WINDOW*);//14
 int getmaxy(const WINDOW*);//12
 int getmaxx(const WINDOW*);//9
 WINDOW*newwin(int,int,int,int);
@@ -104,8 +104,8 @@ int poll(struct pollfd[],nfds_t,int);
 #define POLLIN 0x0001
 struct pollfd stdinfd={0,POLLIN,0};*/
 //#include <stdlib.h>
-void*malloc(size_t);//4
-void free(void*);//8
+void*malloc(size_t);//10
+void free(void*);//12
 void*realloc(void*,size_t);//7
 char*getenv(const char*);
 //#include<stdio.h>
@@ -137,11 +137,14 @@ static char helptext[]="\nq is for quitting"
 "\nb = build file"
 "\nmouse/touch press or v.scroll"
 "\nv = visual mode"
-"\n    c = copy";
-static char*cutbuf=NULL;
+"\n    c = copy"
+"\np = paste";
+static char*cutbuf;
 static size_t cutbuf_sz=0;
 static bool cutbuf_bool=false;
 static char*mapsel=NULL;
+static size_t cutbuf_spc=0;
+static size_t cutbuf_r=1;
 
 typedef struct{
 	char*str;
@@ -548,10 +551,10 @@ static bool writemembuf(size_t ybsel,size_t xbsel,size_t yesel,size_t xesel){
 			size+=rows[i].sz+ln_term_sze;
 		}
 	}
-	if(cutbuf_sz<size){
+	if(cutbuf_spc<size){
 		void*v=realloc(cutbuf,size);
 		if(!v)return false;
-		cutbuf=v;
+		cutbuf=v;cutbuf_spc=size;
 	}
 	if(one)memcpy(cutbuf,b->data+xbsel,xesel-xbsel);
 	else{
@@ -564,7 +567,7 @@ static bool writemembuf(size_t ybsel,size_t xbsel,size_t yesel,size_t xesel){
 		}
 		memcpy(cutbuf+sz,rows[yesel].data,xesel);
 	}
-	cutbuf_sz=size;
+	cutbuf_sz=size;cutbuf_r=yesel-ybsel+1;
 	return true;
 }
 static void set1membuf(size_t y,size_t x,bool*orig,size_t*yb,size_t*xb,size_t*ye,size_t*xe){
@@ -662,6 +665,87 @@ static void visual(char a){
 	mvaddch(getmaxy(stdscr)-1,getmaxx(stdscr)-1,a);
 	wnoutrefresh(stdscr);
 }
+static size_t pasting(row*d,size_t r,size_t c){
+	size_t y=ytext+r;
+	size_t x=xtext+c;
+	fixmembuf(&y,&x);
+	bool one=cutbuf_r==1;
+	//1
+	size_t sz;size_t sz1r;char*a;
+	bool in=y<(rows_tot-1);bool in1;
+	size_t szr=rows[y].sz-x;
+	if(in)szr+=ln_term_sze;
+	if(one){
+		sz=cutbuf_sz;sz1r=szr;
+		in1=in;
+	}
+	else{
+		a=strchr(cutbuf,ln_term[0])+ln_term_sze;
+		sz=(size_t)(a-cutbuf);sz1r=0;
+		in1=true;
+	}
+	size_t size1=x+sz+sz1r;
+	char*r1=malloc(size1);
+	if(r1==NULL)return 0;
+	d[0].data=r1;
+	char*row1d=rows[y].data;
+	memcpy(r1,row1d,x);
+	memcpy(r1+x,cutbuf,sz);
+	memcpy(r1+x+sz,row1d+x,sz1r);
+	if(in1)size1-=ln_term_sze;
+	d[0].sz=size1;
+	if(!one){
+		//inter
+		size_t max=cutbuf_r-1;
+		for(size_t i=1;i<max;i++){
+			char*b=strchr(a,ln_term[0])+ln_term_sze;
+			size_t l=(size_t)(b-a);
+			void*v=malloc(l);
+			if(!v)return i;
+			d[i].data=v;
+			memcpy(v,cutbuf+sz,l);
+			d[i].sz=l-ln_term_sze;
+			sz+=l;
+			a=b;
+		}
+		//last
+		size_t l=cutbuf_sz-sz;
+		size_t sizen=l+szr;
+		char*rn=malloc(sizen);
+		if(!rn)return max;
+		d[max].data=rn;
+		memcpy(rn,cutbuf+sz,l);
+		memcpy(rn+l,row1d+x,szr);
+		if(in)sizen-=ln_term_sze;
+		d[max].sz=sizen;
+		//mem
+		size_t rowssize=rows_tot+max;
+		row*m=(row*)realloc(rows,rowssize*sizeof(row));
+		if(!m)return cutbuf_r;
+		rows=m;row*p=&rows[rowssize-1];
+		size_t i=rows_tot-1;
+		do{
+			memcpy(p,&rows[i],sizeof(row));
+			i--;
+			if(y==i)break;
+			p--;
+		}while(true);
+		rows_tot+=max;
+	}
+	memcpy(rows+y,d,cutbuf_r*sizeof(row));
+	return 0;
+}
+static void paste(WINDOW*w){
+	row*d=(row*)malloc(cutbuf_r*sizeof(row));
+	if(!d)return;
+	int r=getcury(w);int c=getcurx(w);
+	size_t n=pasting(d,(size_t)r,(size_t)c);
+	for(size_t i=0;i<n;i++){
+		free(d[i].data);
+	}
+	free(d);
+	refreshpage(w);wmove(w,r,c);
+}
 static bool loopin(WINDOW*w){
 	int c;
 	do{
@@ -669,8 +753,7 @@ static bool loopin(WINDOW*w){
 		int a=movment(c,w);
 		if(a>0)return true;
 		if(!a){
-			if(c=='b'){if(textfile)out_f();}
-			else if(c=='v'){
+			if(c=='v'){
 				visual('V');
 				wnoutrefresh(w);
 				doupdate();
@@ -703,6 +786,8 @@ static bool loopin(WINDOW*w){
 					}
 				}while(z);
 			}
+			else if(c=='p')paste(w);
+			else if(c=='b'){if(textfile)out_f();}
 			else if(c=='h'){
 				int cy=getcury(w);int cx=getcurx(w);
 				werase(w);
@@ -723,7 +808,7 @@ static bool loopin(WINDOW*w){
 static int normalize(char**c,size_t*size,size_t*r){
 	int ok=0;
 	char*text_w=c[0];
-	size_t sz=strlen(text_w);
+	size_t sz=size[0];
 	char*norm=(char*)malloc(2*sz+1);//-1 ok but,when sz=0,not ok
 	if(norm){
 		size_t j=0;ok=1;
@@ -768,19 +853,18 @@ static void rows_init(char*a,size_t size){
 	}
 	rows[rows_tot-1].sz=(size_t)(b-a);
 }
-static int startpage(char*f,char**c){
+static int startpage(char*f,char**c,size_t*text_sz){
 	int ok=0;
 	int fd=open(f,O_RDONLY);
 	if(fd!=-1){
-		off_t size=lseek(fd,0,SEEK_END);
-		char*tx=realloc(c[0],(size_t)(size+1));
+		size_t size=(size_t)lseek(fd,0,SEEK_END);
+		char*tx=realloc(c[0],size);
 		if(tx){
-			c[0]=tx;
+			c[0]=tx;text_sz[0]=size;
 			lseek(fd,0,SEEK_SET);
-			read(fd,tx,(size_t)size);
-			tx[size]=0;
+			read(fd,tx,size);
 			//
-			for(int i=size-1;i>-1;i--){
+			for(size_t i=size;i>0;i--){
 				if(tx[i]=='\n'){
 					if(i&&tx[i-1]=='\r'){
 						ln_term[0]='\r';
@@ -795,13 +879,12 @@ static int startpage(char*f,char**c){
 				}
 			}
 			ln_term_sze=strlen(ln_term);
-			size_t sz;
-			ok=normalize(c,&sz,&rows_tot);
+			ok=normalize(c,text_sz,&rows_tot);
 			if(ok){
 				row*m=(row*)realloc(rows,rows_tot*sizeof(row));
 				if(m){
 					rows=m;
-					rows_init(c[0],sz);
+					rows_init(c[0],text_sz[0]);
 				}
 				else ok=0;
 			}
@@ -818,14 +901,15 @@ static char*getfilebuf(char*cutbuf_file,size_t off){
 		f=open(cutbuf_file,O_RDONLY);
 	}
 	if(f!=-1){
-		off_t sz=lseek(f,0,SEEK_END);
+		size_t sz=(size_t)lseek(f,0,SEEK_END);
 		if(sz){
-			void*v=realloc(cutbuf,(size_t)sz);
+			char*v=malloc(sz);
 			if(v){
-				cutbuf=v;
 				lseek(f,0,SEEK_SET);
-				cutbuf_sz=(size_t)read(f,cutbuf,(size_t)sz);
-				size_t r;normalize(&cutbuf,&cutbuf_sz,&r);
+				cutbuf_sz=(size_t)read(f,v,sz);
+				if(normalize(&v,&cutbuf_sz,&cutbuf_r)){
+					cutbuf=v;cutbuf_spc=cutbuf_sz;
+				}else free(v);
 			}
 		}
 		close(f);
@@ -856,7 +940,6 @@ static void writefilebuf(char*cutbuf_file){
 			close(f);
 		}
 	}
-	if(cutbuf)free(cutbuf);
 }
 int main(int argc,char**argv){
 	char*text_w=(char*)malloc(1);
@@ -864,10 +947,11 @@ int main(int argc,char**argv){
 		text_w[0]=0;
 		rows=(row*)malloc(sizeof(row));
 		if(rows){
+			size_t text_sz=0;
 			rows[0].data=text_w;rows[0].sz=0;
 			int ok=1;
 			if(argc==2){
-				ok=startpage(argv[1],&text_w);
+				ok=startpage(argv[1],&text_w,&text_sz);
 				if(ok){
 					if(ok<1){
 						puts("Normalize line endings to ");
@@ -888,48 +972,57 @@ int main(int argc,char**argv){
 				start_color();
 				noecho();
 				if(init_pair(1,COLOR_BLACK,COLOR_WHITE)!=ERR){
-					char cutbuf_file_var[128];
-					char*cutbuf_file=cutbuf_file_var;
-					cutbuf_file[0]=0;
-					cutbuf_file=setfilebuf(argv[0],cutbuf_file);
-					bool loops=false;
-					do{
-						int r=getmaxy(w1)-1;
-						char*a=realloc(x_right,(size_t)r);
-						if(!a)break;
-						x_right=a;
-						int c=getmaxx(w1);
-						tabs_rsz=1+(c/tab_sz);
-						if(c%tab_sz)tabs_rsz++;
-						void*b=realloc(tabs,sizeof(int)*(size_t)(r*tabs_rsz));
-						if(!b)break;
-						tabs=(int*)b;
-						a=realloc(mapsel,(size_t)((c*r)+1));
-						if(!a)break;
-						mapsel=a;
-						WINDOW*w=newwin(r,c,0,0);
-						if(w){
-							keypad(w,true);
-							xtext=0;ytext=0;
-							printpage(w);
-							wmove(w,0,0);
-							printhelp();
-							loops=loopin(w);
-							delwin(w);
-						}else break;
-					}while(loops);
-					if(x_right){
-						free(x_right);
-						if(tabs){
-							free(tabs);
-							if(mapsel){
-								free(mapsel);
-								writefilebuf(cutbuf_file);
+					cutbuf=malloc(0);
+					if(cutbuf){
+						char cutbuf_file_var[128];
+						char*cutbuf_file=cutbuf_file_var;
+						cutbuf_file[0]=0;
+						cutbuf_file=setfilebuf(argv[0],cutbuf_file);
+						bool loops=false;
+						do{
+							int r=getmaxy(w1)-1;
+							char*a=realloc(x_right,(size_t)r);
+							if(!a)break;
+							x_right=a;
+							int c=getmaxx(w1);
+							tabs_rsz=1+(c/tab_sz);
+							if(c%tab_sz)tabs_rsz++;
+							void*b=realloc(tabs,sizeof(int)*(size_t)(r*tabs_rsz));
+							if(!b)break;
+							tabs=(int*)b;
+							a=realloc(mapsel,(size_t)((c*r)+1));
+							if(!a)break;
+							mapsel=a;
+							WINDOW*w=newwin(r,c,0,0);
+							if(w){
+								keypad(w,true);
+								xtext=0;ytext=0;
+								printpage(w);
+								wmove(w,0,0);
+								printhelp();
+								loops=loopin(w);
+								delwin(w);
+							}else break;
+						}while(loops);
+						if(x_right){
+							free(x_right);
+							if(tabs){
+								free(tabs);
+								if(mapsel){
+									free(mapsel);
+									writefilebuf(cutbuf_file);
+								}
 							}
 						}
+						free(cutbuf);
 					}
 				}
 				endwin();
+			}
+			char*text_e=text_w+text_sz;
+			for(size_t i=0;i<rows_tot;i++){
+				char*d=rows[i].data;
+				if(d<text_w||text_e<d)free(d);
 			}
 			free(rows);
 		}
