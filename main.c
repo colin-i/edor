@@ -132,7 +132,8 @@ static int tabs_rsz;
 #define tab_sz 6
 static int yhelp;
 static bool helpend;
-static char helptext[]="\nq is for quitting"
+static char helptext[]="INPUT"
+"\nq is for quitting"
 "\narrows(+-alt),home/end(+-ctrl),page up/down"
 "\nb = build file"
 "\nmouse/touch press or v.scroll"
