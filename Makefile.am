@@ -1,6 +1,8 @@
+AUTOMAKE_OPTIONS = subdir-objects
 bin_PROGRAMS = main
-main_SOURCES = main.c
+main_SOURCES = main.c src/comp.c
 main_LDADD = -lcurses
 main_LDFLAGS = -o @PROJ@
+main_LINK = $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(main_LDFLAGS) $(LDFLAGS)
 $(shell `echo > ./.@PROJ@info`)
 $(shell `echo > ~/.@PROJ@info`)

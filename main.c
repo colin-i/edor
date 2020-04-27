@@ -1,27 +1,16 @@
-typedef char bool;
+#include"src/main.h"
+//strlen,4;open,4;close,3;write;malloc,8
+//free,11
 
 //#include <string.h>
-typedef unsigned int size_t;
-size_t strlen(const char*);//7
 char*strchr(const char*,int);//3
 int strcmp(const char*,const char*);//6
 void*memcpy(void*,const void*,size_t);//12
-//#include <fcntl.h>
-int open(const char*,int,...);//5
 //sys/types.h
 typedef unsigned short mode_t;
 //asm-generic/fcntl.h
 #define O_RDONLY 00000000
-#define O_WRONLY 00000001
-#define O_CREAT 00000100
-#define O_TRUNC 00001000
-//linux/stat.h
-#define S_IRUSR 00400
-#define S_IWUSR 00200
 //#include <unistd.h>
-int close(int);//4
-typedef int ssize_t;
-ssize_t write(int,const void*,size_t);//3
 typedef long off_t;
 off_t lseek(int,off_t,int);//4
 ssize_t read(int,void*,size_t);//2
@@ -104,8 +93,6 @@ int poll(struct pollfd[],nfds_t,int);
 #define POLLIN 0x0001
 struct pollfd stdinfd={0,POLLIN,0};*/
 //#include <stdlib.h>
-void*malloc(size_t);//9
-void free(void*);//12
 void*realloc(void*,size_t);//7
 char*getenv(const char*);
 //#include<stdio.h>
@@ -114,8 +101,8 @@ int sprintf(char*,const char*,...);
 int getchar(void);
 
 #define NULL 0
-enum{false=0,true=1};
 
+static char*textfile=NULL;
 typedef struct{
 	char*data;
 	size_t sz;
@@ -135,11 +122,11 @@ static bool helpend;
 static char helptext[]="INPUT"
 "\nq is for quitting"
 "\narrows(+-alt),home/end(+-ctrl),page up/down"
-"\nb = build file"
 "\nmouse/touch press or v.scroll"
 "\nv = visual mode"
 "\n    c = copy"
-"\np = paste";
+"\np = paste"
+"\nb = build file";
 static char*cutbuf=NULL;
 static size_t cutbuf_sz=0;
 static bool cutbuf_bool=false;
@@ -147,52 +134,6 @@ static char*mapsel=NULL;
 static size_t cutbuf_spc=0;
 static size_t cutbuf_r=1;
 
-typedef struct{
-	char*str;
-	char**t;
-}inst;
-static char*textfile=NULL;
-static char terms[][3]={"r0"};
-static char*_r0_0[]={terms[0],"#0",0};
-static char*_ex[]={"exit",0};
-static inst instrs[]={
-	{"mov",_r0_0},{"b",_ex},{0}
-};
-
-static bool out_chr(int f,char c){
-	ssize_t s=write(f,&c,1);
-	if(s!=1)return true;
-	return false;
-}
-static bool out_wrt(int f,char*c){
-	size_t n=strlen(c);
-	size_t s=(size_t)write(f,c,n);
-	if(s!=n)return true;
-	return false;
-}
-static void out_wr(int f){
-	if(out_wrt(f,".global main\n"))return;
-	if(out_wrt(f,".extern exit\n"))return;
-	if(out_wrt(f,"main:\n"))return;
-	int i=0;
-	do{
-		inst*a=&instrs[i];
-		if(a->str==0)return;
-		if(out_wrt(f,a->str))return;
-		if(out_chr(f,' '))return;
-		if(out_wrt(f,a->t[0]))return;
-		int j=1;
-		do{
-			char*b=a->t[j];
-			if(b==0)break;
-			if(out_chr(f,','))return;
-			if(out_wrt(f,b))return;
-			j++;
-		}while(true);
-		if(out_chr(f,'\n'))return;
-		i++;
-	}while(true);
-}
 /*int ach(WINDOW*w){
 	if(poll(&stdinfd,1,0)<1)return 0;
 	return wget ch(w);
@@ -385,31 +326,6 @@ static void printhelp(){
 	move(getmaxy(stdscr)-1,0);
 	printinverted("h for help");
 	wnoutrefresh(stdscr);
-}
-static void out_f(){
-	size_t n=strlen(textfile);
-	char*ext=".s";
-	size_t e=strlen(ext);
-	size_t p=n+e+1;
-	char*s=(char*)malloc(p);
-	if(s){
-		p--;
-		s[p]=0;
-		while(e){
-			e--;p--;
-			s[p]=ext[e];
-		}
-		while(p){
-			p--;
-			s[p]=textfile[p];
-		}
-		int f=open(s,O_WRONLY|O_CREAT|O_TRUNC,S_IRUSR|S_IWUSR);
-		if(f!=-1){
-			out_wr(f);
-			close(f);
-		}
-		free(s);
-	}
 }
 static void sumove(WINDOW*w,int y){tmove(w,y,false);}
 static void sdmove(WINDOW*w,int y){tmove(w,y,true);}
@@ -808,7 +724,7 @@ static bool loopin(WINDOW*w){
 				}while(z);
 			}
 			else if(c=='p')paste(w);
-			else if(c=='b'){if(textfile)out_f();}
+			else if(c=='b'){if(textfile)out_f(textfile);}
 			else if(c=='h'){
 				int cy=getcury(w);int cx=getcurx(w);
 				werase(w);
