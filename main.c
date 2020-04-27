@@ -47,8 +47,8 @@ int move(int,int);//6
 int wmove(WINDOW*,int,int);//13
 int getcury(const WINDOW*);//20
 int getcurx(const WINDOW*);//14
-int getmaxy(const WINDOW*);//12
-int getmaxx(const WINDOW*);//9
+int getmaxy(const WINDOW*);//13
+int getmaxx(const WINDOW*);//10
 WINDOW*newwin(int,int,int,int);
 int delwin(WINDOW*);
 int doupdate(void);//2
@@ -104,7 +104,7 @@ int poll(struct pollfd[],nfds_t,int);
 #define POLLIN 0x0001
 struct pollfd stdinfd={0,POLLIN,0};*/
 //#include <stdlib.h>
-void*malloc(size_t);//10
+void*malloc(size_t);//9
 void free(void*);//12
 void*realloc(void*,size_t);//7
 char*getenv(const char*);
@@ -140,7 +140,7 @@ static char helptext[]="INPUT"
 "\nv = visual mode"
 "\n    c = copy"
 "\np = paste";
-static char*cutbuf;
+static char*cutbuf=NULL;
 static size_t cutbuf_sz=0;
 static bool cutbuf_bool=false;
 static char*mapsel=NULL;
@@ -431,20 +431,17 @@ static void srmove(WINDOW*w,int x){
 	}
 }
 static int end(WINDOW*w,size_t r){
+	size_t sz=rows[r].sz;
+	if(xtext>=sz){xtext=sz;return 0;}
 	char*b=rows[r].data;
-	char*s=b+rows[r].sz;
+	char*s=b+sz;
 	int n=getmaxx(w)-1;int m=0;
-	while(s>b){
+	do{
+		s--;m+=s[0]=='\t'?tab_sz:1;
 		if((size_t)(s-b)==xtext)break;
-		s--;
-		m+=s[0]=='\t'?tab_sz:1;
-		if(m>=n){
-			if(m>n){
-				s++;
-				m-=tab_sz;
-			}
-			break;
-		}
+	}while(m<n);
+	if(m>n){
+		s++;m-=tab_sz;
 	}
 	xtext=(size_t)(s-b);
 	return m;
@@ -666,9 +663,31 @@ static void visual(char a){
 	mvaddch(getmaxy(stdscr)-1,getmaxx(stdscr)-1,a);
 	wnoutrefresh(stdscr);
 }
-static size_t pasting(row*d,size_t r,size_t c){
-	size_t y=ytext+r;
-	size_t x=xtext+c;
+static void pasted(int r,int c,size_t x,WINDOW*w){
+	size_t rws=cutbuf_r-1;
+	r+=rws;int maxy=getmaxy(w);
+	if(maxy<=r){
+		ytext+=(size_t)(r-maxy+1);
+		r=maxy-1;
+	}
+	//
+	if(x<=xtext){xtext=x;c=0;}
+	else{
+		char*d=rows[ytext+(size_t)r].data;
+		char*b=d+xtext;c=0;
+		char*s=d+x;int maxx=getmaxx(w)-1;
+		do{
+			s--;c+=s[0]=='\t'?tab_sz:1;
+			if(b==s)break;
+		}while(c<maxx);
+		if(c>maxx){s++;c-=tab_sz;}
+		xtext=(size_t)(s-b);
+	}
+	refreshpage(w);wmove(w,r,c);
+}
+static size_t pasting(row*d,int r,int c,WINDOW*w){
+	size_t y=ytext+(size_t)r;
+	size_t x=xtext+c_to_xc(c,r);
 	fixmembuf(&y,&x);
 	bool one=cutbuf_r==1;
 	//1
@@ -685,14 +704,15 @@ static size_t pasting(row*d,size_t r,size_t c){
 		sz=(size_t)(a-cutbuf);sz1r=0;
 		in1=true;
 	}
-	size_t size1=x+sz+sz1r;
+	size_t l=x+sz;
+	size_t size1=l+sz1r;
 	char*r1=malloc(size1);
 	if(r1==NULL)return 0;
 	d[0].data=r1;
 	char*row1d=rows[y].data;
 	memcpy(r1,row1d,x);
 	memcpy(r1+x,cutbuf,sz);
-	memcpy(r1+x+sz,row1d+x,sz1r);
+	memcpy(r1+l,row1d+x,sz1r);
 	if(in1)size1-=ln_term_sze;
 	d[0].sz=size1;
 	if(!one){
@@ -700,17 +720,17 @@ static size_t pasting(row*d,size_t r,size_t c){
 		size_t max=cutbuf_r-1;
 		for(size_t i=1;i<max;i++){
 			char*b=strchr(a,ln_term[0])+ln_term_sze;
-			size_t l=(size_t)(b-a);
-			void*v=malloc(l);
+			size_t ln=(size_t)(b-a);
+			void*v=malloc(ln);
 			if(!v)return i;
 			d[i].data=v;
-			memcpy(v,cutbuf+sz,l);
-			d[i].sz=l-ln_term_sze;
-			sz+=l;
+			memcpy(v,cutbuf+sz,ln);
+			d[i].sz=ln-ln_term_sze;
+			sz+=ln;
 			a=b;
 		}
 		//last
-		size_t l=cutbuf_sz-sz;
+		l=cutbuf_sz-sz;
 		size_t sizen=l+szr;
 		char*rn=malloc(sizen);
 		if(!rn)return max;
@@ -734,18 +754,18 @@ static size_t pasting(row*d,size_t r,size_t c){
 		rows_tot+=max;
 	}
 	memcpy(rows+y,d,cutbuf_r*sizeof(row));
+	pasted(r,c,l,w);
 	return 0;
 }
 static void paste(WINDOW*w){
 	row*d=(row*)malloc(cutbuf_r*sizeof(row));
 	if(!d)return;
 	int r=getcury(w);int c=getcurx(w);
-	size_t n=pasting(d,(size_t)r,(size_t)c);
+	size_t n=pasting(d,r,c,w);
 	for(size_t i=0;i<n;i++){
 		free(d[i].data);
 	}
 	free(d);
-	refreshpage(w);wmove(w,r,c);
 }
 static bool loopin(WINDOW*w){
 	int c;
@@ -973,50 +993,47 @@ int main(int argc,char**argv){
 				start_color();
 				noecho();
 				if(init_pair(1,COLOR_BLACK,COLOR_WHITE)!=ERR){
-					cutbuf=malloc(0);
-					if(cutbuf){
-						char cutbuf_file_var[128];
-						char*cutbuf_file=cutbuf_file_var;
-						cutbuf_file[0]=0;
-						cutbuf_file=setfilebuf(argv[0],cutbuf_file);
-						bool loops=false;
-						do{
-							int r=getmaxy(w1)-1;
-							char*a=realloc(x_right,(size_t)r);
-							if(!a)break;
-							x_right=a;
-							int c=getmaxx(w1);
-							tabs_rsz=1+(c/tab_sz);
-							if(c%tab_sz)tabs_rsz++;
-							void*b=realloc(tabs,sizeof(int)*(size_t)(r*tabs_rsz));
-							if(!b)break;
-							tabs=(int*)b;
-							a=realloc(mapsel,(size_t)((c*r)+1));
-							if(!a)break;
-							mapsel=a;
-							WINDOW*w=newwin(r,c,0,0);
-							if(w){
-								keypad(w,true);
-								xtext=0;ytext=0;
-								printpage(w);
-								wmove(w,0,0);
-								printhelp();
-								loops=loopin(w);
-								delwin(w);
-							}else break;
-						}while(loops);
-						if(x_right){
-							free(x_right);
-							if(tabs){
-								free(tabs);
-								if(mapsel){
-									free(mapsel);
-									writefilebuf(cutbuf_file);
-								}
+					char cutbuf_file_var[128];
+					char*cutbuf_file=cutbuf_file_var;
+					cutbuf_file[0]=0;
+					cutbuf_file=setfilebuf(argv[0],cutbuf_file);
+					bool loops=false;
+					do{
+						int r=getmaxy(w1)-1;
+						char*a=realloc(x_right,(size_t)r);
+						if(!a)break;
+						x_right=a;
+						int c=getmaxx(w1);
+						tabs_rsz=1+(c/tab_sz);
+						if(c%tab_sz)tabs_rsz++;
+						void*b=realloc(tabs,sizeof(int)*(size_t)(r*tabs_rsz));
+						if(!b)break;
+						tabs=(int*)b;
+						a=realloc(mapsel,(size_t)((c*r)+1));
+						if(!a)break;
+						mapsel=a;
+						WINDOW*w=newwin(r,c,0,0);
+						if(w){
+							keypad(w,true);
+							xtext=0;ytext=0;
+							printpage(w);
+							wmove(w,0,0);
+							printhelp();
+							loops=loopin(w);
+							delwin(w);
+						}else break;
+					}while(loops);
+					if(x_right){
+						free(x_right);
+						if(tabs){
+							free(tabs);
+							if(mapsel){
+								free(mapsel);
+								writefilebuf(cutbuf_file);
 							}
 						}
-						free(cutbuf);
 					}
+					if(cutbuf)free(cutbuf);
 				}
 				endwin();
 			}
