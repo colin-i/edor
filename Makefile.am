@@ -1,5 +1,6 @@
 AUTOMAKE_OPTIONS = subdir-objects
 bin_PROGRAMS = main
+main_CFLAGS = -Weverything -Wno-padded -Wno-conditional-uninitialized
 main_SOURCES = main.c src/comp.c
 main_LDADD = -lcurses
 main_LDFLAGS = -o @PROJ@

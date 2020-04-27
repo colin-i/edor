@@ -9,11 +9,7 @@ size_t strlen(const char*);
 int open(const char*,int,...);
 //asm-generic/fcntl.h
 #define O_WRONLY 00000001
-#define O_CREAT 00000100
 #define O_TRUNC 00001000
-//linux/stat.h
-#define S_IRUSR 00400
-#define S_IWUSR 00200
 //#include <unistd.h>
 int close(int);
 typedef int ssize_t;
