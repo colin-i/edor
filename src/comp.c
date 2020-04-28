@@ -52,7 +52,7 @@ static void out_wr(int f){
 		i++;
 	}while(true);
 }
-extern void out_f(char*textfile){
+void out_f(char*textfile){
 	size_t n=strlen(textfile);
 	char*ext=".s";
 	size_t e=strlen(ext);
