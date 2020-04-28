@@ -1,5 +1,5 @@
 #include"src/main.h"
-//strlen,4;open,4;close,3;write;malloc,8
+//strlen,4;open,4;close,3;write;malloc,10
 //free,11
 
 //#include <string.h>
@@ -93,7 +93,7 @@ int poll(struct pollfd[],nfds_t,int);
 #define POLLIN 0x0001
 struct pollfd stdinfd={0,POLLIN,0};*/
 //#include <stdlib.h>
-void*realloc(void*,size_t);//7
+void*realloc(void*,size_t);//5
 char*getenv(const char*);
 //#include<stdio.h>
 int puts(const char*);//5
@@ -804,7 +804,7 @@ static int startpage(char*f,char**c,size_t*text_sz){
 	int fd=open(f,O_RDONLY);
 	if(fd!=-1){
 		size_t size=(size_t)lseek(fd,0,SEEK_END);
-		char*tx=realloc(c[0],size);
+		char*tx=malloc(size);
 		if(tx){
 			c[0]=tx;text_sz[0]=size;
 			lseek(fd,0,SEEK_SET);
@@ -827,7 +827,7 @@ static int startpage(char*f,char**c,size_t*text_sz){
 			ln_term_sze=strlen(ln_term);
 			ok=normalize(c,text_sz,&rows_tot);
 			if(ok){
-				row*m=(row*)realloc(rows,rows_tot*sizeof(row));
+				row*m=(row*)malloc(rows_tot*sizeof(row));
 				if(m){
 					rows=m;
 					rows_init(c[0],text_sz[0]);
