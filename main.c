@@ -827,11 +827,8 @@ static int startpage(char*f,char**c,size_t*text_sz){
 			ln_term_sze=strlen(ln_term);
 			ok=normalize(c,text_sz,&rows_tot);
 			if(ok){
-				row*m=(row*)malloc(rows_tot*sizeof(row));
-				if(m){
-					rows=m;
-					rows_init(c[0],text_sz[0]);
-				}
+				rows=(row*)malloc(rows_tot*sizeof(row));
+				if(rows)rows_init(c[0],text_sz[0]);
 				else ok=0;
 			}
 		}
