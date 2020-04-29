@@ -628,40 +628,36 @@ static size_t pasting(row*d,int r,int c,WINDOW*w){
 	fixmembuf(&y,&x);
 	bool one=cutbuf_r==1;
 	//1
-	size_t sz;size_t sz1r;char*a;
+	size_t szc;size_t sz1r;char*a;
 	bool in=y<(rows_tot-1);bool in1;
 	size_t szr=rows[y].sz-x;
 	if(in)szr+=ln_term_sze;
 	if(one){
-		sz=cutbuf_sz;sz1r=szr;
+		szc=cutbuf_sz;sz1r=szr;
 		in1=in;
 	}
 	else{
 		a=strchr(cutbuf,ln_term[0])+ln_term_sze;
-		sz=(size_t)(a-cutbuf);sz1r=0;
+		szc=(size_t)(a-cutbuf);sz1r=0;
 		in1=true;
 	}
-	size_t l=x+sz;
-	size_t size1=l+sz1r;
-	char*r1=malloc(size1);
-	if(r1==NULL)return 0;
-	d[0].data=r1;
+	size_t len=x+szc;
+	size_t size1=len+sz1r;
 	char*row1d=rows[y].data;
-	memcpy(r1,row1d,x);
-	memcpy(r1+x,cutbuf,sz);
-	memcpy(r1+l,row1d+x,sz1r);
-	if(in1)size1-=ln_term_sze;
-	d[0].sz=size1;
-	if(!one){
+	size_t max=cutbuf_r-1;
+	size_t ix;size_t l;
+	if(one)l=len;
+	else{
+		size_t sz=szc;
+		size_t n=max-1;
 		//inter
-		size_t max=cutbuf_r-1;
-		for(size_t i=1;i<max;i++){
+		for(size_t i=0;i<n;i++){
 			char*b=strchr(a,ln_term[0])+ln_term_sze;
 			size_t ln=(size_t)(b-a);
 			void*v=malloc(ln);
 			if(!v)return i;
-			d[i].data=v;
 			memcpy(v,cutbuf+sz,ln);
+			d[i].data=v;
 			d[i].sz=ln-ln_term_sze;
 			sz+=ln;
 			a=b;
@@ -670,28 +666,38 @@ static size_t pasting(row*d,int r,int c,WINDOW*w){
 		l=cutbuf_sz-sz;
 		size_t sizen=l+szr;
 		char*rn=malloc(sizen);
-		if(!rn)return max;
-		d[max].data=rn;
+		if(!rn)return n;
 		memcpy(rn,cutbuf+sz,l);
 		memcpy(rn+l,row1d+x,szr);
+		d[n].data=rn;
 		if(in)sizen-=ln_term_sze;
-		d[max].sz=sizen;
+		d[n].sz=sizen;
 		//mem
-		size_t i=rows_tot-1;
-		if(rows_expand(max))return cutbuf_r;
-		row*p=&rows[rows_tot-1];
-		while(y<i){
-			memcpy(p,&rows[i],sizeof(row));
-			i--;p--;
-		}
+		ix=rows_tot-1;
+		if(rows_expand(max))return max;
 	}
+	char*r1=malloc(size1);
+	if(r1==NULL)return max;
+	memcpy(r1,row1d,x);
+	memcpy(r1+x,cutbuf,szc);
+	memcpy(r1+len,row1d+x,sz1r);
 	text_free(y,1);
-	memcpy(rows+y,d,cutbuf_r*sizeof(row));
+	rows[y].data=r1;
+	if(in1)size1-=ln_term_sze;
+	rows[y].sz=size1;
+	if(!one){
+		row*p=&rows[rows_tot-1];
+		while(y<ix){
+			memcpy(p,&rows[ix],sizeof(row));
+			ix--;p--;
+		}
+		memcpy(rows+y+1,d,max*sizeof(row));
+	}
 	pasted(r,c,l,w);
 	return 0;
 }
 static void paste(WINDOW*w){
-	row*d=(row*)malloc(cutbuf_r*sizeof(row));
+	row*d=(row*)malloc((cutbuf_r-1)*sizeof(row));
 	if(!d)return;
 	int r=getcury(w);int c=getcurx(w);
 	size_t n=pasting(d,r,c,w);
