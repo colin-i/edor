@@ -625,27 +625,23 @@ static size_t pasting(row*d,int r,int c,WINDOW*w){
 	size_t y=ytext+(size_t)r;
 	size_t x=xtext+c_to_xc(c,r);
 	fixmembuf(&y,&x);
+	//
 	bool one=cutbuf_r==1;
-	//1
-	size_t szc;size_t sz1r;char*a;
-	bool in=y<(rows_tot-1);bool in1;
+	size_t szc;size_t sz1r;
+	size_t l;bool in1;
+	bool in=y<(rows_tot-1);
 	size_t szr=rows[y].sz-x;
 	if(in)szr+=ln_term_sze;
+	char*row1d=rows[y].data;
+	size_t max=cutbuf_r-1;
 	if(one){
 		szc=cutbuf_sz;sz1r=szr;
 		in1=in;
 	}
 	else{
-		a=strchr(cutbuf,ln_term[0])+ln_term_sze;
+		char*a=strchr(cutbuf,ln_term[0])+ln_term_sze;
 		szc=(size_t)(a-cutbuf);sz1r=0;
 		in1=true;
-	}
-	size_t len=x+szc;
-	char*row1d=rows[y].data;
-	size_t max=cutbuf_r-1;
-	size_t l;
-	if(one)l=len;
-	else{
 		size_t sz=szc;
 		size_t n=max-1;
 		//inter
@@ -673,6 +669,7 @@ static size_t pasting(row*d,int r,int c,WINDOW*w){
 		//mem
 		if(rows_expand(max))return max;
 	}
+	size_t len=x+szc;
 	size_t size1=len+sz1r;
 	char*r1=malloc(size1);
 	if(r1==NULL)return max;
@@ -683,7 +680,8 @@ static size_t pasting(row*d,int r,int c,WINDOW*w){
 	rows[y].data=r1;
 	if(in1)size1-=ln_term_sze;
 	rows[y].sz=size1;
-	if(!one){
+	if(one)l=len;
+	else{
 		size_t ix=rows_tot-1;
 		rows_tot+=max;
 		row*p=&rows[rows_tot-1];
