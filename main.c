@@ -46,7 +46,7 @@ int addstr(const char*);//3
 int mvaddstr(int,int,const char*);
 int mvwaddstr(WINDOW*,int,int,const char*);//4
 int mvaddch(int,int,const chtype);
-extern WINDOW*stdscr;//15
+extern WINDOW*stdscr;//14
 int werase(WINDOW*);//2
 int clrtoeol(void);
 int attrset(int);//2
@@ -134,6 +134,8 @@ static bool cutbuf_bool=false;
 static char*mapsel=NULL;
 static size_t cutbuf_spc=0;
 static size_t cutbuf_r=1;
+static char*text_init_b=NULL;
+static char*text_init_e=NULL;
 
 /*int ach(WINDOW*w){
 	if(poll(&stdinfd,1,0)<1)return 0;
@@ -483,6 +485,7 @@ static bool writemembuf(size_t ybsel,size_t xbsel,size_t yesel,size_t xesel){
 		memcpy(cutbuf+sz,rows[yesel].data,xesel);
 	}
 	cutbuf_sz=size;cutbuf_r=yesel-ybsel+1;
+	if(rows[yesel].sz<xesel)cutbuf_r++;
 	return true;
 }
 static void set1membuf(size_t y,size_t x,bool*orig,size_t*yb,size_t*xb,size_t*ye,size_t*xe){
@@ -612,6 +615,13 @@ static bool rows_expand(size_t n){
 	rows_tot=rowssize;
 	return false;
 }
+static void text_free(size_t b,size_t e){
+	size_t n=b+e;
+	for(size_t i=b;i<n;i++){
+		char*d=rows[i].data;
+		if(d<text_init_b||text_init_e<d)free(d);
+	}
+}
 static size_t pasting(row*d,int r,int c,WINDOW*w){
 	size_t y=ytext+(size_t)r;
 	size_t x=xtext+c_to_xc(c,r);
@@ -670,13 +680,12 @@ static size_t pasting(row*d,int r,int c,WINDOW*w){
 		size_t i=rows_tot-1;
 		if(rows_expand(max))return cutbuf_r;
 		row*p=&rows[rows_tot-1];
-		do{
+		while(y<i){
 			memcpy(p,&rows[i],sizeof(row));
-			i--;
-			if(y==i)break;
-			p--;
-		}while(true);
+			i--;p--;
+		}
 	}
+	text_free(y,1);
 	memcpy(rows+y,d,cutbuf_r*sizeof(row));
 	pasted(r,c,l,w);
 	return 0;
@@ -787,9 +796,10 @@ static int normalize(char**c,size_t*size,size_t*r){
 	}
 	return ok;
 }
-static void rows_init(char*a,size_t size){
-	char*b=&a[size];
-	rows[0].data=a;size_t sz;
+static void rows_init(size_t size){
+	char*b=&text_init_b[size];
+	rows[0].data=text_init_b;size_t sz;
+	char*a=text_init_b;
 	for(size_t i=1;i<rows_tot;i++){
 		sz=(size_t)(strchr(a,ln_term[0])-a);
 		rows[i-1].sz=sz;
@@ -799,38 +809,32 @@ static void rows_init(char*a,size_t size){
 	rows[rows_tot-1].sz=(size_t)(b-a);
 	rows_spc=rows_tot;
 }
-static int startpage(char*f,char**c,size_t*text_sz){
+static int startpage(char*f,size_t*text_sz){
 	int ok=0;
 	int fd=open(f,O_RDONLY);
 	if(fd!=-1){
 		size_t size=(size_t)lseek(fd,0,SEEK_END);
-		char*tx=malloc(size);
-		if(tx){
-			c[0]=tx;text_sz[0]=size;
+		text_init_b=malloc(size);
+		if(text_init_b){
 			lseek(fd,0,SEEK_SET);
-			read(fd,tx,size);
+			read(fd,text_init_b,size);
 			//
 			for(size_t i=size;i>0;i--){
-				if(tx[i]=='\n'){
-					if(i&&tx[i-1]=='\r'){
+				if(text_init_b[i]=='\n'){
+					if(i&&text_init_b[i-1]=='\r'){
 						ln_term[0]='\r';
 						ln_term[1]='\n';
 						ln_term[2]=0;
 						break;
 					}
 					else break;
-				}else if(tx[i]=='\r'){
+				}else if(text_init_b[i]=='\r'){
 					ln_term[0]='\r';
 					break;
 				}
 			}
 			ln_term_sze=strlen(ln_term);
-			ok=normalize(c,text_sz,&rows_tot);
-			if(ok){
-				rows=(row*)malloc(rows_tot*sizeof(row));
-				if(rows)rows_init(c[0],text_sz[0]);
-				else ok=0;
-			}
+			text_sz[0]=size;ok=1;
 		}
 		close(fd);
 	}
@@ -885,10 +889,10 @@ static void writefilebuf(char*cutbuf_file){
 	}
 }
 int main(int argc,char**argv){
-	char*text_w=NULL;size_t text_sz;
+	size_t text_sz;
 	int ok=0;
 	if(argc==2){
-		ok=startpage(argv[1],&text_w,&text_sz);
+		ok=startpage(argv[1],&text_sz);
 		if(ok){
 			if(ok<1){
 				puts("Normalize line endings to ");
@@ -899,81 +903,91 @@ int main(int argc,char**argv){
 				int c=getchar();
 				if(c=='n')ok=0;
 			}
-			if(ok)textfile=argv[1];
+			if(ok){
+				ok=normalize(&text_init_b,&text_sz,&rows_tot);
+				if(ok){
+					rows=(row*)malloc(rows_tot*sizeof(row));
+					if(rows){
+						rows_init(text_sz);
+						textfile=argv[1];
+					}
+					else ok=0;
+				}
+			}
 		}
 	}else{
-		text_w=(char*)malloc(1);
-		if(text_w){
+		text_init_b=(char*)malloc(1);
+		if(text_init_b){
 			rows=(row*)malloc(sizeof(row));
 			if(rows){
-				text_w[0]=0;
+				text_init_b[0]=0;
 				text_sz=0;
-				rows[0].data=text_w;rows[0].sz=0;
+				rows[0].data=text_init_b;rows[0].sz=0;
 				ok=1;
 			}
 		}
 	}
 	if(ok){
+		text_init_e=text_init_b+text_sz;
 		WINDOW*w1=initscr();
-		keypad(stdscr,true);	
-		mousemask(ALL_MOUSE_EVENTS,NULL);
-		start_color();
-		noecho();
-		if(init_pair(1,COLOR_BLACK,COLOR_WHITE)!=ERR){
-			char cutbuf_file_var[128];
-			char*cutbuf_file=cutbuf_file_var;
-			cutbuf_file[0]=0;
-			cutbuf_file=setfilebuf(argv[0],cutbuf_file);
-			bool loops=false;
-			do{
-				int r=getmaxy(w1)-1;
-				char*a=realloc(x_right,(size_t)r);
-				if(!a)break;
-				x_right=a;
-				int c=getmaxx(w1);
-				tabs_rsz=1+(c/tab_sz);
-				if(c%tab_sz)tabs_rsz++;
-				void*b=realloc(tabs,sizeof(int)*(size_t)(r*tabs_rsz));
-				if(!b)break;
-				tabs=(int*)b;
-				a=realloc(mapsel,(size_t)((c*r)+1));
-				if(!a)break;
-				mapsel=a;
-				WINDOW*w=newwin(r,c,0,0);
-				if(w){
-					keypad(w,true);
-					xtext=0;ytext=0;
-					printpage(w);
-					wmove(w,0,0);
-					printhelp();
-					loops=loopin(w);
-					delwin(w);
-				}else break;
-			}while(loops);
-			if(x_right){
-				free(x_right);
-				if(tabs){
-					free(tabs);
-					if(mapsel){
-						free(mapsel);
-						writefilebuf(cutbuf_file);
+		if(w1!=NULL){
+			if(start_color()!=ERR){
+				if(init_pair(1,COLOR_BLACK,COLOR_WHITE)!=ERR){
+					keypad(w1,true);
+					mousemask(ALL_MOUSE_EVENTS,NULL);
+					noecho();
+					char cutbuf_file_var[128];
+					char*cutbuf_file=cutbuf_file_var;
+					cutbuf_file[0]=0;
+					cutbuf_file=setfilebuf(argv[0],cutbuf_file);
+					bool loops=false;
+					do{
+						int r=getmaxy(w1)-1;
+						char*a=realloc(x_right,(size_t)r);
+						if(!a)break;
+						x_right=a;
+						int c=getmaxx(w1);
+						tabs_rsz=1+(c/tab_sz);
+						if(c%tab_sz)tabs_rsz++;
+						void*b=realloc(tabs,sizeof(int)*(size_t)(r*tabs_rsz));
+						if(!b)break;
+						tabs=(int*)b;
+						a=realloc(mapsel,(size_t)((c*r)+1));
+						if(!a)break;
+						mapsel=a;
+						WINDOW*w=newwin(r,c,0,0);
+						if(w){
+							keypad(w,true);
+							xtext=0;ytext=0;
+							printpage(w);
+							wmove(w,0,0);
+							printhelp();
+							loops=loopin(w);
+							delwin(w);
+						}else break;
+					}while(loops);
+					if(x_right){
+						free(x_right);
+						if(tabs){
+							free(tabs);
+							if(mapsel){
+								free(mapsel);
+								writefilebuf(cutbuf_file);
+							}
+						}
 					}
+					if(cutbuf)free(cutbuf);
 				}
 			}
-			if(cutbuf)free(cutbuf);
+			endwin();
 		}
-		endwin();
 	}
-	if(text_w){
+	if(text_init_b){
 		if(rows){
-			char*text_e=text_w+text_sz;
-			for(size_t i=0;i<rows_tot;i++){
-				char*d=rows[i].data;
-				if(d<text_w||text_e<d)free(d);
-			}
+			text_free(0,rows_tot);
 			free(rows);
 		}
-		free(text_w);
+		free(text_init_b);
 	}
 	return 0;
 }
