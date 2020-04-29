@@ -641,7 +641,6 @@ static size_t pasting(row*d,int r,int c,WINDOW*w){
 		in1=true;
 	}
 	size_t len=x+szc;
-	size_t size1=len+sz1r;
 	char*row1d=rows[y].data;
 	size_t max=cutbuf_r-1;
 	size_t l;
@@ -674,6 +673,7 @@ static size_t pasting(row*d,int r,int c,WINDOW*w){
 		//mem
 		if(rows_expand(max))return max;
 	}
+	size_t size1=len+sz1r;
 	char*r1=malloc(size1);
 	if(r1==NULL)return max;
 	memcpy(r1,row1d,x);
