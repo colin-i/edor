@@ -612,7 +612,6 @@ static bool rows_expand(size_t n){
 		if(!m)return true;
 		rows=m;rows_spc=rowssize;
 	}
-	rows_tot=rowssize;
 	return false;
 }
 static void text_free(size_t b,size_t e){
@@ -645,7 +644,7 @@ static size_t pasting(row*d,int r,int c,WINDOW*w){
 	size_t size1=len+sz1r;
 	char*row1d=rows[y].data;
 	size_t max=cutbuf_r-1;
-	size_t ix;size_t l;
+	size_t l;
 	if(one)l=len;
 	else{
 		size_t sz=szc;
@@ -673,7 +672,6 @@ static size_t pasting(row*d,int r,int c,WINDOW*w){
 		if(in)sizen-=ln_term_sze;
 		d[n].sz=sizen;
 		//mem
-		ix=rows_tot-1;
 		if(rows_expand(max))return max;
 	}
 	char*r1=malloc(size1);
@@ -686,6 +684,8 @@ static size_t pasting(row*d,int r,int c,WINDOW*w){
 	if(in1)size1-=ln_term_sze;
 	rows[y].sz=size1;
 	if(!one){
+		size_t ix=rows_tot-1;
+		rows_tot+=max;
 		row*p=&rows[rows_tot-1];
 		while(y<ix){
 			memcpy(p,&rows[ix],sizeof(row));
