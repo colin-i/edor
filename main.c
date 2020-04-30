@@ -5,7 +5,7 @@
 //#include <string.h>
 char*strchr(const char*,int);//3
 int strcmp(const char*,const char*);//6
-void*memcpy(void*,const void*,size_t);//12
+void*memcpy(void*,const void*,size_t);//11
 //sys/types.h
 typedef unsigned short mode_t;
 //asm-generic/fcntl.h
@@ -93,7 +93,7 @@ int poll(struct pollfd[],nfds_t,int);
 #define POLLIN 0x0001
 struct pollfd stdinfd={0,POLLIN,0};*/
 //#include <stdlib.h>
-void*realloc(void*,size_t);//5
+void*realloc(void*,size_t);//6
 char*getenv(const char*);
 //#include<stdio.h>
 int puts(const char*);//5
@@ -105,6 +105,7 @@ int getchar(void);
 static char*textfile=NULL;
 typedef struct{
 	char*data;
+	size_t spc;
 	size_t sz;
 }row;
 static char ln_term[3]="\n";
@@ -135,7 +136,8 @@ static char*mapsel=NULL;
 static size_t cutbuf_spc=0;
 static size_t cutbuf_r=1;
 static char*text_init_b=NULL;
-static char*text_init_e=NULL;
+static char*text_init_e;
+#define row_pad 0xF
 
 /*int ach(WINDOW*w){
 	if(poll(&stdinfd,1,0)<1)return 0;
@@ -601,7 +603,7 @@ static void pasted(int r,int c,size_t x,WINDOW*w){
 			if(b==s)break;
 		}while(c<maxx);
 		if(c>maxx){s++;c-=tab_sz;}
-		xtext=(size_t)(s-b);
+		xtext=(size_t)(s-d);
 	}
 	refreshpage(w);wmove(w,r,c);
 }
@@ -615,11 +617,40 @@ static bool rows_expand(size_t n){
 	return false;
 }
 static void text_free(size_t b,size_t e){
-	size_t n=b+e;
-	for(size_t i=b;i<n;i++){
+	for(size_t i=b;i<e;i++){
 		char*d=rows[i].data;
-		if(d<text_init_b||text_init_e<d)free(d);
+		if(d<text_init_b||text_init_e<=d)free(d);
 	}
+}
+static size_t row_pad_sz(size_t sz){
+	size_t dif=sz&row_pad;
+	if(dif)return sz+((dif^row_pad)+1);
+	return sz;
+}
+static bool mal_spc_rea(row*rw,size_t l,size_t c,size_t r,char*mid,size_t s_cut){
+	char*src=rw->data;char*dst;
+	size_t sz=l+c+r;
+	if(sz>rw->spc){
+		size_t size=row_pad_sz(sz);
+		if(text_init_b<=src&&src<text_init_e){
+			dst=(char*)malloc(size);
+			if(!dst)return true;
+			memcpy(dst,src,l);
+		}else{
+			dst=realloc(src,size);
+			if(!dst)return true;
+			src=dst;
+		}
+		rw->data=dst;
+		rw->spc=size;
+	}else dst=src;
+	size_t j=l+c;size_t k=l+r;size_t i=j+r;
+	while(j!=i){
+		i--;k--;dst[i]=src[k];
+	}
+	memcpy(dst+l,mid,c);
+	rw->sz=sz-s_cut;
+	return false;
 }
 static size_t pasting(row*d,int r,int c,WINDOW*w){
 	size_t y=ytext+(size_t)r;
@@ -628,59 +659,52 @@ static size_t pasting(row*d,int r,int c,WINDOW*w){
 	//
 	bool one=cutbuf_r==1;
 	size_t szc;size_t sz1r;
-	size_t l;bool in1;
-	bool in=y<(rows_tot-1);
+	size_t l;
+	size_t s_cut;size_t s_cut1;
 	size_t szr=rows[y].sz-x;
-	if(in)szr+=ln_term_sze;
-	char*row1d=rows[y].data;
+	if(y<(rows_tot-1)){szr+=ln_term_sze;s_cut=ln_term_sze;}
+	else s_cut=0;
 	size_t max=cutbuf_r-1;
 	if(one){
 		szc=cutbuf_sz;sz1r=szr;
-		in1=in;
+		s_cut1=s_cut;
 	}
 	else{
 		char*a=strchr(cutbuf,ln_term[0])+ln_term_sze;
 		szc=(size_t)(a-cutbuf);sz1r=0;
-		in1=true;
+		s_cut1=ln_term_sze;
 		size_t sz=szc;
 		size_t n=max-1;
 		//inter
 		for(size_t i=0;i<n;i++){
 			char*b=strchr(a,ln_term[0])+ln_term_sze;
 			size_t ln=(size_t)(b-a);
-			void*v=malloc(ln);
+			size_t spc_sz=row_pad_sz(ln);
+			void*v=malloc(spc_sz);
 			if(!v)return i;
 			memcpy(v,cutbuf+sz,ln);
 			d[i].data=v;
 			d[i].sz=ln-ln_term_sze;
+			d[i].spc=spc_sz;
 			sz+=ln;
 			a=b;
 		}
 		//last
 		l=cutbuf_sz-sz;
 		size_t sizen=l+szr;
-		char*rn=malloc(sizen);
+		size_t spc_sz=row_pad_sz(sizen);
+		char*rn=malloc(spc_sz);
 		if(!rn)return n;
 		memcpy(rn,cutbuf+sz,l);
-		memcpy(rn+l,row1d+x,szr);
+		memcpy(rn+l,rows[y].data+x,szr);
 		d[n].data=rn;
-		if(in)sizen-=ln_term_sze;
-		d[n].sz=sizen;
+		d[n].sz=sizen-s_cut;
+		d[n].spc=spc_sz;
 		//mem
 		if(rows_expand(max))return max;
 	}
-	size_t len=x+szc;
-	size_t size1=len+sz1r;
-	char*r1=malloc(size1);
-	if(r1==NULL)return max;
-	memcpy(r1,row1d,x);
-	memcpy(r1+x,cutbuf,szc);
-	memcpy(r1+len,row1d+x,sz1r);
-	text_free(y,1);
-	rows[y].data=r1;
-	if(in1)size1-=ln_term_sze;
-	rows[y].sz=size1;
-	if(one)l=len;
+	if(mal_spc_rea(&rows[y],x,szc,sz1r,cutbuf,s_cut1))return max;
+	if(one)l=x+szc;
 	else{
 		size_t ix=rows_tot-1;
 		rows_tot+=max;
@@ -802,15 +826,17 @@ static int normalize(char**c,size_t*size,size_t*r){
 }
 static void rows_init(size_t size){
 	char*b=&text_init_b[size];
-	rows[0].data=text_init_b;size_t sz;
+	row*z=&rows[0];
+	z->data=text_init_b;size_t sz;
 	char*a=text_init_b;
 	for(size_t i=1;i<rows_tot;i++){
 		sz=(size_t)(strchr(a,ln_term[0])-a);
-		rows[i-1].sz=sz;
+		z->sz=sz;z->spc=0;
 		a+=sz+ln_term_sze;
-		rows[i].data=a;
+		z=&rows[i];
+		z->data=a;
 	}
-	rows[rows_tot-1].sz=(size_t)(b-a);
+	z->sz=(size_t)(b-a);z->spc=0;
 	rows_spc=rows_tot;
 }
 static int startpage(char*f,size_t*text_sz){
@@ -926,13 +952,14 @@ int main(int argc,char**argv){
 			if(rows){
 				text_init_b[0]=0;
 				text_sz=0;
-				rows[0].data=text_init_b;rows[0].sz=0;
+				rows[0].data=text_init_b;
+				rows[0].sz=0;rows[0].spc=0;
 				ok=1;
 			}
 		}
 	}
 	if(ok){
-		text_init_e=text_init_b+text_sz;
+		text_init_e=text_init_b+text_sz+1;
 		WINDOW*w1=initscr();
 		if(w1!=NULL){
 			if(start_color()!=ERR){
