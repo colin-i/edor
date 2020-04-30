@@ -5,7 +5,7 @@
 //#include <string.h>
 char*strchr(const char*,int);//3
 int strcmp(const char*,const char*);//6
-void*memcpy(void*,const void*,size_t);//11
+void*memcpy(void*,const void*,size_t);//10
 //sys/types.h
 typedef unsigned short mode_t;
 //asm-generic/fcntl.h
@@ -645,10 +645,14 @@ static bool mal_spc_rea(row*rw,size_t l,size_t c,size_t r,char*mid,size_t s_cut)
 		rw->spc=size;
 	}else dst=src;
 	size_t j=l+c;size_t k=l+r;size_t i=j+r;
-	while(j!=i){
+	while(j<i){
 		i--;k--;dst[i]=src[k];
 	}
-	memcpy(dst+l,mid,c);
+	dst+=l;
+	while(c>0){
+		dst[0]=mid[0];
+		dst++;mid++;c--;
+	}
 	rw->sz=sz-s_cut;
 	return false;
 }
