@@ -127,6 +127,7 @@ static char helptext[]="INPUT"
 "\nmouse/touch press or v.scroll"
 "\nv = visual mode"
 "\n    c = copy"
+"\n    d = delete"
 "\np = paste"
 "\nb = build file";
 static char*cutbuf=NULL;
@@ -656,6 +657,37 @@ static bool mal_spc_rea(row*rw,size_t l,size_t c,size_t r,char*mid,size_t s_cut)
 	rw->sz=sz-s_cut;
 	return false;
 }
+static void delete(size_t ybsel,size_t xbsel,size_t yesel,size_t xesel){
+	fixmembuf(&ybsel,&xbsel);
+	fixmembuf(&yesel,&xesel);
+	xesel+=set2membuf(yesel,xesel);
+	//
+	row*r1=&rows[ybsel];
+	bool in=ybsel+1<rows_tot;
+	if(xesel>rows[yesel].sz)
+	if(in){yesel++;xesel=0;}
+	if(ybsel==yesel){
+		size_t sz=r1->sz;
+		if(in)sz+=ln_term_sze;
+		size_t dif=xesel-xbsel;
+		char*d=rows[ybsel].data;
+		for(size_t i=xesel;i<sz;i++){
+			d[i-dif]=d[i];
+		}
+		r1->sz-=dif;
+		return;
+	}
+	size_t c=rows[yesel].sz-xesel;
+	size_t s_cut=yesel+1<rows_tot?ln_term_sze:0;
+	if(mal_spc_rea(r1,xbsel,c+s_cut,0,rows[yesel].data+xesel,s_cut))return;
+	//collapse
+	row*j=&rows[ybsel]+1;
+	for(size_t i=yesel+1;i<rows_tot;i++){
+		memcpy(j,&rows[i],sizeof(row));
+		j++;
+	}
+	rows_tot-=yesel-ybsel;
+}
 static size_t pasting(row*d,int r,int c,WINDOW*w){
 	size_t y=ytext+(size_t)r;
 	size_t x=xtext+c_to_xc(c,r);
@@ -759,7 +791,7 @@ static bool loopin(WINDOW*w){
 							cutbuf_bool=b=='c';
 							if(cutbuf_bool){
 								if(writemembuf(ybsel,xbsel,yesel,xesel))v='C';
-							}
+							}else if(b=='d')delete(ybsel,xbsel,yesel,xesel);
 							visual(v);
 							refreshpage(w);
 						}else{
