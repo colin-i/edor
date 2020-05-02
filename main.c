@@ -681,6 +681,7 @@ static void delete(size_t ybsel,size_t xbsel,size_t yesel,size_t xesel){
 	size_t s_cut=yesel+1<rows_tot?ln_term_sze:0;
 	if(mal_spc_rea(r1,xbsel,c+s_cut,0,rows[yesel].data+xesel,s_cut))return;
 	//collapse
+	text_free(ybsel+1,yesel);
 	row*j=&rows[ybsel]+1;
 	for(size_t i=yesel+1;i<rows_tot;i++){
 		memcpy(j,&rows[i],sizeof(row));
