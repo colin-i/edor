@@ -5,7 +5,7 @@
 //#include <string.h>
 char*strchr(const char*,int);//3
 int strcmp(const char*,const char*);//6
-void*memcpy(void*,const void*,size_t);//10
+void*memcpy(void*,const void*,size_t);//11
 //sys/types.h
 typedef unsigned short mode_t;
 //asm-generic/fcntl.h
