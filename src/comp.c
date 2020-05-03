@@ -29,30 +29,31 @@ static bool out_wrt(int f,char*c){
 	if(s!=n)return true;
 	return false;
 }
-static void out_wr(int f){
-	if(out_wrt(f,".global main\n"))return;
-	if(out_wrt(f,".extern exit\n"))return;
-	if(out_wrt(f,"main:\n"))return;
+static bool out_wr(int f){
+	if(out_wrt(f,".global main\n"))return false;
+	if(out_wrt(f,".extern exit\n"))return false;
+	if(out_wrt(f,"main:\n"))return false;
 	int i=0;
 	do{
 		inst*a=&instrs[i];
-		if(a->str==0)return;
-		if(out_wrt(f,a->str))return;
-		if(out_chr(f,' '))return;
-		if(out_wrt(f,a->t[0]))return;
+		if(a->str==0)return true;
+		if(out_wrt(f,a->str))return false;
+		if(out_chr(f,' '))return false;
+		if(out_wrt(f,a->t[0]))return false;
 		int j=1;
 		do{
 			char*b=a->t[j];
 			if(b==0)break;
-			if(out_chr(f,','))return;
-			if(out_wrt(f,b))return;
+			if(out_chr(f,','))return false;
+			if(out_wrt(f,b))return false;
 			j++;
 		}while(true);
-		if(out_chr(f,'\n'))return;
+		if(out_chr(f,'\n'))return false;
 		i++;
 	}while(true);
 }
-void out_f(char*textfile){
+bool out_f(char*textfile){
+	bool r=false;
 	size_t n=strlen(textfile);
 	char*ext=".s";
 	size_t e=strlen(ext);
@@ -71,9 +72,10 @@ void out_f(char*textfile){
 		}
 		int f=open(s,O_WRONLY|O_CREAT|O_TRUNC,S_IRUSR|S_IWUSR);
 		if(f!=-1){
-			out_wr(f);
+			r=out_wr(f);
 			close(f);
 		}
 		free(s);
 	}
+	return r;
 }

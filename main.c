@@ -4,7 +4,7 @@
 
 //#include <string.h>
 char*strchr(const char*,int);//3
-int strcmp(const char*,const char*);//6
+int strcmp(const char*,const char*);//11
 void*memcpy(void*,const void*,size_t);//11
 //sys/types.h
 typedef unsigned short mode_t;
@@ -81,7 +81,7 @@ MEVENT;
 #define KEY_MOUSE 0631
 #define KEY_RESIZE 0632
 int getmouse(MEVENT*);
-const char*keyname(int);
+const char*keyname(int);//2
 //#include<poll.h>
 /*typedef unsigned int nfds_t;
 struct pollfd{
@@ -122,17 +122,19 @@ static int tabs_rsz;
 static int yhelp;
 static bool helpend;
 static char helptext[]="INPUT"
-"\nq is for quitting"
+"\nhelp"
+"\n    q(uit),up/down"
 "\narrows(+-alt),home/end(+-ctrl),page up/down"
 "\nmouse/touch press or v.scroll"
-"\nv = visual mode"
+"\nCtrl+v = visual mode"
 "\n    c = copy"
 "\n    d = delete"
-"\np = paste"
-"\nb = build file";
+"\nCtrl+p = paste"
+"\nCtrl+b = build file"
+"\nCtrl+q = quit";
+static bool visual_bool=false;
 static char*cutbuf=NULL;
 static size_t cutbuf_sz=0;
-static bool cutbuf_bool=false;
 static char*mapsel=NULL;
 static size_t cutbuf_spc=0;
 static size_t cutbuf_r=1;
@@ -330,7 +332,7 @@ static bool helpin(WINDOW*w){
 }
 static void printhelp(){
 	move(getmaxy(stdscr)-1,0);
-	printinverted("h for help");
+	printinverted("F1 for help");
 	wnoutrefresh(stdscr);
 }
 static void sumove(WINDOW*w,int y){tmove(w,y,false);}
@@ -791,6 +793,11 @@ static void paste(WINDOW*w){
 	}
 	free(d);
 }
+static void vis(char c,WINDOW*w){
+	visual(c);
+	wnoutrefresh(w);
+	doupdate();
+}
 static bool loopin(WINDOW*w){
 	int c;
 	do{
@@ -798,10 +805,9 @@ static bool loopin(WINDOW*w){
 		int a=movment(c,w);
 		if(a>0)return true;
 		if(!a){
-			if(c=='v'){
-				visual('V');
-				wnoutrefresh(w);
-				doupdate();
+			const char*s=keyname(c);
+			if(!strcmp(s,"^V")){
+				vis('V',w);
 				int rw=getcury(w);
 				size_t ybsel=ytext+(size_t)rw;
 				size_t xbsel=xtext+c_to_xc(getcurx(w),rw);
@@ -815,8 +821,8 @@ static bool loopin(WINDOW*w){
 						int r=getcury(w);int col=getcurx(w);
 						if(!z){
 							char v=' ';
-							cutbuf_bool=b=='c';
-							if(cutbuf_bool){
+							visual_bool=b=='c';
+							if(visual_bool){
 								if(writemembuf(ybsel,xbsel,yesel,xesel))v='C';
 							}else if(b=='d'){
 								if(delete(ybsel,xbsel,yesel,xesel))
@@ -834,9 +840,16 @@ static bool loopin(WINDOW*w){
 					}
 				}while(z);
 			}
-			else if(c=='p')paste(w);
-			else if(c=='b'){if(textfile)out_f(textfile);}
-			else if(c=='h'){
+			else if(!strcmp(s,"^P"))paste(w);
+			else if(!strcmp(s,"^B")){
+				if(textfile){
+					if(out_f(textfile)){
+						visual_bool=true;
+						vis('B',w);
+					}
+				}
+			}
+			else if(!strcmp(s,"KEY_F(1)")){
 				int cy=getcury(w);int cx=getcurx(w);
 				werase(w);
 				helpshow(0);
@@ -849,9 +862,12 @@ static bool loopin(WINDOW*w){
 				}
 				wmove(w,cy,cx);
 			}
-		}else if(cutbuf_bool){cutbuf_bool=false;visual(' ');}
-	}while(c!='q');
-	return false;
+			else if(!strcmp(s,"^Q"))return false;
+		}else{
+			if(visual_bool){visual_bool=false;visual(' ');}
+			continue;
+		}
+	}while(true);
 }
 static int normalize(char**c,size_t*size,size_t*r){
 	int ok=0;

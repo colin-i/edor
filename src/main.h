@@ -18,4 +18,4 @@ ssize_t write(int,const void*,size_t);
 void*malloc(size_t);
 void free(void*);
 
-void out_f(char*);
+bool out_f(char*);
