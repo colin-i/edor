@@ -37,7 +37,7 @@ int wmove(WINDOW*,int,int);//13
 int getcury(const WINDOW*);//20
 int getcurx(const WINDOW*);//14
 int getmaxy(const WINDOW*);//13
-int getmaxx(const WINDOW*);//10
+int getmaxx(const WINDOW*);//11
 WINDOW*newwin(int,int,int,int);
 int delwin(WINDOW*);
 int doupdate(void);//2
@@ -586,7 +586,7 @@ static void visual(char a){
 	mvaddch(getmaxy(stdscr)-1,getmaxx(stdscr)-1,a);
 	wnoutrefresh(stdscr);
 }
-static void pasted(int r,int c,size_t x,WINDOW*w){
+static void pasted(int r,size_t x,WINDOW*w){
 	size_t rws=cutbuf_r-1;
 	r+=rws;int maxy=getmaxy(w);
 	if(maxy<=r){
@@ -594,10 +594,11 @@ static void pasted(int r,int c,size_t x,WINDOW*w){
 		r=maxy-1;
 	}
 	//
-	if(x<=xtext){xtext=x;c=0;}
+	int c=0;
+	if(x<=xtext)xtext=x;
 	else{
 		char*d=rows[ytext+(size_t)r].data;
-		char*b=d+xtext;c=0;
+		char*b=d+xtext;
 		char*s=d+x;int maxx=getmaxx(w)-1;
 		do{
 			s--;c+=s[0]=='\t'?tab_sz:1;
@@ -657,7 +658,7 @@ static bool mal_spc_rea(row*rw,size_t l,size_t c,size_t r,char*mid,size_t s_cut)
 	rw->sz=sz-s_cut;
 	return false;
 }
-static void delete(size_t ybsel,size_t xbsel,size_t yesel,size_t xesel){
+static bool delete(size_t ybsel,size_t xbsel,size_t yesel,size_t xesel){
 	fixmembuf(&ybsel,&xbsel);
 	fixmembuf(&yesel,&xesel);
 	xesel+=set2membuf(yesel,xesel);
@@ -675,11 +676,11 @@ static void delete(size_t ybsel,size_t xbsel,size_t yesel,size_t xesel){
 			d[i-dif]=d[i];
 		}
 		r1->sz-=dif;
-		return;
+		return true;
 	}
 	size_t c=rows[yesel].sz-xesel;
 	size_t s_cut=yesel+1<rows_tot?ln_term_sze:0;
-	if(mal_spc_rea(r1,xbsel,c+s_cut,0,rows[yesel].data+xesel,s_cut))return;
+	if(mal_spc_rea(r1,xbsel,c+s_cut,0,rows[yesel].data+xesel,s_cut))return false;
 	//collapse
 	text_free(ybsel+1,yesel);
 	row*j=&rows[ybsel]+1;
@@ -688,6 +689,31 @@ static void delete(size_t ybsel,size_t xbsel,size_t yesel,size_t xesel){
 		j++;
 	}
 	rows_tot-=yesel-ybsel;
+	return true;
+}
+static void deleted(size_t ybsel,size_t xbsel,int*r,int*c,WINDOW*w){
+	if(ybsel<ytext){ytext=ybsel;r[0]=0;}
+	else r[0]=(int)(ybsel-ytext);
+	if(xbsel<=xtext){
+		xtext=xbsel;c[0]=0;
+		return;
+	}
+	char*d=rows[ybsel].data;
+	int cl=0;
+	int max=getmaxx(w);
+	size_t x=xbsel;
+	while(x>xtext){
+		x--;cl+=d[x]=='\t'?tab_sz:1;
+		if(cl>=max){
+			if(cl>max){
+				cl-=tab_sz;
+				x++;
+			}
+			break;
+		}
+	}
+	xtext=x;
+	c[0]=cl;
 }
 static size_t pasting(row*d,int r,int c,WINDOW*w){
 	size_t y=ytext+(size_t)r;
@@ -752,7 +778,7 @@ static size_t pasting(row*d,int r,int c,WINDOW*w){
 		}
 		memcpy(rows+y+1,d,max*sizeof(row));
 	}
-	pasted(r,c,l,w);
+	pasted(r,l,w);
 	return 0;
 }
 static void paste(WINDOW*w){
@@ -792,7 +818,10 @@ static bool loopin(WINDOW*w){
 							cutbuf_bool=b=='c';
 							if(cutbuf_bool){
 								if(writemembuf(ybsel,xbsel,yesel,xesel))v='C';
-							}else if(b=='d')delete(ybsel,xbsel,yesel,xesel);
+							}else if(b=='d'){
+								if(delete(ybsel,xbsel,yesel,xesel))
+									deleted(ybsel,xbsel,&r,&col,w);
+							}
 							visual(v);
 							refreshpage(w);
 						}else{
