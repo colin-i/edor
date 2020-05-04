@@ -3,7 +3,6 @@
 //free,11
 
 //#include <string.h>
-char*strchr(const char*,int);//3
 int strcmp(const char*,const char*);//11
 void*memcpy(void*,const void*,size_t);//11
 //sys/types.h
@@ -26,26 +25,30 @@ int wgetch(WINDOW*);//2
 int ungetch(int);
 typedef unsigned int chtype;
 chtype winch(WINDOW*);
-int mvwinnstr(WINDOW*,int,int,char*,int);//2
+int winnstr(WINDOW*,char*,int);
 int mvwinstr(WINDOW*,int,int,char*);//2
+int mvwinnstr(WINDOW*,int,int,char*,int);//2
 typedef unsigned mmask_t;
 mmask_t mousemask(mmask_t,mmask_t*);
 int noecho(void);
+int cbreak(void);
 #define ALL_MOUSE_EVENTS 0xFffFFff
 int move(int,int);//6
-int wmove(WINDOW*,int,int);//13
-int getcury(const WINDOW*);//20
-int getcurx(const WINDOW*);//14
+int wmove(WINDOW*,int,int);//14
+int getcury(const WINDOW*);//21
+int getcurx(const WINDOW*);//15
 int getmaxy(const WINDOW*);//13
-int getmaxx(const WINDOW*);//11
+int getmaxx(const WINDOW*);//12
 WINDOW*newwin(int,int,int,int);
 int delwin(WINDOW*);
 int doupdate(void);//2
 int wnoutrefresh(WINDOW*);//6
+int waddch(WINDOW*,const chtype);//2
+int mvaddch(int,int,const chtype);
 int addstr(const char*);//3
+int waddstr(WINDOW*,const char*);
 int mvaddstr(int,int,const char*);
 int mvwaddstr(WINDOW*,int,int,const char*);//4
-int mvaddch(int,int,const chtype);
 extern WINDOW*stdscr;//14
 int werase(WINDOW*);//2
 int clrtoeol(void);
@@ -75,6 +78,7 @@ MEVENT;
 #define KEY_LEFT 0404
 #define KEY_RIGHT 0405
 #define KEY_HOME 0406
+#define KEY_DC 0512
 #define KEY_END 0550
 #define KEY_PPAGE 0523
 #define KEY_NPAGE 0522
@@ -169,6 +173,7 @@ int mouse_test(WINDOW*w,int*x,int*y){
 	if(y[0]>get maxy(w))return -1;
 	return a;
 }*/
+static bool no_char(int z){return z<32||z>=127;}
 static void tab_grow(WINDOW*w,int r,char*a){
 	size_t sz=strlen(a);
 	x_right[r]=xtext<sz;
@@ -185,7 +190,7 @@ static void tab_grow(WINDOW*w,int r,char*a){
 			ptr[ptr[0]+1]=c;ptr[0]++;
 			j=i+1;
 			c+=tab_sz;cr+=tab_sz-1;
-		}else if(z<32||z>=127){
+		}else if(no_char(z)){
 			a[i]='?';char aux=a[i+1];a[i+1]=0;
 			mvwaddstr(w,r,c,a+j);a[i+1]=aux;a[i]=z;
 			c+=i-j+1;j=i+1;
@@ -717,6 +722,10 @@ static void deleted(size_t ybsel,size_t xbsel,int*r,int*c,WINDOW*w){
 	xtext=x;
 	c[0]=cl;
 }
+static char*memtrm(char*a){
+	while(a[0]!=ln_term[0])a++;
+	return a;
+}
 static size_t pasting(row*d,int r,int c,WINDOW*w){
 	size_t y=ytext+(size_t)r;
 	size_t x=xtext+c_to_xc(c,r);
@@ -735,14 +744,14 @@ static size_t pasting(row*d,int r,int c,WINDOW*w){
 		s_cut1=s_cut;
 	}
 	else{
-		char*a=strchr(cutbuf,ln_term[0])+ln_term_sze;
+		char*a=memtrm(cutbuf)+ln_term_sze;
 		szc=(size_t)(a-cutbuf);sz1r=0;
 		s_cut1=ln_term_sze;
 		size_t sz=szc;
 		size_t n=max-1;
 		//inter
 		for(size_t i=0;i<n;i++){
-			char*b=strchr(a,ln_term[0])+ln_term_sze;
+			char*b=memtrm(a)+ln_term_sze;
 			size_t ln=(size_t)(b-a);
 			size_t spc_sz=row_pad_sz(ln);
 			void*v=malloc(spc_sz);
@@ -798,9 +807,59 @@ static void vis(char c,WINDOW*w){
 	wnoutrefresh(w);
 	doupdate();
 }
+static void type(int c,WINDOW*w){
+	if(c=='\n')return;
+	else if(c==127)return;
+	else if(c==KEY_DC)return;
+	row*r;
+	int col=getcurx(w);
+	int row=getcury(w);
+	size_t x=xtext+c_to_xc(col,row);
+	size_t y=ytext+(size_t)row;
+	fixmembuf(&y,&x);
+	r=&rows[y];
+	size_t s_cut;
+	if(y+1<rows_tot)s_cut=ln_term_sze;
+	else s_cut=0;
+	if(mal_spc_rea(r,x,1,r->sz-x+s_cut,(char*)&c,s_cut))return;
+	bool is_tab=c=='\t';
+	int s=is_tab?tab_sz:1;
+	int max=getmaxx(w);
+	int column=col+s;
+	if(column>=max){
+		char*d=r->data;
+		do{
+			column-=d[xtext]=='\t'?tab_sz:1;
+			xtext++;
+		}while(column>=max);
+		refreshpage(w);
+	}else{
+		int n=max-col-s;
+		winnstr(w,mapsel,n);
+		if(is_tab){
+			for(int i=tab_sz;i>0;i--){
+				waddch(w,' ');
+			}
+			int*p=&tabs[tabs_rsz*row];
+			int a=p[0];p[0]=a+1;
+			p++;int i=0;
+			for(;i<a;i++){
+				if(col<p[i])break;
+			}
+			for(int j=a;i<j;j--){
+				p[j]=p[j-1];
+			}
+			p[i]=col;
+		}else{
+			waddch(w,no_char(c)?'?':(chtype)c);
+		}
+		waddstr(w,mapsel);
+	}
+	wmove(w,row,column);
+}
 static bool loopin(WINDOW*w){
 	int c;
-	do{
+	for(;;){
 		c=wgetch(w);
 		int a=movment(c,w);
 		if(a>0)return true;
@@ -863,11 +922,12 @@ static bool loopin(WINDOW*w){
 				wmove(w,cy,cx);
 			}
 			else if(!strcmp(s,"^Q"))return false;
-		}else{
-			if(visual_bool){visual_bool=false;visual(' ');}
-			continue;
+			type(c,w);continue;
+		}else if(visual_bool){
+			visual_bool=false;
+			visual(' ');
 		}
-	}while(true);
+	}
 }
 static int normalize(char**c,size_t*size,size_t*r){
 	int ok=0;
@@ -912,7 +972,7 @@ static void rows_init(size_t size){
 	z->data=text_init_b;size_t sz;
 	char*a=text_init_b;
 	for(size_t i=1;i<rows_tot;i++){
-		sz=(size_t)(strchr(a,ln_term[0])-a);
+		sz=(size_t)(memtrm(a)-a);
 		z->sz=sz;z->spc=0;
 		a+=sz+ln_term_sze;
 		z=&rows[i];
@@ -1047,8 +1107,9 @@ int main(int argc,char**argv){
 			if(start_color()!=ERR){
 				if(init_pair(1,COLOR_BLACK,COLOR_WHITE)!=ERR){
 					keypad(w1,true);
-					mousemask(ALL_MOUSE_EVENTS,NULL);
+					cbreak();//stty,cooked
 					noecho();
+					mousemask(ALL_MOUSE_EVENTS,NULL);
 					char cutbuf_file_var[128];
 					char*cutbuf_file=cutbuf_file_var;
 					cutbuf_file[0]=0;
