@@ -52,7 +52,7 @@ int mvaddstr(int,int,const char*);
 int mvwaddstr(WINDOW*,int,int,const char*);//4
 extern WINDOW*stdscr;//14
 int werase(WINDOW*);//2
-int clrtoeol(void);
+int clrtoeol(void);//2
 int attrset(int);//2
 int wattrset(WINDOW*,int);//2
 int start_color(void);
@@ -338,6 +338,7 @@ static bool helpin(WINDOW*w){
 }
 static void printhelp(){
 	move(getmaxy(stdscr)-1,0);
+	clrtoeol();//when resized one row up
 	printinverted("F1 for help");
 	wnoutrefresh(stdscr);
 }
@@ -845,10 +846,10 @@ static void type(int c,WINDOW*w){
 			int a=p[0];p[0]=a+1;
 			p++;int i=0;
 			for(;i<a;i++){
-				if(col<p[i])break;
+				if(col<=p[i])break;
 			}
 			for(int j=a;i<j;j--){
-				p[j]=p[j-1];
+				p[j]=p[j-1]+tab_sz;
 			}
 			p[i]=col;
 		}else{
@@ -924,7 +925,7 @@ static bool loopin(WINDOW*w){
 			}
 			else if(!strcmp(s,"^Q"))return false;
 			else type(c,w);
-			continue;
+			//continue;
 		}else if(visual_bool){
 			visual_bool=false;
 			visual(' ');
