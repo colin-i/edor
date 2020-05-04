@@ -32,6 +32,7 @@ typedef unsigned mmask_t;
 mmask_t mousemask(mmask_t,mmask_t*);
 int noecho(void);
 int cbreak(void);
+int nonl(void);
 #define ALL_MOUSE_EVENTS 0xFffFFff
 int move(int,int);//6
 int wmove(WINDOW*,int,int);//14
@@ -808,7 +809,7 @@ static void vis(char c,WINDOW*w){
 	doupdate();
 }
 static void type(int c,WINDOW*w){
-	if(c=='\n')return;
+	if(c=='\r')return;
 	else if(c==127)return;
 	else if(c==KEY_DC)return;
 	row*r;
@@ -922,7 +923,8 @@ static bool loopin(WINDOW*w){
 				wmove(w,cy,cx);
 			}
 			else if(!strcmp(s,"^Q"))return false;
-			type(c,w);continue;
+			else type(c,w);
+			continue;
 		}else if(visual_bool){
 			visual_bool=false;
 			visual(' ');
@@ -1109,6 +1111,7 @@ int main(int argc,char**argv){
 					keypad(w1,true);
 					cbreak();//stty,cooked
 					noecho();
+					nonl();//no translation,faster
 					mousemask(ALL_MOUSE_EVENTS,NULL);
 					char cutbuf_file_var[128];
 					char*cutbuf_file=cutbuf_file_var;
