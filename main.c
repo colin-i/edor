@@ -838,22 +838,24 @@ static void type(int c,WINDOW*w){
 	}else{
 		int n=max-col-s;
 		winnstr(w,mapsel,n);
+		int*t=&tabs[tabs_rsz*row];
+		int a=t[0];int*p=t+1;int i=0;
+		for(;i<a;i++){
+			if(col<=p[i])break;
+		}
 		if(is_tab){
-			for(int i=tab_sz;i>0;i--){
+			for(int k=tab_sz;k>0;k--){
 				waddch(w,' ');
 			}
-			int*p=&tabs[tabs_rsz*row];
-			int a=p[0];p[0]=a+1;
-			p++;int i=0;
-			for(;i<a;i++){
-				if(col<=p[i])break;
-			}
-			for(int j=a;i<j;j--){
-				p[j]=p[j-1]+tab_sz;
-			}
+			t[0]=a+1;
+			for(int j=a;i<j;j--){p[j]=p[j-1]+tab_sz;}
 			p[i]=col;
 		}else{
 			waddch(w,no_char(c)?'?':(chtype)c);
+			int j=a;
+			while(i<j){
+				j--;p[j]=p[j]+1;
+			}
 		}
 		waddstr(w,mapsel);
 	}
