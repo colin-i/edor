@@ -35,7 +35,7 @@ int cbreak(void);
 int nonl(void);
 #define ALL_MOUSE_EVENTS 0xFffFFff
 int move(int,int);//6
-int wmove(WINDOW*,int,int);//14
+int wmove(WINDOW*,int,int);//15
 int getcury(const WINDOW*);//21
 int getcurx(const WINDOW*);//15
 int getmaxy(const WINDOW*);//13
@@ -174,12 +174,11 @@ int mouse_test(WINDOW*w,int*x,int*y){
 	if(y[0]>get maxy(w))return -1;
 	return a;
 }*/
-static bool no_char(int z){return z<32||z>=127;}
-static void tab_grow(WINDOW*w,int r,char*a){
+static bool no_char(char z){return z<32||z>=127;}
+static void tab_grow(WINDOW*w,int r,char*a,int*ptr){
 	size_t sz=strlen(a);
 	x_right[r]=xtext<sz;
 	if(!x_right[r])return;
-	int*ptr=&tabs[tabs_rsz*r];ptr[0]=0;
 	int c=0;int cr=0;
 	int max=getmaxx(w);
 	size_t i=xtext;size_t j=i;
@@ -208,13 +207,15 @@ static void printpage(WINDOW*w){
 	size_t maxx=xtext+(size_t)getmaxx(w);
 	do{
 		size_t j=ytext+(size_t)i;
-		char*str=rows[j].data;
-		size_t sz=rows[j].sz;
-		if(sz>maxx)sz=maxx;
-		char stor=str[sz];str[sz]=0;
-		tab_grow(w,i,str);
-		str[sz]=stor;
-		if(j+1==rows_tot)break;
+		int*ptr=&tabs[tabs_rsz*i];ptr[0]=0;
+		if(j<rows_tot){
+			char*str=rows[j].data;
+			size_t sz=rows[j].sz;
+			if(sz>maxx)sz=maxx;
+			char stor=str[sz];str[sz]=0;
+			tab_grow(w,i,str,ptr);
+			str[sz]=stor;
+		}else x_right[i]=false;
 		i++;
 	}while(i<maxy);
 }
@@ -440,9 +441,9 @@ static int movment(int c,WINDOW*w){
 			refreshpage(w);
 			wmove(w,0,0);
 		}else if(!strcmp(s,"kEND5")){
+			size_t max=(size_t)getmaxy(w);
+			ytext=rows_tot<=max?0:rows_tot-max;
 			size_t a=rows_tot-1;
-			size_t b=a-(size_t)getmaxy(w)+1;
-			ytext=b<=0?0:b;
 			int y=(int)(a-ytext);
 			int x=end(w,a);
 			refreshpage(w);
@@ -453,10 +454,11 @@ static int movment(int c,WINDOW*w){
 	return -1;
 }
 static void fixmembuf(size_t*y,size_t*x){
-	if(y[0]>rows_tot-1)y[0]=rows_tot-1;
+	bool last=y[0]>=rows_tot;
+	if(last)y[0]=rows_tot-1;
 	size_t r=y[0];
 	size_t sz=rows[r].sz;
-	if(x[0]>sz)x[0]=sz;
+	if(last||x[0]>sz)x[0]=sz;
 }
 static size_t set2membuf(size_t yesel,size_t xesel){
 	if(xesel==rows[yesel].sz){
@@ -595,18 +597,18 @@ static void visual(char a){
 	mvaddch(getmaxy(stdscr)-1,getmaxx(stdscr)-1,a);
 	wnoutrefresh(stdscr);
 }
-static void pasted(int r,size_t x,WINDOW*w){
+static void pasted(size_t r,size_t x,WINDOW*w){
 	size_t rws=cutbuf_r-1;
-	r+=rws;int maxy=getmaxy(w);
+	r+=rws;size_t maxy=(size_t)getmaxy(w);
 	if(maxy<=r){
-		ytext+=(size_t)(r-maxy+1);
+		ytext+=r-maxy+1;
 		r=maxy-1;
 	}
 	//
 	int c=0;
 	if(x<=xtext)xtext=x;
 	else{
-		char*d=rows[ytext+(size_t)r].data;
+		char*d=rows[ytext+r].data;
 		char*b=d+xtext;
 		char*s=d+x;int maxx=getmaxx(w)-1;
 		do{
@@ -616,7 +618,7 @@ static void pasted(int r,size_t x,WINDOW*w){
 		if(c>maxx){s++;c-=tab_sz;}
 		xtext=(size_t)(s-d);
 	}
-	refreshpage(w);wmove(w,r,c);
+	refreshpage(w);wmove(w,(int)r,c);
 }
 static bool rows_expand(size_t n){
 	size_t rowssize=rows_tot+n;
@@ -667,39 +669,6 @@ static bool mal_spc_rea(row*rw,size_t l,size_t c,size_t r,char*mid,size_t s_cut)
 	rw->sz=sz-s_cut;
 	return false;
 }
-static bool delete(size_t ybsel,size_t xbsel,size_t yesel,size_t xesel){
-	fixmembuf(&ybsel,&xbsel);
-	fixmembuf(&yesel,&xesel);
-	xesel+=set2membuf(yesel,xesel);
-	//
-	row*r1=&rows[ybsel];
-	bool in=ybsel+1<rows_tot;
-	if(xesel>rows[yesel].sz)
-	if(in){yesel++;xesel=0;}
-	if(ybsel==yesel){
-		size_t sz=r1->sz;
-		if(in)sz+=ln_term_sze;
-		size_t dif=xesel-xbsel;
-		char*d=rows[ybsel].data;
-		for(size_t i=xesel;i<sz;i++){
-			d[i-dif]=d[i];
-		}
-		r1->sz-=dif;
-		return true;
-	}
-	size_t c=rows[yesel].sz-xesel;
-	size_t s_cut=yesel+1<rows_tot?ln_term_sze:0;
-	if(mal_spc_rea(r1,xbsel,c+s_cut,0,rows[yesel].data+xesel,s_cut))return false;
-	//collapse
-	text_free(ybsel+1,yesel);
-	row*j=&rows[ybsel]+1;
-	for(size_t i=yesel+1;i<rows_tot;i++){
-		memcpy(j,&rows[i],sizeof(row));
-		j++;
-	}
-	rows_tot-=yesel-ybsel;
-	return true;
-}
 static void deleted(size_t ybsel,size_t xbsel,int*r,int*c,WINDOW*w){
 	if(ybsel<ytext){ytext=ybsel;r[0]=0;}
 	else r[0]=(int)(ybsel-ytext);
@@ -723,6 +692,39 @@ static void deleted(size_t ybsel,size_t xbsel,int*r,int*c,WINDOW*w){
 	}
 	xtext=x;
 	c[0]=cl;
+}
+static void delete(size_t ybsel,size_t xbsel,size_t yesel,size_t xesel,int*rw,int*cl,WINDOW*w){
+	fixmembuf(&ybsel,&xbsel);
+	fixmembuf(&yesel,&xesel);
+	xesel+=set2membuf(yesel,xesel);
+	//
+	row*r1=&rows[ybsel];
+	bool in=ybsel+1<rows_tot;
+	if(xesel>rows[yesel].sz)
+	if(in){yesel++;xesel=0;}
+	if(ybsel==yesel){
+		size_t sz=r1->sz;
+		if(in)sz+=ln_term_sze;
+		size_t dif=xesel-xbsel;
+		char*d=rows[ybsel].data;
+		for(size_t i=xesel;i<sz;i++){
+			d[i-dif]=d[i];
+		}
+		r1->sz-=dif;
+	}else{
+		size_t c=rows[yesel].sz-xesel;
+		size_t s_cut=yesel+1<rows_tot?ln_term_sze:0;
+		if(mal_spc_rea(r1,xbsel,c+s_cut,0,rows[yesel].data+xesel,s_cut))return;
+		//collapse
+		text_free(ybsel+1,yesel);
+		row*j=&rows[ybsel]+1;
+		for(size_t i=yesel+1;i<rows_tot;i++){
+			memcpy(j,&rows[i],sizeof(row));
+			j++;
+		}
+		rows_tot-=yesel-ybsel;
+	}
+	deleted(ybsel,xbsel,rw,cl,w);
 }
 static char*memtrm(char*a){
 	while(a[0]!=ln_term[0])a++;
@@ -791,7 +793,7 @@ static size_t pasting(row*d,int r,int c,WINDOW*w){
 		}
 		memcpy(rows+y+1,d,max*sizeof(row));
 	}
-	pasted(r,l,w);
+	pasted(y-ytext,l,w);
 	return 0;
 }
 static void paste(WINDOW*w){
@@ -809,57 +811,74 @@ static void vis(char c,WINDOW*w){
 	wnoutrefresh(w);
 	doupdate();
 }
-static void type(int c,WINDOW*w){
-	if(c=='\r')return;
-	else if(c==127)return;
-	else if(c==KEY_DC)return;
-	row*r;
-	int col=getcurx(w);
-	int row=getcury(w);
-	size_t x=xtext+c_to_xc(col,row);
-	size_t y=ytext+(size_t)row;
-	fixmembuf(&y,&x);
-	r=&rows[y];
-	size_t s_cut;
-	if(y+1<rows_tot)s_cut=ln_term_sze;
-	else s_cut=0;
-	if(mal_spc_rea(r,x,1,r->sz-x+s_cut,(char*)&c,s_cut))return;
-	bool is_tab=c=='\t';
-	int s=is_tab?tab_sz:1;
-	int max=getmaxx(w);
-	int column=col+s;
-	if(column>=max){
-		char*d=r->data;
-		do{
-			column-=d[xtext]=='\t'?tab_sz:1;
-			xtext++;
-		}while(column>=max);
-		refreshpage(w);
+static void type(int cr,WINDOW*w){
+	int cl=getcurx(w);
+	int rw=getcury(w);
+	size_t x=xtext+c_to_xc(cl,rw);
+	size_t y=ytext+(size_t)rw;
+	size_t xx=x;fixmembuf(&y,&x);
+	row*r=&rows[y];
+	int rwnr=rw;rw=(int)(y-ytext);
+	bool off=rw<rwnr;
+	if(off){
+		xtext=r->sz;
+		cl=0;
 	}else{
-		int n=max-col-s;
-		winnstr(w,mapsel,n);
-		int*t=&tabs[tabs_rsz*row];
-		int a=t[0];int*p=t+1;int i=0;
-		for(;i<a;i++){
-			if(col<=p[i])break;
-		}
-		if(is_tab){
-			for(int k=tab_sz;k>0;k--){
-				waddch(w,' ');
-			}
-			t[0]=a+1;
-			for(int j=a;i<j;j--){p[j]=p[j-1]+tab_sz;}
-			p[i]=col;
-		}else{
-			waddch(w,no_char(c)?'?':(chtype)c);
-			int j=a;
-			while(i<j){
-				j--;p[j]=p[j]+1;
-			}
-		}
-		waddstr(w,mapsel);
+		cl-=(int)(xx-x);
 	}
-	wmove(w,row,column);
+	if(cr=='\r'){}
+	else if(cr==127){}
+	else if(cr==KEY_DC){}
+	else{
+		char chr=(char)cr;
+		size_t s_cut;
+		if(y+1<rows_tot)s_cut=ln_term_sze;
+		else s_cut=0;
+		if(mal_spc_rea(r,x,1,r->sz-x+s_cut,&chr,s_cut))return;
+		bool is_tab=chr=='\t';
+		int s=is_tab?tab_sz:1;
+		if(off){
+			cl=s;
+		}else{
+			int colmn=cl;
+			cl+=s;
+			int max=getmaxx(w);
+			if(cl>=max){
+				char*d=r->data;
+				do{
+					cl-=d[xtext]=='\t'?tab_sz:1;
+					xtext++;
+				}while(cl>=max);
+				refreshpage(w);
+			}else{
+				wmove(w,rw,colmn);
+				int n=max-cl;
+				winnstr(w,mapsel,n);
+				int*t=&tabs[tabs_rsz*rw];
+				int a=t[0];int*p=t+1;int i=0;
+				for(;i<a;i++){
+					if(colmn<=p[i])break;
+				}
+				if(is_tab){
+					for(int k=tab_sz;k>0;k--){
+						waddch(w,' ');
+					}
+					t[0]=a+1;
+					for(int j=a;i<j;j--){p[j]=p[j-1]+tab_sz;}
+					p[i]=colmn;
+				}else{
+					waddch(w,no_char(chr)?'?':chr);
+					int j=a;
+					while(i<j){
+						j--;p[j]=p[j]+1;
+					}
+				}
+				waddstr(w,mapsel);
+			}
+		}
+	}
+	if(off)refreshpage(w);
+	wmove(w,rw,cl);
 }
 static bool loopin(WINDOW*w){
 	int c;
@@ -888,8 +907,7 @@ static bool loopin(WINDOW*w){
 							if(visual_bool){
 								if(writemembuf(ybsel,xbsel,yesel,xesel))v='C';
 							}else if(b=='d'){
-								if(delete(ybsel,xbsel,yesel,xesel))
-									deleted(ybsel,xbsel,&r,&col,w);
+								delete(ybsel,xbsel,yesel,xesel,&r,&col,w);
 							}
 							visual(v);
 							refreshpage(w);
