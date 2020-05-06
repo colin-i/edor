@@ -1,5 +1,5 @@
 #include"src/main.h"
-//strlen,3;open,4;close,3;write;malloc,10
+//strlen,2;open,4;close,3;write;malloc,10
 //free,11
 
 //#include <string.h>
@@ -177,8 +177,7 @@ int mouse_test(WINDOW*w,int*x,int*y){
 	return a;
 }*/
 static bool no_char(char z){return z<32||z>=127;}
-static void tab_grow(WINDOW*w,int r,char*a,int*ptr){
-	size_t sz=strlen(a);
+static void tab_grow(WINDOW*w,int r,char*a,size_t sz,int*ptr){
 	x_right[r]=xtext<sz;
 	if(!x_right[r])return;
 	int c=0;int cr=0;
@@ -215,7 +214,7 @@ static void printpage(WINDOW*w){
 			size_t sz=rows[j].sz;
 			if(sz>maxx)sz=maxx;
 			char stor=str[sz];str[sz]=0;
-			tab_grow(w,i,str,ptr);
+			tab_grow(w,i,str,sz,ptr);
 			str[sz]=stor;
 		}else x_right[i]=false;
 		i++;
@@ -540,7 +539,8 @@ static size_t c_to_xc(int c,int r){
 	int n=p[0];int x=c;
 	for(int i=0;i<n;i++){
 		p++;
-		if(p[0]<c)x-=tab_sz-1;
+		//cright can be in tab
+		if((p[0]+(tab_sz-1))<c)x-=tab_sz-1;
 		else break;
 	}
 	return (size_t)x;
@@ -577,6 +577,16 @@ static void printsel(WINDOW*w,size_t ybsel,size_t xbsel,size_t yesel,size_t xese
 		if(xtext+c_to_xc(cright,re)<=xesel)ce=cright;
 		else if(xtext<=xesel)ce=xc_to_c((int)(xesel-xtext),re);
 		else{re--;ce=cright;}
+	}
+	int*t=&tabs[re*tabs_rsz];
+	for(int i=t[0];i>0;i--){
+		if(t[i]<=ce){
+			if(t[i]==ce){
+				ce+=tab_sz-1;
+				if(ce>=wd)ce=wd-1;
+			}
+			break;
+		}
 	}
 	if(rb==re){
 		mvwinnstr(w,rb,cb,mapsel,ce-cb+1);
