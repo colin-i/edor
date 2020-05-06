@@ -1,5 +1,5 @@
 #include"src/main.h"
-//strlen,4;open,4;close,3;write;malloc,10
+//strlen,3;open,4;close,3;write;malloc,10
 //free,11
 
 //#include <string.h>
@@ -116,7 +116,7 @@ typedef struct{
 	size_t sz;
 }row;
 static char ln_term[3]="\n";
-static size_t ln_term_sze;
+static size_t ln_term_sze=1;
 static row*rows=NULL;
 static size_t rows_tot=1;
 static size_t rows_spc=1;
@@ -1072,22 +1072,24 @@ static int startpage(char*f,size_t*text_sz){
 			lseek(fd,0,SEEK_SET);
 			read(fd,text_init_b,size);
 			//
-			for(size_t i=size;i>0;i--){
+			size_t i=size;
+			while(i>0){
+				i--;
 				if(text_init_b[i]=='\n'){
 					if(i&&text_init_b[i-1]=='\r'){
 						ln_term[0]='\r';
 						ln_term[1]='\n';
 						ln_term[2]=0;
-						break;
+						ln_term_sze=2;
 					}
-					else break;
+					break;
 				}else if(text_init_b[i]=='\r'){
 					ln_term[0]='\r';
 					break;
 				}
 			}
-			ln_term_sze=strlen(ln_term);
-			text_sz[0]=size;ok=1;
+			text_sz[0]=size;
+			ok=normalize(&text_init_b,text_sz,&rows_tot);
 		}
 		close(fd);
 	}
@@ -1157,15 +1159,12 @@ int main(int argc,char**argv){
 				if(c=='n')ok=0;
 			}
 			if(ok){
-				ok=normalize(&text_init_b,&text_sz,&rows_tot);
-				if(ok){
-					rows=(row*)malloc(rows_tot*sizeof(row));
-					if(rows){
-						rows_init(text_sz);
-						textfile=argv[1];
-					}
-					else ok=0;
+				rows=(row*)malloc(rows_tot*sizeof(row));
+				if(rows){
+					rows_init(text_sz);
+					textfile=argv[1];
 				}
+				else ok=0;
 			}
 		}
 	}else{
