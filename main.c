@@ -45,8 +45,8 @@ int wnoutrefresh(WINDOW*);//6
 int waddch(WINDOW*,const chtype);//2
 int mvaddch(int,int,const chtype);
 int addstr(const char*);//3
-int waddstr(WINDOW*,const char*);//5
-int waddnstr(WINDOW*,const char*,int);
+int waddstr(WINDOW*,const char*);//4
+int waddnstr(WINDOW*,const char*,int);//2
 int mvaddstr(int,int,const char*);
 extern WINDOW*stdscr;//14
 int werase(WINDOW*);//2
@@ -185,10 +185,8 @@ static void tab_grow(WINDOW*w,int r,char*a,size_t sz,int*ptr){
 	for(;i<sz&&cr<max;i++){
 		char z=a[i];
 		if(z=='\t'){
-			size_t n=i-j;
-			if(n){
-				a[i]=0;waddstr(w,a+j);a[i]='\t';
-			}
+			int n=(int)(i-j);
+			waddnstr(w,a+j,n);
 			c+=n;
 			ptr[ptr[0]+1]=c;ptr[0]++;
 			j=i+1;
