@@ -948,7 +948,7 @@ static void type(int cr,WINDOW*w){
 		xtext=r->sz;
 		cl=0;
 	}else{
-		cl-=(int)(xx-x);
+		cl-=xx-x;
 	}
 	if(cr=='\r'){}
 	else if(cr==127){if(bcsp(y,&rw,&cl,w))return;}
