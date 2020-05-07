@@ -25,9 +25,7 @@ int wgetch(WINDOW*);//2
 int ungetch(int);
 typedef unsigned int chtype;
 chtype winch(WINDOW*);
-int winnstr(WINDOW*,char*,int);
-int mvwinstr(WINDOW*,int,int,char*);//2
-int mvwinnstr(WINDOW*,int,int,char*,int);//2
+int winnstr(WINDOW*,char*,int);//2
 typedef unsigned mmask_t;
 mmask_t mousemask(mmask_t,mmask_t*);
 int noecho(void);
@@ -35,11 +33,11 @@ int cbreak(void);
 int nonl(void);
 #define ALL_MOUSE_EVENTS 0xFffFFff
 int move(int,int);//6
-int wmove(WINDOW*,int,int);//15
+int wmove(WINDOW*,int,int);//17
 int getcury(const WINDOW*);//21
 int getcurx(const WINDOW*);//15
 int getmaxy(const WINDOW*);//13
-int getmaxx(const WINDOW*);//13
+int getmaxx(const WINDOW*);//14
 WINDOW*newwin(int,int,int,int);
 int delwin(WINDOW*);
 int doupdate(void);//2
@@ -47,19 +45,20 @@ int wnoutrefresh(WINDOW*);//6
 int waddch(WINDOW*,const chtype);//2
 int mvaddch(int,int,const chtype);
 int addstr(const char*);//3
-int waddstr(WINDOW*,const char*);
+int waddstr(WINDOW*,const char*);//2
 int waddnstr(WINDOW*,const char*,int);
 int mvaddstr(int,int,const char*);
-int mvwaddstr(WINDOW*,int,int,const char*);//4
+int mvwaddstr(WINDOW*,int,int,const char*);//3
 extern WINDOW*stdscr;//14
 int werase(WINDOW*);//2
 int clrtoeol(void);//2
 int wclrtoeol(WINDOW*);
-int attrset(int);//2
-int wattrset(WINDOW*,int);//2
+int attrset(int);//3
+int wattrset(WINDOW*,int);
 int start_color(void);
-int init_pair(short,short,short);
+int init_pair(short,short,short);//2
 #define COLOR_BLACK 0
+#define COLOR_CYAN 6
 #define COLOR_WHITE 7
 #define ERR -1
 int COLOR_PAIR(int);//2
@@ -183,24 +182,29 @@ static void tab_grow(WINDOW*w,int r,char*a,size_t sz,int*ptr){
 	int c=0;int cr=0;
 	int max=getmaxx(w);
 	size_t i=xtext;size_t j=i;
+	wmove(w,r,0);
 	for(;i<sz&&cr<max;i++){
 		char z=a[i];
 		if(z=='\t'){
-			a[i]=0;mvwaddstr(w,r,c,a+j);a[i]='\t';
-			c+=i-j;
+			size_t n=i-j;
+			if(n){
+				a[i]=0;waddstr(w,a+j);a[i]='\t';
+			}
+			c+=n;
 			ptr[ptr[0]+1]=c;ptr[0]++;
 			j=i+1;
 			c+=tab_sz;cr+=tab_sz-1;
+			wmove(w,r,c);
 		}else if(no_char(z)){
 			a[i]='?';char aux=a[i+1];a[i+1]=0;
-			mvwaddstr(w,r,c,a+j);a[i+1]=aux;a[i]=z;
+			waddstr(w,a+j);a[i+1]=aux;a[i]=z;
 			c+=i-j+1;j=i+1;
 		}
 		cr++;
 	}
 	if(c<max){
 		char e=a[i];
-		a[i]=0;mvwaddstr(w,r,c,a+j);a[i]=e;
+		a[i]=0;waddstr(w,a+j);a[i]=e;
 	}
 }
 static void printpage(WINDOW*w){
@@ -555,6 +559,38 @@ static int xc_to_c(int col,int r){
 	}
 	return col;
 }
+static int mid(int r,int max){
+	size_t y=ytext+(size_t)r;
+	if(y<rows_tot){
+		size_t sz=rows[y].sz;
+		if(sz<xtext)return 0;
+		sz-=xtext;
+		int w=tabs[r*tabs_rsz]*(tab_sz-1)+(int)sz;
+		if(w<max){
+			return w;
+		}
+		return max;
+	}
+	return 0;
+}
+static void printpart(WINDOW*w,int p,int n){
+	wattrset(w,COLOR_PAIR(p));
+	winnstr(w,mapsel,n);
+	waddstr(w,mapsel);
+}
+static void printrow(WINDOW*w,int r,int b,int e){
+	int m=mid(r,getmaxx(w));
+	if(m<=b){
+		printpart(w,2,e-b);
+		return;
+	}
+	if(e<=m){
+		printpart(w,1,e-b);
+		return;
+	}
+	printpart(w,1,m-b);
+	printpart(w,2,e-m);
+}
 static void printsel(WINDOW*w,size_t ybsel,size_t xbsel,size_t yesel,size_t xesel){
 	int wd=getmaxx(w);
 	int cright=wd-1;
@@ -588,17 +624,19 @@ static void printsel(WINDOW*w,size_t ybsel,size_t xbsel,size_t yesel,size_t xese
 			break;
 		}
 	}
+	wmove(w,rb,cb);
+	ce++;
 	if(rb==re){
-		mvwinnstr(w,rb,cb,mapsel,ce-cb+1);
+		printrow(w,rb,cb,ce);
 	}else{
-		int i=mvwinstr(w,rb,cb,mapsel);
+		printrow(w,rb,cb,wd);
 		for(int r=rb+1;r<re;r++){
-			i+=mvwinstr(w,r,0,&mapsel[i]);
+			int m=mid(r,wd);
+			printpart(w,1,m);
+			printpart(w,2,wd-m);
 		}
-		mvwinnstr(w,re,0,&mapsel[i],ce+1);
+		printrow(w,re,0,ce);
 	}
-	wattrset(w,COLOR_PAIR(1));
-	mvwaddstr(w,rb,cb,mapsel);
 	wattrset(w,0);
 }
 static bool testrefresh(int z,bool orig){
@@ -828,10 +866,9 @@ static void vis(char c,WINDOW*w){
 }
 static bool delete_key(size_t y,size_t x,int r,int c,WINDOW*w){
 	size_t yy=y+1;
-	bool last=yy==rows_tot;
 	row*r1=&rows[y];size_t sz=r1->sz;
-	if(last){if(x==sz)return false;}
-	else if(x==sz){
+	if(x==sz){
+		if(yy==rows_tot)return false;
 		row*r2=&rows[yy];
 		size_t sz_t=yy+1==rows_tot?0:ln_term_sze;
 		if(mal_spc_rea(r1,x,r2->sz+sz_t,0,r2->data,sz_t))return true;
@@ -840,7 +877,7 @@ static bool delete_key(size_t y,size_t x,int r,int c,WINDOW*w){
 		return false;
 	}
 	char*data=r1->data;
-	size_t siz=sz;if(!last)siz+=ln_term_sze;
+	size_t siz=sz;if(yy<rows_tot)siz+=ln_term_sze;
 	for(size_t i=x+1;i<siz;i++){
 		data[i-1]=data[i];
 	}
@@ -863,18 +900,40 @@ static bool delete_key(size_t y,size_t x,int r,int c,WINDOW*w){
 			char ch=data[x];
 			if(ch=='\t'){
 				p[i]=c;i++;t[0]=i;
-				c+=tab_sz;
 				int j=0;
-				while(j<tab_sz){mapsel[k+j]=' ';j++;}
+				while(j<tab_sz){
+					mapsel[k+j]=' ';
+					j++;
+					c++;if(c==max)break;
+				}
 				k+=j;
 			}
-			else{c++;mapsel[k]=no_char(ch)?'?':ch;k++;}
-			if(c>=max)break;
+			else{mapsel[k]=no_char(ch)?'?':ch;c++;k++;}
+			if(c==max)break;
 			x++;
 		}
 		waddnstr(w,mapsel,k);
 	}
 	if(c<max)wclrtoeol(w);
+	return false;
+}
+static bool bcsp(size_t y,int*rw,int*cl,WINDOW*w){
+	int c=cl[0];
+	if(xtext==0&&c==0){
+		if(y==0)return false;
+		row*r0=&rows[y-1];
+		row*r1=&rows[y];
+		size_t l1;if(y<rows_tot)l1=ln_term_sze;
+		else l1=0;
+		c=end(w,y-1);
+		if(mal_spc_rea(r0,r0->sz,r1->sz+l1,0,r1->data,l1))return true;
+		if(rw[0]==0)ytext--;
+		else rw[0]--;
+		cl[0]=c;
+		row_del(y,y);
+		refreshpage(w);
+		return false;
+	}
 	return false;
 }
 static void type(int cr,WINDOW*w){
@@ -893,7 +952,7 @@ static void type(int cr,WINDOW*w){
 		cl-=(int)(xx-x);
 	}
 	if(cr=='\r'){}
-	else if(cr==127){}
+	else if(cr==127){if(bcsp(y,&rw,&cl,w))return;}
 	else if(cr==KEY_DC){if(delete_key(y,x,rw,cl,w))return;}
 	else{
 		char chr=(char)cr;
@@ -958,11 +1017,16 @@ static bool loopin(WINDOW*w){
 			const char*s=keyname(c);
 			if(!strcmp(s,"^V")){
 				vis('V',w);
-				int rw=getcury(w);
+				int rw=getcury(w);int cl=getcurx(w);
 				size_t ybsel=ytext+(size_t)rw;
-				size_t xbsel=xtext+c_to_xc(getcurx(w),rw);
+				size_t xbsel=xtext+c_to_xc(cl,rw);
 				size_t yesel=ybsel;size_t xesel=xbsel;
-				int z;bool orig=true;
+				bool orig=true;
+				if(ybsel<rows_tot)if(xbsel<rows[ybsel].sz)if(rows[ybsel].data[xbsel]=='\t'){
+					printsel(w,ybsel,xbsel,yesel,xesel);
+					wmove(w,rw,cl);
+				}
+				int z;
 				do{
 					int b=wgetch(w);
 					z=movment(b,w);
@@ -1153,6 +1217,12 @@ static void writefilebuf(char*cutbuf_file){
 		}
 	}
 }
+static bool color(){
+	if(start_color()==ERR)return false;
+	if(init_pair(1,COLOR_BLACK,COLOR_WHITE)==ERR)return false;
+	if(init_pair(2,COLOR_BLACK,COLOR_CYAN)==ERR)return false;
+	return true;
+}
 int main(int argc,char**argv){
 	size_t text_sz;
 	int ok=0;
@@ -1194,55 +1264,53 @@ int main(int argc,char**argv){
 		text_init_e=text_init_b+text_sz+1;
 		WINDOW*w1=initscr();
 		if(w1!=NULL){
-			if(start_color()!=ERR){
-				if(init_pair(1,COLOR_BLACK,COLOR_WHITE)!=ERR){
-					keypad(w1,true);
-					cbreak();//stty,cooked
-					noecho();
-					nonl();//no translation,faster
-					mousemask(ALL_MOUSE_EVENTS,NULL);
-					char cutbuf_file_var[128];
-					char*cutbuf_file=cutbuf_file_var;
-					cutbuf_file[0]=0;
-					cutbuf_file=setfilebuf(argv[0],cutbuf_file);
-					bool loops=false;
-					do{
-						int r=getmaxy(w1)-1;
-						char*a=realloc(x_right,(size_t)r);
-						if(!a)break;
-						x_right=a;
-						int c=getmaxx(w1);
-						tabs_rsz=1+(c/tab_sz);
-						if(c%tab_sz)tabs_rsz++;
-						void*b=realloc(tabs,sizeof(int)*(size_t)(r*tabs_rsz));
-						if(!b)break;
-						tabs=(int*)b;
-						a=realloc(mapsel,(size_t)((c*r)+1));
-						if(!a)break;
-						mapsel=a;
-						WINDOW*w=newwin(r,c,0,0);
-						if(w){
-							keypad(w,true);
-							xtext=0;ytext=0;
-							printpage(w);
-							wmove(w,0,0);
-							printhelp();
-							loops=loopin(w);
-							delwin(w);
-						}else break;
-					}while(loops);
-					if(x_right){
-						free(x_right);
-						if(tabs){
-							free(tabs);
-							if(mapsel){
-								free(mapsel);
-								writefilebuf(cutbuf_file);
-							}
+			if(color()){
+				keypad(w1,true);
+				cbreak();//stty,cooked
+				noecho();
+				nonl();//no translation,faster
+				mousemask(ALL_MOUSE_EVENTS,NULL);
+				char cutbuf_file_var[128];
+				char*cutbuf_file=cutbuf_file_var;
+				cutbuf_file[0]=0;
+				cutbuf_file=setfilebuf(argv[0],cutbuf_file);
+				bool loops=false;
+				do{
+					int r=getmaxy(w1)-1;
+					char*a=realloc(x_right,(size_t)r);
+					if(!a)break;
+					x_right=a;
+					int c=getmaxx(w1);
+					tabs_rsz=1+(c/tab_sz);
+					if(c%tab_sz)tabs_rsz++;
+					void*b=realloc(tabs,sizeof(int)*(size_t)(r*tabs_rsz));
+					if(!b)break;
+					tabs=(int*)b;
+					a=realloc(mapsel,(size_t)c+1);
+					if(!a)break;
+					mapsel=a;
+					WINDOW*w=newwin(r,c,0,0);
+					if(w){
+						keypad(w,true);
+						xtext=0;ytext=0;
+						printpage(w);
+						wmove(w,0,0);
+						printhelp();
+						loops=loopin(w);
+						delwin(w);
+					}else break;
+				}while(loops);
+				if(x_right){
+					free(x_right);
+					if(tabs){
+						free(tabs);
+						if(mapsel){
+							free(mapsel);
+							writefilebuf(cutbuf_file);
 						}
 					}
-					if(cutbuf)free(cutbuf);
 				}
+				if(cutbuf)free(cutbuf);
 			}
 			endwin();
 		}
