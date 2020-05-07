@@ -881,12 +881,12 @@ static bool delete_key(size_t y,size_t x,int r,int c,WINDOW*w){
 	r1->sz--;
 	//
 	int*t=&tabs[tabs_rsz*r];int n=t[0];
-	int*p=t+1;int i=0;
-	while(i<n){
-		if(c<=p[i])break;
+	int i=1;
+	while(i<=n){
+		if(c<=t[i])break;
 		i++;
 	}
-	t[0]=i;
+	t[0]=i-1;
 	//
 	int max=getmaxx(w);
 	sz=r1->sz;
@@ -896,7 +896,7 @@ static bool delete_key(size_t y,size_t x,int r,int c,WINDOW*w){
 		while(x<sz){
 			char ch=data[x];
 			if(ch=='\t'){
-				p[i]=c;i++;t[0]=i;
+				t[i]=c;t[0]=i;i++;
 				int j=0;
 				while(j<tab_sz){
 					mapsel[k+j]=' ';
@@ -979,22 +979,22 @@ static void type(int cr,WINDOW*w){
 				int*t=&tabs[tabs_rsz*rw];
 				int a=t[0];
 				if(a)if(t[a]+s>=max){t[0]--;a--;}
-				int*p=t+1;int i=0;
-				for(;i<a;i++){
-					if(colmn<=p[i])break;
+				int i=1;
+				for(;i<=a;i++){
+					if(colmn<=t[i])break;
 				}
 				if(is_tab){
 					for(int k=tab_sz;k>0;k--){
 						waddch(w,' ');
 					}
 					t[0]=a+1;
-					for(int j=a;i<j;j--){p[j]=p[j-1]+tab_sz;}
-					p[i]=colmn;
+					for(int j=a;i<=j;j--){t[j+1]=t[j]+tab_sz;}
+					t[i]=colmn;
 				}else{
 					waddch(w,no_char(chr)?'?':chr);
 					int j=a;
-					while(i<j){
-						j--;p[j]=p[j]+1;
+					while(i<=j){
+						t[j]=t[j]+1;j--;
 					}
 				}
 				waddstr(w,mapsel);
