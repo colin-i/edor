@@ -33,7 +33,7 @@ int cbreak(void);
 int nonl(void);
 #define ALL_MOUSE_EVENTS 0xFffFFff
 int move(int,int);//6
-int wmove(WINDOW*,int,int);//17
+int wmove(WINDOW*,int,int);//19
 int getcury(const WINDOW*);//21
 int getcurx(const WINDOW*);//15
 int getmaxy(const WINDOW*);//13
@@ -45,10 +45,9 @@ int wnoutrefresh(WINDOW*);//6
 int waddch(WINDOW*,const chtype);//2
 int mvaddch(int,int,const chtype);
 int addstr(const char*);//3
-int waddstr(WINDOW*,const char*);//2
+int waddstr(WINDOW*,const char*);//5
 int waddnstr(WINDOW*,const char*,int);
 int mvaddstr(int,int,const char*);
-int mvwaddstr(WINDOW*,int,int,const char*);//3
 extern WINDOW*stdscr;//14
 int werase(WINDOW*);//2
 int clrtoeol(void);//2
