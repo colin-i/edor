@@ -4,7 +4,7 @@
 
 //#include <string.h>
 int strcmp(const char*,const char*);//11
-void*memcpy(void*,const void*,size_t);//11
+void*memcpy(void*,const void*,size_t);//15
 //sys/types.h
 typedef unsigned short mode_t;
 //asm-generic/fcntl.h
@@ -114,7 +114,7 @@ typedef struct{
 	size_t sz;
 }row;
 static char ln_term[3]="\n";
-static size_t ln_term_sze=1;
+static size_t ln_term_sz=1;
 static row*rows=NULL;
 static size_t rows_tot=1;
 static size_t rows_spc=1;
@@ -464,7 +464,7 @@ static void fixmembuf(size_t*y,size_t*x){
 }
 static size_t set2membuf(size_t yesel,size_t xesel){
 	if(xesel==rows[yesel].sz){
-		if(yesel<rows_tot-1)return ln_term_sze;
+		if(yesel<rows_tot-1)return ln_term_sz;
 		return 0;
 	}
 	return 1;
@@ -478,10 +478,10 @@ static bool writemembuf(size_t ybsel,size_t xbsel,size_t yesel,size_t xesel){
 	size_t sz1;
 	if(one)size=xesel-xbsel;
 	else{
-		sz1=b->sz+ln_term_sze-xbsel;
-		size=sz1+xesel;
+		sz1=b->sz-xbsel;
+		size=sz1+ln_term_sz+xesel;
 		for(size_t i=ybsel+1;i<yesel;i++){
-			size+=rows[i].sz+ln_term_sze;
+			size+=rows[i].sz+ln_term_sz;
 		}
 	}
 	if(cutbuf_spc<size){
@@ -489,19 +489,31 @@ static bool writemembuf(size_t ybsel,size_t xbsel,size_t yesel,size_t xesel){
 		if(!v)return false;
 		cutbuf=v;cutbuf_spc=size;
 	}
-	if(one)memcpy(cutbuf,b->data+xbsel,xesel-xbsel);
+	bool inc_nl=rows[yesel].sz<xesel;
+	if(one){
+		size_t n=xesel-xbsel;
+		if(inc_nl)n-=ln_term_sz;
+		memcpy(cutbuf,b->data+xbsel,n);
+		if(inc_nl)memcpy(cutbuf+n,ln_term,ln_term_sz);
+	}
 	else{
 		memcpy(cutbuf,b->data+xbsel,sz1);
-		size_t sz=sz1;
+		memcpy(cutbuf+sz1,ln_term,ln_term_sz);
+		size_t sz=sz1+ln_term_sz;
 		for(size_t i=ybsel+1;i<yesel;i++){
-			size_t s=rows[i].sz+ln_term_sze;
+			size_t s=rows[i].sz;
 			memcpy(cutbuf+sz,rows[i].data,s);
 			sz+=s;
+			memcpy(cutbuf+sz,ln_term,ln_term_sz);
+			sz+=ln_term_sz;
 		}
-		memcpy(cutbuf+sz,rows[yesel].data,xesel);
+		size_t n=xesel;
+		if(inc_nl)n-=ln_term_sz;
+		memcpy(cutbuf+sz,rows[yesel].data,n);
+		if(inc_nl)memcpy(cutbuf+sz+n,ln_term,ln_term_sz);
 	}
 	cutbuf_sz=size;cutbuf_r=yesel-ybsel+1;
-	if(rows[yesel].sz<xesel)cutbuf_r++;
+	if(inc_nl)cutbuf_r++;
 	return true;
 }
 static void set1membuf(size_t y,size_t x,bool*orig,size_t*yb,size_t*xb,size_t*ye,size_t*xe){
@@ -687,7 +699,7 @@ static size_t row_pad_sz(size_t sz){
 	if(dif)return sz+((dif^row_pad)+1);
 	return sz;
 }
-static bool mal_spc_rea(row*rw,size_t l,size_t c,size_t r,char*mid,size_t s_cut){
+static bool mal_spc_rea(row*rw,size_t l,size_t c,size_t r,char*mid){
 	char*src=rw->data;char*dst;
 	size_t sz=l+c+r;
 	if(sz>rw->spc){
@@ -713,7 +725,7 @@ static bool mal_spc_rea(row*rw,size_t l,size_t c,size_t r,char*mid,size_t s_cut)
 		dst[0]=mid[0];
 		dst++;mid++;c--;
 	}
-	rw->sz=sz-s_cut;
+	rw->sz=sz;
 	return false;
 }
 static void deleted(size_t ybsel,size_t xbsel,int*r,int*c,WINDOW*w){
@@ -756,12 +768,9 @@ static void delete(size_t ybsel,size_t xbsel,size_t yesel,size_t xesel,int*rw,in
 	xesel+=set2membuf(yesel,xesel);
 	//
 	row*r1=&rows[ybsel];
-	bool in=ybsel+1<rows_tot;
-	if(xesel>rows[yesel].sz)
-	if(in){yesel++;xesel=0;}
+	if(xesel>rows[yesel].sz){yesel++;xesel=0;}
 	if(ybsel==yesel){
 		size_t sz=r1->sz;
-		if(in)sz+=ln_term_sze;
 		size_t dif=xesel-xbsel;
 		char*d=rows[ybsel].data;
 		for(size_t i=xesel;i<sz;i++){
@@ -770,8 +779,7 @@ static void delete(size_t ybsel,size_t xbsel,size_t yesel,size_t xesel,int*rw,in
 		r1->sz-=dif;
 	}else{
 		size_t c=rows[yesel].sz-xesel;
-		size_t s_cut=yesel+1<rows_tot?ln_term_sze:0;
-		if(mal_spc_rea(r1,xbsel,c+s_cut,0,rows[yesel].data+xesel,s_cut))return;
+		if(mal_spc_rea(r1,xbsel,c,0,rows[yesel].data+xesel))return;
 		row_del(ybsel+1,yesel);
 	}
 	deleted(ybsel,xbsel,rw,cl,w);
@@ -786,33 +794,29 @@ static size_t pasting(row*d,int r,int c,WINDOW*w){
 	fixmembuf(&y,&x);
 	//
 	bool one=cutbuf_r==1;
-	size_t szc;size_t sz1r;
-	size_t l;
-	size_t s_cut;size_t s_cut1;
+	size_t szc;size_t sz1r;size_t l;
 	size_t szr=rows[y].sz-x;
-	if(y<(rows_tot-1)){szr+=ln_term_sze;s_cut=ln_term_sze;}
-	else s_cut=0;
 	size_t max=cutbuf_r-1;
 	if(one){
 		szc=cutbuf_sz;sz1r=szr;
-		s_cut1=s_cut;
 	}
 	else{
-		char*a=memtrm(cutbuf)+ln_term_sze;
-		szc=(size_t)(a-cutbuf);sz1r=0;
-		s_cut1=ln_term_sze;
-		size_t sz=szc;
+		char*a=memtrm(cutbuf)+ln_term_sz;
+		sz1r=0;
+		size_t sz=(size_t)(a-cutbuf);
+		szc=sz-ln_term_sz;
 		size_t n=max-1;
 		//inter
 		for(size_t i=0;i<n;i++){
-			char*b=memtrm(a)+ln_term_sze;
+			char*b=memtrm(a)+ln_term_sz;
 			size_t ln=(size_t)(b-a);
-			size_t spc_sz=row_pad_sz(ln);
+			size_t len=ln-ln_term_sz;
+			size_t spc_sz=row_pad_sz(len);
 			void*v=malloc(spc_sz);
 			if(!v)return i;
-			memcpy(v,cutbuf+sz,ln);
+			memcpy(v,cutbuf+sz,len);
 			d[i].data=v;
-			d[i].sz=ln-ln_term_sze;
+			d[i].sz=len;
 			d[i].spc=spc_sz;
 			sz+=ln;
 			a=b;
@@ -826,12 +830,12 @@ static size_t pasting(row*d,int r,int c,WINDOW*w){
 		memcpy(rn,cutbuf+sz,l);
 		memcpy(rn+l,rows[y].data+x,szr);
 		d[n].data=rn;
-		d[n].sz=sizen-s_cut;
+		d[n].sz=sizen;
 		d[n].spc=spc_sz;
 		//mem
 		if(rows_expand(max))return max;
 	}
-	if(mal_spc_rea(&rows[y],x,szc,sz1r,cutbuf,s_cut1))return max;
+	if(mal_spc_rea(&rows[y],x,szc,sz1r,cutbuf))return max;
 	if(one)l=x+szc;
 	else{
 		size_t ix=rows_tot-1;
@@ -862,20 +866,18 @@ static void vis(char c,WINDOW*w){
 	doupdate();
 }
 static bool delete_key(size_t y,size_t x,int r,int c,WINDOW*w){
-	size_t yy=y+1;
 	row*r1=&rows[y];size_t sz=r1->sz;
 	if(x==sz){
+		size_t yy=y+1;
 		if(yy==rows_tot)return false;
 		row*r2=&rows[yy];
-		size_t sz_t=yy+1==rows_tot?0:ln_term_sze;
-		if(mal_spc_rea(r1,x,r2->sz+sz_t,0,r2->data,sz_t))return true;
+		if(mal_spc_rea(r1,x,r2->sz,0,r2->data))return true;
 		row_del(yy,yy);
 		refreshpage(w);
 		return false;
 	}
 	char*data=r1->data;
-	size_t siz=sz;if(yy<rows_tot)siz+=ln_term_sze;
-	for(size_t i=x+1;i<siz;i++){
+	for(size_t i=x+1;i<sz;i++){
 		data[i-1]=data[i];
 	}
 	r1->sz--;
@@ -914,20 +916,29 @@ static bool delete_key(size_t y,size_t x,int r,int c,WINDOW*w){
 	if(c<max)wclrtoeol(w);
 	return false;
 }
-static bool bcsp(size_t y,int*rw,int*cl,WINDOW*w){
+static bool bcsp(size_t y,size_t x,int*rw,int*cl,WINDOW*w){
 	int c=cl[0];
 	if(xtext==0&&c==0){
 		if(y==0)return false;
 		row*r0=&rows[y-1];
 		row*r1=&rows[y];
-		size_t l1;if(y<rows_tot)l1=ln_term_sze;
-		else l1=0;
 		c=end(w,y-1);
-		if(mal_spc_rea(r0,r0->sz,r1->sz+l1,0,r1->data,l1))return true;
+		if(mal_spc_rea(r0,r0->sz,r1->sz,0,r1->data))return true;
 		if(rw[0]==0)ytext--;
 		else rw[0]--;
 		cl[0]=c;
 		row_del(y,y);
+		refreshpage(w);
+		return false;
+	}
+	row*r=&rows[y];
+	char*data=r->data;size_t sz=r->sz;
+	for(size_t i=x;i<sz;i++){
+		data[i-1]=data[i];
+	}
+	r->sz--;
+	if(c==0){
+		xtext--;
 		refreshpage(w);
 		return false;
 	}
@@ -949,14 +960,11 @@ static void type(int cr,WINDOW*w){
 		cl-=xx-x;
 	}
 	if(cr=='\r'){}
-	else if(cr==127){if(bcsp(y,&rw,&cl,w))return;}
+	else if(cr==127){if(bcsp(y,x,&rw,&cl,w))return;}
 	else if(cr==KEY_DC){if(delete_key(y,x,rw,cl,w))return;}
 	else{
 		char chr=(char)cr;
-		size_t s_cut;
-		if(y+1<rows_tot)s_cut=ln_term_sze;
-		else s_cut=0;
-		if(mal_spc_rea(r,x,1,r->sz-x+s_cut,&chr,s_cut))return;
+		if(mal_spc_rea(r,x,1,r->sz-x,&chr))return;
 		bool is_tab=chr=='\t';
 		int s=is_tab?tab_sz:1;
 		if(off){
@@ -1092,13 +1100,13 @@ static int normalize(char**c,size_t*size,size_t*r){
 			char a=text_w[i];
 			if(a=='\n'){
 				r[0]++;
-				if(ln_term_sze==2){
+				if(ln_term_sz==2){
 					norm[j]='\r';j++;ok=-1;
 				}
 				else if(ln_term[0]=='\r'){a='\r';ok=-1;}
 			}else if(a=='\r'){
 				r[0]++;
-				if(ln_term_sze==2){
+				if(ln_term_sz==2){
 					bool rn=((i+1)<sz)&&text_w[i+1]=='\n';
 					if(rn){
 						norm[j]=a;j++;i++;
@@ -1126,7 +1134,7 @@ static void rows_init(size_t size){
 	for(size_t i=1;i<rows_tot;i++){
 		sz=(size_t)(memtrm(a)-a);
 		z->sz=sz;z->spc=0;
-		a+=sz+ln_term_sze;
+		a+=sz+ln_term_sz;
 		z=&rows[i];
 		z->data=a;
 	}
@@ -1151,7 +1159,7 @@ static int startpage(char*f,size_t*text_sz){
 						ln_term[0]='\r';
 						ln_term[1]='\n';
 						ln_term[2]=0;
-						ln_term_sze=2;
+						ln_term_sz=2;
 					}
 					break;
 				}else if(text_init_b[i]=='\r'){
@@ -1228,7 +1236,7 @@ int main(int argc,char**argv){
 		if(ok){
 			if(ok<1){
 				puts("Normalize line endings to ");
-				if(ln_term_sze==2)puts("\\r\\n");
+				if(ln_term_sz==2)puts("\\r\\n");
 				else if(ln_term[0]=='\n')puts("\\n");
 				else puts("\\r");
 				puts("? n=no, default=yes\n");
