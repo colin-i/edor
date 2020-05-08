@@ -33,7 +33,7 @@ int cbreak(void);
 int nonl(void);
 #define ALL_MOUSE_EVENTS 0xFffFFff
 int move(int,int);//6
-int wmove(WINDOW*,int,int);//19
+int wmove(WINDOW*,int,int);//20
 int getcury(const WINDOW*);//21
 int getcurx(const WINDOW*);//15
 int getmaxy(const WINDOW*);//13
@@ -865,23 +865,7 @@ static void vis(char c,WINDOW*w){
 	wnoutrefresh(w);
 	doupdate();
 }
-static bool delete_key(size_t y,size_t x,int r,int c,WINDOW*w){
-	row*r1=&rows[y];size_t sz=r1->sz;
-	if(x==sz){
-		size_t yy=y+1;
-		if(yy==rows_tot)return false;
-		row*r2=&rows[yy];
-		if(mal_spc_rea(r1,x,r2->sz,0,r2->data))return true;
-		row_del(yy,yy);
-		refreshpage(w);
-		return false;
-	}
-	char*data=r1->data;
-	for(size_t i=x+1;i<sz;i++){
-		data[i-1]=data[i];
-	}
-	r1->sz--;
-	//
+static void delete_fast(WINDOW*w,int r,int c,char*data,size_t x,size_t sz){
 	int*t=&tabs[tabs_rsz*r];int n=t[0];
 	int i=1;
 	while(i<=n){
@@ -891,7 +875,6 @@ static bool delete_key(size_t y,size_t x,int r,int c,WINDOW*w){
 	t[0]=i-1;
 	//
 	int max=getmaxx(w);
-	sz=r1->sz;
 	if(xtext==sz)x_right[r]=false;
 	else{
 		int k=0;
@@ -914,6 +897,24 @@ static bool delete_key(size_t y,size_t x,int r,int c,WINDOW*w){
 		waddnstr(w,mapsel,k);
 	}
 	if(c<max)wclrtoeol(w);
+}
+static bool delete_key(size_t y,size_t x,int r,int c,WINDOW*w){
+	row*r1=&rows[y];size_t sz=r1->sz;
+	if(x==sz){
+		size_t yy=y+1;
+		if(yy==rows_tot)return false;
+		row*r2=&rows[yy];
+		if(mal_spc_rea(r1,x,r2->sz,0,r2->data))return true;
+		row_del(yy,yy);
+		refreshpage(w);
+		return false;
+	}
+	char*data=r1->data;
+	for(size_t i=x+1;i<sz;i++){
+		data[i-1]=data[i];
+	}
+	r1->sz--;
+	delete_fast(w,r,c,data,x,r1->sz);
 	return false;
 }
 static bool bcsp(size_t y,size_t x,int*rw,int*cl,WINDOW*w){
@@ -933,15 +934,19 @@ static bool bcsp(size_t y,size_t x,int*rw,int*cl,WINDOW*w){
 	}
 	row*r=&rows[y];
 	char*data=r->data;size_t sz=r->sz;
+	c-=data[x-1]=='\t'?tab_sz:1;
 	for(size_t i=x;i<sz;i++){
 		data[i-1]=data[i];
 	}
 	r->sz--;
-	if(c==0){
+	if(c<0){
 		xtext--;
 		refreshpage(w);
 		return false;
 	}
+	cl[0]=c;
+	wmove(w,rw[0],c);//move for addstr
+	delete_fast(w,rw[0],c,data,x-1,r->sz);
 	return false;
 }
 static void type(int cr,WINDOW*w){
