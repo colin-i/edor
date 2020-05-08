@@ -4,7 +4,7 @@
 
 //#include <string.h>
 int strcmp(const char*,const char*);//11
-void*memcpy(void*,const void*,size_t);//15
+void*memcpy(void*,const void*,size_t);//16
 //sys/types.h
 typedef unsigned short mode_t;
 //asm-generic/fcntl.h
@@ -36,7 +36,7 @@ int move(int,int);//6
 int wmove(WINDOW*,int,int);//20
 int getcury(const WINDOW*);//21
 int getcurx(const WINDOW*);//15
-int getmaxy(const WINDOW*);//13
+int getmaxy(const WINDOW*);//14
 int getmaxx(const WINDOW*);//14
 WINDOW*newwin(int,int,int,int);
 int delwin(WINDOW*);
@@ -788,6 +788,15 @@ static char*memtrm(char*a){
 	while(a[0]!=ln_term[0])a++;
 	return a;
 }
+static void rows_insert(row*d,size_t sz,size_t off){
+	size_t a=rows_tot-1;
+	rows_tot+=sz;
+	while(off<=a){
+		memcpy(&rows[a+sz],&rows[a],sizeof(row));
+		a--;
+	}
+	memcpy(rows+off,d,sz*sizeof(row));
+}
 static size_t pasting(row*d,int r,int c,WINDOW*w){
 	size_t y=ytext+(size_t)r;
 	size_t x=xtext+c_to_xc(c,r);
@@ -837,16 +846,7 @@ static size_t pasting(row*d,int r,int c,WINDOW*w){
 	}
 	if(mal_spc_rea(&rows[y],x,szc,sz1r,cutbuf))return max;
 	if(one)l=x+szc;
-	else{
-		size_t ix=rows_tot-1;
-		rows_tot+=max;
-		row*p=&rows[rows_tot-1];
-		while(y<ix){
-			memcpy(p,&rows[ix],sizeof(row));
-			ix--;p--;
-		}
-		memcpy(rows+y+1,d,max*sizeof(row));
-	}
+	else rows_insert(d,max,y+1);
 	pasted(y-ytext,l,w);
 	return 0;
 }
@@ -949,6 +949,22 @@ static bool bcsp(size_t y,size_t x,int*rw,int*cl,WINDOW*w){
 	delete_fast(w,rw[0],c,data,x-1,r->sz);
 	return false;
 }
+static bool enter(size_t y,size_t x,int*r,int*c,WINDOW*w){
+	if(rows_expand(1))return true;
+	size_t s=rows[y].sz-x;                    size_t spc=row_pad_sz(s);
+	void*v=malloc(spc);
+	if(!v)return true;
+	row rw;
+	memcpy(v,rows[y].data+x,s);
+	rows[y].sz-=s;
+	rw.data=v;rw.sz=s;rw.spc=spc;
+	rows_insert(&rw,1,y+1);
+	if(r[0]==(getmaxy(w)-1))ytext++;
+	else r[0]++;
+	xtext=0;c[0]=0;
+	refreshpage(w);
+	return false;
+}
 static void type(int cr,WINDOW*w){
 	int cl=getcurx(w);
 	int rw=getcury(w);
@@ -964,7 +980,7 @@ static void type(int cr,WINDOW*w){
 	}else{
 		cl-=xx-x;
 	}
-	if(cr=='\r'){}
+	if(cr=='\r'){if(enter(y,x,&rw,&cl,w))return;}
 	else if(cr==127){if(bcsp(y,x,&rw,&cl,w))return;}
 	else if(cr==KEY_DC){if(delete_key(y,x,rw,cl,w))return;}
 	else{
