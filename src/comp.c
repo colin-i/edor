@@ -1,5 +1,6 @@
 #include"main.h"
 //strlen,3;open;close;write,2;malloc;free
+//realloc
 
 //asm-generic/fcntl.h
 #define O_CREAT 00000100
@@ -8,15 +9,14 @@
 #define S_IWUSR 00200
 
 typedef struct{
-	char*str;
-	char**t;
+	char*name;
+	char*a;
+	size_t n;
+	char b;
 }inst;
-static char terms[][3]={"r0"};
-static char*_r0_0[]={terms[0],"#0",0};
-static char*_ex[]={"exit",0};
-static inst instrs[]={
-	{"mov",_r0_0},{"b",_ex},{0}
-};
+static inst*insts;
+static size_t insts_sz;
+static size_t insts_spc;
 
 static bool out_chr(int f,char c){
 	ssize_t s=write(f,&c,1);
@@ -33,26 +33,42 @@ static bool out_wr(int f){
 	if(out_wrt(f,".global main\n"))return false;
 	if(out_wrt(f,".extern exit\n"))return false;
 	if(out_wrt(f,"main:\n"))return false;
-	int i=0;
-	do{
-		inst*a=&instrs[i];
-		if(a->str==0)return true;
-		if(out_wrt(f,a->str))return false;
+	for(size_t i=0;i<insts_sz;i++){
+		inst*a=&insts[i];
+		if(out_wrt(f,a->name))return false;
 		if(out_chr(f,' '))return false;
-		if(out_wrt(f,a->t[0]))return false;
-		int j=1;
-		do{
-			char*b=a->t[j];
-			if(b==0)break;
-			if(out_chr(f,','))return false;
-			if(out_wrt(f,b))return false;
-			j++;
-		}while(true);
+		if(out_wrt(f,a->a))return false;
+		for(size_t j=0;j<a->n;j++){
+			if(out_wrt(f,",#"))return false;
+			if(out_chr(f,a->b+0x30))return false;
+		}
 		if(out_chr(f,'\n'))return false;
-		i++;
-	}while(true);
+	}
+	return true;
 }
-bool out_f(char*textfile){
+static bool insts_expand(size_t n){
+	size_t size=insts_sz+n;
+        if(size>insts_spc){
+		size_t dif=size&0xf;
+		size_t sz=size;
+		if(dif)sz+=(dif^0xf)+1;
+		inst*d=(inst*)realloc(insts,sz*sizeof(inst));
+                if(!d)return false;
+                insts=d;insts_spc=sz;
+	}
+	insts_sz=size;
+        return true;
+}
+static bool out_parse(row*rws,size_t sz){
+	if(sz>1||rws[0].sz!=1||rws[0].data[0]<0x30||rws[0].data[0]>0x39)return false;
+	inst*i=&insts[0];i->name="mov";i->a="r0";
+	i->n=1;
+	i->b=rws[0].data[0]-0x30;
+	i=&insts[1];i->name="b";i->a="exit";
+	i->n=0;
+	return true;
+}
+bool out_f(char*textfile,row*rws,size_t sz){
 	bool r=false;
 	size_t n=strlen(textfile);
 	char*ext=".s";
@@ -72,7 +88,12 @@ bool out_f(char*textfile){
 		}
 		int f=open(s,O_WRONLY|O_CREAT|O_TRUNC,S_IRUSR|S_IWUSR);
 		if(f!=-1){
-			r=out_wr(f);
+			insts=NULL;insts_spc=0;insts_sz=0;
+			if(insts_expand(2)){
+				if(out_parse(rws,sz))
+					r=out_wr(f);
+				free(insts);
+			}
 			close(f);
 		}
 		free(s);

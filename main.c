@@ -1,6 +1,6 @@
 #include"src/main.h"
 //strlen,2;open,4;close,3;write;malloc,10
-//free,11
+//free,11;realloc,6
 
 //#include <string.h>
 int strcmp(const char*,const char*);//11
@@ -98,21 +98,13 @@ int poll(struct pollfd[],nfds_t,int);
 #define POLLIN 0x0001
 struct pollfd stdinfd={0,POLLIN,0};*/
 //#include <stdlib.h>
-void*realloc(void*,size_t);//6
 char*getenv(const char*);
 //#include<stdio.h>
 int puts(const char*);//5
 int sprintf(char*,const char*,...);
 int getchar(void);
 
-#define NULL 0
-
 static char*textfile=NULL;
-typedef struct{
-	char*data;
-	size_t spc;
-	size_t sz;
-}row;
 static char ln_term[3]="\n";
 static size_t ln_term_sz=1;
 static row*rows=NULL;
@@ -1082,7 +1074,7 @@ static bool loopin(WINDOW*w){
 			else if(!strcmp(s,"^P"))paste(w);
 			else if(!strcmp(s,"^B")){
 				if(textfile){
-					if(out_f(textfile)){
+					if(out_f(textfile,rows,rows_tot)){
 						visual_bool=true;
 						vis('B',w);
 					}
