@@ -1,9 +1,12 @@
+#include"src/main0.h"
+//strlen,2;open,4;close,3;write
 #include"src/main.h"
-//strlen,2;open,4;close,3;write;malloc,10
-//free,11;realloc,6
+//malloc,10;free,11;realloc,6
+#include"src/main2.h"
+//move,6;getch;getmaxy,14;stdscr,14
+//keyname,2;strcmp,12
 
 //#include <string.h>
-int strcmp(const char*,const char*);//11
 void*memcpy(void*,const void*,size_t);//16
 //sys/types.h
 typedef unsigned short mode_t;
@@ -17,13 +20,10 @@ ssize_t read(int,void*,size_t);//2
 #define SEEK_SET 0
 #define SEEK_END 2
 //#include<curses.h>
-typedef void WINDOW;
 WINDOW*initscr(void);
 int endwin(void);
-int getch(void);
 int wgetch(WINDOW*);//2
 int ungetch(int);
-typedef unsigned int chtype;
 chtype winch(WINDOW*);
 int winnstr(WINDOW*,char*,int);//2
 typedef unsigned mmask_t;
@@ -32,11 +32,9 @@ int noecho(void);
 int cbreak(void);
 int nonl(void);
 #define ALL_MOUSE_EVENTS 0xFffFFff
-int move(int,int);//6
-int wmove(WINDOW*,int,int);//20
-int getcury(const WINDOW*);//21
-int getcurx(const WINDOW*);//15
-int getmaxy(const WINDOW*);//14
+int wmove(WINDOW*,int,int);//21
+int getcury(const WINDOW*);//22
+int getcurx(const WINDOW*);//16
 int getmaxx(const WINDOW*);//14
 WINDOW*newwin(int,int,int,int);
 int delwin(WINDOW*);
@@ -48,7 +46,6 @@ int addstr(const char*);//3
 int waddstr(WINDOW*,const char*);//4
 int waddnstr(WINDOW*,const char*,int);//2
 int mvaddstr(int,int,const char*);
-extern WINDOW*stdscr;//14
 int werase(WINDOW*);//2
 int clrtoeol(void);//2
 int wclrtoeol(WINDOW*);
@@ -76,17 +73,13 @@ MEVENT;
 #define BUTTON4_PRESSED 0x10000
 #define KEY_UP 0403
 #define KEY_DOWN 0402
-#define KEY_LEFT 0404
-#define KEY_RIGHT 0405
 #define KEY_HOME 0406
 #define KEY_DC 0512
 #define KEY_END 0550
 #define KEY_PPAGE 0523
 #define KEY_NPAGE 0522
 #define KEY_MOUSE 0631
-#define KEY_RESIZE 0632
 int getmouse(MEVENT*);
-const char*keyname(int);//2
 //#include<poll.h>
 /*typedef unsigned int nfds_t;
 struct pollfd{
@@ -104,9 +97,10 @@ int puts(const char*);//5
 int sprintf(char*,const char*,...);
 int getchar(void);
 
+char ln_term[3]="\n";
+size_t ln_term_sz=1;
+
 static char*textfile=NULL;
-static char ln_term[3]="\n";
-static size_t ln_term_sz=1;
 static row*rows=NULL;
 static size_t rows_tot=1;
 static size_t rows_spc=1;
@@ -127,6 +121,9 @@ static char helptext[]="INPUT"
 "\n    c = copy"
 "\n    d = delete"
 "\nCtrl+p = paste"
+"\nCtrl+s = save file"
+"\ncommand mode"
+"\n    left/right,ctrl+q"
 "\nCtrl+b = build file"
 "\nCtrl+q = quit";
 static bool visual_bool=false;
@@ -166,7 +163,7 @@ int mouse_test(WINDOW*w,int*x,int*y){
 	if(y[0]>get maxy(w))return -1;
 	return a;
 }*/
-static bool no_char(char z){return z<32||z>=127;}
+bool no_char(char z){return z<32||z>=127;}
 static void tab_grow(WINDOW*w,int r,char*a,size_t sz,int*ptr){
 	x_right[r]=xtext<sz;
 	if(!x_right[r])return;
@@ -334,7 +331,7 @@ static bool helpin(WINDOW*w){
 static void printhelp(){
 	move(getmaxy(stdscr)-1,0);
 	clrtoeol();//when resized one row up
-	printinverted("F1 for help");
+	printinverted(bar_init());
 	wnoutrefresh(stdscr);
 }
 static void sumove(WINDOW*w,int y){tmove(w,y,false);}
@@ -972,13 +969,13 @@ static void type(int cr,WINDOW*w){
 	}else{
 		cl-=xx-x;
 	}
-	if(cr=='\r'){if(enter(y,x,&rw,&cl,w))return;}
-	else if(cr==127){if(bcsp(y,x,&rw,&cl,w))return;}
+	if(cr==Char_Return){if(enter(y,x,&rw,&cl,w))return;}
+	else if(cr==Char_Backspace){if(bcsp(y,x,&rw,&cl,w))return;}
 	else if(cr==KEY_DC){if(delete_key(y,x,rw,cl,w))return;}
 	else{
-		char chr=(char)cr;
-		if(mal_spc_rea(r,x,1,r->sz-x,&chr))return;
-		bool is_tab=chr=='\t';
+		char ch=cr&0xff;
+		if(mal_spc_rea(r,x,1,r->sz-x,&ch))return;
+		bool is_tab=ch=='\t';
 		int s=is_tab?tab_sz:1;
 		if(off){
 			cl=s;
@@ -1012,7 +1009,7 @@ static void type(int cr,WINDOW*w){
 					for(int j=a;i<=j;j--){t[j+1]=t[j]+tab_sz;}
 					t[i]=colmn;
 				}else{
-					waddch(w,no_char(chr)?'?':chr);
+					waddch(w,no_char(ch)?'?':ch);
 					int j=a;
 					while(i<=j){
 						t[j]=t[j]+1;j--;
@@ -1072,6 +1069,11 @@ static bool loopin(WINDOW*w){
 				}while(z);
 			}
 			else if(!strcmp(s,"^P"))paste(w);
+			else if(!strcmp(s,"^S")){
+				int y=getcury(w);int x=getcurx(w);
+				if(save(rows,rows_tot,textfile))return true;
+				wmove(w,y,x);
+			}
 			else if(!strcmp(s,"^B")){
 				if(textfile){
 					if(out_f(textfile,rows,rows_tot)){
@@ -1088,7 +1090,7 @@ static bool loopin(WINDOW*w){
 				wnoutrefresh(stdscr);
 				doupdate();
 				if(helpin(w)){
-					ungetch('h');
+					ungetch(c);
 					return true;
 				}
 				wmove(w,cy,cx);

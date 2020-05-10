@@ -1,3 +1,4 @@
+#include"main0.h"
 #include"main.h"
 //strlen,3;open;close;write,2;malloc;free
 //realloc
