@@ -1,7 +1,8 @@
 #include"main0.h"
 //strlen;open;close;write,3
 #include"main2.h"
-//move;getch;getmaxy;stdscr;keyname;strcmp
+//move,3;getch;getmaxy;getcurx,2;stdscr,3
+//keyname;strcmp
 
 //#include<curses.h>
 int addch(const chtype);
@@ -31,13 +32,20 @@ bool save(row*rows,size_t sz,char*path){
 		}
 		return false;
 	}
-	move(getmaxy(stdscr)-1,com_left);
+	int y=getmaxy(stdscr)-1;
+	move(y,com_left);
 	for(;;){
 		int a=getch();
 		if(a==Char_Return)return false;
 		else if(a==Char_Backspace){}
-		else if(a==KEY_LEFT){}
-		else if(a==KEY_RIGHT){}
+		else if(a==KEY_LEFT){
+			int x=getcurx(stdscr);
+			move(y,x-1);
+		}
+		else if(a==KEY_RIGHT){
+			int x=getcurx(stdscr);
+			move(y,x+1);
+		}
 		else if(a==KEY_RESIZE)return true;
 		else{
 			const char*s=keyname(a);

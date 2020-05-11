@@ -4,7 +4,7 @@
 //malloc,10;free,11;realloc,6
 #include"src/main2.h"
 //move,6;getch;getmaxy,14;stdscr,14
-//keyname,2;strcmp,12
+//keyname,2;getcurx,16;strcmp,12
 
 //#include <string.h>
 void*memcpy(void*,const void*,size_t);//16
@@ -34,7 +34,6 @@ int nonl(void);
 #define ALL_MOUSE_EVENTS 0xFffFFff
 int wmove(WINDOW*,int,int);//21
 int getcury(const WINDOW*);//22
-int getcurx(const WINDOW*);//16
 int getmaxx(const WINDOW*);//14
 WINDOW*newwin(int,int,int,int);
 int delwin(WINDOW*);
@@ -93,7 +92,7 @@ struct pollfd stdinfd={0,POLLIN,0};*/
 //#include <stdlib.h>
 char*getenv(const char*);
 //#include<stdio.h>
-int puts(const char*);//5
+int puts(const char*);
 int sprintf(char*,const char*,...);
 int getchar(void);
 
@@ -1244,55 +1243,55 @@ static bool color(){
 	return true;
 }
 int main(int argc,char**argv){
-	size_t text_sz;
-	int ok=0;
-	if(argc==2){
-		ok=startpage(argv[1],&text_sz);
-		if(ok){
-			if(ok<1){
-				puts("Normalize line endings to ");
-				if(ln_term_sz==2)puts("\\r\\n");
-				else if(ln_term[0]=='\n')puts("\\n");
-				else puts("\\r");
-				puts("? n=no, default=yes\n");
-				int c=getchar();
-				if(c=='n')ok=0;
-			}
+	WINDOW*w1=initscr();
+	if(w1!=NULL){
+		cbreak();//stty,cooked;relevant for getchar at me
+		size_t text_sz;
+		int ok=0;
+		if(argc==2){
+			ok=startpage(argv[1],&text_sz);
 			if(ok){
-				rows=(row*)malloc(rows_tot*sizeof(row));
-				if(rows){
-					rows_init(text_sz);
-					textfile=argv[1];
+				if(ok<1){
+					char txt[51]="Normalize line endings to \\r  ? n=no, default=yes ";
+					//            0         1         2         3         4         5
+					if(ln_term_sz==2){txt[28]='\\';txt[29]='n';}
+					else if(ln_term[0]=='\n')txt[27]='n';
+					puts(txt);
+					int c=getchar();
+					if(c=='n')ok=0;
 				}
-				else ok=0;
+				if(ok){
+					rows=(row*)malloc(rows_tot*sizeof(row));
+					if(rows){
+						rows_init(text_sz);
+						textfile=argv[1];
+					}
+					else ok=0;
+				}
+			}
+		}else{
+			text_init_b=(char*)malloc(1);
+			if(text_init_b){
+				rows=(row*)malloc(sizeof(row));
+				if(rows){
+					text_init_b[0]=0;
+					text_sz=0;
+					rows[0].data=text_init_b;
+					rows[0].sz=0;rows[0].spc=0;
+					ok=1;
+				}
 			}
 		}
-	}else{
-		text_init_b=(char*)malloc(1);
-		if(text_init_b){
-			rows=(row*)malloc(sizeof(row));
-			if(rows){
-				text_init_b[0]=0;
-				text_sz=0;
-				rows[0].data=text_init_b;
-				rows[0].sz=0;rows[0].spc=0;
-				ok=1;
-			}
-		}
-	}
-	if(ok){
-		text_init_e=text_init_b+text_sz+1;
-		WINDOW*w1=initscr();
-		if(w1!=NULL){
+		if(ok){
+			text_init_e=text_init_b+text_sz+1;
 			if(color()){
 				keypad(w1,true);
-				cbreak();//stty,cooked
 				noecho();
 				nonl();//no translation,faster
 				mousemask(ALL_MOUSE_EVENTS,NULL);
 				char cutbuf_file_var[128];
+				cutbuf_file_var[0]=0;
 				char*cutbuf_file=cutbuf_file_var;
-				cutbuf_file[0]=0;
 				cutbuf_file=setfilebuf(argv[0],cutbuf_file);
 				bool loops=false;
 				do{
@@ -1332,15 +1331,15 @@ int main(int argc,char**argv){
 				}
 				if(cutbuf)free(cutbuf);
 			}
-			endwin();
 		}
-	}
-	if(text_init_b){
-		if(rows){
-			text_free(0,rows_tot);
-			free(rows);
+		if(text_init_b){
+			if(rows){
+				text_free(0,rows_tot);
+				free(rows);
+			}
+			free(text_init_b);
 		}
-		free(text_init_b);
+		endwin();
 	}
 	return 0;
 }
