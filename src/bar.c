@@ -1,11 +1,11 @@
 #include"main0.h"
 //strlen;open;close;write,3
 #include"main2.h"
-//move,8;getch;getmaxy;getmaxx;getcurx,3
+//move,9;getch;getmaxy;getmaxx;getcurx,3
 //stdscr,5;keyname;strcmp
 
 //#include<curses.h>
-int addch(const chtype);//2
+int addch(const chtype);//3
 int addnstr(const char*,int);//4
 
 static int com_left;
@@ -82,13 +82,29 @@ bool save(row*rows,size_t sz,char*path){
 			char ch=(char)a;
 			if(!no_char(ch)){
 				int x=getcurx(stdscr);
-				input[cursor]=ch;
-				cursor++;
-				if(x==right){
+				int off=pos+(x-com_left);
+				for(int i=cursor;i>off;i--){
+					input[i]=input[i-1];
+				}
+				input[off]=ch;
+				int dif=right-x;
+				if(!dif){
 					move(y,com_left);
 					pos++;
 					addnstr(input+pos,visib-1);
 				}else addch(ch);
+				if(off<cursor){
+					int i=off+1;
+					int limit=off+dif;
+					while(i<=cursor){
+						addch(input[i]);
+						if(i>=limit)break;//when x==right,i==limit is not enough
+						//if(x==right)break;else x++;
+						i++;
+					}
+					move(y,dif?x+1:x);
+				}
+				cursor++;
 			}
 		}
 	}
