@@ -1,13 +1,17 @@
 #include"main0.h"
 //strlen;open;close;write,3
 #include"main2.h"
-//move,3;getch;getmaxy;getcurx,2;stdscr,3
-//keyname;strcmp
+//move,8;getch;getmaxy;getmaxx;getcurx,3
+//stdscr,5;keyname;strcmp
 
 //#include<curses.h>
-int addch(const chtype);
+int addch(const chtype);//2
+int addnstr(const char*,int);//4
 
 static int com_left;
+
+//#define max_path 256
+#define max_path 10
 
 char*bar_init(){
 	char*h="F1 for help";
@@ -34,24 +38,58 @@ bool save(row*rows,size_t sz,char*path){
 	}
 	int y=getmaxy(stdscr)-1;
 	move(y,com_left);
+//	int right=getmaxx(stdscr)-4;
+	int right=getmaxx(stdscr)-25;
+	int visib=right-com_left+1;
+	int cursor=0;char input[max_path];
+	int pos=0;
 	for(;;){
 		int a=getch();
 		if(a==Char_Return)return false;
 		else if(a==Char_Backspace){}
 		else if(a==KEY_LEFT){
 			int x=getcurx(stdscr);
-			move(y,x-1);
+			if(x>com_left)
+				move(y,x-1);
+			else if(pos>0){
+				pos--;
+				addnstr(input+pos,visib);
+				move(y,com_left);
+			}
 		}
 		else if(a==KEY_RIGHT){
 			int x=getcurx(stdscr);
-			move(y,x+1);
+			if(x<right){if(x<com_left+cursor)move(y,x+1);}
+			else if(pos+visib<=cursor){
+				move(y,com_left);
+				if(pos+visib==cursor){
+					pos++;
+					addnstr(input+pos,visib-1);
+					addch(' ');
+				}
+				else{
+					pos++;
+					addnstr(input+pos,visib);
+				}
+				move(y,x);
+			}
 		}
 		else if(a==KEY_RESIZE)return true;
 		else{
 			const char*s=keyname(a);
 			if(!strcmp(s,"^Q"))return false;
+			if(cursor==max_path)continue;
 			char ch=(char)a;
-			if(!no_char(ch))addch(ch);
+			if(!no_char(ch)){
+				int x=getcurx(stdscr);
+				input[cursor]=ch;
+				cursor++;
+				if(x==right){
+					move(y,com_left);
+					pos++;
+					addnstr(input+pos,visib-1);
+				}else addch(ch);
+			}
 		}
 	}
 }

@@ -3,8 +3,8 @@
 #include"src/main.h"
 //malloc,10;free,11;realloc,6
 #include"src/main2.h"
-//move,6;getch;getmaxy,14;stdscr,14
-//keyname,2;getcurx,16;strcmp,12
+//move,6;getch;getmaxy,14;getmaxx,14
+//stdscr,14;keyname,2;getcurx,16;strcmp,12
 
 //#include <string.h>
 void*memcpy(void*,const void*,size_t);//16
@@ -34,7 +34,6 @@ int nonl(void);
 #define ALL_MOUSE_EVENTS 0xFffFFff
 int wmove(WINDOW*,int,int);//21
 int getcury(const WINDOW*);//22
-int getmaxx(const WINDOW*);//14
 WINDOW*newwin(int,int,int,int);
 int delwin(WINDOW*);
 int doupdate(void);//2
@@ -1027,7 +1026,13 @@ static bool loopin(WINDOW*w){
 		c=wgetch(w);
 		int a=movment(c,w);
 		if(a>0)return true;
-		if(!a){
+		if(a){
+			if(visual_bool){
+				visual_bool=false;
+				visual(' ');
+			}
+		}
+		else{
 			const char*s=keyname(c);
 			if(!strcmp(s,"^V")){
 				vis('V',w);
@@ -1097,9 +1102,6 @@ static bool loopin(WINDOW*w){
 			else if(!strcmp(s,"^Q"))return false;
 			else type(c,w);
 			//continue;
-		}else if(visual_bool){
-			visual_bool=false;
-			visual(' ');
 		}
 	}
 }

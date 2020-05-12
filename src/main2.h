@@ -5,6 +5,7 @@ typedef unsigned int chtype;
 typedef void WINDOW;
 extern WINDOW*stdscr;
 int getmaxy(const WINDOW*);
+int getmaxx(const WINDOW*);
 int getcurx(const WINDOW*);
 #define KEY_LEFT 0404
 #define KEY_RIGHT 0405
