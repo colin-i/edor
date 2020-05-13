@@ -5,5 +5,5 @@ main_SOURCES = main.c src/comp.c src/bar.c
 main_LDADD = -lcurses
 main_LDFLAGS = -o @PROJ@
 main_LINK = $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(main_LDFLAGS) $(LDFLAGS)
-$(shell `echo > ./.@PROJ@info`)
-$(shell `echo > ~/.@PROJ@info`)
+$(shell `if [ ! -f "./.@PROJ@info" ]; then echo > ./.@PROJ@info; fi`)
+$(shell `if [ ! -f "~/.@PROJ@info" ]; then echo > ~/.@PROJ@info; fi`)
