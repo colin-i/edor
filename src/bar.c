@@ -37,12 +37,6 @@ static int bcdl(int y,char*input,int*p,int cursor){
 	for(int i=pos+of;i<cursor;i++){
 		input[i-1]=input[i];
 	}
-	if(left){
-		pos--;
-		if(!pos)mvaddch(y,com_left-1,' ');
-		p[0]=pos;
-		return cursor-1;
-	}
 	if(!pos){
 		x--;
 		if(of==cursor){
@@ -54,10 +48,16 @@ static int bcdl(int y,char*input,int*p,int cursor){
 		move(y,x);
 		return cursor-1;
 	}
+	if(!left){
+		pos--;
+		if(!pos)mvaddch(y,com_left-1,' ');
+		else move(y,com_left);
+		addnstr(input+pos,x-com_left);
+		p[0]=pos;
+		return cursor-1;
+	}
 	pos--;
 	if(!pos)mvaddch(y,com_left-1,' ');
-	else move(y,com_left);
-	addnstr(input+pos,x-com_left);
 	p[0]=pos;
 	return cursor-1;
 }
