@@ -1,12 +1,13 @@
 //#include<curses.h>
 int move(int,int);
 int getch(void);
-typedef unsigned int chtype;
 typedef void WINDOW;
 extern WINDOW*stdscr;
 int getmaxy(const WINDOW*);
 int getmaxx(const WINDOW*);
 int getcurx(const WINDOW*);
+typedef unsigned int chtype;
+int mvaddch(int,int,const chtype);
 #define KEY_LEFT 0404
 #define KEY_RIGHT 0405
 #define KEY_RESIZE 0632

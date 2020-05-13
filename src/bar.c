@@ -1,12 +1,13 @@
 #include"main0.h"
 //strlen;open;close;write,3
 #include"main2.h"
-//move,9;getch;getmaxy;getmaxx;getcurx,3
-//stdscr,5;keyname;strcmp
+//move,11;getch;getmaxy;getmaxx;getcurx,4
+//stdscr,6;keyname;strcmp;mvaddch,6
 
 //#include<curses.h>
-int addch(const chtype);//3
-int addnstr(const char*,int);//4
+int addch(const chtype);//6
+int addnstr(const char*,int);//6
+int mvaddnstr(int,int,const char*,int);
 
 static int com_left;
 
@@ -27,6 +28,39 @@ static void wrt(int f,row*rows,size_t sz){
 	}
 	write(f,rows[n].data,rows[n].sz);
 }
+static int bcdl(int y,char*input,int*p,int cursor){
+	int x=getcurx(stdscr);
+	bool left=x==com_left;
+	int pos=p[0];
+	if(!pos&&left)return cursor;
+	int of=x-com_left;
+	for(int i=pos+of;i<cursor;i++){
+		input[i-1]=input[i];
+	}
+	if(left){
+		pos--;
+		if(!pos)mvaddch(y,com_left-1,' ');
+		p[0]=pos;
+		return cursor-1;
+	}
+	if(!pos){
+		x--;
+		if(of==cursor){
+			mvaddch(y,x,' ');
+		}else{
+			mvaddnstr(y,x,input+of-1,cursor-of);
+			addch(' ');
+		}
+		move(y,x);
+		return cursor-1;
+	}
+	pos--;
+	if(!pos)mvaddch(y,com_left-1,' ');
+	else move(y,com_left);
+	addnstr(input+pos,x-com_left);
+	p[0]=pos;
+	return cursor-1;
+}
 bool save(row*rows,size_t sz,char*path){
 	if(path){
 		int f=open(path,O_WRONLY|O_TRUNC);
@@ -46,7 +80,9 @@ bool save(row*rows,size_t sz,char*path){
 	for(;;){
 		int a=getch();
 		if(a==Char_Return)return false;
-		else if(a==Char_Backspace){}
+		else if(a==Char_Backspace){
+			cursor=bcdl(y,input,&pos,cursor);
+		}
 		else if(a==KEY_LEFT){
 			int x=getcurx(stdscr);
 			if(x>com_left)
@@ -54,14 +90,17 @@ bool save(row*rows,size_t sz,char*path){
 			else if(pos>0){
 				pos--;
 				addnstr(input+pos,visib);
-				move(y,com_left);
+				if(pos+visib==cursor-1)addch('>');
+				if(!pos)mvaddch(y,com_left-1,' ');
+				else move(y,com_left);
 			}
 		}
 		else if(a==KEY_RIGHT){
 			int x=getcurx(stdscr);
 			if(x<right){if(x<com_left+cursor)move(y,x+1);}
 			else if(pos+visib<=cursor){
-				move(y,com_left);
+				if(!pos)mvaddch(y,com_left-1,'<');
+				else move(y,com_left);
 				if(pos+visib==cursor){
 					pos++;
 					addnstr(input+pos,visib-1);
@@ -70,6 +109,7 @@ bool save(row*rows,size_t sz,char*path){
 				else{
 					pos++;
 					addnstr(input+pos,visib);
+					if(pos+visib==cursor)addch(' ');
 				}
 				move(y,x);
 			}
@@ -89,20 +129,20 @@ bool save(row*rows,size_t sz,char*path){
 				input[off]=ch;
 				int dif=right-x;
 				if(!dif){
-					move(y,com_left);
+					if(!pos)mvaddch(y,com_left-1,'<');
+					else move(y,com_left);
 					pos++;
 					addnstr(input+pos,visib-1);
 				}else addch(ch);
-				if(off<cursor){
+				int d=cursor-off;
+				if(d){
+					int n=right-x;
+					if(dif)x++;else n++;
+					if(d<n)n=d;
 					int i=off+1;
-					int limit=off+dif;
-					while(i<=cursor){
-						addch(input[i]);
-						if(i>=limit)break;//when x==right,i==limit is not enough
-						//if(x==right)break;else x++;
-						i++;
-					}
-					move(y,dif?x+1:x);
+					addnstr(input+i,n);
+					if(i+n==cursor)addch('>');
+					move(y,x);
 				}
 				cursor++;
 			}

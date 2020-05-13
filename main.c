@@ -5,6 +5,7 @@
 #include"src/main2.h"
 //move,6;getch;getmaxy,14;getmaxx,14
 //stdscr,14;keyname,2;getcurx,16;strcmp,12
+//mvaddch
 
 //#include <string.h>
 void*memcpy(void*,const void*,size_t);//16
@@ -39,7 +40,6 @@ int delwin(WINDOW*);
 int doupdate(void);//2
 int wnoutrefresh(WINDOW*);//6
 int waddch(WINDOW*,const chtype);//2
-int mvaddch(int,int,const chtype);
 int addstr(const char*);//3
 int waddstr(WINDOW*,const char*);//4
 int waddnstr(WINDOW*,const char*,int);//2
