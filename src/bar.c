@@ -1,18 +1,21 @@
 #include"main0.h"
-//strlen;open;close;write,3
-#include"main2.h"
+//strlen;open,2;close;write,3
+#include"mainb.h"
 //move,11;getch;getmaxy;getmaxx;getcurx,4
 //stdscr,6;keyname;strcmp;mvaddch,6
+#include"mainbc.h"
 
 //#include<curses.h>
 int addch(const chtype);//6
 int addnstr(const char*,int);//6
 int mvaddnstr(int,int,const char*,int);
+//unistd.h
+#define F_OK 0
+int access(const char*,int);              
 
 static int com_left;
-
-//#define max_path 256
-#define max_path 10
+#define max_path 0xff
+//10
 
 char*bar_init(){
 	char*h="F1 for help";
@@ -61,25 +64,39 @@ static int bcdl(int y,char*input,int*p,int cursor){
 	p[0]=pos;
 	return cursor-1;
 }
+static void saving(char*path,row*rows,size_t sz,bool creat){
+	int f;
+	if(creat)f=open(path,O_CREAT|O_WRONLY|O_TRUNC,S_IRUSR|S_IWUSR);
+	else f=open(path,O_WRONLY|O_TRUNC);
+	if(f!=-1){
+		wrt(f,rows,sz);
+		close(f);
+	}
+}
+static void saves(char*path,row*rows,size_t sz){
+	if(access(path,F_OK)==-1){
+		saving(path,rows,sz,true);
+		return;
+	}
+}
 bool save(row*rows,size_t sz,char*path){
 	if(path){
-		int f=open(path,O_WRONLY|O_TRUNC);
-		if(f!=-1){
-			wrt(f,rows,sz);
-			close(f);
-		}
+		saving(path,rows,sz,false);
 		return false;
 	}
 	int y=getmaxy(stdscr)-1;
 	move(y,com_left);
-//	int right=getmaxx(stdscr)-4;
-	int right=getmaxx(stdscr)-25;
+	int right=getmaxx(stdscr)-4;//25
 	int visib=right-com_left+1;
-	int cursor=0;char input[max_path];
+	int cursor=0;char input[max_path+1];
 	int pos=0;
 	for(;;){
 		int a=getch();
-		if(a==Char_Return)return false;
+		if(a==Char_Return){
+			input[cursor]=0;
+			saves(input,rows,sz);
+			return false;
+		}
 		else if(a==Char_Backspace){
 			cursor=bcdl(y,input,&pos,cursor);
 		}

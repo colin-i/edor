@@ -1,11 +1,11 @@
 #include"src/main0.h"
 //strlen,2;open,4;close,3;write
-#include"src/main.h"
+#include"src/mainc.h"
 //malloc,10;free,11;realloc,6
-#include"src/main2.h"
-//move,6;getch;getmaxy,14;getmaxx,14
-//stdscr,14;keyname,2;getcurx,16;strcmp,12
-//mvaddch
+#include"src/mainb.h"
+//move,6;getch;getmaxy,15;getmaxx,15
+//stdscr,17;keyname,2;getcurx,16;strcmp,12
+//mvaddch,2
 
 //#include <string.h>
 void*memcpy(void*,const void*,size_t);//16
@@ -38,7 +38,7 @@ int getcury(const WINDOW*);//22
 WINDOW*newwin(int,int,int,int);
 int delwin(WINDOW*);
 int doupdate(void);//2
-int wnoutrefresh(WINDOW*);//6
+int wnoutrefresh(WINDOW*);//7
 int waddch(WINDOW*,const chtype);//2
 int addstr(const char*);//3
 int waddstr(WINDOW*,const char*);//4
@@ -133,6 +133,7 @@ static size_t cutbuf_r=1;
 static char*text_init_b=NULL;
 static char*text_init_e;
 #define row_pad 0xF
+static bool mod_flag=true;
 
 /*int ach(WINDOW*w){
 	if(poll(&stdinfd,1,0)<1)return 0;
@@ -749,6 +750,11 @@ static void row_del(size_t a,size_t b){
 	}
 	rows_tot-=c-a;
 }
+static void mod_set(){
+	mod_flag=false;
+	mvaddch(getmaxy(stdscr)-1,getmaxx(stdscr)-2,'*');
+	wnoutrefresh(stdscr);
+}
 static void delete(size_t ybsel,size_t xbsel,size_t yesel,size_t xesel,int*rw,int*cl,WINDOW*w){
 	fixmembuf(&ybsel,&xbsel);
 	fixmembuf(&yesel,&xesel);
@@ -770,6 +776,8 @@ static void delete(size_t ybsel,size_t xbsel,size_t yesel,size_t xesel,int*rw,in
 		row_del(ybsel+1,yesel);
 	}
 	deleted(ybsel,xbsel,rw,cl,w);
+	if(mod_flag)if(ybsel!=yesel||xbsel!=xesel)
+		mod_set();
 }
 static char*memtrm(char*a){
 	while(a[0]!=ln_term[0])a++;
@@ -835,6 +843,8 @@ static size_t pasting(row*d,int r,int c,WINDOW*w){
 	if(one)l=x+szc;
 	else rows_insert(d,max,y+1);
 	pasted(y-ytext,l,w);
+	if(mod_flag)if(cutbuf_r>1||cutbuf_sz>0)
+		mod_set();
 	return 0;
 }
 static void paste(WINDOW*w){
@@ -1019,6 +1029,7 @@ static void type(int cr,WINDOW*w){
 	}
 	if(off)refreshpage(w);
 	wmove(w,rw,cl);
+	if(mod_flag)mod_set();
 }
 static bool loopin(WINDOW*w){
 	int c;
