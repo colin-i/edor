@@ -5,7 +5,8 @@
 #include"src/mainb.h"
 //move,6;getch;getmaxy,15;getmaxx,15
 //stdscr,17;keyname,2;getcurx,16;strcmp,12
-//mvaddch,2
+//mvaddch,2;addstr,3;mvaddstr
+//wnoutrefresh,7
 
 //#include <string.h>
 void*memcpy(void*,const void*,size_t);//16
@@ -38,12 +39,9 @@ int getcury(const WINDOW*);//22
 WINDOW*newwin(int,int,int,int);
 int delwin(WINDOW*);
 int doupdate(void);//2
-int wnoutrefresh(WINDOW*);//7
 int waddch(WINDOW*,const chtype);//2
-int addstr(const char*);//3
 int waddstr(WINDOW*,const char*);//4
 int waddnstr(WINDOW*,const char*,int);//2
-int mvaddstr(int,int,const char*);
 int werase(WINDOW*);//2
 int clrtoeol(void);//2
 int wclrtoeol(WINDOW*);
@@ -98,6 +96,7 @@ int getchar(void);
 char ln_term[3]="\n";
 size_t ln_term_sz=1;
 
+static char*mapsel=NULL;
 static char*textfile=NULL;
 static row*rows=NULL;
 static size_t rows_tot=1;
@@ -127,7 +126,6 @@ static char helptext[]="INPUT"
 static bool visual_bool=false;
 static char*cutbuf=NULL;
 static size_t cutbuf_sz=0;
-static char*mapsel=NULL;
 static size_t cutbuf_spc=0;
 static size_t cutbuf_r=1;
 static char*text_init_b=NULL;

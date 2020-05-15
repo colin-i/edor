@@ -1,17 +1,20 @@
 #include"main0.h"
-//strlen;open,2;close;write,3
+//strlen,2;open,2;close;write,3
 #include"mainb.h"
-//move,11;getch;getmaxy;getmaxx;getcurx,4
-//stdscr,6;keyname;strcmp;mvaddch,6
+//move,16;getch,2;getmaxy;getmaxx,2
+//getcurx,5;stdscr,9;keyname;strcmp
+//mvaddch,7,addstr;mvaddstr;wnoutrefresh,2
 #include"mainbc.h"
 
 //#include<curses.h>
-int addch(const chtype);//6
-int addnstr(const char*,int);//6
+int addch(const chtype);//7
+int addnstr(const char*,int);//7
 int mvaddnstr(int,int,const char*,int);
 //unistd.h
 #define F_OK 0
 int access(const char*,int);              
+//string.h
+//void*memset(void*,int,size_t);//3
 
 static int com_left;
 #define max_path 0xff
@@ -73,29 +76,85 @@ static void saving(char*path,row*rows,size_t sz,bool creat){
 		close(f);
 	}
 }
-static void saves(char*path,row*rows,size_t sz){
+static bool saves(char*path,row*rows,size_t sz){
 	if(access(path,F_OK)==-1){
 		saving(path,rows,sz,true);
-		return;
+		return false;
 	}
+	return true;
+}
+static void clear_com(int y,int sz,int pos,int cursor){
+	int len;if(pos){
+		move(y,com_left-1);
+		len=1+cursor-pos;sz++;
+	}
+	else{
+		move(y,com_left);
+		len=cursor;
+	}
+	if(len>sz){
+		sz++;
+		for(int i=0;i<sz;i++)
+			addch(' ');
+		//memset(mapsel,' ',(size_t)sz+1);mapsel[sz+1]=0;addstr(mapsel);
+	}
+	else{
+		for(int i=0;i<len;i++)
+			addch(' ');
+		//memset(mapsel,' ',(size_t)len);mapsel[len]=0;addstr(mapsel);
+	}
+}
+static int question(char*q,int y){
+	int sz=(int)(strlen(q)+sizeof("? y/n/C"));
+	if(com_left+sz>getmaxx(stdscr))return 1;
+	mvaddstr(y,com_left,q);
+	addstr("? Y/n/c");
+	int ch=getch();
+	move(y,com_left);
+	for(int i=0;i<sz;i++)
+		addch(' ');
+	//memset(mapsel,' ',sz);mapsel[sz]=0;mvaddstr(y,com_left,mapsel);
+	if(ch=='n')return 0;
+	else if(ch=='c')return -1;
+	return 1;
 }
 bool save(row*rows,size_t sz,char*path){
 	if(path){
 		saving(path,rows,sz,false);
 		return false;
 	}
+	int right=getmaxx(stdscr)-4;//25
+	int visib=right+1-com_left;
+	if(visib<2)return false;//phisical visib is 1
 	int y=getmaxy(stdscr)-1;
 	move(y,com_left);
-	int right=getmaxx(stdscr)-4;//25
-	int visib=right-com_left+1;
 	int cursor=0;char input[max_path+1];
 	int pos=0;
 	for(;;){
 		int a=getch();
 		if(a==Char_Return){
 			input[cursor]=0;
-			saves(input,rows,sz);
-			return false;
+			if(saves(input,rows,sz)){
+				int x=getcurx(stdscr);
+				clear_com(y,visib,pos,cursor);
+				int q=question("Overwrite",y);
+				if(q==1){
+					saving(input,rows,sz,false);
+				}else if(q==-1){
+					if(pos)mvaddch(y,com_left-1,'<');
+					else move(y,com_left);
+					int len=cursor-pos;
+					bool rt=len>visib;
+					if(rt)len=visib;
+					addnstr(input+pos,len);
+					if(rt)addch('>');
+					move(y,x);
+					continue;
+				}
+				wnoutrefresh(stdscr);
+				return false;
+			}
+			break;
 		}
 		else if(a==Char_Backspace){
 			cursor=bcdl(y,input,&pos,cursor);
@@ -134,7 +193,7 @@ bool save(row*rows,size_t sz,char*path){
 		else if(a==KEY_RESIZE)return true;
 		else{
 			const char*s=keyname(a);
-			if(!strcmp(s,"^Q"))return false;
+			if(!strcmp(s,"^Q"))break;
 			if(cursor==max_path)continue;
 			char ch=(char)a;
 			if(!no_char(ch)){
@@ -165,4 +224,7 @@ bool save(row*rows,size_t sz,char*path){
 			}
 		}
 	}
+	clear_com(y,visib,pos,cursor);
+	wnoutrefresh(stdscr);
+	return false;
 }

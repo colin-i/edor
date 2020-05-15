@@ -8,10 +8,13 @@ int getmaxx(const WINDOW*);
 int getcurx(const WINDOW*);
 typedef unsigned int chtype;
 int mvaddch(int,int,const chtype);
+int addstr(const char*);
+int mvaddstr(int,int,const char*);
 #define KEY_LEFT 0404
 #define KEY_RIGHT 0405
 #define KEY_RESIZE 0632
 const char*keyname(int);
+int wnoutrefresh(WINDOW*);
 //#include <string.h>
 int strcmp(const char*,const char*);
 
