@@ -105,7 +105,7 @@ static void clear_com(int y,int sz,int pos,int cursor){
 	}
 }
 static int question(char*q,int y){
-	int sz=(int)(strlen(q)+sizeof("? y/n/C"));
+	int sz=(int)(strlen(q)+sizeof("? Y/n/c"));
 	if(com_left+sz>getmaxx(stdscr))return 1;
 	mvaddstr(y,com_left,q);
 	addstr("? Y/n/c");
