@@ -10,5 +10,5 @@ Makefile
 *.o
 *.s
 src/.dirstamp
-editoror
-.editororinfo
+edor
+.edorinfo

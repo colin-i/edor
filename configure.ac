@@ -1,7 +1,7 @@
 #                                               -*- Autoconf -*-
 # Process this file with autoconf to produce a configure script.
 AC_PREREQ([2.69])
-AC_INIT([editoror], [0.1], [BUG-REPORT-ADDRESS])
+AC_INIT([edor], [0.1], [BUG-REPORT-ADDRESS])
 AC_CONFIG_SRCDIR([main.c])
 #AC_CONFIG_HEADERS([config.h])
 
@@ -29,6 +29,6 @@ AM_INIT_AUTOMAKE
 
 AC_CONFIG_FILES([Makefile])
 
-AC_SUBST([PROJ], 'editoror')
+AC_SUBST([PROJ], 'edor')
 
 AC_OUTPUT
