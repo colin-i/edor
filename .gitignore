@@ -10,5 +10,6 @@ Makefile
 *.o
 *.s
 src/.dirstamp
+test.s
 edor
 .edorinfo

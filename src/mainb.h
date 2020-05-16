@@ -24,7 +24,7 @@ int strcmp(const char*,const char*);
 bool no_char(char);
 
 char*bar_init(void);
-int save(row*,size_t,char*);
+int save(row*,size_t,char**);
 int question(char*);
 
 extern char ln_term[3];

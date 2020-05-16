@@ -122,9 +122,9 @@ int question(char*q){
 	return 1;
 }
 //-2resize,-1no/quit,0er,1ok
-int save(row*rows,size_t sz,char*path){
-	if(path){
-		return saving(path,rows,sz,false);
+int save(row*rows,size_t sz,char**path){
+	if(path[0]){
+		return saving(path[0],rows,sz,false);
 	}
 	int right=getmaxx(stdscr)-4;//25
 	int visib=right+1-com_left;
@@ -137,6 +137,7 @@ int save(row*rows,size_t sz,char*path){
 		int a=getch();
 		if(a==Char_Return){
 			input[cursor]=0;
+			path[0]=input;
 			r=saves(input,rows,sz);
 			if(r==-1){
 				int x=getcurx(stdscr);

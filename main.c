@@ -1,7 +1,7 @@
 #include"src/main0.h"
-//strlen,2;open,4;close,3;write
+//strlen,3;open,4;close,3;write
 #include"src/mainc.h"
-//malloc,10;free,11;realloc,6
+//malloc,11;free,13;realloc,6
 #include"src/mainb.h"
 //move,6;getch;getmaxy,15;getmaxx,15
 //stdscr,18;keyname,2;getcurx,17;strcmp,12
@@ -10,6 +10,7 @@
 
 //#include <string.h>
 void*memcpy(void*,const void*,size_t);//16
+char*strcpy(char*,const char*);
 //sys/types.h
 typedef unsigned short mode_t;
 //asm-generic/fcntl.h
@@ -104,6 +105,7 @@ size_t ln_term_sz=1;
 
 static char*mapsel=NULL;
 static char*textfile=NULL;
+static char*text_file=NULL;
 static row*rows=NULL;
 static size_t rows_tot=1;
 static size_t rows_spc=1;
@@ -1090,9 +1092,19 @@ static bool loopin(WINDOW*w){
 			}
 			else if(!strcmp(s,"^P"))paste(w);
 			else if(!strcmp(s,"^S")){
-				int ret=save(rows,rows_tot,textfile);
+				int ret=save(rows,rows_tot,&textfile);
 				if(ret){
-					if(ret==1)mod_set(true);
+					if(ret==1){
+						mod_set(true);
+						size_t sz=strlen(textfile)+1;
+						char*d=malloc(sz);
+						if(d){
+							strcpy(d,textfile);
+							textfile=d;
+							if(text_file)free(text_file);
+							text_file=d;
+						}
+					}
 					else if(ret==-2)return true;
 				}
 				wmove(w,getcury(w),getcurx(w));
@@ -1122,7 +1134,7 @@ static bool loopin(WINDOW*w){
 				if(!mod_flag){
 					int q=question("And save");
 					if(q==1){
-						q=save(rows,rows_tot,textfile);
+						q=save(rows,rows_tot,&textfile);
 					}
 					if(q==-2)return true;
 					else if(!q){
@@ -1374,6 +1386,7 @@ int main(int argc,char**argv){
 			if(rows){
 				text_free(0,rows_tot);
 				free(rows);
+				if(text_file)free(text_file);
 			}
 			free(text_init_b);
 		}
