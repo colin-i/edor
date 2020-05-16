@@ -90,7 +90,7 @@ struct pollfd stdinfd={0,POLLIN,0};*/
 //#include <stdlib.h>
 char*getenv(const char*);
 //#include<stdio.h>
-int puts(const char*);//3
+int puts(const char*);//2
 int sprintf(char*,const char*,...);
 int getchar(void);
 /*//signal.h
