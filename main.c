@@ -90,7 +90,7 @@ struct pollfd stdinfd={0,POLLIN,0};*/
 //#include <stdlib.h>
 char*getenv(const char*);
 //#include<stdio.h>
-int puts(const char*);
+int puts(const char*);//3
 int sprintf(char*,const char*,...);
 int getchar(void);
 /*//signal.h
@@ -1095,7 +1095,6 @@ static bool loopin(WINDOW*w){
 				int ret=save(rows,rows_tot,&textfile);
 				if(ret){
 					if(ret==1){
-						mod_set(true);
 						size_t sz=strlen(textfile)+1;
 						char*d=malloc(sz);
 						if(d){
@@ -1103,6 +1102,7 @@ static bool loopin(WINDOW*w){
 							textfile=d;
 							if(text_file)free(text_file);
 							text_file=d;
+							mod_set(true);
 						}
 					}
 					else if(ret==-2)return true;
@@ -1386,11 +1386,15 @@ int main(int argc,char**argv){
 			if(rows){
 				text_free(0,rows_tot);
 				free(rows);
-				if(text_file)free(text_file);
+				//nothing here if(text_file){puts(text_file);free(text_file);}
 			}
 			free(text_init_b);
 		}
 		endwin();
+		if(text_file){
+			puts(text_file);
+			free(text_file);
+		}
 	}
 	return 0;
 }
