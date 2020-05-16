@@ -1,7 +1,7 @@
 #include"src/main0.h"
-//strlen,3;open,4;close,3;write
+//strlen,2;open,4;close,3;write
 #include"src/mainc.h"
-//malloc,11;free,13;realloc,6
+//malloc,10;free,11;realloc,6
 #include"src/mainb.h"
 //move,6;getch;getmaxy,15;getmaxx,15
 //stdscr,18;keyname,2;getcurx,17;strcmp,12
@@ -10,7 +10,6 @@
 
 //#include <string.h>
 void*memcpy(void*,const void*,size_t);//16
-char*strcpy(char*,const char*);
 //sys/types.h
 typedef unsigned short mode_t;
 //asm-generic/fcntl.h
@@ -1092,18 +1091,12 @@ static bool loopin(WINDOW*w){
 			}
 			else if(!strcmp(s,"^P"))paste(w);
 			else if(!strcmp(s,"^S")){
-				int ret=save(rows,rows_tot,&textfile);
+				char*d=textfile;
+				int ret=save(rows,rows_tot,&d);
 				if(ret){
 					if(ret==1){
-						size_t sz=strlen(textfile)+1;
-						char*d=malloc(sz);
-						if(d){
-							strcpy(d,textfile);
-							textfile=d;
-							if(text_file)free(text_file);
-							text_file=d;
-							mod_set(true);
-						}
+						if(d!=textfile){textfile=d;text_file=d;}
+						mod_set(true);
 					}
 					else if(ret==-2)return true;
 				}
@@ -1386,15 +1379,12 @@ int main(int argc,char**argv){
 			if(rows){
 				text_free(0,rows_tot);
 				free(rows);
-				//nothing here if(text_file){puts(text_file);free(text_file);}
+				//nothing here if(text_file)puts(text_file);
 			}
 			free(text_init_b);
 		}
 		endwin();
-		if(text_file){
-			puts(text_file);
-			free(text_file);
-		}
+		if(text_file)puts(text_file);
 	}
 	return 0;
 }

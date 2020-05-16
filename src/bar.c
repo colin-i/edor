@@ -19,6 +19,7 @@ int access(const char*,int);
 static int com_left;
 #define max_path 0xff
 //10
+static char input[max_path+1];
 
 char*bar_init(){
 	char*h="F1 for help";
@@ -34,7 +35,7 @@ static bool wrt(int f,row*rows,size_t sz){
 	}
 	return (size_t)write(f,rows[n].data,rows[n].sz)==rows[n].sz;
 }
-static int bcdl(int y,char*input,int*p,int cursor){
+static int bcdl(int y,int*p,int cursor){
 	int x=getcurx(stdscr);
 	bool left=x==com_left;
 	int pos=p[0];
@@ -131,7 +132,7 @@ int save(row*rows,size_t sz,char**path){
 	if(visib<2)return 0;//phisical visib is 1
 	int y=getmaxy(stdscr)-1;
 	move(y,com_left);
-	int cursor=0;char input[max_path+1];
+	int cursor=0;
 	int pos=0;int r;
 	for(;;){
 		int a=getch();
@@ -162,7 +163,7 @@ int save(row*rows,size_t sz,char**path){
 			break;
 		}
 		else if(a==Char_Backspace){
-			cursor=bcdl(y,input,&pos,cursor);
+			cursor=bcdl(y,&pos,cursor);
 		}
 		else if(a==KEY_LEFT){
 			int x=getcurx(stdscr);
