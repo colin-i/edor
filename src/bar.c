@@ -1,7 +1,7 @@
 #include"main0.h"
 //strlen,2;open,2;close;write,3
 #include"mainb.h"
-//move,16;getch,2;getmaxy;getmaxx,2
+//move,16;getch,2;getmaxy,2;getmaxx
 //getcurx,5;stdscr,9;keyname;strcmp
 //mvaddch,7,addstr;mvaddstr;wnoutrefresh,2
 #include"mainbc.h"
@@ -25,14 +25,14 @@ char*bar_init(){
 	com_left=(int)(strlen(h)+1);
 	return h;
 }
-static void wrt(int f,row*rows,size_t sz){
+static bool wrt(int f,row*rows,size_t sz){
 	size_t n=sz-1;
 	for(size_t i=0;i<n;i++){
 		row*r=&rows[i];
-		if((size_t)write(f,r->data,r->sz)!=r->sz)return;
-		if((size_t)write(f,ln_term,ln_term_sz)!=ln_term_sz)return;
+		if((size_t)write(f,r->data,r->sz)!=r->sz)return false;
+		if((size_t)write(f,ln_term,ln_term_sz)!=ln_term_sz)return false;
 	}
-	write(f,rows[n].data,rows[n].sz);
+	return (size_t)write(f,rows[n].data,rows[n].sz)==rows[n].sz;
 }
 static int bcdl(int y,char*input,int*p,int cursor){
 	int x=getcurx(stdscr);
@@ -67,21 +67,22 @@ static int bcdl(int y,char*input,int*p,int cursor){
 	p[0]=pos;
 	return cursor-1;
 }
-static void saving(char*path,row*rows,size_t sz,bool creat){
-	int f;
+static bool saving(char*path,row*rows,size_t sz,bool creat){
+	int f;bool r;
 	if(creat)f=open(path,O_CREAT|O_WRONLY|O_TRUNC,S_IRUSR|S_IWUSR);
 	else f=open(path,O_WRONLY|O_TRUNC);
 	if(f!=-1){
-		wrt(f,rows,sz);
+		r=wrt(f,rows,sz);
 		close(f);
-	}
+	}else r=false;
+	return r;
 }
-static bool saves(char*path,row*rows,size_t sz){
+//-1exist,0er,1ok
+static int saves(char*path,row*rows,size_t sz){
 	if(access(path,F_OK)==-1){
-		saving(path,rows,sz,true);
-		return false;
+		return saving(path,rows,sz,true);
 	}
-	return true;
+	return -1;
 }
 static void clear_com(int y,int sz,int pos,int cursor){
 	int len;if(pos){
@@ -104,43 +105,46 @@ static void clear_com(int y,int sz,int pos,int cursor){
 		//memset(mapsel,' ',(size_t)len);mapsel[len]=0;addstr(mapsel);
 	}
 }
-static int question(char*q,int y){
-	int sz=(int)(strlen(q)+sizeof("? Y/n/c"));
-	if(com_left+sz>getmaxx(stdscr))return 1;
+int question(char*q){
+	//if(com_left+sz>getmaxx(stdscr))return 1;
+	int y=getmaxy(stdscr)-1;
 	mvaddstr(y,com_left,q);
-	addstr("? Y/n/c");
+	addstr("? Y/c/n");
 	int ch=getch();
+	if(ch==KEY_RESIZE)return -2;
 	move(y,com_left);
+	int sz=(int)(strlen(q)+sizeof("? Y/c/n"));
 	for(int i=0;i<sz;i++)
 		addch(' ');
 	//memset(mapsel,' ',sz);mapsel[sz]=0;mvaddstr(y,com_left,mapsel);
-	if(ch=='n')return 0;
-	else if(ch=='c')return -1;
+	if(ch=='c')return 0;
+	else if(ch=='n')return -1;
 	return 1;
 }
-bool save(row*rows,size_t sz,char*path){
+//-2resize,-1no/quit,0er,1ok
+int save(row*rows,size_t sz,char*path){
 	if(path){
-		saving(path,rows,sz,false);
-		return false;
+		return saving(path,rows,sz,false);
 	}
 	int right=getmaxx(stdscr)-4;//25
 	int visib=right+1-com_left;
-	if(visib<2)return false;//phisical visib is 1
+	if(visib<2)return 0;//phisical visib is 1
 	int y=getmaxy(stdscr)-1;
 	move(y,com_left);
 	int cursor=0;char input[max_path+1];
-	int pos=0;
+	int pos=0;int r;
 	for(;;){
 		int a=getch();
 		if(a==Char_Return){
 			input[cursor]=0;
-			if(saves(input,rows,sz)){
+			r=saves(input,rows,sz);
+			if(r==-1){
 				int x=getcurx(stdscr);
 				clear_com(y,visib,pos,cursor);
-				int q=question("Overwrite",y);
-				if(q==1){
-					saving(input,rows,sz,false);
-				}else if(q==-1){
+				r=question("Overwrite");
+				if(r==1){
+					r=saving(input,rows,sz,false);
+				}else if(!r){
 					if(pos)mvaddch(y,com_left-1,'<');
 					else move(y,com_left);
 					int len=cursor-pos;
@@ -150,9 +154,9 @@ bool save(row*rows,size_t sz,char*path){
 					if(rt)addch('>');
 					move(y,x);
 					continue;
-				}
+				}else if(r==-2)return -2;
 				wnoutrefresh(stdscr);
-				return false;
+				return r;
 			}
 			break;
 		}
@@ -190,10 +194,10 @@ bool save(row*rows,size_t sz,char*path){
 				move(y,x);
 			}
 		}
-		else if(a==KEY_RESIZE)return true;
+		else if(a==KEY_RESIZE)return -2;
 		else{
 			const char*s=keyname(a);
-			if(!strcmp(s,"^Q"))break;
+			if(!strcmp(s,"^Q")){r=-1;break;}
 			if(cursor==max_path)continue;
 			char ch=(char)a;
 			if(!no_char(ch)){
@@ -226,5 +230,5 @@ bool save(row*rows,size_t sz,char*path){
 	}
 	clear_com(y,visib,pos,cursor);
 	wnoutrefresh(stdscr);
-	return false;
+	return r;
 }

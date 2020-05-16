@@ -31,7 +31,7 @@ int winnstr(WINDOW*,char*,int);//2
 typedef unsigned mmask_t;
 mmask_t mousemask(mmask_t,mmask_t*);
 int noecho(void);
-int cbreak(void);
+int raw(void);
 int nonl(void);
 #define ALL_MOUSE_EVENTS 0xFffFFff
 int wmove(WINDOW*,int,int);//21
@@ -92,6 +92,12 @@ char*getenv(const char*);
 int puts(const char*);
 int sprintf(char*,const char*,...);
 int getchar(void);
+/*//signal.h
+void(*signal(int,void(*)(void)))(void);
+//asm-generic/signal.h
+#define SIG_IGN 1
+#define SIGINT 2
+#define SIGTSTP 20*/
 
 char ln_term[3]="\n";
 size_t ln_term_sz=1;
@@ -748,9 +754,10 @@ static void row_del(size_t a,size_t b){
 	}
 	rows_tot-=c-a;
 }
-static void mod_set(){
-	mod_flag=false;
-	mvaddch(getmaxy(stdscr)-1,getmaxx(stdscr)-2,'*');
+static void mod_set(bool flag){
+	mod_flag=flag;
+	chtype ch=mod_flag?' ':'*';
+	mvaddch(getmaxy(stdscr)-1,getmaxx(stdscr)-2,ch);
 	wnoutrefresh(stdscr);
 }
 static void delete(size_t ybsel,size_t xbsel,size_t yesel,size_t xesel,int*rw,int*cl,WINDOW*w){
@@ -775,7 +782,7 @@ static void delete(size_t ybsel,size_t xbsel,size_t yesel,size_t xesel,int*rw,in
 	}
 	deleted(ybsel,xbsel,rw,cl,w);
 	if(mod_flag)if(ybsel!=yesel||xbsel!=xesel)
-		mod_set();
+		mod_set(false);
 }
 static char*memtrm(char*a){
 	while(a[0]!=ln_term[0])a++;
@@ -842,7 +849,7 @@ static size_t pasting(row*d,int r,int c,WINDOW*w){
 	else rows_insert(d,max,y+1);
 	pasted(y-ytext,l,w);
 	if(mod_flag)if(cutbuf_r>1||cutbuf_sz>0)
-		mod_set();
+		mod_set(false);
 	return 0;
 }
 static void paste(WINDOW*w){
@@ -1027,14 +1034,14 @@ static void type(int cr,WINDOW*w){
 	}
 	if(off)refreshpage(w);
 	wmove(w,rw,cl);
-	if(mod_flag)mod_set();
+	if(mod_flag)mod_set(false);
 }
 static bool loopin(WINDOW*w){
 	int c;
 	for(;;){
 		c=wgetch(w);
 		int a=movment(c,w);
-		if(a>0)return true;
+		if(a==1)return true;
 		if(a){
 			if(visual_bool){
 				visual_bool=false;
@@ -1058,7 +1065,7 @@ static bool loopin(WINDOW*w){
 				do{
 					int b=wgetch(w);
 					z=movment(b,w);
-					if(z>0)return true;
+					if(z==1)return true;
 					else{
 						int r=getcury(w);int col=getcurx(w);
 						if(!z){
@@ -1083,9 +1090,12 @@ static bool loopin(WINDOW*w){
 			}
 			else if(!strcmp(s,"^P"))paste(w);
 			else if(!strcmp(s,"^S")){
-				int y=getcury(w);int x=getcurx(w);
-				if(save(rows,rows_tot,textfile))return true;
-				wmove(w,y,x);
+				int ret=save(rows,rows_tot,textfile);
+				if(ret){
+					if(ret==1)mod_set(true);
+					else if(ret==-2)return true;
+				}
+				wmove(w,getcury(w),getcurx(w));
 			}
 			else if(!strcmp(s,"^B")){
 				if(textfile){
@@ -1108,7 +1118,21 @@ static bool loopin(WINDOW*w){
 				}
 				wmove(w,cy,cx);
 			}
-			else if(!strcmp(s,"^Q"))return false;
+			else if(!strcmp(s,"^Q")){
+				if(!mod_flag){
+					int q=question("And save");
+					if(q==1){
+						q=save(rows,rows_tot,textfile);
+					}
+					if(q==-2)return true;
+					else if(!q){
+						wnoutrefresh(stdscr);
+						wmove(w,getcury(w),getcurx(w));
+						continue;
+					}
+				}
+				return false;
+			}
 			else type(c,w);
 			//continue;
 		}
@@ -1254,9 +1278,11 @@ static bool color(){
 	return true;
 }
 int main(int argc,char**argv){
+	//signal(SIGINT,(void(*)(void))SIG_IGN);
+	//signal(SIGTSTP,sig_handler);
 	WINDOW*w1=initscr();
 	if(w1!=NULL){
-		cbreak();//stty,cooked;relevant for getchar at me
+		raw();//stty,cooked;relevant for getchar at me
 		size_t text_sz;
 		int ok=0;
 		if(argc==2){
@@ -1326,6 +1352,7 @@ int main(int argc,char**argv){
 						printpage(w);
 						wmove(w,0,0);
 						printhelp();
+						if(!mod_flag)mod_set(false);
 						loops=loopin(w);
 						delwin(w);
 					}else break;
