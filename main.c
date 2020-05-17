@@ -629,16 +629,10 @@ static void difsel(WINDOW*w,int rb,int cb,int re,int ce){
 	}else if(re<_re||(re==_re&&ce<_ce)){
 		if(rb==_rb&&cb==_cb)b=false;else b=true;
 		_rb=re;_cb=ce;a=true;
-	}else if(rb<_rb){
+	}else if(rb<_rb||cb<_cb){
 		re=_rb;ce=_cb;b=true;
 		a=false;
-	}else if(cb<_cb){
-		re=_rb;ce=_cb;b=true;
-		a=false;
-	}else if(_re<re){
-		rb=_re;cb=_ce;b=true;
-		a=false;
-	}else{// if(_ce<ce)
+	}else{// if(_re<re||_ce<ce){
 		rb=_re;cb=_ce;b=true;
 		a=false;
 	}
