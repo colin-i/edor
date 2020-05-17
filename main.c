@@ -139,8 +139,8 @@ static char*text_init_b=NULL;
 static char*text_init_e;
 #define row_pad 0xF
 static bool mod_flag=true;
-static int sel_rb;static int sel_cb;
-static int sel_re;static int sel_ce;
+static int _rb;static int _cb;
+static int _re;static int _ce;
 
 /*int ach(WINDOW*w){
 	if(poll(&stdinfd,1,0)<1)return 0;
@@ -380,7 +380,7 @@ static int end(WINDOW*w,size_t r){
 	xtext=(size_t)(s-b);
 	return m;
 }
-//1resize,0diff key,-,1refrehed,2press,3back,4forward
+//1resize,0diff key,-,1refreshed,2no refresh
 static int movment(int c,WINDOW*w){
 	if(c==KEY_MOUSE){
 		MEVENT e;
@@ -392,19 +392,19 @@ static int movment(int c,WINDOW*w){
 		}
 	}else if(c==KEY_UP){
 		int y=getcury(w);
-		if(y>0){amove(w,y-1,getcurx(w));return -3;}
+		if(y>0){amove(w,y-1,getcurx(w));return -2;}
 		else sumove(w,y);
 	}else if(c==KEY_DOWN){
 		int y=getcury(w);
-		if(y+1<getmaxy(w)){amove(w,y+1,getcurx(w));return -4;}
+		if(y+1<getmaxy(w)){amove(w,y+1,getcurx(w));return -2;}
 		else sdmove(w,y);
 	}else if(c==KEY_LEFT){
 		int x=getcurx(w);
-		if(x>0){amove(w,getcury(w),x-1);return -3;}
+		if(x>0){amove(w,getcury(w),x-1);return -2;}
 		else slmove(w,x,true);
 	}else if(c==KEY_RIGHT){
 		int x=getcurx(w);
-		if(x+1<getmaxx(w)){if(bmove(w,getcury(w),x+1,false))return -4;}
+		if(x+1<getmaxx(w)){if(bmove(w,getcury(w),x+1,false))return -2;}
 		else srmove(w,x,false);
 	}else if(c==KEY_HOME){
 		xtext=0;int y=getcury(w);
@@ -548,62 +548,54 @@ static void printrow(WINDOW*w,int r,int b,int e,int c1,int c2){
 	printpart(w,c1,m-b);
 	printpart(w,c2,e-m);
 }
-static void sel(WINDOW*w,int c1,int c2){
-	wmove(w,sel_rb,sel_cb);
+static void sel(WINDOW*w,int c1,int c2,int rb,int cb,int re,int ce){
+	wmove(w,rb,cb);
 	int wd=getmaxx(w);
-	if(sel_rb==sel_re){
-		printrow(w,sel_rb,sel_cb,sel_ce,c1,c2);
+	if(rb==re){
+		printrow(w,rb,cb,ce,c1,c2);
 	}else{
-		printrow(w,sel_rb,sel_cb,wd,c1,c2);
-		for(int r=sel_rb+1;r<sel_re;r++){
+		printrow(w,rb,cb,wd,c1,c2);
+		for(int r=rb+1;r<re;r++){
 			int m=mid(r,wd);
 			printpart(w,c1,m);
 			printpart(w,c2,wd-m);
 		}
-		printrow(w,sel_re,0,sel_ce,c1,c2);
+		printrow(w,re,0,ce,c1,c2);
 	}
 }
-static void set1membuf(size_t y,size_t x,bool*orig,size_t*yb,size_t*xb,size_t*ye,size_t*xe,int z,WINDOW*w){
+static void set1membuf(size_t y,size_t x,bool*orig,size_t*yb,size_t*xb,size_t*ye,size_t*xe){
 	if(orig[0]){
 		if(y<yb[0]){
-			if(z<-1)sel(w,0,0);
 			ye[0]=yb[0];yb[0]=y;
 			xe[0]=xb[0];xb[0]=x;
 			orig[0]=false;
 		}
 		else if(y>yb[0]){
-			if(z==-3||z==-2)sel(w,0,0);
 			ye[0]=y;xe[0]=x;
 		}
 		else if(x<xb[0]){
-			if(z<-1)sel(w,0,0);
 			ye[0]=yb[0];
 			xe[0]=xb[0];xb[0]=x;
 			orig[0]=false;
 		}
 		else{
-			if(z==-3||z==-2)sel(w,0,0);
 			ye[0]=y;xe[0]=x;
 		}
 	}else{
 		if(ye[0]<y){
-			if(z<-1)sel(w,0,0);
 			yb[0]=ye[0];ye[0]=y;
 			xb[0]=xe[0];xe[0]=x;
 			orig[0]=true;
 		}
 		else if(ye[0]>y){
-			if(z==-4||z==-2)sel(w,0,0);
 			yb[0]=y;xb[0]=x;
 		}
 		else if(xe[0]<x){
-			if(z<-1)sel(w,0,0);
 			yb[0]=ye[0];
 			xb[0]=xe[0];xe[0]=x;
 			orig[0]=true;
 		}
 		else{
-			if(z==-4||z==-2)sel(w,0,0);
 			yb[0]=y;xb[0]=x;
 		}
 	}
@@ -629,7 +621,31 @@ static int xc_to_c(int col,int r){
 	}
 	return col;
 }
-static void printsel(WINDOW*w,size_t ybsel,size_t xbsel,size_t yesel,size_t xesel){
+static void difsel(WINDOW*w,int rb,int cb,int re,int ce){
+	bool a;bool b;
+	if(_rb<rb||(_rb==rb&&_cb<cb)){
+		if(re==_re&&ce==_ce)b=false;else b=true;
+		_re=rb;_ce=cb;a=true;
+	}else if(re<_re||(re==_re&&ce<_ce)){
+		if(rb==_rb&&cb==_cb)b=false;else b=true;
+		_rb=re;_cb=ce;a=true;
+	}else if(rb<_rb){
+		re=_rb;ce=_cb;b=true;
+		a=false;
+	}else if(cb<_cb){
+		re=_rb;ce=_cb;b=true;
+		a=false;
+	}else if(_re<re){
+		rb=_re;cb=_ce;b=true;
+		a=false;
+	}else{// if(_ce<ce)
+		rb=_re;cb=_ce;b=true;
+		a=false;
+	}
+	if(a)sel(w,0,0,_rb,_cb,_re,_ce);
+	if(b)sel(w,1,2,rb,cb,re,ce);
+}
+static void printsel(WINDOW*w,size_t ybsel,size_t xbsel,size_t yesel,size_t xesel,int z){
 	int wd=getmaxx(w);
 	int cright=wd-1;
 	int rb;int cb;
@@ -662,10 +678,12 @@ static void printsel(WINDOW*w,size_t ybsel,size_t xbsel,size_t yesel,size_t xese
 			break;
 		}
 	}
-	sel_rb=rb;sel_cb=cb;
-	sel_re=re;sel_ce=ce+1;
-	sel(w,1,2);
+	ce++;
+	if(z!=-2)sel(w,1,2,rb,cb,re,ce);
+	else difsel(w,rb,cb,re,ce);
 	wattrset(w,0);
+	_rb=rb;_cb=cb;
+	_re=re;_ce=ce;
 }
 static void visual(char a){
 	mvaddch(getmaxy(stdscr)-1,getmaxx(stdscr)-1,a);
@@ -1089,7 +1107,7 @@ static bool loopin(WINDOW*w){
 				size_t yesel=ybsel;size_t xesel=xbsel;
 				bool orig=true;
 				if(ybsel<rows_tot)if(xbsel<rows[ybsel].sz)if(rows[ybsel].data[xbsel]=='\t'){
-					printsel(w,ybsel,xbsel,yesel,xesel);
+					printsel(w,ybsel,xbsel,yesel,xesel,-1);
 					wmove(w,rw,cl);
 				}
 				int z;
@@ -1111,8 +1129,8 @@ static bool loopin(WINDOW*w){
 							refreshpage(w);
 						}else{
 							size_t y=ytext+(size_t)r;size_t x=xtext+c_to_xc(col,r);
-							set1membuf(y,x,&orig,&ybsel,&xbsel,&yesel,&xesel,z,w);
-							printsel(w,ybsel,xbsel,yesel,xesel);
+							set1membuf(y,x,&orig,&ybsel,&xbsel,&yesel,&xesel);
+							printsel(w,ybsel,xbsel,yesel,xesel,z);
 						}
 						wmove(w,r,col);
 					}
