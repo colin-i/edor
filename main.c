@@ -3,7 +3,7 @@
 #include"src/mainc.h"
 //malloc,10;free,11;realloc,6
 #include"src/mainb.h"
-//move,6;getch;getmaxy,15;getmaxx,15
+//move,6;getch;getmaxy,15;getmaxx,17
 //stdscr,18;keyname,2;getcurx,17;strcmp,12
 //mvaddch,2;addstr,3;mvaddstr
 //wnoutrefresh,8
@@ -139,6 +139,8 @@ static char*text_init_b=NULL;
 static char*text_init_e;
 #define row_pad 0xF
 static bool mod_flag=true;
+static int sel_rb;static int sel_cb;
+static int sel_re;static int sel_ce;
 
 /*int ach(WINDOW*w){
 	if(poll(&stdinfd,1,0)<1)return 0;
@@ -260,10 +262,15 @@ static void amove(WINDOW*w,int r,int c){
 static void tmove(WINDOW*w,int y,bool right){
 	int x=getcurx(w);
 	if(right){
-		if(ytext+1<rows_tot){ytext++;refreshpage(w);}
+		if(ytext+1<rows_tot){
+			ytext++;refreshpage(w);
+			amove(w,y,x);
+		}
 	}
-	else if(ytext){ytext--;refreshpage(w);}
-	amove(w,y,x);//print changed cursor
+	else if(ytext){
+		ytext--;refreshpage(w);
+		amove(w,y,x);
+	}
 }
 static void helpclear(){
 	int r=getcury(stdscr);
@@ -373,7 +380,7 @@ static int end(WINDOW*w,size_t r){
 	xtext=(size_t)(s-b);
 	return m;
 }
-//1resize,0diff key,-,1refreh,2press,3back,4forward
+//1resize,0diff key,-,1refrehed,2press,3back,4forward
 static int movment(int c,WINDOW*w){
 	if(c==KEY_MOUSE){
 		MEVENT e;
@@ -509,33 +516,94 @@ static bool writemembuf(size_t ybsel,size_t xbsel,size_t yesel,size_t xesel){
 	if(inc_nl)cutbuf_r++;
 	return true;
 }
-static void set1membuf(size_t y,size_t x,bool*orig,size_t*yb,size_t*xb,size_t*ye,size_t*xe){
+static int mid(int r,int max){
+	size_t y=ytext+(size_t)r;
+	if(y<rows_tot){
+		size_t sz=rows[y].sz;
+		if(sz<xtext)return 0;
+		sz-=xtext;
+		int w=tabs[r*tabs_rsz]*(tab_sz-1)+(int)sz;
+		if(w<max){
+			return w;
+		}
+		return max;
+	}
+	return 0;
+}
+static void printpart(WINDOW*w,int p,int n){
+	wattrset(w,COLOR_PAIR(p));
+	winnstr(w,mapsel,n);
+	waddstr(w,mapsel);
+}
+static void printrow(WINDOW*w,int r,int b,int e,int c1,int c2){
+	int m=mid(r,getmaxx(w));
+	if(m<=b){
+		printpart(w,c2,e-b);
+		return;
+	}
+	if(e<=m){
+		printpart(w,c1,e-b);
+		return;
+	}
+	printpart(w,c1,m-b);
+	printpart(w,c2,e-m);
+}
+static void sel(WINDOW*w,int c1,int c2){
+	wmove(w,sel_rb,sel_cb);
+	int wd=getmaxx(w);
+	if(sel_rb==sel_re){
+		printrow(w,sel_rb,sel_cb,sel_ce,c1,c2);
+	}else{
+		printrow(w,sel_rb,sel_cb,wd,c1,c2);
+		for(int r=sel_rb+1;r<sel_re;r++){
+			int m=mid(r,wd);
+			printpart(w,c1,m);
+			printpart(w,c2,wd-m);
+		}
+		printrow(w,sel_re,0,sel_ce,c1,c2);
+	}
+}
+static void set1membuf(size_t y,size_t x,bool*orig,size_t*yb,size_t*xb,size_t*ye,size_t*xe,int z,WINDOW*w){
 	if(orig[0]){
 		if(y<yb[0]){
-			ye[0]=yb[0];xe[0]=xb[0];xb[0]=x;orig[0]=false;
-			yb[0]=y;
+			if(z<-1)sel(w,0,0);
+			ye[0]=yb[0];yb[0]=y;
+			xe[0]=xb[0];xb[0]=x;
+			orig[0]=false;
 		}
 		else if(y>yb[0]){
+			if(z==-3||z==-2)sel(w,0,0);
 			ye[0]=y;xe[0]=x;
 		}
 		else if(x<xb[0]){
-			ye[0]=yb[0];xe[0]=xb[0];xb[0]=x;orig[0]=false;
+			if(z<-1)sel(w,0,0);
+			ye[0]=yb[0];
+			xe[0]=xb[0];xb[0]=x;
+			orig[0]=false;
 		}
 		else{
+			if(z==-3||z==-2)sel(w,0,0);
 			ye[0]=y;xe[0]=x;
 		}
 	}else{
 		if(ye[0]<y){
-			yb[0]=ye[0];xb[0]=xe[0];xe[0]=x;orig[0]=true;
-			ye[0]=y;
+			if(z<-1)sel(w,0,0);
+			yb[0]=ye[0];ye[0]=y;
+			xb[0]=xe[0];xe[0]=x;
+			orig[0]=true;
 		}
 		else if(ye[0]>y){
+			if(z==-4||z==-2)sel(w,0,0);
 			yb[0]=y;xb[0]=x;
 		}
 		else if(xe[0]<x){
-			yb[0]=ye[0];xb[0]=xe[0];xe[0]=x;orig[0]=true;
+			if(z<-1)sel(w,0,0);
+			yb[0]=ye[0];
+			xb[0]=xe[0];xe[0]=x;
+			orig[0]=true;
 		}
 		else{
+			if(z==-4||z==-2)sel(w,0,0);
 			yb[0]=y;xb[0]=x;
 		}
 	}
@@ -560,38 +628,6 @@ static int xc_to_c(int col,int r){
 		else break;
 	}
 	return col;
-}
-static int mid(int r,int max){
-	size_t y=ytext+(size_t)r;
-	if(y<rows_tot){
-		size_t sz=rows[y].sz;
-		if(sz<xtext)return 0;
-		sz-=xtext;
-		int w=tabs[r*tabs_rsz]*(tab_sz-1)+(int)sz;
-		if(w<max){
-			return w;
-		}
-		return max;
-	}
-	return 0;
-}
-static void printpart(WINDOW*w,int p,int n){
-	wattrset(w,COLOR_PAIR(p));
-	winnstr(w,mapsel,n);
-	waddstr(w,mapsel);
-}
-static void printrow(WINDOW*w,int r,int b,int e){
-	int m=mid(r,getmaxx(w));
-	if(m<=b){
-		printpart(w,2,e-b);
-		return;
-	}
-	if(e<=m){
-		printpart(w,1,e-b);
-		return;
-	}
-	printpart(w,1,m-b);
-	printpart(w,2,e-m);
 }
 static void printsel(WINDOW*w,size_t ybsel,size_t xbsel,size_t yesel,size_t xesel){
 	int wd=getmaxx(w);
@@ -626,24 +662,10 @@ static void printsel(WINDOW*w,size_t ybsel,size_t xbsel,size_t yesel,size_t xese
 			break;
 		}
 	}
-	wmove(w,rb,cb);
-	ce++;
-	if(rb==re){
-		printrow(w,rb,cb,ce);
-	}else{
-		printrow(w,rb,cb,wd);
-		for(int r=rb+1;r<re;r++){
-			int m=mid(r,wd);
-			printpart(w,1,m);
-			printpart(w,2,wd-m);
-		}
-		printrow(w,re,0,ce);
-	}
+	sel_rb=rb;sel_cb=cb;
+	sel_re=re;sel_ce=ce+1;
+	sel(w,1,2);
 	wattrset(w,0);
-}
-static bool testrefresh(int z,bool orig){
-	if(z>-2)return false;
-	return z==-2||(z==-3&&orig)||!orig;
 }
 static void visual(char a){
 	mvaddch(getmaxy(stdscr)-1,getmaxx(stdscr)-1,a);
@@ -942,10 +964,18 @@ static bool bcsp(size_t y,size_t x,int*rw,int*cl,WINDOW*w){
 		data[i-1]=data[i];
 	}
 	r->sz--;
-	if(c<0){
-		xtext--;
-		refreshpage(w);
-		return false;
+	if(xtext){
+		int mx=getmaxx(w)/4;
+		if(c<mx){
+			while(c<mx){
+				xtext--;
+				c+=data[xtext]=='\t'?tab_sz:1;
+				if(!xtext)break;
+			}
+			refreshpage(w);
+			cl[0]=c;
+			return false;
+		}
 	}
 	cl[0]=c;
 	wmove(w,rw[0],c);//move for addstr
@@ -1080,9 +1110,8 @@ static bool loopin(WINDOW*w){
 							visual(v);
 							refreshpage(w);
 						}else{
-							if(testrefresh(z,orig))refreshpage(w);
 							size_t y=ytext+(size_t)r;size_t x=xtext+c_to_xc(col,r);
-							set1membuf(y,x,&orig,&ybsel,&xbsel,&yesel,&xesel);
+							set1membuf(y,x,&orig,&ybsel,&xbsel,&yesel,&xesel,z,w);
 							printsel(w,ybsel,xbsel,yesel,xesel);
 						}
 						wmove(w,r,col);
