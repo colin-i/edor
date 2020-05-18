@@ -4,9 +4,9 @@
 //malloc,10;free,11;realloc,6
 #include"src/mainb.h"
 //move,6;getch;getmaxy,15;getmaxx,17
-//stdscr,18;keyname,2;getcurx,17;strcmp,12
+//stdscr,17;keyname,2;getcurx,17;strcmp,12
 //mvaddch,2;addstr,3;mvaddstr
-//wnoutrefresh,8
+//wnoutrefresh,7
 
 //#include <string.h>
 void*memcpy(void*,const void*,size_t);//16
@@ -34,17 +34,17 @@ int noecho(void);
 int raw(void);
 int nonl(void);
 #define ALL_MOUSE_EVENTS 0xFffFFff
-int wmove(WINDOW*,int,int);//22
+int wmove(WINDOW*,int,int);//23
 int getcury(const WINDOW*);//23
 WINDOW*newwin(int,int,int,int);
 int delwin(WINDOW*);
 int doupdate(void);//2
-int waddch(WINDOW*,const chtype);//2
+int waddch(WINDOW*,const chtype);//3
 int waddstr(WINDOW*,const char*);//4
 int waddnstr(WINDOW*,const char*,int);//2
-int werase(WINDOW*);//2
+int werase(WINDOW*);
 int clrtoeol(void);//2
-int wclrtoeol(WINDOW*);
+int wclrtoeol(WINDOW*);//2
 int attrset(int);//3
 int wattrset(WINDOW*,int);
 int start_color(void);
@@ -176,7 +176,6 @@ static void tab_grow(WINDOW*w,int r,char*a,size_t sz,int*ptr){
 	int c=0;int cr=0;
 	int max=getmaxx(w);
 	size_t i=xtext;size_t j=i;
-	wmove(w,r,0);
 	for(;i<sz&&cr<max;i++){
 		char z=a[i];
 		if(z=='\t'){
@@ -186,7 +185,10 @@ static void tab_grow(WINDOW*w,int r,char*a,size_t sz,int*ptr){
 			ptr[ptr[0]+1]=c;ptr[0]++;
 			j=i+1;
 			c+=tab_sz;cr+=tab_sz-1;
-			wmove(w,r,c);
+			//wmove(w,r,c);
+			for(int k=0;k<tab_sz;k++){
+				waddch(w,' ');
+			}
 		}else if(no_char(z)){
 			a[i]='?';char aux=a[i+1];a[i+1]=0;
 			waddstr(w,a+j);a[i+1]=aux;a[i]=z;
@@ -199,12 +201,13 @@ static void tab_grow(WINDOW*w,int r,char*a,size_t sz,int*ptr){
 		a[i]=0;waddstr(w,a+j);a[i]=e;
 	}
 }
-static void printpage(WINDOW*w){
+static void refreshpage(WINDOW*w){
 	int i=0;int maxy=getmaxy(w);
 	size_t maxx=xtext+(size_t)getmaxx(w);
 	do{
 		size_t j=ytext+(size_t)i;
 		int*ptr=&tabs[tabs_rsz*i];ptr[0]=0;
+		wmove(w,i,0);
 		if(j<rows_tot){
 			char*str=rows[j].data;
 			size_t sz=rows[j].sz;
@@ -213,12 +216,9 @@ static void printpage(WINDOW*w){
 			tab_grow(w,i,str,sz,ptr);
 			str[sz]=stor;
 		}else x_right[i]=false;
+		wclrtoeol(w);
 		i++;
 	}while(i<maxy);
-}
-static void refreshpage(WINDOW*w){
-	werase(w);
-	printpage(w);
 }
 static bool bmove(WINDOW*w,int r,int c,bool back){
 	wmove(w,r,c);
@@ -334,9 +334,8 @@ static bool helpin(WINDOW*w){
 		else if(c==KEY_UP)hmove(-1);
 		else if(c==KEY_RESIZE)return true;
 	}while(c!='q');
-	helpclear();
-	wnoutrefresh(stdscr);
-	printpage(w);
+	//helpclear();wnoutrefresh(stdscr);
+	refreshpage(w);
 	return false;
 }
 static void printhelp(){
@@ -1395,7 +1394,7 @@ int main(int argc,char**argv){
 					if(w){
 						keypad(w,true);
 						xtext=0;ytext=0;
-						printpage(w);
+						refreshpage(w);
 						wmove(w,0,0);
 						printhelp();
 						if(!mod_flag)mod_set(false);
