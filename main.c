@@ -1044,7 +1044,7 @@ static bool enter(size_t y,size_t x,int*r,int*c,WINDOW*w){
 			int*p=t+a;
 			int*z=p;
 			while(p!=t){
-				if(p[0]<(int)xc)break;
+				if((size_t)p[0]<xc)break;
 				p--;
 			}
 			t[0]-=z-p;
