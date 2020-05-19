@@ -1090,48 +1090,48 @@ static void type(int cr,WINDOW*w){
 		if(mal_spc_rea(r,x,1,r->sz-x,&ch))return;
 		bool is_tab=ch=='\t';
 		int s=is_tab?tab_sz:1;
-		if(off){
-			cl=s;
-			refreshrows(w,rw);
+		//if(off){
+		//	cl=s;
+		//	refreshrows(w,rw);
+		//}else{
+		int colmn=cl;
+		cl+=s;
+		int max=getmaxx(w);
+		if(cl>=max){
+			char*d=r->data;
+			do{
+				cl-=d[xtext]=='\t'?tab_sz:1;
+				xtext++;
+			}while(cl>=max);
+			refreshpage(w);
 		}else{
-			int colmn=cl;
-			cl+=s;
-			int max=getmaxx(w);
-			if(cl>=max){
-				char*d=r->data;
-				do{
-					cl-=d[xtext]=='\t'?tab_sz:1;
-					xtext++;
-				}while(cl>=max);
-				refreshpage(w);
-			}else{
-				wmove(w,rw,colmn);
-				int n=max-cl;
-				winnstr(w,mapsel,n);
-				int*t=&tabs[tabs_rsz*rw];
-				int a=t[0];
-				if(a)if(t[a]+s>=max){t[0]--;a--;}
-				int i=1;
-				for(;i<=a;i++){
-					if(colmn<=t[i])break;
-				}
-				if(is_tab){
-					for(int k=tab_sz;k>0;k--){
-						waddch(w,' ');
-					}
-					t[0]=a+1;
-					for(int j=a;i<=j;j--){t[j+1]=t[j]+tab_sz;}
-					t[i]=colmn;
-				}else{
-					waddch(w,no_char(ch)?'?':ch);
-					int j=a;
-					while(i<=j){
-						t[j]=t[j]+1;j--;
-					}
-				}
-				waddstr(w,mapsel);
+			wmove(w,rw,colmn);
+			int n=max-cl;
+			winnstr(w,mapsel,n);
+			int*t=&tabs[tabs_rsz*rw];
+			int a=t[0];
+			if(a)if(t[a]+s>=max){t[0]--;a--;}
+			int i=1;
+			for(;i<=a;i++){
+				if(colmn<=t[i])break;
 			}
+			if(is_tab){
+				for(int k=tab_sz;k>0;k--){
+					waddch(w,' ');
+				}
+				t[0]=a+1;
+				for(int j=a;i<=j;j--){t[j+1]=t[j]+tab_sz;}
+				t[i]=colmn;
+			}else{
+				waddch(w,no_char(ch)?'?':ch);
+				int j=a;
+				while(i<=j){
+					t[j]=t[j]+1;j--;
+				}
+			}
+			waddstr(w,mapsel);
 		}
+		//}
 	}
 	wmove(w,rw,cl);
 	if(mod_flag)mod_set(false);
