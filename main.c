@@ -3,7 +3,7 @@
 #include"src/mainc.h"
 //malloc,10;free,11;realloc,6
 #include"src/mainb.h"
-//move,6;getch;getmaxy,15;getmaxx,17
+//move,6;getch;getmaxy,15;getmaxx,19
 //stdscr,17;keyname,2;getcurx,17;strcmp,12
 //mvaddch,2;addstr,3;mvaddstr
 //wnoutrefresh,7
@@ -34,17 +34,17 @@ int noecho(void);
 int raw(void);
 int nonl(void);
 #define ALL_MOUSE_EVENTS 0xFffFFff
-int wmove(WINDOW*,int,int);//23
+int wmove(WINDOW*,int,int);//25
 int getcury(const WINDOW*);//23
 WINDOW*newwin(int,int,int,int);
 int delwin(WINDOW*);
 int doupdate(void);//2
-int waddch(WINDOW*,const chtype);//3
+int waddch(WINDOW*,const chtype);//4
 int waddstr(WINDOW*,const char*);//4
 int waddnstr(WINDOW*,const char*,int);//2
 int werase(WINDOW*);
 int clrtoeol(void);//2
-int wclrtoeol(WINDOW*);//2
+int wclrtoeol(WINDOW*);//3
 int attrset(int);//3
 int wattrset(WINDOW*,int);
 int start_color(void);
@@ -201,8 +201,8 @@ static void tab_grow(WINDOW*w,int r,char*a,size_t sz,int*ptr){
 		a[i]=0;waddstr(w,a+j);a[i]=e;
 	}
 }
-static void refreshpage(WINDOW*w){
-	int i=0;int maxy=getmaxy(w);
+static void refreshrows(WINDOW*w,int i){
+	int maxy=getmaxy(w);
 	size_t maxx=xtext+(size_t)getmaxx(w);
 	do{
 		size_t j=ytext+(size_t)i;
@@ -219,6 +219,9 @@ static void refreshpage(WINDOW*w){
 		wclrtoeol(w);
 		i++;
 	}while(i<maxy);
+}
+static void refreshpage(WINDOW*w){
+	refreshrows(w,0);
 }
 static bool bmove(WINDOW*w,int r,int c,bool back){
 	wmove(w,r,c);
@@ -934,6 +937,25 @@ static void delete_fast(WINDOW*w,int r,int c,char*data,size_t x,size_t sz){
 	}
 	if(c<max)wclrtoeol(w);
 }
+static void rowfixdel(WINDOW*w,int r,int c,row*rw,size_t i){
+	int wd=getmaxx(w);
+	char*d=rw->data;
+	int*t=&tabs[tabs_rsz*r];
+	int a=t[0]+1;
+	size_t mx=rw->sz;
+	while(c<wd&&i<mx){
+		char ch=d[i];
+		if(ch!='\t'){
+			c++;waddch(w,no_char(ch)?'?':ch);
+		}else{
+			t[a]=c;t[0]++;a++;
+			c+=tab_sz;wmove(w,r,c);
+		}
+		i++;
+	}
+	x_right[r]=mx!=0;
+	refreshrows(w,r+1);
+}
 static bool delete_key(size_t y,size_t x,int r,int c,WINDOW*w){
 	row*r1=&rows[y];size_t sz=r1->sz;
 	if(x==sz){
@@ -942,7 +964,7 @@ static bool delete_key(size_t y,size_t x,int r,int c,WINDOW*w){
 		row*r2=&rows[yy];
 		if(mal_spc_rea(r1,x,r2->sz,0,r2->data))return true;
 		row_del(yy,yy);
-		refreshpage(w);
+		rowfixdel(w,r,c,r1,x);
 		return false;
 	}
 	char*data=r1->data;
@@ -959,13 +981,21 @@ static bool bcsp(size_t y,size_t x,int*rw,int*cl,WINDOW*w){
 		if(y==0)return false;
 		row*r0=&rows[y-1];
 		row*r1=&rows[y];
+		size_t sz0=r0->sz;
 		c=end(w,y-1);
-		if(mal_spc_rea(r0,r0->sz,r1->sz,0,r1->data))return true;
-		if(rw[0]==0)ytext--;
-		else rw[0]--;
+		if(mal_spc_rea(r0,sz0,r1->sz,0,r1->data))return true;
 		cl[0]=c;
 		row_del(y,y);
-		refreshpage(w);
+		int r=rw[0];
+		if(r==0){
+			ytext--;refreshpage(w);
+		}
+		else{
+			r--;
+			wmove(w,r,c);
+			rowfixdel(w,r,c,r0,sz0);
+			rw[0]=r;
+		}
 		return false;
 	}
 	row*r=&rows[y];
@@ -995,7 +1025,8 @@ static bool bcsp(size_t y,size_t x,int*rw,int*cl,WINDOW*w){
 }
 static bool enter(size_t y,size_t x,int*r,int*c,WINDOW*w){
 	if(rows_expand(1))return true;
-	size_t s=rows[y].sz-x;                    size_t spc=row_pad_sz(s);
+	size_t s=rows[y].sz-x;
+	size_t spc=row_pad_sz(s);
 	void*v=malloc(spc);
 	if(!v)return true;
 	row rw;
@@ -1003,8 +1034,28 @@ static bool enter(size_t y,size_t x,int*r,int*c,WINDOW*w){
 	rows[y].sz-=s;
 	rw.data=v;rw.sz=s;rw.spc=spc;
 	rows_insert(&rw,1,y+1);
-	if(r[0]==(getmaxy(w)-1))ytext++;
-	else r[0]++;
+	int row=r[0];
+	if(row==(getmaxy(w)-1))ytext++;
+	else{
+		if(xtext==0){
+			size_t xc=c_to_xc(c[0],row);
+			int*t=&tabs[tabs_rsz*row];
+			int a=t[0];
+			int*p=t+a;
+			int*z=p;
+			while(p!=t){
+				if(p[0]<(int)xc)break;
+				p--;
+			}
+			t[0]-=z-p;
+			wclrtoeol(w);
+			x_right[row]=rows[y].sz!=0;
+			refreshrows(w,row+1);
+			c[0]=0;r[0]++;
+			return false;
+		}
+		r[0]++;
+	}
 	xtext=0;c[0]=0;
 	refreshpage(w);
 	return false;
@@ -1021,8 +1072,15 @@ static void type(int cr,WINDOW*w){
 	if(off){
 		xtext=r->sz;
 		cl=0;
+		refreshpage(w);
 	}else{
-		cl-=xx-x;
+		size_t dif=xx-x;
+		if(dif<(size_t)getmaxx(w))cl-=dif;
+		else{
+			xtext=r->sz;
+			cl=0;
+			refreshpage(w);
+		}
 	}
 	if(cr==Char_Return){if(enter(y,x,&rw,&cl,w))return;}
 	else if(cr==Char_Backspace){if(bcsp(y,x,&rw,&cl,w))return;}
@@ -1034,6 +1092,7 @@ static void type(int cr,WINDOW*w){
 		int s=is_tab?tab_sz:1;
 		if(off){
 			cl=s;
+			refreshrows(w,rw);
 		}else{
 			int colmn=cl;
 			cl+=s;
@@ -1074,7 +1133,6 @@ static void type(int cr,WINDOW*w){
 			}
 		}
 	}
-	if(off)refreshpage(w);
 	wmove(w,rw,cl);
 	if(mod_flag)mod_set(false);
 }
