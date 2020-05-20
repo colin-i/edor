@@ -1,13 +1,13 @@
 #include"main0.h"
 //strlen,2;open,2;close;write,3
 #include"mainb.h"
-//move,16;getch,2;getmaxy,2;getmaxx
-//getcurx,5;stdscr,9;keyname;strcmp
+//move,17;getch,2;getmaxy,2;getmaxx
+//getcurx,6;stdscr,10;keyname;strcmp
 //mvaddch,7,addstr;mvaddstr;wnoutrefresh,2
 #include"mainbc.h"
 
 //#include<curses.h>
-int addch(const chtype);//7
+int addch(const chtype);//10
 int addnstr(const char*,int);//7
 int mvaddnstr(int,int,const char*,int);
 //unistd.h
@@ -122,13 +122,28 @@ int question(char*q){
 	else if(ch=='n')return -1;
 	return 1;
 }
+static int del(int x,int cursor,int dif){
+	if(x==cursor)return cursor;
+	cursor--;
+	for(int i=x;i<cursor;i++){
+		input[i]=input[i+1];
+	}
+	int f=x+dif;int r;
+	if(cursor<f)r=cursor;else r=f;
+	while(x<r){addch(input[x]);x++;}
+	if(cursor<f){
+		addch(' ');
+	}else if(f==cursor)addch(' ');
+	return cursor;
+}
 //-2resize,-1no/quit,0er,1ok
 int save(row*rows,size_t sz,char**path){
 	if(path[0]){
 		return saving(path[0],rows,sz,false);
 	}
 	int right=getmaxx(stdscr)-4;//25
-	int visib=right+1-com_left;
+	int rightexcl=right+1;
+	int visib=rightexcl-com_left;
 	if(visib<2)return 0;//phisical visib is 1
 	int y=getmaxy(stdscr)-1;
 	move(y,com_left);
@@ -195,6 +210,11 @@ int save(row*rows,size_t sz,char**path){
 				}
 				move(y,x);
 			}
+		}
+		else if(a==KEY_DC){
+			int x=getcurx(stdscr);
+			cursor=del(x-com_left+pos,cursor,rightexcl-x);
+			move(y,x);
 		}
 		else if(a==KEY_RESIZE)return -2;
 		else{

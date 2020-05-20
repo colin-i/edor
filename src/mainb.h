@@ -12,6 +12,7 @@ int addstr(const char*);
 int mvaddstr(int,int,const char*);
 #define KEY_LEFT 0404
 #define KEY_RIGHT 0405
+#define KEY_DC 0512
 #define KEY_RESIZE 0632
 const char*keyname(int);
 int wnoutrefresh(WINDOW*);

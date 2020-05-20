@@ -70,7 +70,6 @@ MEVENT;
 #define KEY_UP 0403
 #define KEY_DOWN 0402
 #define KEY_HOME 0406
-#define KEY_DC 0512
 #define KEY_END 0550
 #define KEY_PPAGE 0523
 #define KEY_NPAGE 0522
@@ -1156,10 +1155,10 @@ static bool loopin(WINDOW*w){
 				size_t xbsel=xtext+c_to_xc(cl,rw);
 				size_t yesel=ybsel;size_t xesel=xbsel;
 				bool orig=true;
-				if(ybsel<rows_tot)if(xbsel<rows[ybsel].sz)if(rows[ybsel].data[xbsel]=='\t'){
-					printsel(w,ybsel,xbsel,yesel,xesel,-1);
-					wmove(w,rw,cl);
-				}
+				//if(ybsel<rows_tot)if(xbsel<rows[ybsel].sz)if(rows[ybsel].data[xbsel]=='\t'){
+				printsel(w,ybsel,xbsel,yesel,xesel,-1);
+				wmove(w,rw,cl);
+				//}
 				int z;
 				do{
 					int b=wgetch(w);
