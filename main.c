@@ -984,8 +984,8 @@ static bool bcsp(size_t y,size_t x,int*rw,int*cl,WINDOW*w){
 		size_t sz0=r0->sz;
 		c=end(w,y-1);
 		if(mal_spc_rea(r0,sz0,r1->sz,0,r1->data))return true;
-		cl[0]=c;
 		row_del(y,y);
+		cl[0]=c;
 		int r=rw[0];
 		if(r==0){
 			ytext--;refreshpage(w);
