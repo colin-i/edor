@@ -1068,8 +1068,7 @@ static void type(int cr,WINDOW*w){
 	size_t xx=x;fixmembuf(&y,&x);
 	row*r=&rows[y];
 	int rwnr=rw;rw=(int)(y-ytext);
-	bool off=rw<rwnr;
-	if(off){
+	if(rw<rwnr){
 		xtext=r->sz;
 		cl=0;
 		refreshpage(w);
