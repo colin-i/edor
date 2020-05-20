@@ -1062,12 +1062,12 @@ static bool enter(size_t y,size_t x,int*r,int*c,WINDOW*w){
 }
 static void type(int cr,WINDOW*w){
 	int cl=getcurx(w);
-	int rw=getcury(w);
-	size_t x=xtext+c_to_xc(cl,rw);
-	size_t y=ytext+(size_t)rw;
+	int rwnr=getcury(w);
+	size_t x=xtext+c_to_xc(cl,rwnr);
+	size_t y=ytext+(size_t)rwnr;
 	size_t xx=x;fixmembuf(&y,&x);
 	row*r=&rows[y];
-	int rwnr=rw;rw=(int)(y-ytext);
+	int rw=(int)(y-ytext);
 	if(rw<rwnr){
 		xtext=r->sz;
 		cl=0;
