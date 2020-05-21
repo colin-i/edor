@@ -34,7 +34,7 @@ int noecho(void);
 int raw(void);
 int nonl(void);
 #define ALL_MOUSE_EVENTS 0xFffFFff
-int wmove(WINDOW*,int,int);//26
+int wmove(WINDOW*,int,int);//25
 int getcury(const WINDOW*);//23
 WINDOW*newwin(int,int,int,int);
 int delwin(WINDOW*);
@@ -937,6 +937,7 @@ static void delete_fast(WINDOW*w,int r,int c,char*data,size_t x,size_t sz){
 	if(c<max)wclrtoeol(w);
 }
 static void rowfixdel(WINDOW*w,int r,int c,row*rw,size_t i){
+	wmove(w,r,c);
 	int wd=getmaxx(w);
 	char*d=rw->data;
 	int*t=&tabs[tabs_rsz*r];
@@ -963,7 +964,6 @@ static bool delete_key(size_t y,size_t x,int r,int c,WINDOW*w){
 		row*r2=&rows[yy];
 		if(mal_spc_rea(r1,x,r2->sz,0,r2->data))return true;
 		row_del(yy,yy);
-		wmove(w,r,c);
 		rowfixdel(w,r,c,r1,x);
 		return false;
 	}
@@ -992,7 +992,6 @@ static bool bcsp(size_t y,size_t x,int*rw,int*cl,WINDOW*w){
 		}
 		else{
 			r--;
-			wmove(w,r,c);
 			rowfixdel(w,r,c,r0,sz0);
 			rw[0]=r;
 		}
