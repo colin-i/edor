@@ -7,9 +7,9 @@ int getmaxy(const WINDOW*);
 int getmaxx(const WINDOW*);
 int getcurx(const WINDOW*);
 typedef unsigned int chtype;
+int addch(const chtype);
 int mvaddch(int,int,const chtype);
 int addstr(const char*);
-int mvaddstr(int,int,const char*);
 #define KEY_LEFT 0404
 #define KEY_RIGHT 0405
 #define KEY_DC 0512

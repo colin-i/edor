@@ -3,12 +3,12 @@
 #include"mainb.h"
 //move,17;getch,2;getmaxy,2;getmaxx
 //getcurx,6;stdscr,10;keyname;strcmp
-//mvaddch,7,addstr;mvaddstr;wnoutrefresh,2
+//addch,10;mvaddch,7,addstr;wnoutrefresh,2
 #include"mainbc.h"
 
 //#include<curses.h>
-int addch(const chtype);//10
 int addnstr(const char*,int);//7
+int mvaddstr(int,int,const char*);
 int mvaddnstr(int,int,const char*,int);
 //unistd.h
 #define F_OK 0

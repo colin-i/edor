@@ -3,9 +3,9 @@
 #include"src/mainc.h"
 //malloc,10;free,11;realloc,6
 #include"src/mainb.h"
-//move,6;getch;getmaxy,16;getmaxx,19
+//move,7;getch;getmaxy,16;getmaxx,20
 //stdscr,17;keyname,2;getcurx,17;strcmp,12
-//mvaddch,2;addstr,3;mvaddstr
+//addch;mvaddch,2;addstr,4
 //wnoutrefresh,7
 
 //#include <string.h>
@@ -118,7 +118,7 @@ static bool helpend;
 static char helptext[]="INPUT"
 "\nhelp"
 "\n    q(uit),up/down"
-"\narrows(+-alt),home/end(+-ctrl),page up/down"
+"\narrows(alt),home(ctrl,alt)/end(ctrl),page up/down"
 "\nmouse/touch press or v.scroll"
 "\nCtrl+v = visual mode"
 "\n    c = copy"
@@ -302,20 +302,27 @@ static void helpshow(int n){
 	move(0,0);	
 	int i=0;int j=0;int y=0;
 	int max=getmaxx(stdscr);int c=0;
+	int cstart=0;
 	do{
 		helpend=helptext[i]==0;
 		bool newl=helptext[i]=='\n';
-		if(newl||helpend||c==max){
+		bool is_max=c==max;
+		if(newl||helpend||is_max){
 			if(n)n--;
 			else{
+				move(y,0);
+				if(cstart){addch(' ');cstart=0;}
 				char aux=helptext[i];helptext[i]=0;
-				mvaddstr(y,0,&helptext[j]);
+				addstr(&helptext[j]);
 				helptext[i]=aux;
 				y++;
 				if(getmaxy(stdscr)-3<y)break;
 			}
-			j=i;if(newl)j++;
-			c=0;
+			if(newl)j=i+1;else{
+				j=i;
+				if(is_max)cstart=1;
+			}
+			c=cstart;
 		}else c++;
 		i++;
 	}while(!helpend);
@@ -381,6 +388,24 @@ static int end(WINDOW*w,size_t r){
 	xtext=(size_t)(s-b);
 	return m;
 }
+static int home(WINDOW*w,size_t r){
+	char*d=rows[r].data;
+	size_t sz=rows[r].sz;
+	size_t i=0;
+	while(i<sz){
+		if(d[i]!='\t')break;
+		i++;
+	}
+	if(i<xtext){xtext=i;return 0;}
+	else if(i==xtext)return 0;
+	int max=getmaxx(w);
+	int c=0;while(xtext<i){
+		if(c+tab_sz<max){
+			i--;c+=tab_sz;
+		}else xtext++;
+	}
+	return c;
+}
 //1resize,0diff key,-,1refreshed,2no refresh
 static int movment(int c,WINDOW*w){
 	if(c==KEY_MOUSE){
@@ -413,8 +438,8 @@ static int movment(int c,WINDOW*w){
 		wmove(w,y,0);
 	}else if(c==KEY_END){
 		int y=getcury(w);
-		size_t r=ytext+(size_t)y;int x;
-		if(r<rows_tot)x=end(w,r);
+		size_t r=ytext+(size_t)y;
+		int x;if(r<rows_tot)x=end(w,r);
 		else{xtext=0;x=0;}
 		refreshpage(w);
 		wmove(w,y,x);
@@ -435,11 +460,7 @@ static int movment(int c,WINDOW*w){
 	}
 	else{
 		const char*s=keyname(c);
-		if(!strcmp(s,"kUP3"))sumove(w,getcury(w));
-		else if(!strcmp(s,"kDN3"))sdmove(w,getcury(w));
-		else if(!strcmp(s,"kLFT3"))slmove(w,getcurx(w),false);
-		else if(!strcmp(s,"kRIT3"))srmove(w,getcurx(w),true);
-		else if(!strcmp(s,"kHOM5")){
+		if(!strcmp(s,"kHOM5")){
 			ytext=0;xtext=0;
 			refreshpage(w);
 			wmove(w,0,0);
@@ -452,7 +473,18 @@ static int movment(int c,WINDOW*w){
 			refreshpage(w);
 			//moved by curses, but no add str for line breaks
 			wmove(w,y,x);
-		}else return 0;
+		}else if(!strcmp(s,"kHOM3")){
+			int y=getcury(w);
+			size_t r=ytext+(size_t)y;
+			int x;if(r<rows_tot)x=home(w,r);
+			else{xtext=0;x=0;}
+			refreshpage(w);
+			wmove(w,y,x);
+		}else if(!strcmp(s,"kUP3"))sumove(w,getcury(w));
+		else if(!strcmp(s,"kDN3"))sdmove(w,getcury(w));
+		else if(!strcmp(s,"kLFT3"))slmove(w,getcurx(w),false);
+		else if(!strcmp(s,"kRIT3"))srmove(w,getcurx(w),true);
+		else return 0;
 	}
 	return -1;
 }
