@@ -460,7 +460,9 @@ static int movment(int c,WINDOW*w){
 	}
 	else{
 		const char*s=keyname(c);
-		if(!strcmp(s,"kHOM5")){
+		if(!strcmp(s,"kLFT3"))slmove(w,getcurx(w),false);
+		else if(!strcmp(s,"kRIT3"))srmove(w,getcurx(w),true);
+		else if(!strcmp(s,"kHOM5")){
 			ytext=0;xtext=0;
 			refreshpage(w);
 			wmove(w,0,0);
@@ -482,8 +484,6 @@ static int movment(int c,WINDOW*w){
 			wmove(w,y,x);
 		}else if(!strcmp(s,"kUP3"))sumove(w,getcury(w));
 		else if(!strcmp(s,"kDN3"))sdmove(w,getcury(w));
-		else if(!strcmp(s,"kLFT3"))slmove(w,getcurx(w),false);
-		else if(!strcmp(s,"kRIT3"))srmove(w,getcurx(w),true);
 		else return 0;
 	}
 	return -1;
