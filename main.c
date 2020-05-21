@@ -3,7 +3,7 @@
 #include"src/mainc.h"
 //malloc,10;free,11;realloc,6
 #include"src/mainb.h"
-//move,6;getch;getmaxy,15;getmaxx,19
+//move,6;getch;getmaxy,16;getmaxx,19
 //stdscr,17;keyname,2;getcurx,17;strcmp,12
 //mvaddch,2;addstr,3;mvaddstr
 //wnoutrefresh,7
@@ -954,7 +954,6 @@ static void rowfixdel(WINDOW*w,int r,int c,row*rw,size_t i){
 		i++;
 	}
 	x_right[r]=mx!=0;
-	refreshrows(w,r+1);
 }
 static bool delete_key(size_t y,size_t x,int r,int c,WINDOW*w){
 	row*r1=&rows[y];size_t sz=r1->sz;
@@ -965,6 +964,7 @@ static bool delete_key(size_t y,size_t x,int r,int c,WINDOW*w){
 		if(mal_spc_rea(r1,x,r2->sz,0,r2->data))return true;
 		row_del(yy,yy);
 		rowfixdel(w,r,c,r1,x);
+		if(r+1<getmaxy(w))refreshrows(w,r+1);
 		return false;
 	}
 	char*data=r1->data;
@@ -991,9 +991,9 @@ static bool bcsp(size_t y,size_t x,int*rw,int*cl,WINDOW*w){
 			ytext--;refreshpage(w);
 		}
 		else{
-			r--;
-			rowfixdel(w,r,c,r0,sz0);
-			rw[0]=r;
+			rowfixdel(w,r-1,c,r0,sz0);
+			refreshrows(w,r);
+			rw[0]=r-1;
 		}
 		return false;
 	}
@@ -1088,10 +1088,7 @@ static void type(int cr,WINDOW*w){
 		if(mal_spc_rea(r,x,1,r->sz-x,&ch))return;
 		bool is_tab=ch=='\t';
 		int s=is_tab?tab_sz:1;
-		//if(off){
-		//	cl=s;
-		//	refreshrows(w,rw);
-		//}else{
+		//
 		int colmn=cl;
 		cl+=s;
 		int max=getmaxx(w);
@@ -1129,7 +1126,7 @@ static void type(int cr,WINDOW*w){
 			}
 			waddstr(w,mapsel);
 		}
-		//}
+		//
 	}
 	wmove(w,rw,cl);
 	if(mod_flag)mod_set(false);
