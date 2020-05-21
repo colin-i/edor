@@ -1,5 +1,5 @@
 #include"src/main0.h"
-//strlen,2;open,4;close,3;write
+//strlen,2;open,3;close,3;write
 #include"src/mainc.h"
 //malloc,10;free,11;realloc,6
 #include"src/mainb.h"
@@ -1357,14 +1357,14 @@ static int startpage(char*f,size_t*text_sz){
 	}
 	return ok;
 }
-static void getfilebuf(char*cutbuf_file,size_t off){
+static void getfilebuf(char*cutbuf_file){//,size_t off){
 	int f=open(cutbuf_file,O_RDONLY);
-	if(f==-1){
+	/*if(f==-1){
 		char store=cutbuf_file[off];
 		cutbuf_file[off]='.';
 		f=open(cutbuf_file+off,O_RDONLY);
 		cutbuf_file[off]=store;
-	}
+	}*/
 	if(f!=-1){
 		size_t sz=(size_t)lseek(f,0,SEEK_END);
 		if(sz){
@@ -1391,10 +1391,9 @@ static void setfilebuf(char*s,char*cutbuf_file){
 	if(!h)return;
 	size_t l=strlen(h);
 	if(!l)return;
-	sz-=i;
-	if(l+sz+7>128)return;
+	if(l+(sz-i)+7>128)return;
 	sprintf(cutbuf_file,"%s/.%sinfo",h,&s[i]);
-	getfilebuf(cutbuf_file,l-1);
+	getfilebuf(cutbuf_file);//l-1
 }
 static void writefilebuf(char*cutbuf_file){
 	if(cutbuf_file[0]){
