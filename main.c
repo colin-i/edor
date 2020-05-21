@@ -123,6 +123,7 @@ static char helptext[]="INPUT"
 "\nCtrl+v = visual mode"
 "\n    c = copy"
 "\n    d = delete"
+"\n    x = cut"
 "\nCtrl+p = paste"
 "\nCtrl+s = save file"
 "\ncommand mode"
@@ -1202,6 +1203,9 @@ static bool loopin(WINDOW*w){
 								if(writemembuf(ybsel,xbsel,yesel,xesel))v='C';
 							}else if(b=='d'){
 								delete(ybsel,xbsel,yesel,xesel,&r,&col,w);
+							}else if(b=='x'){
+								if(writemembuf(ybsel,xbsel,yesel,xesel))
+									delete(ybsel,xbsel,yesel,xesel,&r,&col,w);
 							}
 							visual(v);
 							refreshpage(w);
