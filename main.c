@@ -107,7 +107,7 @@ static char*text_file=NULL;
 static row*rows=NULL;
 static size_t rows_tot=1;
 static size_t rows_spc=1;
-static size_t xtext;
+static size_t xtext=0;
 static size_t ytext=0;
 static bool*x_right=NULL;
 static int*tabs=NULL;
@@ -1449,7 +1449,6 @@ int main(int argc,char**argv){
 					WINDOW*w=newwin(r,c,0,0);
 					if(w){
 						keypad(w,true);
-						xtext=0;
 						refreshpage(w);
 						wmove(w,0,0);
 						printhelp();
