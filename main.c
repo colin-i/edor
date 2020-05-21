@@ -34,7 +34,7 @@ int noecho(void);
 int raw(void);
 int nonl(void);
 #define ALL_MOUSE_EVENTS 0xFffFFff
-int wmove(WINDOW*,int,int);//25
+int wmove(WINDOW*,int,int);//26
 int getcury(const WINDOW*);//23
 WINDOW*newwin(int,int,int,int);
 int delwin(WINDOW*);
@@ -387,9 +387,9 @@ static int movment(int c,WINDOW*w){
 		MEVENT e;
 		int a=getmouse(&e);
 		if(a==OK){
-			if(e.bstate&BUTTON1_CLICKED){amove(w,e.y-1,e.x-1);return -2;}
-			else if(e.bstate&BUTTON5_PRESSED)tmove(w,getcury(w),false);
+			if(e.bstate&BUTTON5_PRESSED)tmove(w,getcury(w),false);
 			else if(e.bstate&BUTTON4_PRESSED)tmove(w,getcury(w),true);
+			else if(e.bstate&BUTTON1_CLICKED){amove(w,e.y-1,e.x-1);return -2;}
 		}
 	}else if(c==KEY_UP){
 		int y=getcury(w);
@@ -963,6 +963,7 @@ static bool delete_key(size_t y,size_t x,int r,int c,WINDOW*w){
 		row*r2=&rows[yy];
 		if(mal_spc_rea(r1,x,r2->sz,0,r2->data))return true;
 		row_del(yy,yy);
+		wmove(w,r,c);
 		rowfixdel(w,r,c,r1,x);
 		return false;
 	}
