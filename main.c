@@ -1357,12 +1357,13 @@ static int startpage(char*f,size_t*text_sz){
 	}
 	return ok;
 }
-static char*getfilebuf(char*cutbuf_file,size_t off){
+static void getfilebuf(char*cutbuf_file,size_t off){
 	int f=open(cutbuf_file,O_RDONLY);
 	if(f==-1){
+		char store=cutbuf_file[off];
 		cutbuf_file[off]='.';
-		cutbuf_file+=off;
-		f=open(cutbuf_file,O_RDONLY);
+		f=open(cutbuf_file+off,O_RDONLY);
+		cutbuf_file[off]=store;
 	}
 	if(f!=-1){
 		size_t sz=(size_t)lseek(f,0,SEEK_END);
@@ -1378,9 +1379,8 @@ static char*getfilebuf(char*cutbuf_file,size_t off){
 		}
 		close(f);
 	}
-	return cutbuf_file;
 }
-static char*setfilebuf(char*s,char*cutbuf_file){
+static void setfilebuf(char*s,char*cutbuf_file){
 	size_t sz=strlen(s);size_t i=sz;
 	do{
 		i--;
@@ -1388,13 +1388,13 @@ static char*setfilebuf(char*s,char*cutbuf_file){
 		if(a=='/'||a=='\\'){i++;break;}
 	}while(i);
 	char*h=getenv("HOME");
-	if(!h)return cutbuf_file;
+	if(!h)return;
 	size_t l=strlen(h);
-	if(!l)return cutbuf_file;
+	if(!l)return;
 	sz-=i;
-	if(l+sz+7>128)return cutbuf_file;
+	if(l+sz+7>128)return;
 	sprintf(cutbuf_file,"%s/.%sinfo",h,&s[i]);
-	return getfilebuf(cutbuf_file,l-1);
+	getfilebuf(cutbuf_file,l-1);
 }
 static void writefilebuf(char*cutbuf_file){
 	if(cutbuf_file[0]){
@@ -1460,10 +1460,9 @@ int main(int argc,char**argv){
 				noecho();
 				nonl();//no translation,faster
 				mousemask(ALL_MOUSE_EVENTS,NULL);
-				char cutbuf_file_var[128];
-				cutbuf_file_var[0]=0;
-				char*cutbuf_file=cutbuf_file_var;
-				cutbuf_file=setfilebuf(argv[0],cutbuf_file);
+				char cutbuf_file[128];
+				cutbuf_file[0]=0;
+				setfilebuf(argv[0],cutbuf_file);
 				bool loops=false;
 				do{
 					int r=getmaxy(w1)-1;
