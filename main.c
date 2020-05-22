@@ -3,7 +3,7 @@
 #include"src/mainc.h"
 //malloc,10;free,11;realloc,6
 #include"src/mainb.h"
-//move,7;getch;getmaxy,16;getmaxx,20
+//move,7;getch;getmaxy,16;getmaxx,29
 //stdscr,17;keyname,2;getcurx,17;strcmp,12
 //addch;mvaddch,2;addstr,4
 //wnoutrefresh,7
@@ -597,39 +597,49 @@ static void sel(WINDOW*w,int c1,int c2,int rb,int cb,int re,int ce){
 		printrow(w,re,0,ce,c1,c2);
 	}
 }
-static void set1membuf(size_t y,size_t x,bool*orig,size_t*yb,size_t*xb,size_t*ye,size_t*xe){
+static void set1membuf(size_t y,size_t x,bool*orig,size_t*yb,size_t*xb,size_t*ye,size_t*xe,WINDOW*w){
 	if(orig[0]){
 		if(y<yb[0]){
+			if(yb[0]<rows_tot-1&&xb[0]==rows[yb[0]].sz)xb[0]+=(size_t)getmaxx(w)-1;
+			if(y<rows_tot-1&&x>rows[y].sz)x=rows[y].sz;
 			ye[0]=yb[0];yb[0]=y;
 			xe[0]=xb[0];xb[0]=x;
 			orig[0]=false;
 		}
 		else if(y>yb[0]){
+			if(y<rows_tot-1&&x>=rows[y].sz)x=rows[y].sz+(size_t)getmaxx(w)-1;
 			ye[0]=y;xe[0]=x;
 		}
 		else if(x<xb[0]){
+			if(yb[0]<rows_tot-1&&xb[0]==rows[yb[0]].sz)xb[0]+=(size_t)getmaxx(w)-1;
 			ye[0]=yb[0];
 			xe[0]=xb[0];xb[0]=x;
 			orig[0]=false;
 		}
 		else{
+			if(y<rows_tot-1&&x>=rows[y].sz)x=rows[y].sz+(size_t)getmaxx(w)-1;
 			ye[0]=y;xe[0]=x;
 		}
 	}else{
 		if(ye[0]<y){
+			if(ye[0]<rows_tot-1&&xe[0]>rows[ye[0]].sz)xe[0]=rows[ye[0]].sz;
+			if(y<rows_tot-1&&x>=rows[y].sz)x=rows[y].sz+(size_t)getmaxx(w)-1;
 			yb[0]=ye[0];ye[0]=y;
 			xb[0]=xe[0];xe[0]=x;
 			orig[0]=true;
 		}
 		else if(ye[0]>y){
+			if(y<rows_tot-1&&x>=rows[y].sz)x=rows[y].sz;
 			yb[0]=y;xb[0]=x;
 		}
 		else if(xe[0]<x){
+			if(y<rows_tot-1&&x>=rows[y].sz)x=rows[y].sz+(size_t)getmaxx(w)-1;
 			yb[0]=ye[0];
 			xb[0]=xe[0];xe[0]=x;
 			orig[0]=true;
 		}
 		else{
+			if(y<rows_tot-1&&x>=rows[y].sz)x=rows[y].sz;
 			yb[0]=y;xb[0]=x;
 		}
 	}
@@ -662,12 +672,16 @@ static void difsel(WINDOW*w,int rb,int cb,int re,int ce){
 		_re=rb;_ce=cb;a=true;
 	}else if(re<_re||(re==_re&&ce<_ce)){
 		if(rb==_rb&&cb==_cb)b=false;else b=true;
-		_rb=re;_cb=ce;a=true;
+		if(ce==getmaxx(w)){_cb=0;_rb=re+1;}
+		else{_rb=re;_cb=ce;}
+		a=true;
 	}else if(rb<_rb||cb<_cb){
 		re=_rb;ce=_cb;b=true;
 		a=false;
 	}else{// if(_re<re||_ce<ce){
-		rb=_re;cb=_ce;b=true;
+		if(_ce==getmaxx(w)&&_re<re){cb=0;rb=_re+1;}
+		else{rb=_re;cb=_ce;}
+		b=true;
 		a=false;
 	}
 	if(a)sel(w,0,0,_rb,_cb,_re,_ce);
@@ -1188,10 +1202,12 @@ static bool loopin(WINDOW*w){
 				size_t xbsel=xtext+c_to_xc(cl,rw);
 				size_t yesel=ybsel;size_t xesel=xbsel;
 				bool orig=true;
-				//if(ybsel<rows_tot)if(xbsel<rows[ybsel].sz)if(rows[ybsel].data[xbsel]=='\t'){
+				if(ybsel<rows_tot-1&&xbsel>=rows[ybsel].sz){
+					xbsel=rows[ybsel].sz;
+					xesel=xbsel+(size_t)getmaxx(w)-1;
+				}
 				printsel(w,ybsel,xbsel,yesel,xesel,-1);
 				wmove(w,rw,cl);
-				//}
 				int z;
 				do{
 					int b=wgetch(w);
@@ -1214,7 +1230,7 @@ static bool loopin(WINDOW*w){
 							refreshpage(w);
 						}else{
 							size_t y=ytext+(size_t)r;size_t x=xtext+c_to_xc(col,r);
-							set1membuf(y,x,&orig,&ybsel,&xbsel,&yesel,&xesel);
+							set1membuf(y,x,&orig,&ybsel,&xbsel,&yesel,&xesel,w);
 							printsel(w,ybsel,xbsel,yesel,xesel,z);
 						}
 						wmove(w,r,col);
