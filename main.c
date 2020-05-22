@@ -1015,7 +1015,7 @@ static bool bcsp(size_t y,size_t x,int*rw,int*cl,WINDOW*w){
 		row*r0=&rows[y-1];
 		row*r1=&rows[y];
 		size_t sz0=r0->sz;
-		c=end(w,y-1);
+		size_t xx=xtext;c=end(w,y-1);
 		if(mal_spc_rea(r0,sz0,r1->sz,0,r1->data))return true;
 		row_del(y,y);
 		cl[0]=c;
@@ -1024,8 +1024,11 @@ static bool bcsp(size_t y,size_t x,int*rw,int*cl,WINDOW*w){
 			ytext--;refreshpage(w);
 		}
 		else{
-			rowfixdel(w,r-1,c,r0,sz0);
-			refreshrows(w,r);
+			if(xtext!=xx)refreshpage(w);
+			else{
+				rowfixdel(w,r-1,c,r0,sz0);
+				refreshrows(w,r);
+			}
 			rw[0]=r-1;
 		}
 		return false;
