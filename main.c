@@ -118,7 +118,7 @@ static bool helpend;
 static char helptext[]="INPUT"
 "\nhelp"
 "\n    q(uit),up/down"
-"\narrows(alt),home(ctrl,alt)/end(ctrl),page up/down"
+"\narrows(Alt),home(Ctrl,Alt)/end(Ctrl),page up/down"
 "\nmouse/touch press or v.scroll"
 "\nCtrl+v = visual mode"
 "\n    c = copy"
@@ -665,6 +665,9 @@ static int xc_to_c(int col,int r){
 	}
 	return col;
 }
+static void unsel(WINDOW*w){
+	sel(w,0,0,_rb,_cb,_re,_ce);
+}
 static void difsel(WINDOW*w,int rb,int cb,int re,int ce){
 	bool a;bool b;
 	if(_rb<rb||(_rb==rb&&_cb<cb)){
@@ -684,7 +687,7 @@ static void difsel(WINDOW*w,int rb,int cb,int re,int ce){
 		b=true;
 		a=false;
 	}
-	if(a)sel(w,0,0,_rb,_cb,_re,_ce);
+	if(a)unsel(w);
 	if(b)sel(w,1,2,rb,cb,re,ce);
 }
 static void printsel(WINDOW*w,size_t ybsel,size_t xbsel,size_t yesel,size_t xesel,int z){
@@ -864,6 +867,7 @@ static void delete(size_t ybsel,size_t xbsel,size_t yesel,size_t xesel,int*rw,in
 		row_del(ybsel+1,yesel);
 	}
 	deleted(ybsel,xbsel,rw,cl,w);
+	refreshpage(w);
 	if(mod_flag)if(ybsel!=yesel||xbsel!=xesel)
 		mod_set(false);
 }
@@ -1219,15 +1223,14 @@ static bool loopin(WINDOW*w){
 							char v=' ';
 							visual_bool=b=='c';
 							if(visual_bool){
-								if(writemembuf(ybsel,xbsel,yesel,xesel))v='C';
+								if(writemembuf(ybsel,xbsel,yesel,xesel)){v='C';unsel(w);}
 							}else if(b=='d'){
 								delete(ybsel,xbsel,yesel,xesel,&r,&col,w);
 							}else if(b=='x'){
 								if(writemembuf(ybsel,xbsel,yesel,xesel))
 									delete(ybsel,xbsel,yesel,xesel,&r,&col,w);
-							}
+							}else unsel(w);
 							visual(v);
-							refreshpage(w);
 						}else{
 							size_t y=ytext+(size_t)r;size_t x=xtext+c_to_xc(col,r);
 							set1membuf(y,x,&orig,&ybsel,&xbsel,&yesel,&xesel,w);
