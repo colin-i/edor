@@ -3,7 +3,7 @@
 #include"src/mainc.h"
 //malloc,10;free,11;realloc,6
 #include"src/mainb.h"
-//move,7;getch;getmaxy,16;getmaxx,29
+//move,7;getch;getmaxy,16;getmaxx,30
 //stdscr,17;keyname,2;getcurx,17;strcmp,12
 //addch;mvaddch,2;addstr,4
 //wnoutrefresh,7
