@@ -212,10 +212,9 @@ static void refreshrowsbot(WINDOW*w,int i,int maxy){
 		int*ptr=&tabs[tabs_rsz*i];ptr[0]=0;
 		wmove(w,i,0);
 		if(j<rows_tot){
-			char*str=rows[j].data;
 			size_t sz=rows[j].sz;
 			if(sz>maxx)sz=maxx;
-			tab_grow(w,i,str,sz,ptr);
+			tab_grow(w,i,rows[j].data,sz,ptr);
 			if(sz!=maxx)wclrtoeol(w);
 		}else{x_right[i]=false;wclrtoeol(w);}
 		i++;
@@ -801,6 +800,7 @@ static bool mal_spc_rea(row*rw,size_t l,size_t c,size_t r,char*mid){
 			dst=(char*)malloc(size);
 			if(!dst)return true;
 			memcpy(dst,src,l);
+			if(!mid)memcpy(dst,src+l,r);//alloc only
 		}else{
 			dst=realloc(src,size);
 			if(!dst)return true;
@@ -809,6 +809,7 @@ static bool mal_spc_rea(row*rw,size_t l,size_t c,size_t r,char*mid){
 		rw->data=dst;
 		rw->spc=size;
 	}else dst=src;
+	if(!mid)return false;//alloc mem only
 	size_t j=l+c;size_t k=l+r;size_t i=j+r;
 	while(j<i){
 		i--;k--;dst[i]=src[k];
@@ -1205,14 +1206,23 @@ static void indent(bool b,size_t ybsel,size_t*xbsel,size_t yesel,size_t*xesel,in
 	size_t ye;
 	if(yesel>=rows_tot)ye=rows_tot-1;
 	else ye=yesel;
-	for(size_t i=ybsel;i<=ye;i++){
-		row*r=&rows[i];size_t sz=r->sz;
-		if(b){
-			if(mal_spc_rea(r,0,1,sz,"\t"))return;
-		}else if(sz){
-			char*d=r->data;
-			for(size_t j=1;j<sz;j++)d[j-1]=d[j];
-			r->sz=sz-1;
+	if(b){
+		for(size_t i=ybsel;i<=ye;i++){
+			row*r=&rows[i];
+			if(mal_spc_rea(r,0,1,r->sz,NULL))return;
+		}
+		for(size_t i=ybsel;i<=ye;i++){
+			row*r=&rows[i];
+			mal_spc_rea(r,0,1,r->sz,"\t");
+		}
+	}else{
+		for(size_t i=ybsel;i<=ye;i++){
+			row*r=&rows[i];size_t sz=r->sz;
+			if(sz){
+				char*d=r->data;
+				for(size_t j=1;j<sz;j++)d[j-1]=d[j];
+				r->sz=sz-1;
+			}
 		}
 	}
 	int rb;if(ybsel<ytext)rb=0;
