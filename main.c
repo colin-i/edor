@@ -4,7 +4,7 @@
 //malloc,10;free,11;realloc,6
 #include"src/mainb.h"
 //move,7;getch;getmaxy,17;getmaxx,31
-//stdscr,17;keyname,2;getcurx,17;strcmp,12
+//stdscr,17;keyname,2;getcurx,18;strcmp,12
 //addch;mvaddch,2;addstr,4
 //wnoutrefresh,7
 
@@ -34,8 +34,8 @@ int noecho(void);
 int raw(void);
 int nonl(void);
 #define ALL_MOUSE_EVENTS 0xFffFFff
-int wmove(WINDOW*,int,int);//25
-int getcury(const WINDOW*);//23
+int wmove(WINDOW*,int,int);//27
+int getcury(const WINDOW*);//24
 WINDOW*newwin(int,int,int,int);
 int delwin(WINDOW*);
 int doupdate(void);//2
@@ -100,15 +100,15 @@ void(*signal(int,void(*)(void)))(void);
 
 char ln_term[3]="\n";
 size_t ln_term_sz=1;
+char*textfile=NULL;
+row*rows=NULL;
+size_t rows_tot=1;
 
 static char*mapsel=NULL;
-static char*textfile=NULL;
 static char*text_file=NULL;
-static row*rows=NULL;
-static size_t rows_tot=1;
 static size_t rows_spc=1;
-static size_t xtext=0;
 static size_t ytext=0;
+static size_t xtext=0;
 static bool*x_right=NULL;
 static int*tabs=NULL;
 static int tabs_rsz;
@@ -130,6 +130,7 @@ static char helptext[]="INPUT"
 "\nCtrl+s = save file"
 "\ncommand mode"
 "\n    left/right,ctrl+q"
+"\nCtrl+g = go to line number"
 "\nCtrl+b = build file"
 "\nCtrl+q = quit";
 static bool visual_bool=false;
@@ -1314,15 +1315,22 @@ static bool loopin(WINDOW*w){
 			else if(!strcmp(s,"^P"))paste(w);
 			else if(!strcmp(s,"^S")){
 				char*d=textfile;
-				int ret=save(rows,rows_tot,&d);
+				int ret=save();
 				if(ret){
 					if(ret==1){
-						if(d!=textfile){textfile=d;text_file=d;}
+						if(d!=textfile)text_file=textfile;
 						mod_set(true);
 					}
 					else if(ret==-2)return true;
 				}
 				wmove(w,getcury(w),getcurx(w));
+			}
+			else if(!strcmp(s,"^G")){
+				int r=command(1);
+				if(r>0&&(size_t)r<=rows_tot){
+					ytext=(size_t)r-1;
+					refreshpage(w);wmove(w,0,0);}
+				else wmove(w,getcury(w),getcurx(w));
 			}
 			else if(!strcmp(s,"^B")){
 				if(textfile){
@@ -1349,7 +1357,7 @@ static bool loopin(WINDOW*w){
 				if(!mod_flag){
 					int q=question("And save");
 					if(q==1){
-						q=save(rows,rows_tot,&textfile);
+						q=save();
 					}
 					if(q==-2)return true;
 					else if(!q){

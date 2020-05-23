@@ -25,8 +25,12 @@ int strcmp(const char*,const char*);
 bool no_char(char);
 
 char*bar_init(void);
-int save(row*,size_t,char**);
+int save(void);
 int question(char*);
+int command(int);
 
 extern char ln_term[3];
 extern size_t ln_term_sz;
+extern char*textfile;
+extern row*rows;
+extern size_t rows_tot;

@@ -13,6 +13,8 @@ int mvaddnstr(int,int,const char*,int);
 //unistd.h
 #define F_OK 0
 int access(const char*,int);              
+//stdlib.h
+int atoi(const char*);
 //string.h
 //void*memset(void*,int,size_t);//3
 
@@ -26,8 +28,8 @@ char*bar_init(){
 	com_left=(int)(strlen(h)+1);
 	return h;
 }
-static bool wrt(int f,row*rows,size_t sz){
-	size_t n=sz-1;
+static bool wrt(int f){
+	size_t n=rows_tot-1;
 	for(size_t i=0;i<n;i++){
 		row*r=&rows[i];
 		if((size_t)write(f,r->data,r->sz)!=r->sz)return false;
@@ -68,20 +70,21 @@ static int bcdl(int y,int*p,int cursor){
 	p[0]=pos;
 	return cursor-1;
 }
-static bool saving(char*path,row*rows,size_t sz,bool creat){
+static bool saving(bool creat){
 	int f;bool r;
-	if(creat)f=open(path,O_CREAT|O_WRONLY|O_TRUNC,S_IRUSR|S_IWUSR);
-	else f=open(path,O_WRONLY|O_TRUNC);
+	if(creat)f=open(textfile,O_CREAT|O_WRONLY|O_TRUNC,S_IRUSR|S_IWUSR);
+	else f=open(textfile,O_WRONLY|O_TRUNC);
 	if(f!=-1){
-		r=wrt(f,rows,sz);
+		r=wrt(f);
 		close(f);
 	}else r=false;
 	return r;
 }
 //-1exist,0er,1ok
-static int saves(char*path,row*rows,size_t sz){
-	if(access(path,F_OK)==-1){
-		return saving(path,rows,sz,true);
+static int saves(){
+	if(access(input,F_OK)==-1){
+		textfile=input;
+		return saving(true);
 	}
 	return -1;
 }
@@ -136,11 +139,8 @@ static int del(int x,int cursor,int dif){
 	}else if(f==cursor)addch(' ');
 	return cursor;
 }
-//-2resize,-1no/quit,0er,1ok
-int save(row*rows,size_t sz,char**path){
-	if(path[0]){
-		return saving(path[0],rows,sz,false);
-	}
+//-2resize,-1no/quit,0er,1okSave,...
+int command(int comnr){
 	int right=getmaxx(stdscr)-4;//25
 	int rightexcl=right+1;
 	int visib=rightexcl-com_left;
@@ -153,27 +153,31 @@ int save(row*rows,size_t sz,char**path){
 		int a=getch();
 		if(a==Char_Return){
 			input[cursor]=0;
-			path[0]=input;
-			r=saves(input,rows,sz);
-			if(r==-1){
-				int x=getcurx(stdscr);
-				clear_com(y,visib,pos,cursor);
-				r=question("Overwrite");
-				if(r==1){
-					r=saving(input,rows,sz,false);
-				}else if(!r){
-					if(pos)mvaddch(y,com_left-1,'<');
-					else move(y,com_left);
-					int len=cursor-pos;
-					bool rt=len>visib;
-					if(rt)len=visib;
-					addnstr(input+pos,len);
-					if(rt)addch('>');
-					move(y,x);
-					continue;
-				}else if(r==-2)return -2;
-				wnoutrefresh(stdscr);
-				return r;
+			if(!comnr){
+				r=saves();
+				if(r==-1){
+					int x=getcurx(stdscr);
+					clear_com(y,visib,pos,cursor);
+					r=question("Overwrite");
+					if(r==1){
+						textfile=input;
+						r=saving(false);
+					}else if(!r){
+						if(pos)mvaddch(y,com_left-1,'<');
+						else move(y,com_left);
+						int len=cursor-pos;
+						bool rt=len>visib;
+						if(rt)len=visib;
+						addnstr(input+pos,len);
+						if(rt)addch('>');
+						move(y,x);
+						continue;
+					}else if(r==-2)return -2;
+					wnoutrefresh(stdscr);
+					return r;
+				}
+			}else{
+				r=atoi(input);
 			}
 			break;
 		}
@@ -253,4 +257,10 @@ int save(row*rows,size_t sz,char**path){
 	clear_com(y,visib,pos,cursor);
 	wnoutrefresh(stdscr);
 	return r;
+}
+int save(){
+	if(textfile){
+		return saving(false);
+	}
+	return command(0);
 }
