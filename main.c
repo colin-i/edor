@@ -3,7 +3,7 @@
 #include"src/mainc.h"
 //malloc,10;free,11;realloc,6
 #include"src/mainb.h"
-//move,7;getch;getmaxy,16;getmaxx,30
+//move,7;getch;getmaxy,17;getmaxx,31
 //stdscr,17;keyname,2;getcurx,17;strcmp,12
 //addch;mvaddch,2;addstr,4
 //wnoutrefresh,7
@@ -44,7 +44,7 @@ int waddstr(WINDOW*,const char*);//4
 int waddnstr(WINDOW*,const char*,int);//2
 int werase(WINDOW*);
 int clrtoeol(void);//2
-int wclrtoeol(WINDOW*);//3
+int wclrtoeol(WINDOW*);//4
 int attrset(int);//3
 int wattrset(WINDOW*,int);
 int start_color(void);
@@ -177,6 +177,7 @@ static void tab_grow(WINDOW*w,int r,char*a,size_t sz,int*ptr){
 	int max=getmaxx(w);
 	size_t i=xtext;size_t j=i;
 	for(;i<sz&&cr<max;i++){
+		cr++;
 		char z=a[i];
 		if(z=='\t'){
 			int n=(int)(i-j);
@@ -184,9 +185,11 @@ static void tab_grow(WINDOW*w,int r,char*a,size_t sz,int*ptr){
 			c+=n;
 			ptr[ptr[0]+1]=c;ptr[0]++;
 			j=i+1;
-			c+=tab_sz;cr+=tab_sz-1;
+			cr+=tab_sz-1;
 			//wmove(w,r,c);
-			for(int k=0;k<tab_sz;k++){
+			int k;if(cr>max)k=max;
+			else k=cr;
+			for(;c<k;c++){
 				waddch(w,' ');
 			}
 		}else if(no_char(z)){
@@ -194,15 +197,13 @@ static void tab_grow(WINDOW*w,int r,char*a,size_t sz,int*ptr){
 			waddstr(w,a+j);a[i+1]=aux;a[i]=z;
 			c+=i-j+1;j=i+1;
 		}
-		cr++;
 	}
 	if(c<max){
-		char e=a[i];
-		a[i]=0;waddstr(w,a+j);a[i]=e;
+		char aux=a[i];
+		a[i]=0;waddstr(w,a+j);a[i]=aux;
 	}
 }
-static void refreshrows(WINDOW*w,int i){
-	int maxy=getmaxy(w);
+static void refreshrowsbot(WINDOW*w,int i,int maxy){
 	size_t maxx=xtext+(size_t)getmaxx(w);
 	do{
 		size_t j=ytext+(size_t)i;
@@ -212,13 +213,14 @@ static void refreshrows(WINDOW*w,int i){
 			char*str=rows[j].data;
 			size_t sz=rows[j].sz;
 			if(sz>maxx)sz=maxx;
-			char stor=str[sz];str[sz]=0;
 			tab_grow(w,i,str,sz,ptr);
-			str[sz]=stor;
-		}else x_right[i]=false;
-		wclrtoeol(w);
+			if(sz!=maxx)wclrtoeol(w);
+		}else{x_right[i]=false;wclrtoeol(w);}
 		i++;
 	}while(i<maxy);
+}
+static void refreshrows(WINDOW*w,int i){
+	refreshrowsbot(w,i,getmaxy(w));
 }
 static void refreshpage(WINDOW*w){
 	refreshrows(w,0);
@@ -783,6 +785,7 @@ static void text_free(size_t b,size_t e){
 	}
 }
 static size_t row_pad_sz(size_t sz){
+	sz++;//[i]=0;addstr;=aux
 	size_t dif=sz&row_pad;
 	if(dif)return sz+((dif^row_pad)+1);
 	return sz;
@@ -790,7 +793,7 @@ static size_t row_pad_sz(size_t sz){
 static bool mal_spc_rea(row*rw,size_t l,size_t c,size_t r,char*mid){
 	char*src=rw->data;char*dst;
 	size_t sz=l+c+r;
-	if(sz>rw->spc){
+	if(sz>=rw->spc){//[i]=0;addstr;=aux
 		size_t size=row_pad_sz(sz);
 		if(text_init_b<=src&&src<text_init_e){
 			dst=(char*)malloc(size);
@@ -1195,6 +1198,48 @@ static void type(int cr,WINDOW*w){
 	wmove(w,rw,cl);
 	if(mod_flag)mod_set(false);
 }
+static void indent(bool b,size_t ybsel,size_t*xbsel,size_t yesel,size_t*xesel,int*cl,WINDOW*w){
+	if(ybsel>=rows_tot)return;
+	size_t ye;
+	if(yesel>=rows_tot)ye=rows_tot-1;
+	else ye=yesel;
+	for(size_t i=ybsel;i<=ye;i++){
+		row*r=&rows[i];size_t sz=r->sz;
+		if(b){
+			if(mal_spc_rea(r,0,1,sz,"\t"))return;
+		}else if(sz){
+			char*d=r->data;
+			for(size_t j=1;j<sz;j++)d[j-1]=d[j];
+			r->sz=sz-1;
+		}
+	}
+	int rb;if(ybsel<ytext)rb=0;
+	else rb=(int)(ybsel-ytext);
+	int re=(int)(yesel-ytext)+1;
+	int max=getmaxy(w);
+	if(re>max)re=max;
+	if(b){
+		xtext++;xbsel[0]++;
+		xesel[0]++;
+		if(rb)refreshrowsbot(w,0,rb);
+		if(re<max)refreshrowsbot(w,re,max);
+	}else{
+		if(xtext){
+			xtext--;xbsel[0]--;
+			xesel[0]--;
+			if(rb)refreshrowsbot(w,0,rb);
+			if(re<max)refreshrowsbot(w,re,max);
+		}else{
+			xbsel[0]=0;
+			if(yesel<rows_tot&&!rows[yesel].sz)xesel[0]=(size_t)getmaxx(w)-1;
+			else xesel[0]=0;
+			cl[0]=0;
+			refreshrowsbot(w,rb,re);
+			printsel(w,ybsel,0,yesel,xesel[0],-1);
+		}
+	}
+	if(mod_flag)mod_set(false);
+}
 static bool loopin(WINDOW*w){
 	int c;
 	for(;;){
@@ -1230,17 +1275,21 @@ static bool loopin(WINDOW*w){
 					else{
 						int r=getcury(w);int col=getcurx(w);
 						if(!z){
-							char v=' ';
-							visual_bool=b=='c';
-							if(visual_bool){
-								if(writemembuf(ybsel,xbsel,yesel,xesel)){v='C';unsel(w);}
-							}else if(b=='d'){
-								delete(ybsel,xbsel,yesel,xesel,&r,&col,w);
-							}else if(b=='x'){
-								if(writemembuf(ybsel,xbsel,yesel,xesel))
+							if(b=='i'){indent(true,ybsel,&xbsel,yesel,&xesel,&col,w);z=-1;}
+							else if(b=='u'){indent(false,ybsel,&xbsel,yesel,&xesel,&col,w);z=-1;}
+							else{
+								char v=' ';
+								visual_bool=b=='c';
+								if(visual_bool){
+									if(writemembuf(ybsel,xbsel,yesel,xesel)){v='C';unsel(w);}
+								}else if(b=='d'){
 									delete(ybsel,xbsel,yesel,xesel,&r,&col,w);
-							}else unsel(w);
-							visual(v);
+								}else if(b=='x'){
+									if(writemembuf(ybsel,xbsel,yesel,xesel))
+										delete(ybsel,xbsel,yesel,xesel,&r,&col,w);
+								}else unsel(w);
+								visual(v);
+							}
 						}else{
 							size_t y=ytext+(size_t)r;size_t x=xtext+c_to_xc(col,r);
 							set1membuf(y,x,&orig,&ybsel,&xbsel,&yesel,&xesel,w);
