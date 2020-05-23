@@ -600,30 +600,36 @@ static void sel(WINDOW*w,int c1,int c2,int rb,int cb,int re,int ce){
 static void set1membuf(size_t y,size_t x,bool*orig,size_t*yb,size_t*xb,size_t*ye,size_t*xe,WINDOW*w){
 	if(orig[0]){
 		if(y<yb[0]){
-			if(yb[0]<rows_tot-1&&xb[0]==rows[yb[0]].sz)xb[0]+=(size_t)getmaxx(w)-1;
+			if(yb[0]<rows_tot-1&&xb[0]==rows[yb[0]].sz){
+				size_t max=(size_t)getmaxx(w)-1;
+				if(rows[yb[0]].sz<xtext+max)xb[0]=xtext+max;
+			}
 			if(y<rows_tot-1&&x>rows[y].sz)x=rows[y].sz;
 			ye[0]=yb[0];yb[0]=y;
 			xe[0]=xb[0];xb[0]=x;
 			orig[0]=false;
 		}
 		else if(y>yb[0]){
-			if(y<rows_tot-1&&x>=rows[y].sz)x=rows[y].sz+(size_t)getmaxx(w)-1;
+			if(y<rows_tot-1&&x>=rows[y].sz)x=xtext+(size_t)getmaxx(w)-1;
 			ye[0]=y;xe[0]=x;
 		}
 		else if(x<xb[0]){
-			if(yb[0]<rows_tot-1&&xb[0]==rows[yb[0]].sz)xb[0]+=(size_t)getmaxx(w)-1;
+			if(yb[0]<rows_tot-1&&xb[0]==rows[yb[0]].sz){
+				size_t max=(size_t)getmaxx(w)-1;
+				if(rows[yb[0]].sz<xtext+max)xb[0]=xtext+max;
+			}
 			ye[0]=yb[0];
 			xe[0]=xb[0];xb[0]=x;
 			orig[0]=false;
 		}
 		else{
-			if(y<rows_tot-1&&x>=rows[y].sz)x=rows[y].sz+(size_t)getmaxx(w)-1;
+			if(y<rows_tot-1&&x>=rows[y].sz)x=xtext+(size_t)getmaxx(w)-1;
 			ye[0]=y;xe[0]=x;
 		}
 	}else{
 		if(ye[0]<y){
 			if(ye[0]<rows_tot-1&&xe[0]>rows[ye[0]].sz)xe[0]=rows[ye[0]].sz;
-			if(y<rows_tot-1&&x>=rows[y].sz)x=rows[y].sz+(size_t)getmaxx(w)-1;
+			if(y<rows_tot-1&&x>=rows[y].sz)x=xtext+(size_t)getmaxx(w)-1;
 			yb[0]=ye[0];ye[0]=y;
 			xb[0]=xe[0];xe[0]=x;
 			orig[0]=true;
@@ -633,7 +639,7 @@ static void set1membuf(size_t y,size_t x,bool*orig,size_t*yb,size_t*xb,size_t*ye
 			yb[0]=y;xb[0]=x;
 		}
 		else if(xe[0]<x){
-			if(y<rows_tot-1&&x>=rows[y].sz)x=rows[y].sz+(size_t)getmaxx(w)-1;
+			if(y<rows_tot-1&&x>=rows[y].sz)x=xtext+(size_t)getmaxx(w)-1;
 			yb[0]=ye[0];
 			xb[0]=xe[0];xe[0]=x;
 			orig[0]=true;
@@ -1208,7 +1214,7 @@ static bool loopin(WINDOW*w){
 				bool orig=true;
 				if(ybsel<rows_tot-1&&xbsel>=rows[ybsel].sz){
 					xbsel=rows[ybsel].sz;
-					xesel=xbsel+(size_t)getmaxx(w)-1;
+					xesel=xtext+(size_t)getmaxx(w)-1;
 				}
 				printsel(w,ybsel,xbsel,yesel,xesel,-1);
 				wmove(w,rw,cl);
