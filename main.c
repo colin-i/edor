@@ -66,8 +66,8 @@ typedef struct
 MEVENT;
 #define OK 0
 #define BUTTON1_CLICKED 0x4
-#define BUTTON5_PRESSED 0x200000
 #define BUTTON4_PRESSED 0x10000
+#define BUTTON5_PRESSED 0x200000
 #define KEY_UP 0403
 #define KEY_DOWN 0402
 #define KEY_HOME 0406
