@@ -418,8 +418,8 @@ static int movment(int c,WINDOW*w){
 		MEVENT e;
 		int a=getmouse(&e);
 		if(a==OK){
-			if(e.bstate&BUTTON5_PRESSED)tmove(w,getcury(w),false);
-			else if(e.bstate&BUTTON4_PRESSED)tmove(w,getcury(w),true);
+			if(e.bstate&BUTTON4_PRESSED)tmove(w,getcury(w),false);
+			else if(e.bstate&BUTTON5_PRESSED)tmove(w,getcury(w),true);
 			else if(e.bstate&BUTTON1_CLICKED){amove(w,e.y-1,e.x-1);return -2;}
 		}
 	}else if(c==KEY_UP){
