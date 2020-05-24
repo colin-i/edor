@@ -10,6 +10,7 @@
 
 //#include <string.h>
 void*memcpy(void*,const void*,size_t);//16
+void*memset(void*,int,size_t);
 //sys/types.h
 typedef unsigned short mode_t;
 //asm-generic/fcntl.h
@@ -1095,20 +1096,34 @@ static bool bcsp(size_t y,size_t x,int*rw,int*cl,WINDOW*w){
 }
 static bool enter(size_t y,size_t x,int*r,int*c,WINDOW*w){
 	if(rows_expand(1))return true;
+	char*b=rows[y].data;
+	char*d=b;
+	char*e=b+x;
+	while(d<e&&d[0]=='\t')d++;
+	size_t tb=(size_t)(d-b);
 	size_t s=rows[y].sz-x;
-	size_t spc=row_pad_sz(s);
-	void*v=malloc(spc);
+	size_t sze=tb+s;
+	size_t spc=row_pad_sz(sze);
+	char*v=malloc(spc);
 	if(!v)return true;
 	row rw;
-	memcpy(v,rows[y].data+x,s);
+	memset(v,'\t',tb);
+	memcpy(v+tb,b+x,s);
 	rows[y].sz-=s;
-	rw.data=v;rw.sz=s;rw.spc=spc;
+	rw.data=v;rw.sz=sze;rw.spc=spc;
 	rows_insert(&rw,1,y+1);
+	bool fix=tb>=xtext;
+	int cprev;if(fix){
+		cprev=c[0];
+		c[0]=(int)(tb-xtext)*tab_sz;
+	}
+	else{xtext=tb;c[0]=0;}
 	int row=r[0];
 	if(row==(getmaxy(w)-1))ytext++;
 	else{
-		if(xtext==0){
-			size_t xc=c_to_xc(c[0],row);
+		r[0]++;
+		if(fix){
+			size_t xc=c_to_xc(cprev,row);
 			int*t=&tabs[tabs_rsz*row];
 			int a=t[0];
 			int*p=t+a;
@@ -1119,14 +1134,11 @@ static bool enter(size_t y,size_t x,int*r,int*c,WINDOW*w){
 			}
 			t[0]-=z-p;
 			wclrtoeol(w);
-			x_right[row]=rows[y].sz!=0;
+			x_right[row]=xtext<rows[y].sz;
 			refreshrows(w,row+1);
-			c[0]=0;r[0]++;
 			return false;
 		}
-		r[0]++;
 	}
-	xtext=0;c[0]=0;
 	refreshpage(w);
 	return false;
 }
