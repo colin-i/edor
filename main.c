@@ -118,8 +118,7 @@ static bool helpend;
 static char helptext[]="INPUT"
 "\nhelp"
 "\n    q(uit),up/down"
-"\narrows(Alt),home(Ctrl,Alt)/end(Ctrl),page up/down"
-"\nmouse/touch press or v.scroll"
+"\narrows(Alt),home(Ctrl,Alt)/end(Ctrl),page up/down;mouse/touch press or v.scroll"
 "\nCtrl+v = visual mode"
 "\n    c = copy"
 "\n    d = delete"
@@ -128,6 +127,7 @@ static char helptext[]="INPUT"
 "\n    u = unindent"
 "\nCtrl+p = paste"
 "\nCtrl+s = save file"
+"\nCtrl+o = save file as..."
 "\ncommand mode"
 "\n    left/right,ctrl+q"
 "\nCtrl+g = go to line number"
@@ -1313,9 +1313,11 @@ static bool loopin(WINDOW*w){
 				}while(z);
 			}
 			else if(!strcmp(s,"^P"))paste(w);
-			else if(!strcmp(s,"^S")){
+			else if((!strcmp(s,"^S"))||!strcmp(s,"^O")){
 				char*d=textfile;
-				int ret=save();
+				int ret;
+				if(s[1]=='S')ret=save();
+				else ret=saveas();
 				if(ret){
 					if(ret==1){
 						if(d!=textfile)text_file=textfile;

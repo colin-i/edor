@@ -21,7 +21,9 @@ int atoi(const char*);
 static int com_left;
 #define max_path 0xff
 //10
-static char input[max_path+1];
+static char input1[max_path+1];
+static char input2[max_path+1];
+static char*input=input1;
 
 char*bar_init(){
 	char*h="F1 for help";
@@ -109,6 +111,7 @@ static void clear_com(int y,int sz,int pos,int cursor){
 		//memset(mapsel,' ',(size_t)len);mapsel[len]=0;addstr(mapsel);
 	}
 }
+//1/0/-1 -2
 int question(char*q){
 	//if(com_left+sz>getmaxx(stdscr))return 1;
 	int y=getmaxy(stdscr)-1;
@@ -262,5 +265,11 @@ int save(){
 	if(textfile){
 		return saving(false);
 	}
+	return command(0);
+}
+int saveas(){
+	if(textfile==input1)input=input2;
+	else if(textfile==input2)input=input1;
+	//null,argv[1]
 	return command(0);
 }
