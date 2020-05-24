@@ -1317,7 +1317,7 @@ static bool loopin(WINDOW*w){
 				char*d=textfile;
 				int ret;
 				if(s[1]=='S')ret=save();
-				else ret=saveas();
+				else ret=command(0);
 				if(ret){
 					if(ret==1){
 						if(d!=textfile)text_file=textfile;

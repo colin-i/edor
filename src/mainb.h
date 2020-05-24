@@ -26,7 +26,6 @@ bool no_char(char);
 
 char*bar_init(void);
 int save(void);
-int saveas(void);
 int question(char*);
 int command(int);
 

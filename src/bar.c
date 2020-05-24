@@ -82,10 +82,16 @@ static bool saving(bool creat){
 	}else r=false;
 	return r;
 }
+static void inputpath(){
+	textfile=input;
+	if(input==input1)input=input2;
+	else input=input1;
+	//good for other commands that are not storing the result
+}
 //-1exist,0er,1ok
 static int saves(){
 	if(access(input,F_OK)==-1){
-		textfile=input;
+		inputpath();
 		return saving(true);
 	}
 	return -1;
@@ -163,7 +169,7 @@ int command(int comnr){
 					clear_com(y,visib,pos,cursor);
 					r=question("Overwrite");
 					if(r==1){
-						textfile=input;
+						inputpath();
 						r=saving(false);
 					}else if(!r){
 						if(pos)mvaddch(y,com_left-1,'<');
@@ -265,11 +271,5 @@ int save(){
 	if(textfile){
 		return saving(false);
 	}
-	return command(0);
-}
-int saveas(){
-	if(textfile==input1)input=input2;
-	else if(textfile==input2)input=input1;
-	//null,argv[1]
 	return command(0);
 }
