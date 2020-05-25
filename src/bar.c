@@ -148,6 +148,34 @@ static int del(int x,int cursor,int dif){
 	}else if(f==cursor)addch(' ');
 	return cursor;
 }
+static int memncmp(char*S1,size_t L1,char*s2,size_t l2){
+	if(l2>L1)return -1;
+	size_t n=L1-l2;
+	size_t i=0;
+	while(i<n){
+		if(S1[i]==s2[0]){
+			size_t j=1;
+			for(;j<l2;j++){
+				if(S1[i+j]!=s2[j])break;
+			}
+			if(j==l2)return(int)i;
+			i+=l2;
+		}else i++;
+	}
+	return -1;
+}
+static bool find(int cursor){
+	if(!cursor)return false;
+	size_t i=ytext;size_t e=rows_tot;
+	for(;;){
+		int a=memncmp(rows[i].data,rows[i].sz,input,(size_t)cursor);
+		if(a>0){xtext=(size_t)a;ytext=i;return true;}
+		if(i==e){
+			if(e==rows_tot){i=0;e=ytext;}
+			else return false;
+		}else i++;
+	}
+}
 //-2resize,-1no/quit,0er,1okSave,...
 int command(int comnr){
 	int right=getmaxx(stdscr)-4;//25
@@ -161,8 +189,8 @@ int command(int comnr){
 	for(;;){
 		int a=getch();
 		if(a==Char_Return){
-			input[cursor]=0;
 			if(!comnr){
+				input[cursor]=0;
 				r=saves();
 				if(r==-1){
 					int x=getcurx(stdscr);
@@ -185,8 +213,11 @@ int command(int comnr){
 					wnoutrefresh(stdscr);
 					return r;
 				}
-			}else{
+			}else if(comnr==1){
+				input[cursor]=0;
 				r=atoi(input);
+			}else{
+				r=find(cursor);
 			}
 			break;
 		}

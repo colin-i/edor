@@ -34,3 +34,5 @@ extern size_t ln_term_sz;
 extern char*textfile;
 extern row*rows;
 extern size_t rows_tot;
+extern size_t ytext;
+extern size_t xtext;

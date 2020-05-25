@@ -4,7 +4,7 @@
 //malloc,10;free,11;realloc,6
 #include"src/mainb.h"
 //move,7;getch;getmaxy,17;getmaxx,31
-//stdscr,17;keyname,2;getcurx,18;strcmp,12
+//stdscr,17;keyname,2;getcurx,19;strcmp,12
 //addch;mvaddch,2;addstr,4
 //wnoutrefresh,7
 
@@ -35,8 +35,8 @@ int noecho(void);
 int raw(void);
 int nonl(void);
 #define ALL_MOUSE_EVENTS 0xFffFFff
-int wmove(WINDOW*,int,int);//27
-int getcury(const WINDOW*);//24
+int wmove(WINDOW*,int,int);//29
+int getcury(const WINDOW*);//25
 WINDOW*newwin(int,int,int,int);
 int delwin(WINDOW*);
 int doupdate(void);//2
@@ -104,12 +104,12 @@ size_t ln_term_sz=1;
 char*textfile=NULL;
 row*rows=NULL;
 size_t rows_tot=1;
+size_t ytext=0;
+size_t xtext=0;
 
 static char*mapsel=NULL;
 static char*text_file=NULL;
 static size_t rows_spc=1;
-static size_t ytext=0;
-static size_t xtext=0;
 static bool*x_right=NULL;
 static int*tabs=NULL;
 static int tabs_rsz;
@@ -130,6 +130,7 @@ static char helptext[]="INPUT"
 "\nCtrl+s = save file"
 "\nCtrl+o = save file as..."
 "\nCtrl+g = go to line number"
+"\nCtrl+f = find text"
 "\n-"
 "\nCtrl+b = build file"
 "\nCtrl+q = quit";
@@ -1343,6 +1344,13 @@ static bool loopin(WINDOW*w){
 				if(r>0&&(size_t)r<=rows_tot){
 					ytext=(size_t)r-1;
 					refreshpage(w);wmove(w,0,0);}
+				else wmove(w,getcury(w),getcurx(w));
+			}
+			else if(!strcmp(s,"^F")){
+				if(command(2)){
+					refreshpage(w);
+					wmove(w,0,0);
+				}
 				else wmove(w,getcury(w),getcurx(w));
 			}
 			else if(!strcmp(s,"^B")){
