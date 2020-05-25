@@ -117,8 +117,7 @@ static int tabs_rsz;
 static int yhelp;
 static bool helpend;
 static char helptext[]="INPUT"
-"\nhelp"
-"\n    q(uit),up/down"
+"\nhelp: q(uit),up/down"
 "\narrows(Alt),home(Ctrl,Alt)/end(Ctrl),page up/down;mouse/touch press or v.scroll"
 "\nCtrl+v = visual mode"
 "\n    c = copy"
@@ -127,11 +126,11 @@ static char helptext[]="INPUT"
 "\n    i = indent"
 "\n    u = unindent"
 "\nCtrl+p = paste"
+"\ncommand mode: left/right,ctrl+q"
 "\nCtrl+s = save file"
 "\nCtrl+o = save file as..."
-"\ncommand mode"
-"\n    left/right,ctrl+q"
 "\nCtrl+g = go to line number"
+"\n-"
 "\nCtrl+b = build file"
 "\nCtrl+q = quit";
 static bool visual_bool=false;
