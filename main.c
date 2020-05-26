@@ -3,10 +3,10 @@
 #include"src/mainc.h"
 //malloc,10;free,11;realloc,6
 #include"src/mainb.h"
-//move,7;wmove,28;getch;getmaxy,17
-//getmaxx,32;stdscr,17;keyname,2
+//move,4;wmove,28;getch;getmaxy,16
+//getmaxx,33;stdscr,16;keyname,2
 //getcurx,21;strcmp,12;addch;mvaddch,2
-//addstr,4;wnoutrefresh,7
+//addstr,3;wnoutrefresh,7
 
 //#include <string.h>
 void*memcpy(void*,const void*,size_t);//16
@@ -35,7 +35,7 @@ int noecho(void);
 int raw(void);
 int nonl(void);
 #define ALL_MOUSE_EVENTS 0xFffFFff
-int getcury(const WINDOW*);//26
+int getcury(const WINDOW*);//25
 WINDOW*newwin(int,int,int,int);
 int delwin(WINDOW*);
 int doupdate(void);//2
@@ -114,6 +114,7 @@ static int*tabs=NULL;
 static int tabs_rsz;
 static int yhelp;
 static bool helpend;
+static int phelp;
 static char helptext[]="INPUT"
 "\nhelp: q(uit),up/down"
 "\narrows(Alt),home(Ctrl,Alt)/end(Ctrl),page up/down;mouse/touch press or v.scroll"
@@ -278,15 +279,6 @@ static void tmove(WINDOW*w,int y,bool right){
 		amove(w,y,x);
 	}
 }
-static void helpclear(){
-	int r=getcury(stdscr);
-	for(int i=0;i<=r;i++){
-		move(i,0);
-		clrtoeol();
-	}
-	move(getmaxy(stdscr)-2,0);
-	addstr("   ");
-}
 static void printinverted(char*s){
 	attrset(COLOR_PAIR(1));
 	addstr(s);
@@ -298,37 +290,69 @@ static void helpposition(){
 	move(getmaxy(stdscr)-2,0);
 	if(helpend)printinverted("BOT");
 	else if(!yhelp)printinverted("TOP");
-	else addstr(":  ");
+	else addstr("---");
 	move(y,x);
 }
+static int helpmanag(int n){
+	int max=getmaxx(stdscr);
+	int i=phelp;
+	if(yhelp<n){
+		int z=i+max;
+		if(i&&helptext[i-1]!='\n')z--;
+		do{
+			if(helptext[i]=='\n'){i++;break;}
+			if(!helptext[i])break;
+			i++;
+		}while(i<z);
+		if(helptext[i]=='\n')return i+1;
+		return i;
+	}
+	if(helptext[i-1]=='\n'){
+		i--;int j=i;do{
+			i--;
+		}while(helptext[i]!='\n'&&i);
+		if(i)i++;
+		int sz=j-i;
+		if(sz<=max)return i;
+		sz-=max;i+=max;
+		max--;int k=-1;
+		while(sz>0){sz-=max;k++;}
+		return k*max+i;
+	}
+	i-=max;
+	if(i&&helptext[i-1]=='\n')return i;
+	return i+1;
+}
 static void helpshow(int n){
-	yhelp=n;
-	move(0,0);	
-	int i=0;int j=0;int y=0;
-	int max=getmaxx(stdscr);int c=0;
-	int cstart=0;
+	int max=getmaxx(stdscr);
+	int i=phelp;int j=i;
+	yhelp=n;int y=0;
+	int cstart;
+	if(i&&helptext[i-1]!='\n')cstart=1;
+	else cstart=0;
+	int c=cstart;
 	do{
 		helpend=helptext[i]==0;
 		bool newl=helptext[i]=='\n';
+		c++;i++;
 		bool is_max=c==max;
 		if(newl||helpend||is_max){
-			if(n)n--;
-			else{
-				move(y,0);
-				if(cstart){addch(' ');cstart=0;}
-				char aux=helptext[i];helptext[i]=0;
-				addstr(&helptext[j]);
-				helptext[i]=aux;
-				y++;
-				if(getmaxy(stdscr)-3<y)break;
-			}
-			if(newl)j=i+1;else{
-				j=i;
-				if(is_max)cstart=1;
+			move(y,0);
+			int sum=i-j+cstart;
+			if(cstart){addch(' ');cstart=0;}
+			char aux=helptext[i];helptext[i]=0;
+			addstr(&helptext[j]);
+			helptext[i]=aux;
+			if(sum<max)clrtoeol();
+			y++;
+			if(getmaxy(stdscr)-3<y)break;
+			j=i;
+			if(!newl){
+				if(helptext[i]=='\n'){j++;i=j;}
+				else cstart=1;
 			}
 			c=cstart;
-		}else c++;
-		i++;
+		}
 	}while(!helpend);
 	helpposition();
 }
@@ -336,7 +360,7 @@ static void hmove(int n){
 	if(helpend&&(n>0))return;
 	n+=yhelp;
 	if(n<0)return;
-	helpclear();
+	phelp=helpmanag(n);
 	helpshow(n);
 }
 static bool helpin(WINDOW*w){
@@ -1376,6 +1400,7 @@ static bool loopin(WINDOW*w){
 			else if(!strcmp(s,"KEY_F(1)")){
 				int cy=getcury(w);int cx=getcurx(w);
 				werase(w);
+				phelp=0;
 				helpshow(0);
 				wnoutrefresh(w);
 				wnoutrefresh(stdscr);

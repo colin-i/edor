@@ -172,13 +172,12 @@ static bool find(int cursor,size_t r,size_t c){
 	else{
 		i+=r;
 		c+=xtext;
-		if(c>=rows[i].sz)i=0;
-		else{
+		if(c<rows[i].sz){
 			int a=memncmp(rows[i].data+c,rows[i].sz-c,input,(size_t)cursor);
 			if(a>=0){xtext=c+(size_t)a;ytext=i;return true;}
-			i++;
-			if(i==rows_tot)i=0;
 		}
+		i++;
+		if(i==rows_tot)i=0;
 	}
 	size_t b=i;
 	size_t e=rows_tot;
