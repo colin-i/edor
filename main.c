@@ -3,9 +3,9 @@
 #include"src/mainc.h"
 //malloc,10;free,11;realloc,6
 #include"src/mainb.h"
-//move,7;wmove,27;getch;getmaxy,17
-//getmaxx,31;stdscr,17;keyname,2
-//getcurx,20;strcmp,12;addch;mvaddch,2
+//move,7;wmove,28;getch;getmaxy,17
+//getmaxx,32;stdscr,17;keyname,2
+//getcurx,21;strcmp,12;addch;mvaddch,2
 //addstr,4;wnoutrefresh,7
 
 //#include <string.h>
@@ -365,15 +365,26 @@ static void slmove(WINDOW*w,int x,bool notabs){
 		xtext--;
 		refreshpage(w);
 		if(notabs)wmove(w,y,x);
-		else amove(w,y,x);
+		else{
+			amove(w,y,x);
+			int newx=getcurx(w);
+			if(newx<x&&newx+tab_sz<getmaxx(w))wmove(w,y,newx+tab_sz);
+		}
 	}
 }
 static void srmove(WINDOW*w,int x,bool back){
 	int y=getcury(w);
 	if(x_right[y]){
-		xtext++;
-		refreshpage(w);
-		bmove(w,y,x,back);
+		if(back){
+			xtext++;
+			refreshpage(w);
+			amove(w,y,x);
+		}else{
+			if(rows[ytext+(size_t)y].data[xtext]=='\t')x-=tab_sz-1;
+			xtext++;
+			refreshpage(w);
+			bmove(w,y,x,false);
+		}
 	}
 }
 static int end(WINDOW*w,size_t r){
