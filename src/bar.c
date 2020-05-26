@@ -160,7 +160,7 @@ static int memncmp(char*S1,size_t L1,char*s2,size_t l2){
 				if(S1[i+j]!=s2[j])break;
 			}
 			if(j==l2)return(int)i;
-			i+=l2;
+			i+=j;
 		}else i++;
 	}
 	return -1;
@@ -171,6 +171,7 @@ static bool find(int cursor,size_t r,size_t c){
 	if(i+r>=rows_tot)i=0;
 	else{
 		i+=r;
+		c+=xtext;
 		if(c>=rows[i].sz)i=0;
 		else{
 			int a=memncmp(rows[i].data+c,rows[i].sz-c,input,(size_t)cursor);

@@ -1347,7 +1347,8 @@ static bool loopin(WINDOW*w){
 				else wmove(w,getcury(w),getcurx(w));
 			}
 			else if(!strcmp(s,"^F")){
-				size_t args[3]={2,(size_t)getcury(w),(size_t)getcurx(w)};
+				int rw=getcury(w);
+				size_t args[3]={2,(size_t)rw,c_to_xc(getcurx(w),rw)};
 				if(command(args)==1){
 					centering(w);
 				}
