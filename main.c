@@ -5,7 +5,7 @@
 #include"src/mainb.h"
 //move,7;wmove,27;getch;getmaxy,17
 //getmaxx,31;stdscr,17;keyname,2
-//getcurx,19;strcmp,12;addch;mvaddch,2
+//getcurx,20;strcmp,12;addch;mvaddch,2
 //addstr,4;wnoutrefresh,7
 
 //#include <string.h>
@@ -35,7 +35,7 @@ int noecho(void);
 int raw(void);
 int nonl(void);
 #define ALL_MOUSE_EVENTS 0xFffFFff
-int getcury(const WINDOW*);//25
+int getcury(const WINDOW*);//26
 WINDOW*newwin(int,int,int,int);
 int delwin(WINDOW*);
 int doupdate(void);//2
@@ -1327,7 +1327,7 @@ static bool loopin(WINDOW*w){
 				char*d=textfile;
 				int ret;
 				if(s[1]=='S')ret=save();
-				else ret=command(0);
+				else{size_t aa=0;ret=command(&aa);}
 				if(ret){
 					if(ret==1){
 						if(d!=textfile)text_file=textfile;
@@ -1338,7 +1338,8 @@ static bool loopin(WINDOW*w){
 				wmove(w,getcury(w),getcurx(w));
 			}
 			else if(!strcmp(s,"^G")){
-				int r=command(1);
+				size_t aa=1;
+				int r=command(&aa);
 				if(r>0&&(size_t)r<=rows_tot){
 					ytext=(size_t)r-1;
 					centering(w);
@@ -1346,7 +1347,8 @@ static bool loopin(WINDOW*w){
 				else wmove(w,getcury(w),getcurx(w));
 			}
 			else if(!strcmp(s,"^F")){
-				if(command(2)){
+				size_t args[3]={2,(size_t)getcury(w),(size_t)getcurx(w)};
+				if(command(args)==1){
 					centering(w);
 				}
 				else wmove(w,getcury(w),getcurx(w));

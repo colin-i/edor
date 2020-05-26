@@ -29,7 +29,7 @@ void refreshpage(WINDOW*w);
 char*bar_init(void);
 int save(void);
 int question(char*);
-int command(int);
+int command(size_t*);
 void centering(WINDOW*w);
 
 #define tab_sz 6

@@ -153,7 +153,7 @@ static int memncmp(char*S1,size_t L1,char*s2,size_t l2){
 	if(l2>L1)return -1;
 	size_t n=L1-l2;
 	size_t i=0;
-	while(i<n){
+	while(i<=n){
 		if(S1[i]==s2[0]){
 			size_t j=1;
 			for(;j<l2;j++){
@@ -165,24 +165,37 @@ static int memncmp(char*S1,size_t L1,char*s2,size_t l2){
 	}
 	return -1;
 }
-static bool find(int cursor){
+static bool find(int cursor,size_t r,size_t c){
 	if(!cursor)return false;
-	size_t i=ytext;size_t e=rows_tot;
+	size_t i=ytext;
+	if(i+r>=rows_tot)i=0;
+	else{
+		i+=r;
+		if(c>=rows[i].sz)i=0;
+		else{
+			int a=memncmp(rows[i].data+c,rows[i].sz-c,input,(size_t)cursor);
+			if(a>=0){xtext=c+(size_t)a;ytext=i;return true;}
+			i++;
+			if(i==rows_tot)i=0;
+		}
+	}
+	size_t b=i;
+	size_t e=rows_tot;
 	for(;;){
 		int a=memncmp(rows[i].data,rows[i].sz,input,(size_t)cursor);
-		if(a>0){xtext=(size_t)a;ytext=i;return true;}
+		if(a>=0){xtext=(size_t)a;ytext=i;return true;}
 		i++;
 		if(i==e){
 			if(e==rows_tot){
-				if(!ytext)return false;
-				i=0;e=ytext;
+				if(!b)return false;
+				i=0;e=b;
 			}
 			else return false;
 		}
 	}
 }
 //-2resize,-1no/quit,0er,1okSave,...
-int command(int comnr){
+int command(size_t*comnrp){
 	int right=getmaxx(stdscr)-4;//25
 	int rightexcl=right+1;
 	int visib=rightexcl-com_left;
@@ -194,6 +207,7 @@ int command(int comnr){
 	for(;;){
 		int a=getch();
 		if(a==Char_Return){
+			size_t comnr=comnrp[0];
 			if(!comnr){
 				input[cursor]=0;
 				r=saves();
@@ -222,7 +236,7 @@ int command(int comnr){
 				input[cursor]=0;
 				r=atoi(input);
 			}else{
-				r=find(cursor);
+				r=find(cursor,comnrp[1],comnrp[2]);
 			}
 			break;
 		}
@@ -307,7 +321,8 @@ int save(){
 	if(textfile){
 		return saving(false);
 	}
-	return command(0);
+	size_t a=0;
+	return command(&a);
 }
 void centering(WINDOW*w){
 	size_t wd=(size_t)getmaxx(w)/2;
