@@ -1,9 +1,10 @@
 #include"main0.h"
 //strlen,2;open,2;close;write,3
 #include"mainb.h"
-//move,17;wmove;getch,2;getmaxy,2;getmaxx
-//getcurx,6;stdscr,10;keyname;strcmp
-//addch,10;mvaddch,7,addstr;wnoutrefresh,2
+//move,17;wmove;getch,2;getmaxy,3
+//getmaxx;2;getcurx,6;stdscr,10;keyname
+//strcmp;addch,10;mvaddch,7,addstr
+//wnoutrefresh,2
 #include"mainbc.h"
 
 //#include<curses.h>
@@ -308,12 +309,17 @@ int save(){
 	}
 	return command(0);
 }
-/*static void centering(WINDOW*w){
-	size_t hg=(size_t)getmaxy(w)/2;
+void centering(WINDOW*w){
 	size_t wd=(size_t)getmaxx(w)/2;
+	size_t c=0;char*d=rows[ytext].data;
+	do{
+		if(!xtext)break;
+		xtext--;
+		c+=d[xtext]=='\t'?tab_sz:1;
+	}while(c<wd);
+	size_t hg=(size_t)getmaxy(w)/2;
 	if((int)(ytext-hg)<0){hg=ytext;ytext=0;}
 	else ytext=ytext-hg;
-	if((int)(xtext-wd)<0){wd=xtext;xtext=0;}
-	else xtext=xtext-wd;
-	wmove(w,(int)hg,(int)wd);
-}*/
+	refreshpage(w);
+	wmove(w,(int)hg,(int)c);
+}

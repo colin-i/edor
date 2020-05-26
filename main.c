@@ -3,7 +3,7 @@
 #include"src/mainc.h"
 //malloc,10;free,11;realloc,6
 #include"src/mainb.h"
-//wmove,29;move,7;getch;getmaxy,17
+//move,7;wmove,27;getch;getmaxy,17
 //getmaxx,31;stdscr,17;keyname,2
 //getcurx,19;strcmp,12;addch;mvaddch,2
 //addstr,4;wnoutrefresh,7
@@ -112,7 +112,6 @@ static size_t rows_spc=1;
 static bool*x_right=NULL;
 static int*tabs=NULL;
 static int tabs_rsz;
-#define tab_sz 6
 static int yhelp;
 static bool helpend;
 static char helptext[]="INPUT"
@@ -224,7 +223,7 @@ static void refreshrowsbot(WINDOW*w,int i,int maxy){
 static void refreshrows(WINDOW*w,int i){
 	refreshrowsbot(w,i,getmaxy(w));
 }
-static void refreshpage(WINDOW*w){
+void refreshpage(WINDOW*w){
 	refreshrows(w,0);
 }
 static bool bmove(WINDOW*w,int r,int c,bool back){
@@ -1342,13 +1341,13 @@ static bool loopin(WINDOW*w){
 				int r=command(1);
 				if(r>0&&(size_t)r<=rows_tot){
 					ytext=(size_t)r-1;
-					refreshpage(w);wmove(w,0,0);}
+					centering(w);
+				}
 				else wmove(w,getcury(w),getcurx(w));
 			}
 			else if(!strcmp(s,"^F")){
 				if(command(2)){
-					refreshpage(w);
-					wmove(w,0,0);
+					centering(w);
 				}
 				else wmove(w,getcury(w),getcurx(w));
 			}
