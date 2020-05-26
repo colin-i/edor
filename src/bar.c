@@ -1,7 +1,7 @@
 #include"main0.h"
 //strlen,2;open,2;close;write,3
 #include"mainb.h"
-//move,17;getch,2;getmaxy,2;getmaxx
+//move,17;wmove;getch,2;getmaxy,2;getmaxx
 //getcurx,6;stdscr,10;keyname;strcmp
 //addch,10;mvaddch,7,addstr;wnoutrefresh,2
 #include"mainbc.h"
@@ -170,10 +170,14 @@ static bool find(int cursor){
 	for(;;){
 		int a=memncmp(rows[i].data,rows[i].sz,input,(size_t)cursor);
 		if(a>0){xtext=(size_t)a;ytext=i;return true;}
+		i++;
 		if(i==e){
-			if(e==rows_tot){i=0;e=ytext;}
+			if(e==rows_tot){
+				if(!ytext)return false;
+				i=0;e=ytext;
+			}
 			else return false;
-		}else i++;
+		}
 	}
 }
 //-2resize,-1no/quit,0er,1okSave,...
@@ -304,3 +308,12 @@ int save(){
 	}
 	return command(0);
 }
+/*static void centering(WINDOW*w){
+	size_t hg=(size_t)getmaxy(w)/2;
+	size_t wd=(size_t)getmaxx(w)/2;
+	if((int)(ytext-hg)<0){hg=ytext;ytext=0;}
+	else ytext=ytext-hg;
+	if((int)(xtext-wd)<0){wd=xtext;xtext=0;}
+	else xtext=xtext-wd;
+	wmove(w,(int)hg,(int)wd);
+}*/

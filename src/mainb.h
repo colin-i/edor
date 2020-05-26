@@ -1,7 +1,8 @@
 //#include<curses.h>
-int move(int,int);
-int getch(void);
 typedef void WINDOW;
+int move(int,int);
+int wmove(WINDOW*,int,int);
+int getch(void);
 extern WINDOW*stdscr;
 int getmaxy(const WINDOW*);
 int getmaxx(const WINDOW*);

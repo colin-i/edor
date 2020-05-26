@@ -3,10 +3,10 @@
 #include"src/mainc.h"
 //malloc,10;free,11;realloc,6
 #include"src/mainb.h"
-//move,7;getch;getmaxy,17;getmaxx,31
-//stdscr,17;keyname,2;getcurx,19;strcmp,12
-//addch;mvaddch,2;addstr,4
-//wnoutrefresh,7
+//wmove,29;move,7;getch;getmaxy,17
+//getmaxx,31;stdscr,17;keyname,2
+//getcurx,19;strcmp,12;addch;mvaddch,2
+//addstr,4;wnoutrefresh,7
 
 //#include <string.h>
 void*memcpy(void*,const void*,size_t);//16
@@ -35,7 +35,6 @@ int noecho(void);
 int raw(void);
 int nonl(void);
 #define ALL_MOUSE_EVENTS 0xFffFFff
-int wmove(WINDOW*,int,int);//29
 int getcury(const WINDOW*);//25
 WINDOW*newwin(int,int,int,int);
 int delwin(WINDOW*);
