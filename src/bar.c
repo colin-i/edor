@@ -270,8 +270,8 @@ static bool find(char*z,int cursor,int pos,int visib,int y){
       alignment from 1 to 4*/
 	/*warning: arithmetic on
       a pointer to void is a GNU extension*/
-	z+=sizeof(void*);
-	WINDOW*w=((WINDOW**)((void*)z))[0];
+	//z+=sizeof(void*);
+	WINDOW*w=((WINDOW**)((void*)z))[1];
 	size_t rw=(size_t)getcury(w);
 	size_t cl=c_to_xc(getcurx(w),(int)rw);
 	//
