@@ -2,7 +2,7 @@
 //strlen,2;open,2;close;write,3
 #include"mainb.h"
 //move,18;wmove,2;getch,2;wgetch;getmaxy,3
-//getmaxx;2;getcury;getcurx,8;stdscr,12
+//getmaxx;2;getcury;getcurx,9;stdscr,13
 //keyname;strcmp;addch,10;mvaddch,7
 //addstr;wnoutrefresh,3;attrset,2
 //COLOR_PAIR
@@ -225,7 +225,7 @@ static bool find(char*z,int cursor,int pos,int visib,int y){
 	z+=sizeof(void*);
 	WINDOW*w=((WINDOW**)((void*)z))[0];
 	//
-	int sz=0;
+	int sz=0;int ifback;
 	for(;;){
 		bool b=finding(cursor,rw,cl);
 		if(b){
@@ -234,6 +234,7 @@ static bool find(char*z,int cursor,int pos,int visib,int y){
 				attrset(COLOR_PAIR(1));
 				sz=cursor-pos;
 				if(sz>visib)sz=visib;
+				ifback=getcurx(stdscr);
 				mvaddnstr(y,com_left,input+pos,sz);
 				attrset(0);
 				wnoutrefresh(stdscr);
@@ -246,7 +247,10 @@ static bool find(char*z,int cursor,int pos,int visib,int y){
 			continue;
 		}
 		if(a=='c'){
-			if(sz)mvaddnstr(y,com_left,input+pos,sz);
+			if(sz){
+				mvaddnstr(y,com_left,input+pos,sz);
+				move(y,ifback);
+			}else move(y,getcurx(stdscr));//wnoutrefresh(stdscr)
 			return false;
 		}
 		return true;
@@ -294,9 +298,8 @@ int command(char*comnrp){
 				input[cursor]=0;
 				r=atoi(input);
 			}else{
-				int atback=getcurx(stdscr);
 				r=find(comnrp,cursor,pos,visib,y);
-				if(!r){move(y,atback);continue;}
+				if(!r)continue;
 			}
 			break;
 		}
