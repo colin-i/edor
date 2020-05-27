@@ -148,15 +148,15 @@ static int del(int x,int cursor,int dif){
 	}else if(f==cursor)addch(' ');
 	return cursor;
 }
-static int memncmp(char*S1,size_t L1,char*s2,size_t l2){
+static int inputcmp(char*S1,size_t L1,size_t l2){
 	if(l2>L1)return -1;
 	size_t n=L1-l2;
 	size_t i=0;
 	while(i<=n){
-		if(S1[i]==s2[0]){
+		if(S1[i]==input[0]){
 			size_t j=1;
 			for(;j<l2;j++){
-				if(S1[i+j]!=s2[j])break;
+				if(S1[i+j]!=input[j])break;
 			}
 			if(j==l2)return(int)i;
 			i+=j;
@@ -172,7 +172,7 @@ static bool finding(int cursor,size_t r,size_t c){
 		i+=r;
 		c+=xtext;
 		if(c<rows[i].sz){
-			int a=memncmp(rows[i].data+c,rows[i].sz-c,input,(size_t)cursor);
+			int a=inputcmp(rows[i].data+c,rows[i].sz-c,(size_t)cursor);
 			if(a>=0){xtext=c+(size_t)a;ytext=i;return true;}
 		}
 		i++;
@@ -181,7 +181,7 @@ static bool finding(int cursor,size_t r,size_t c){
 	size_t b=i;
 	size_t e=rows_tot;
 	for(;;){
-		int a=memncmp(rows[i].data,rows[i].sz,input,(size_t)cursor);
+		int a=inputcmp(rows[i].data,rows[i].sz,(size_t)cursor);
 		if(a>=0){xtext=(size_t)a;ytext=i;return true;}
 		i++;
 		if(i==e){
