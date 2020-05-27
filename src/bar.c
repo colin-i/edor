@@ -164,15 +164,14 @@ static int inputcmp(char*S1,size_t L1,size_t l2){
 	}
 	return -1;
 }
-static bool finding(int cursor,size_t r,size_t c){
-	if(!cursor)return false;
+static bool findingf(size_t cursor,size_t r,size_t c){
 	size_t i=ytext;
 	if(i+r>=rows_tot)i=0;
 	else{
 		i+=r;
 		c+=xtext;
 		if(c<rows[i].sz){
-			int a=inputcmp(rows[i].data+c,rows[i].sz-c,(size_t)cursor);
+			int a=inputcmp(rows[i].data+c,rows[i].sz-c,cursor);
 			if(a>=0){xtext=c+(size_t)a;ytext=i;return true;}
 		}
 		i++;
@@ -181,7 +180,7 @@ static bool finding(int cursor,size_t r,size_t c){
 	size_t b=i;
 	size_t e=rows_tot;
 	for(;;){
-		int a=inputcmp(rows[i].data,rows[i].sz,(size_t)cursor);
+		int a=inputcmp(rows[i].data,rows[i].sz,cursor);
 		if(a>=0){xtext=(size_t)a;ytext=i;return true;}
 		i++;
 		if(i==e){
@@ -192,6 +191,59 @@ static bool finding(int cursor,size_t r,size_t c){
 			else return false;
 		}
 	}
+}
+static int inputrcmp(char*S1,size_t L1,size_t l2){
+	if(l2>L1)return -1;
+	size_t m=l2-1;
+	size_t i=L1;
+	while(l2<=i){
+		i--;
+		if(S1[i]==input[m]){
+			size_t j=m;
+			size_t p=i-j;
+			while(j>0){
+				j--;
+				if(S1[p+j]!=input[j]){
+					j++;
+					break;
+				}
+			}
+			i-=m-j;
+			if(!j)return(int)i;
+		}
+	}
+	return -1;
+}
+static bool findingb(size_t cursor,size_t r,size_t c){
+	size_t i=ytext;
+	if(i+r>=rows_tot)i=rows_tot-1;
+	else{//safe when find first fails
+		i+=r;
+		c+=xtext;
+		if(c<rows[i].sz){
+			int n=inputrcmp(rows[i].data,c,cursor);
+			if(n>=0){xtext=(size_t)n;ytext=i;return true;}
+			if(!i)i=rows_tot-1;
+			else i--;
+		}
+	}
+	size_t b=i;
+	size_t e=0;
+	for(;;){
+		int a=inputrcmp(rows[i].data,rows[i].sz,cursor);
+		if(a>=0){xtext=(size_t)a;ytext=i;return true;}
+		if(i==e){
+			if(!e){
+				if(b==rows_tot-1)return false;
+				i=rows_tot-1;e=b+1;
+			}else return false;
+		}else i--;
+	}
+}
+static bool finding(size_t cursor,size_t r,size_t c,bool f){
+	if(!cursor)return false;
+	if(f)return findingf(cursor,r,c);
+	return findingb(cursor,r,c);
 }
 void centering(WINDOW*w,size_t*rw,size_t*cl){
 	size_t wd=(size_t)getmaxx(w)/3;
@@ -223,9 +275,9 @@ static bool find(char*z,int cursor,int pos,int visib,int y){
 	size_t rw=(size_t)getcury(w);
 	size_t cl=c_to_xc(getcurx(w),(int)rw);
 	//
-	int sz=0;int ifback;
+	int sz=0;int ifback;bool forward=true;
 	for(;;){
-		bool b=finding(cursor,rw,cl);
+		bool b=finding((size_t)cursor,rw,cl,forward);
 		if(b){
 			centering(w,&rw,&cl);
 			if(!sz){
@@ -242,7 +294,11 @@ static bool find(char*z,int cursor,int pos,int visib,int y){
 		int a=wgetch(w);
 		if(a=='n'){
 			if(b)cl++;
+			forward=true;
 			continue;
+		}
+		if(a=='p'){
+			forward=false;continue;
 		}
 		if(a=='c'){
 			if(sz){

@@ -128,11 +128,12 @@ static char helptext[]="INPUT"
 "\nCtrl+g = go to line number"
 "\nCtrl+f = find text"
 "\n    n = next"
+"\n    p = previous"
 "\n    c = cancel"
 "\n    any key to return"
 "\n-"
 "\nCtrl+b = build file"
-"\nCtrl+q = quit";//21
+"\nCtrl+q = quit";//22
 static bool visual_bool=false;
 static char*cutbuf=NULL;
 static size_t cutbuf_sz=0;
