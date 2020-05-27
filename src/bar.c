@@ -2,7 +2,7 @@
 //strlen,2;open,2;close;write,3
 #include"mainb.h"
 //move,18;wmove,2;getch,2;wgetch;getmaxy,3
-//getmaxx;2;getcury;getcurx,9;stdscr,13
+//getmaxx;2;getcury,2;getcurx,10;stdscr,13
 //keyname;strcmp;addch,10;mvaddch,7
 //addstr;wnoutrefresh,3;attrset,2
 //COLOR_PAIR
@@ -219,11 +219,9 @@ static bool find(char*z,int cursor,int pos,int visib,int y){
 	/*warning: arithmetic on
       a pointer to void is a GNU extension*/
 	z+=sizeof(void*);
-	size_t rw=((size_t*)((void*)z))[0];
-	z+=sizeof(void*);
-	size_t cl=((size_t*)((void*)z))[0];
-	z+=sizeof(void*);
 	WINDOW*w=((WINDOW**)((void*)z))[0];
+	size_t rw=(size_t)getcury(w);
+	size_t cl=c_to_xc(getcurx(w),(int)rw);
 	//
 	int sz=0;int ifback;
 	for(;;){

@@ -5,7 +5,7 @@
 #include"src/mainb.h"
 //move,4;wmove,27;getch;wgetch,2
 //getmaxy,16;getmaxx,33;stdscr,16
-//keyname,2;getcury,25;getcurx,20
+//keyname,2;getcury,24;getcurx,19
 //strcmp,12;addch;mvaddch,2;addstr,3
 //wnoutrefresh,8;attrset,3;COLOR_PAIR,2
 
@@ -692,7 +692,7 @@ static void set1membuf(size_t y,size_t x,bool*orig,size_t*yb,size_t*xb,size_t*ye
 		}
 	}
 }
-static size_t c_to_xc(int c,int r){
+size_t c_to_xc(int c,int r){
 	int*p=&tabs[tabs_rsz*r];
 	int n=p[0];int x=c;
 	for(int i=0;i<n;i++){
@@ -1382,13 +1382,9 @@ static bool loopin(WINDOW*w){
 				else wmove(w,getcury(w),getcurx(w));
 			}
 			else if(!strcmp(s,"^F")){
-				int rw=getcury(w);
-				char*args[4];
+				char*args[2];
 				args[0]=(char*)2;
-				args[1]=(char*)rw;
-				size_t cl=c_to_xc(getcurx(w),rw);
-				args[2]=(char*)cl;
-				args[3]=w;
+				args[1]=w;
 				if(command((char*)args)){
 					wnoutrefresh(w);
 					doupdate();

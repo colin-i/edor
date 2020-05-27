@@ -29,6 +29,7 @@ int strcmp(const char*,const char*);
 
 bool no_char(char);
 void refreshpage(WINDOW*w);
+size_t c_to_xc(int,int);
 
 char*bar_init(void);
 int save(void);
