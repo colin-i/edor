@@ -3,6 +3,7 @@ typedef void WINDOW;
 int move(int,int);
 int wmove(WINDOW*,int,int);
 int getch(void);
+int wgetch(WINDOW*);
 extern WINDOW*stdscr;
 int getmaxy(const WINDOW*);
 int getmaxx(const WINDOW*);
@@ -18,6 +19,8 @@ int addstr(const char*);
 #define KEY_RESIZE 0632
 const char*keyname(int);
 int wnoutrefresh(WINDOW*);
+int attrset(int);
+int COLOR_PAIR(int);
 //#include <string.h>
 int strcmp(const char*,const char*);
 
@@ -31,7 +34,7 @@ char*bar_init(void);
 int save(void);
 int question(char*);
 int command(char*);
-void centering(WINDOW*);
+void centering(WINDOW*,size_t*,size_t*);
 
 #define tab_sz 6
 extern char ln_term[3];

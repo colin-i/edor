@@ -1,16 +1,17 @@
 #include"main0.h"
 //strlen,2;open,2;close;write,3
 #include"mainb.h"
-//move,17;wmove,2;getch,2;getmaxy,3
-//getmaxx;2;getcury;getcurx,7;stdscr,10
+//move,17;wmove,2;getch,2;wgetch;getmaxy,3
+//getmaxx;2;getcury;getcurx,7;stdscr,11
 //keyname;strcmp;addch,10;mvaddch,7
-//addstr;wnoutrefresh,2
+//addstr;wnoutrefresh,3;attrset,2
+//COLOR_PAIR
 #include"mainbc.h"
 
 //#include<curses.h>
 int addnstr(const char*,int);//7
 int mvaddstr(int,int,const char*);
-int mvaddnstr(int,int,const char*,int);
+int mvaddnstr(int,int,const char*,int);//3
 //unistd.h
 #define F_OK 0
 int access(const char*,int);              
@@ -192,9 +193,10 @@ static bool finding(int cursor,size_t r,size_t c){
 		}
 	}
 }
-void centering(WINDOW*w){
+void centering(WINDOW*w,size_t*rw,size_t*cl){
 	size_t wd=(size_t)getmaxx(w)/3;
 	size_t c=0;char*d=rows[ytext].data;
+	size_t xc=xtext;
 	do{
 		if(!xtext)break;
 		xtext--;
@@ -205,8 +207,11 @@ void centering(WINDOW*w){
 	else ytext=ytext-hg;
 	refreshpage(w);
 	wmove(w,(int)hg,(int)c);
+	if(rw){
+		rw[0]=hg;cl[0]=xc-xtext;
+	}
 }
-static void find(char*z,int cursor){
+static bool find(char*z,int cursor,int pos,int visib,int y){
 	/*warning: cast from
       'char *' to 'size_t *' (aka
       'unsigned int *') increases required
@@ -219,10 +224,33 @@ static void find(char*z,int cursor){
 	size_t cl=((size_t*)((void*)z))[0];
 	z+=sizeof(void*);
 	WINDOW*w=((WINDOW**)((void*)z))[0];
-	if(finding(cursor,rw,cl)){
-		centering(w);
+	//
+	int sz=0;
+	for(;;){
+		bool b=finding(cursor,rw,cl);
+		if(b){
+			centering(w,&rw,&cl);
+			if(!sz){
+				attrset(COLOR_PAIR(1));
+				sz=cursor-pos;
+				if(sz>visib)sz=visib;
+				mvaddnstr(y,com_left,input+pos,sz);
+				attrset(0);
+				wnoutrefresh(stdscr);
+			}
+		}
+		else wmove(w,getcury(w),getcurx(w));
+		int a=wgetch(w);
+		if(a=='n'){
+			if(b)cl++;
+			continue;
+		}
+		if(a=='c'){
+			if(sz)mvaddnstr(y,com_left,input+pos,sz);
+			return false;
+		}
+		return true;
 	}
-	else wmove(w,getcury(w),getcurx(w));
 }
 //-2resize,-1no/quit,0er,1okSave,...
 int command(char*comnrp){
@@ -266,7 +294,8 @@ int command(char*comnrp){
 				input[cursor]=0;
 				r=atoi(input);
 			}else{
-				find(comnrp,cursor);
+				r=find(comnrp,cursor,pos,visib,y);
+				if(!r)continue;
 			}
 			break;
 		}

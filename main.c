@@ -3,10 +3,11 @@
 #include"src/mainc.h"
 //malloc,10;free,11;realloc,6
 #include"src/mainb.h"
-//move,4;wmove,27;getch;getmaxy,16
-//getmaxx,33;stdscr,16;keyname,2
-//getcury,25;getcurx,20;strcmp,12;addch
-//mvaddch,2;addstr,3;wnoutrefresh,7
+//move,4;wmove,27;getch;wgetch,2
+//getmaxy,16;getmaxx,33;stdscr,16
+//keyname,2;getcury,25;getcurx,20
+//strcmp,12;addch;mvaddch,2;addstr,3
+//wnoutrefresh,8;attrset,3;COLOR_PAIR,2
 
 //#include <string.h>
 void*memcpy(void*,const void*,size_t);//16
@@ -25,7 +26,6 @@ ssize_t read(int,void*,size_t);//2
 //#include<curses.h>
 WINDOW*initscr(void);
 int endwin(void);
-int wgetch(WINDOW*);//2
 int ungetch(int);
 chtype winch(WINDOW*);
 int winnstr(WINDOW*,char*,int);//2
@@ -37,14 +37,13 @@ int nonl(void);
 #define ALL_MOUSE_EVENTS 0xFffFFff
 WINDOW*newwin(int,int,int,int);
 int delwin(WINDOW*);
-int doupdate(void);//2
+int doupdate(void);//3
 int waddch(WINDOW*,const chtype);//4
 int waddstr(WINDOW*,const char*);//4
 int waddnstr(WINDOW*,const char*,int);//2
 int werase(WINDOW*);
 int clrtoeol(void);//2
 int wclrtoeol(WINDOW*);//4
-int attrset(int);//3
 int wattrset(WINDOW*,int);
 int start_color(void);
 int init_pair(short,short,short);//2
@@ -52,7 +51,6 @@ int init_pair(short,short,short);//2
 #define COLOR_CYAN 6
 #define COLOR_WHITE 7
 #define ERR -1
-int COLOR_PAIR(int);//2
 int keypad(WINDOW*,bool);//2
 typedef unsigned int mmask_t;
 typedef struct
@@ -129,9 +127,12 @@ static char helptext[]="INPUT"
 "\nCtrl+o = save file as..."
 "\nCtrl+g = go to line number"
 "\nCtrl+f = find text"
+"\n    n = next"
+"\n    c = cancel"
+"\n    any key to return"
 "\n-"
 "\nCtrl+b = build file"
-"\nCtrl+q = quit";
+"\nCtrl+q = quit";//21
 static bool visual_bool=false;
 static char*cutbuf=NULL;
 static size_t cutbuf_sz=0;
@@ -1376,7 +1377,7 @@ static bool loopin(WINDOW*w){
 				int r=command(&aa);
 				if(r>0&&(size_t)r<=rows_tot){
 					ytext=(size_t)r-1;
-					centering(w);
+					centering(w,NULL,NULL);
 				}
 				else wmove(w,getcury(w),getcurx(w));
 			}
@@ -1388,7 +1389,10 @@ static bool loopin(WINDOW*w){
 				size_t cl=c_to_xc(getcurx(w),rw);
 				args[2]=(char*)cl;
 				args[3]=w;
-				command((char*)args);
+				if(command((char*)args)){
+					wnoutrefresh(w);
+					doupdate();
+				}
 			}
 			else if(!strcmp(s,"^B")){
 				if(textfile){
