@@ -1,8 +1,8 @@
 #include"main0.h"
 //strlen,2;open,2;close;write,3
 #include"mainb.h"
-//move,17;wmove,2;getch,2;wgetch;getmaxy,3
-//getmaxx;2;getcury;getcurx,7;stdscr,11
+//move,18;wmove,2;getch,2;wgetch;getmaxy,3
+//getmaxx;2;getcury;getcurx,8;stdscr,12
 //keyname;strcmp;addch,10;mvaddch,7
 //addstr;wnoutrefresh,3;attrset,2
 //COLOR_PAIR
@@ -294,8 +294,9 @@ int command(char*comnrp){
 				input[cursor]=0;
 				r=atoi(input);
 			}else{
+				int atback=getcurx(stdscr);
 				r=find(comnrp,cursor,pos,visib,y);
-				if(!r)continue;
+				if(!r){move(y,atback);continue;}
 			}
 			break;
 		}
