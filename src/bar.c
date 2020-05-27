@@ -1,10 +1,10 @@
 #include"main0.h"
 //strlen,2;open,2;close;write,3
 #include"mainb.h"
-//move,17;wmove;getch,2;getmaxy,3
-//getmaxx;2;getcurx,6;stdscr,10;keyname
-//strcmp;addch,10;mvaddch,7,addstr
-//wnoutrefresh,2
+//move,17;wmove,2;getch,2;getmaxy,3
+//getmaxx;2;getcury;getcurx,7;stdscr,10
+//keyname;strcmp;addch,10;mvaddch,7
+//addstr;wnoutrefresh,2
 #include"mainbc.h"
 
 //#include<curses.h>
@@ -16,8 +16,6 @@ int mvaddnstr(int,int,const char*,int);
 int access(const char*,int);              
 //stdlib.h
 int atoi(const char*);
-//string.h
-//void*memset(void*,int,size_t);//3
 
 static int com_left;
 #define max_path 0xff
@@ -123,17 +121,17 @@ int question(char*q){
 	//if(com_left+sz>getmaxx(stdscr))return 1;
 	int y=getmaxy(stdscr)-1;
 	mvaddstr(y,com_left,q);
-	addstr("? Y/c/n");
+	addstr("? y/C/n");
 	int ch=getch();
 	if(ch==KEY_RESIZE)return -2;
 	move(y,com_left);
-	int sz=(int)(strlen(q)+sizeof("? Y/c/n"));
+	int sz=(int)(strlen(q)+sizeof("? y/C/n"));
 	for(int i=0;i<sz;i++)
 		addch(' ');
 	//memset(mapsel,' ',sz);mapsel[sz]=0;mvaddstr(y,com_left,mapsel);
-	if(ch=='c')return 0;
+	if(ch=='y')return 1;
 	else if(ch=='n')return -1;
-	return 1;
+	return 0;
 }
 static int del(int x,int cursor,int dif){
 	if(x==cursor)return cursor;
@@ -165,7 +163,7 @@ static int memncmp(char*S1,size_t L1,char*s2,size_t l2){
 	}
 	return -1;
 }
-static bool find(int cursor,size_t r,size_t c){
+static bool finding(int cursor,size_t r,size_t c){
 	if(!cursor)return false;
 	size_t i=ytext;
 	if(i+r>=rows_tot)i=0;
@@ -194,8 +192,40 @@ static bool find(int cursor,size_t r,size_t c){
 		}
 	}
 }
+void centering(WINDOW*w){
+	size_t wd=(size_t)getmaxx(w)/3;
+	size_t c=0;char*d=rows[ytext].data;
+	do{
+		if(!xtext)break;
+		xtext--;
+		c+=d[xtext]=='\t'?tab_sz:1;
+	}while(c<wd);
+	size_t hg=(size_t)getmaxy(w)/2;
+	if((int)(ytext-hg)<0){hg=ytext;ytext=0;}
+	else ytext=ytext-hg;
+	refreshpage(w);
+	wmove(w,(int)hg,(int)c);
+}
+static void find(char*z,int cursor){
+	/*warning: cast from
+      'char *' to 'size_t *' (aka
+      'unsigned int *') increases required
+      alignment from 1 to 4*/
+	/*warning: arithmetic on
+      a pointer to void is a GNU extension*/
+	z+=sizeof(void*);
+	size_t rw=((size_t*)((void*)z))[0];
+	z+=sizeof(void*);
+	size_t cl=((size_t*)((void*)z))[0];
+	z+=sizeof(void*);
+	WINDOW*w=((WINDOW**)((void*)z))[0];
+	if(finding(cursor,rw,cl)){
+		centering(w);
+	}
+	else wmove(w,getcury(w),getcurx(w));
+}
 //-2resize,-1no/quit,0er,1okSave,...
-int command(size_t*comnrp){
+int command(char*comnrp){
 	int right=getmaxx(stdscr)-4;//25
 	int rightexcl=right+1;
 	int visib=rightexcl-com_left;
@@ -207,7 +237,7 @@ int command(size_t*comnrp){
 	for(;;){
 		int a=getch();
 		if(a==Char_Return){
-			size_t comnr=comnrp[0];
+			char comnr=comnrp[0];
 			if(!comnr){
 				input[cursor]=0;
 				r=saves();
@@ -236,7 +266,7 @@ int command(size_t*comnrp){
 				input[cursor]=0;
 				r=atoi(input);
 			}else{
-				r=find(cursor,comnrp[1],comnrp[2]);
+				find(comnrp,cursor);
 			}
 			break;
 		}
@@ -321,20 +351,6 @@ int save(){
 	if(textfile){
 		return saving(false);
 	}
-	size_t a=0;
+	char a=0;
 	return command(&a);
-}
-void centering(WINDOW*w){
-	size_t wd=(size_t)getmaxx(w)/2;
-	size_t c=0;char*d=rows[ytext].data;
-	do{
-		if(!xtext)break;
-		xtext--;
-		c+=d[xtext]=='\t'?tab_sz:1;
-	}while(c<wd);
-	size_t hg=(size_t)getmaxy(w)/2;
-	if((int)(ytext-hg)<0){hg=ytext;ytext=0;}
-	else ytext=ytext-hg;
-	refreshpage(w);
-	wmove(w,(int)hg,(int)c);
 }

@@ -3,10 +3,10 @@
 #include"src/mainc.h"
 //malloc,10;free,11;realloc,6
 #include"src/mainb.h"
-//move,4;wmove,28;getch;getmaxy,16
+//move,4;wmove,27;getch;getmaxy,16
 //getmaxx,33;stdscr,16;keyname,2
-//getcurx,21;strcmp,12;addch;mvaddch,2
-//addstr,3;wnoutrefresh,7
+//getcury,25;getcurx,20;strcmp,12;addch
+//mvaddch,2;addstr,3;wnoutrefresh,7
 
 //#include <string.h>
 void*memcpy(void*,const void*,size_t);//16
@@ -35,7 +35,6 @@ int noecho(void);
 int raw(void);
 int nonl(void);
 #define ALL_MOUSE_EVENTS 0xFffFFff
-int getcury(const WINDOW*);//25
 WINDOW*newwin(int,int,int,int);
 int delwin(WINDOW*);
 int doupdate(void);//2
@@ -216,7 +215,7 @@ static void refreshrowsbot(WINDOW*w,int i,int maxy){
 			size_t sz=rows[j].sz;
 			if(sz>maxx)sz=maxx;
 			tab_grow(w,i,rows[j].data,sz,ptr);
-			if(sz!=maxx)wclrtoeol(w);
+			if(getcury(w)==i)wclrtoeol(w);
 		}else{x_right[i]=false;wclrtoeol(w);}
 		i++;
 	}while(i<maxy);
@@ -1362,7 +1361,7 @@ static bool loopin(WINDOW*w){
 				char*d=textfile;
 				int ret;
 				if(s[1]=='S')ret=save();
-				else{size_t aa=0;ret=command(&aa);}
+				else{char aa=0;ret=command(&aa);}
 				if(ret){
 					if(ret==1){
 						if(d!=textfile)text_file=textfile;
@@ -1373,7 +1372,7 @@ static bool loopin(WINDOW*w){
 				wmove(w,getcury(w),getcurx(w));
 			}
 			else if(!strcmp(s,"^G")){
-				size_t aa=1;
+				char aa=1;
 				int r=command(&aa);
 				if(r>0&&(size_t)r<=rows_tot){
 					ytext=(size_t)r-1;
@@ -1383,11 +1382,13 @@ static bool loopin(WINDOW*w){
 			}
 			else if(!strcmp(s,"^F")){
 				int rw=getcury(w);
-				size_t args[3]={2,(size_t)rw,c_to_xc(getcurx(w),rw)};
-				if(command(args)==1){
-					centering(w);
-				}
-				else wmove(w,getcury(w),getcurx(w));
+				char*args[4];
+				args[0]=(char*)2;
+				args[1]=(char*)rw;
+				size_t cl=c_to_xc(getcurx(w),rw);
+				args[2]=(char*)cl;
+				args[3]=w;
+				command((char*)args);
 			}
 			else if(!strcmp(s,"^B")){
 				if(textfile){

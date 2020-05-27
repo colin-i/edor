@@ -6,6 +6,7 @@ int getch(void);
 extern WINDOW*stdscr;
 int getmaxy(const WINDOW*);
 int getmaxx(const WINDOW*);
+int getcury(const WINDOW*);
 int getcurx(const WINDOW*);
 typedef unsigned int chtype;
 int addch(const chtype);
@@ -29,8 +30,8 @@ void refreshpage(WINDOW*w);
 char*bar_init(void);
 int save(void);
 int question(char*);
-int command(size_t*);
-void centering(WINDOW*w);
+int command(char*);
+void centering(WINDOW*);
 
 #define tab_sz 6
 extern char ln_term[3];
