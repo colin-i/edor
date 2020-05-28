@@ -1157,13 +1157,12 @@ static bool enter(size_t y,size_t x,int*r,int*c,WINDOW*w){
 	else{
 		r[0]++;
 		if(fix){
-			size_t xc=c_to_xc(cprev,row);
 			int*t=&tabs[tabs_rsz*row];
 			int a=t[0];
 			int*p=t+a;
 			int*z=p;
 			while(p!=t){
-				if((size_t)p[0]<xc)break;
+				if(p[0]<cprev)break;
 				p--;
 			}
 			t[0]-=z-p;
