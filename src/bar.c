@@ -263,6 +263,12 @@ void centering(WINDOW*w,size_t*rw,size_t*cl){
 		rw[0]=hg;cl[0]=xc-xtext;
 	}
 }
+static void colorfind(int a,int y,int pos,int sz){
+	attrset(COLOR_PAIR(a));
+	mvaddnstr(y,com_left,input+pos,sz);
+	attrset(0);
+	wnoutrefresh(stdscr);
+}
 static bool find(char*z,int cursor,int pos,int visib,int y){
 	/*warning: cast from
       'char *' to 'size_t *' (aka
@@ -276,19 +282,22 @@ static bool find(char*z,int cursor,int pos,int visib,int y){
 	size_t cl=c_to_xc(getcurx(w),(int)rw);
 	//
 	int sz=0;int ifback;bool forward=true;
+	size_t y1;size_t x1;bool color=false;
 	for(;;){
 		bool b=finding((size_t)cursor,rw,cl,forward);
 		if(b){
-			centering(w,&rw,&cl);
 			if(!sz){
-				attrset(COLOR_PAIR(1));
 				sz=cursor-pos;
 				if(sz>visib)sz=visib;
 				ifback=getcurx(stdscr);
-				mvaddnstr(y,com_left,input+pos,sz);
-				attrset(0);
-				wnoutrefresh(stdscr);
+				colorfind(1,y,pos,sz);
+				y1=ytext;x1=xtext;
+			}else if(y1==ytext&&x1==xtext){
+				colorfind(2,y,pos,sz);color=true;
+			}else if(color){
+				color=false;colorfind(1,y,pos,sz);
 			}
+			centering(w,&rw,&cl);
 		}
 		else wmove(w,getcury(w),getcurx(w));
 		int a=wgetch(w);
