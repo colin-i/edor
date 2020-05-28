@@ -1,10 +1,10 @@
 #include"main0.h"
 //strlen,2;open,2;close;write,3
 #include"mainb.h"
-//move,18;wmove,2;getch,2;wgetch;getmaxy,3
-//getmaxx;2;getcury,2;getcurx,10;stdscr,13
+//move,17;wmove;getch,3;wgetch;getmaxy,3
+//getmaxx;2;getcury;getcurx,8;stdscr,14
 //keyname;strcmp;addch,10;mvaddch,7
-//addstr;wnoutrefresh,3;attrset,2
+//addstr;wnoutrefresh,5;attrset,2
 //COLOR_PAIR
 #include"mainbc.h"
 
@@ -267,7 +267,6 @@ static void colorfind(int a,int y,int pos,int sz){
 	attrset(COLOR_PAIR(a));
 	mvaddnstr(y,com_left,input+pos,sz);
 	attrset(0);
-	wnoutrefresh(stdscr);
 }
 static bool find(char*z,int cursor,int pos,int visib,int y){
 	/*warning: cast from
@@ -281,26 +280,35 @@ static bool find(char*z,int cursor,int pos,int visib,int y){
 	size_t rw=(size_t)getcury(w);
 	size_t cl=c_to_xc(getcurx(w),(int)rw);
 	//
-	int sz=0;int ifback;bool forward=true;
-	size_t y1;size_t x1;bool color=false;
+	int sz=cursor-pos;
+	if(sz>visib)sz=visib;
+	int ifback=getcurx(stdscr);
+	colorfind(1,y,pos,sz);
+	//
+	bool forward=true;
+	size_t y1;size_t x1;int phase=-1;
 	for(;;){
 		bool b=finding((size_t)cursor,rw,cl,forward);
 		if(b){
-			if(!sz){
-				sz=cursor-pos;
-				if(sz>visib)sz=visib;
-				ifback=getcurx(stdscr);
-				colorfind(1,y,pos,sz);
+			if(phase==-1){
 				y1=ytext;x1=xtext;
+				phase=0;
+				wnoutrefresh(stdscr);
 			}else if(y1==ytext&&x1==xtext){
-				colorfind(2,y,pos,sz);color=true;
-			}else if(color){
-				color=false;colorfind(1,y,pos,sz);
+				colorfind(2,y,pos,sz);
+				phase=1;
+				wnoutrefresh(stdscr);
+			}else if(phase==1){
+				phase=0;
+				colorfind(1,y,pos,sz);
+				wnoutrefresh(stdscr);
 			}
 			centering(w,&rw,&cl);
 		}
-		else wmove(w,getcury(w),getcurx(w));
-		int a=wgetch(w);
+		//else wmove(w,getcury(w),getcurx(w));
+		int a;
+		if(b)a=wgetch(w);
+		else a=getch();
 		if(a=='n'){
 			if(b)cl++;
 			forward=true;
@@ -310,10 +318,10 @@ static bool find(char*z,int cursor,int pos,int visib,int y){
 			forward=false;continue;
 		}
 		if(a=='c'){
-			if(sz){
-				mvaddnstr(y,com_left,input+pos,sz);
-				move(y,ifback);
-			}else move(y,getcurx(stdscr));//wnoutrefresh(stdscr)
+			//if(sz){
+			mvaddnstr(y,com_left,input+pos,sz);
+			move(y,ifback);
+			//}else move(y,getcurx(stdscr));//wnoutrefresh(stdscr)
 			return false;
 		}
 		return true;
