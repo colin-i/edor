@@ -289,7 +289,7 @@ static bool find(char*z,int cursor,int pos,int visib,int y){
 	size_t y1;size_t x1;int phase=-1;
 	for(;;){
 		bool b=finding((size_t)cursor,rw,cl,forward);
-		if(b){
+		int a;if(b){
 			if(phase==-1){
 				y1=ytext;x1=xtext;
 				phase=0;
@@ -304,11 +304,8 @@ static bool find(char*z,int cursor,int pos,int visib,int y){
 				wnoutrefresh(stdscr);
 			}
 			centering(w,&rw,&cl);
-		}
-		//else wmove(w,getcury(w),getcurx(w));
-		int a;
-		if(b)a=wgetch(w);
-		else a=getch();
+			a=wgetch(w);
+		}else a=getch();
 		if(a=='n'){
 			if(b)cl++;
 			forward=true;
