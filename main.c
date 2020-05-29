@@ -896,10 +896,10 @@ static void mod_set(bool flag){
 static bool delete(size_t ybsel,size_t xbsel,size_t yesel,size_t xesel,int*rw,int*cl,WINDOW*w){
 	fixmembuf(&ybsel,&xbsel);
 	fixmembuf(&yesel,&xesel);
-	xesel+=set2membuf(yesel,xesel);
+	if(xesel==rows[yesel].sz){if(yesel<rows_tot-1){yesel++;xesel=0;}}
+	else xesel++;
 	//
 	row*r1=&rows[ybsel];
-	if(xesel>rows[yesel].sz){yesel++;xesel=0;}
 	if(ybsel==yesel){
 		size_t sz=r1->sz;
 		size_t dif=xesel-xbsel;
