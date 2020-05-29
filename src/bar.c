@@ -386,7 +386,7 @@ int command(char*comnrp){
 				input[cursor]=0;
 				r=atoi(input);
 			}else{
-				int ifback=getcurx(stdscr);
+//				int ifback=getcurx(stdscr);
 				r=find(comnrp,cursor,pos,visib,y);
 				if(r==-1)return -2;
 				if(!r)continue;
