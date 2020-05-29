@@ -526,11 +526,9 @@ static int movment(int c,WINDOW*w){
 	return -1;
 }
 static void fixmembuf(size_t*y,size_t*x){
-	bool last=y[0]>=rows_tot;
-	if(last)y[0]=rows_tot-1;
-	size_t r=y[0];
-	size_t sz=rows[r].sz;
-	if(last||x[0]>sz)x[0]=sz;
+	if(y[0]>=rows_tot)y[0]=rows_tot-1;
+	size_t sz=rows[y[0]].sz;
+	if(x[0]>sz)x[0]=sz;
 }
 static size_t set2membuf(size_t yesel,size_t xesel){
 	if(xesel==rows[yesel].sz){
@@ -895,7 +893,7 @@ static void mod_set(bool flag){
 	mvaddch(getmaxy(stdscr)-1,getmaxx(stdscr)-2,ch);
 	wnoutrefresh(stdscr);
 }
-static void delete(size_t ybsel,size_t xbsel,size_t yesel,size_t xesel,int*rw,int*cl,WINDOW*w){
+static bool delete(size_t ybsel,size_t xbsel,size_t yesel,size_t xesel,int*rw,int*cl,WINDOW*w){
 	fixmembuf(&ybsel,&xbsel);
 	fixmembuf(&yesel,&xesel);
 	xesel+=set2membuf(yesel,xesel);
@@ -912,15 +910,13 @@ static void delete(size_t ybsel,size_t xbsel,size_t yesel,size_t xesel,int*rw,in
 		r1->sz-=dif;
 	}else{
 		size_t c=rows[yesel].sz-xesel;
-		if(mal_spc_rea(r1,xbsel,c,0,rows[yesel].data+xesel))return;
+		if(mal_spc_rea(r1,xbsel,c,0,rows[yesel].data+xesel))return false;
 		row_del(ybsel+1,yesel);
 	}
 	deleted(ybsel,xbsel,rw,cl,w);
 	refreshpage(w);
-	if(ybsel!=yesel||xbsel!=xesel){
-		if(mod_flag)mod_set(false);
-		position(rw[0],cl[0]);//if(orig)not good, can be yesel++,x=0
-	}
+	if(mod_flag)if(ybsel!=yesel||xbsel!=xesel)mod_set(false);
+	return true;
 }
 static char*memtrm(char*a){
 	while(a[0]!=ln_term[0])a++;
@@ -1352,10 +1348,13 @@ static bool loopin(WINDOW*w){
 								if(visual_bool){
 									if(writemembuf(ybsel,xbsel,yesel,xesel)){v='C';unsel(w);}
 								}else if(b=='d'){
-									delete(ybsel,xbsel,yesel,xesel,&r,&col,w);
+									if(delete(ybsel,xbsel,yesel,xesel,&r,&col,w))
+										if(orig)position(r,col);
 								}else if(b=='x'){
-									if(writemembuf(ybsel,xbsel,yesel,xesel))
-										delete(ybsel,xbsel,yesel,xesel,&r,&col,w);
+									if(writemembuf(ybsel,xbsel,yesel,xesel)){
+										if(delete(ybsel,xbsel,yesel,xesel,&r,&col,w))
+											if(orig)position(r,col);
+									}
 								}else unsel(w);
 								visual(v);
 							}
