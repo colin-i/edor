@@ -306,15 +306,15 @@ static bool find(char*z,int cursor,int pos,int visib,int y){
 			centering(w,&rw,&cl);
 			a=wgetch(w);
 		}else a=getch();
-		if(a=='n'){
+		if(a==Char_Return){
 			if(b)cl++;
 			forward=true;
 			continue;
 		}
-		if(a=='p'){
+		if(a==Char_Backspace){
 			forward=false;continue;
 		}
-		if(a=='c'){
+		if(a==' '){
 			//if(sz){
 			mvaddnstr(y,com_left,input+pos,sz);
 			move(y,ifback);
