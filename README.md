@@ -9,4 +9,4 @@ Outputting arm assembly files.\
 Uninstall command is *make uninstall*.
 ###### Donations
 Bitcoin: 1DcXWYXpmopfgg3oZYWVBTLbDTmQ6nWG7s\
-Ethereum: 0xd8ea69f877b93fa663652bc2d944e71a338cd5f9\
+Ethereum: 0xd8ea69f877b93fa663652bc2d944e71a338cd5f9
