@@ -1379,16 +1379,19 @@ static bool loopin(WINDOW*w){
 					ytext=(size_t)r-1;
 					centering(w,NULL,NULL);
 				}
+				else if(r==-2)return true;
 				else wmove(w,getcury(w),getcurx(w));
 			}
 			else if(!strcmp(s,"^F")){
 				char*args[2];
 				args[0]=(char*)2;
 				args[1]=w;
-				if(command((char*)args)){
+				int r=command((char*)args);
+				if(r==1){
 					wnoutrefresh(w);
 					doupdate();
 				}
+				else if(r==-2)return true;
 			}
 			else if(!strcmp(s,"^B")){
 				if(textfile){

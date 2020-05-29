@@ -268,7 +268,8 @@ static void colorfind(int a,int y,int pos,int sz){
 	mvaddnstr(y,com_left,input+pos,sz);
 	attrset(0);
 }
-static bool find(char*z,int cursor,int pos,int visib,int y){
+//1,0,-1resz
+static int find(char*z,int cursor,int pos,int visib,int y){
 	/*warning: cast from
       'char *' to 'size_t *' (aka
       'unsigned int *') increases required
@@ -321,7 +322,7 @@ static bool find(char*z,int cursor,int pos,int visib,int y){
 			//}else move(y,getcurx(stdscr));//wnoutrefresh(stdscr)
 			return false;
 		}
-		return true;
+		return a==KEY_RESIZE?-1:1;
 	}
 }
 //-2resize,-1no/quit,0er,1okSave,...
@@ -368,6 +369,7 @@ int command(char*comnrp){
 			}else{
 				r=find(comnrp,cursor,pos,visib,y);
 				if(!r)continue;
+				if(r!=true)return -2;
 			}
 			break;
 		}
