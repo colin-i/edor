@@ -311,10 +311,10 @@ static bool find(char*z,int cursor,int pos,int visib,int y){
 			forward=true;
 			continue;
 		}
-		if(a==Char_Backspace){
+		if(a==' '){
 			forward=false;continue;
 		}
-		if(a==' '){
+		if(a=='c'){
 			//if(sz){
 			mvaddnstr(y,com_left,input+pos,sz);
 			move(y,ifback);
