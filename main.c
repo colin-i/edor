@@ -380,7 +380,6 @@ static void printhelp(){
 	move(getmaxy(stdscr)-1,0);
 	clrtoeol();//when resized one row up
 	printinverted(bar_init());
-	wnoutrefresh(stdscr);
 }
 static void sumove(WINDOW*w,int y){tmove(w,y,false);}
 static void sdmove(WINDOW*w,int y){tmove(w,y,true);}
@@ -1647,6 +1646,7 @@ int main(int argc,char**argv){
 						wmove(w,0,0);
 						printhelp();
 						if(!mod_flag)mod_set(false);
+						else wnoutrefresh(stdscr);
 						loops=loopin(w);
 						delwin(w);
 					}else break;
