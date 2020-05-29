@@ -1618,8 +1618,8 @@ int main(int argc,char**argv){
 		if(ok){
 			text_init_e=text_init_b+text_sz+1;
 			if(color()){
-				//WINDOW*pw=position_init();
-				//if(pw){
+				WINDOW*pw=position_init();
+				if(pw){
 					keypad(w1,true);
 					noecho();
 					nonl();//no translation,faster
@@ -1650,8 +1650,8 @@ int main(int argc,char**argv){
 							printhelp();
 							if(!mod_flag)mod_set(false);
 							else wnoutrefresh(stdscr);
-				//			position_reset();
-				//			position(0,0);
+							position_reset();
+							position(0,0);
 							loops=loopin(w);
 							delwin(w);
 						}else break;
@@ -1667,8 +1667,8 @@ int main(int argc,char**argv){
 						}
 					}
 					if(cutbuf)free(cutbuf);
-				//	delwin(pw);
-				//}
+					delwin(pw);
+				}
 			}
 		}
 		if(text_init_b){
