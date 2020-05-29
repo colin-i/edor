@@ -1110,10 +1110,13 @@ static bool bcsp(size_t y,size_t x,int*rw,int*cl,WINDOW*w){
 	if(xtext){
 		int mx=getmaxx(w)/4;
 		if(c<mx){
-			while(c<mx){
-				xtext--;
-				c+=data[xtext]=='\t'?tab_sz:1;
-				if(!xtext)break;
+			if(c<0){c=0;xtext--;}
+			if(xtext){
+				while(c<mx){
+					xtext--;
+					c+=data[xtext]=='\t'?tab_sz:1;
+					if(!xtext)break;
+				}
 			}
 			refreshpage(w);
 			cl[0]=c;
@@ -1647,7 +1650,8 @@ int main(int argc,char**argv){
 							printhelp();
 							if(!mod_flag)mod_set(false);
 							else wnoutrefresh(stdscr);
-							position(0,0);
+				//			position_reset();
+				//			position(0,0);
 							loops=loopin(w);
 							delwin(w);
 						}else break;
@@ -1663,7 +1667,7 @@ int main(int argc,char**argv){
 						}
 					}
 					if(cutbuf)free(cutbuf);
-					//delwin(pw);
+				//	delwin(pw);
 				//}
 			}
 		}

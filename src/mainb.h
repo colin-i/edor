@@ -41,6 +41,7 @@ int command(char*);
 void centering(WINDOW*,size_t*,size_t*);
 WINDOW*position_init(void);
 void position(int,int);
+void position_reset(void);
 
 #define tab_sz 6
 extern char ln_term[3];

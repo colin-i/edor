@@ -12,8 +12,8 @@ int waddstr(WINDOW*,const char*);
 int addnstr(const char*,int);//7
 int mvaddstr(int,int,const char*);
 int mvaddnstr(int,int,const char*,int);//3
-int wresize(WINDOW*,int,int);
-int mvwin(WINDOW*,int,int);
+int wresize(WINDOW*,int,int);//2
+int mvwin(WINDOW*,int,int);//2
 int getbegx(const WINDOW*);
 int getbegy(const WINDOW*);
 //unistd.h
@@ -462,8 +462,12 @@ int save(){
 	return command(&a);
 }
 WINDOW*position_init(){
-	poswn=newwin(1,1,getmaxy(stdscr)-1,getmaxx(stdscr)-3);
+	poswn=newwin(1,3,0,0);
 	return poswn;
+}
+void position_reset(){
+	wresize(poswn,1,3);
+	mvwin(poswn,getmaxy(stdscr)-1,getmaxx(stdscr)-5);
 }
 void position(int rw,int cl){
 	size_t y=ytext+(size_t)rw;
@@ -479,7 +483,7 @@ void position(int rw,int cl){
 		mvwin(poswn,getbegy(poswn),getbegx(poswn)+dif);
 		wresize(poswn,1,n);
 	}
-//	wmove(poswn,0,0);
+	wmove(poswn,0,0);
 	waddstr(poswn,posbuf);
 	wnoutrefresh(poswn);
 }
