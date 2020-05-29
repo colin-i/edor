@@ -28,7 +28,7 @@ static int com_left;
 static char input1[max_path+1];
 static char input2[max_path+1];
 static char*input=input1;
-static WINDOW*poswn;
+//static WINDOW*poswn;
 
 char*bar_init(){
 	char*h="F1 for help";
@@ -250,8 +250,7 @@ static bool finding(size_t cursor,size_t r,size_t c,bool f){
 	if(f)return findingf(cursor,r,c);
 	return findingb(cursor,r,c);
 }
-void position(int rw,int cl){
-return;
+/*void position(int rw,int cl){
 	size_t y=ytext+(size_t)rw;
 	if(y>=rows_tot)y=rows_tot;
 	size_t x=xtext+c_to_xc(cl,rw);
@@ -267,9 +266,9 @@ return;
 	}
 	mvwaddstr(poswn,0,0,posbuf);
 	wnoutrefresh(poswn);
-}
+}*/
 void centering(WINDOW*w,size_t*rw,size_t*cl){
-	position(0,0);
+//	position(0,0);
 	size_t wd=(size_t)getmaxx(w)/3;
 	size_t c=0;char*d=rows[ytext].data;
 	size_t xc=xtext;
@@ -346,7 +345,8 @@ static int find(char*z,int cursor,int pos,int visib,int y){
 }
 //-2resize,-1no/quit,0er,1okSave,...
 int command(char*comnrp){
-	int right=getbegx(poswn)-2;
+//	int right=getbegx(poswn)-2;
+	int right=getmaxx(stdscr)-4;
 	int rightexcl=right+1;
 	int visib=rightexcl-com_left;
 	if(visib<2)return 0;//phisical visib is 1
@@ -389,7 +389,8 @@ int command(char*comnrp){
 				int ifback=getcurx(stdscr);
 				r=find(comnrp,cursor,pos,visib,y);
 				if(r==-1)return -2;
-				int dif=rightexcl-getbegx(poswn);
+				if(!r)continue;
+				/*int dif=rightexcl-getbegx(poswn);
 				if(dif>=0){
 					right-=dif+1;rightexcl=right+1;
 					visib=rightexcl-com_left;
@@ -402,7 +403,7 @@ int command(char*comnrp){
 					mvaddnstr(y,com_left,input+pos,sz);
 					move(y,ifback>right?right:ifback);
 					continue;
-				}
+				}*/
 			}
 			break;
 		}
@@ -490,13 +491,13 @@ int save(){
 	char a=0;
 	return command(&a);
 }
-WINDOW*position_init(){
+/*WINDOW*position_init(){
 	poswn=newwin(1,3,0,0);
 	return poswn;
 }
 void position_reset(){
-//	wresize(poswn,1,3);
-//	mvwin(poswn,getmaxy(stdscr)-1,getmaxx(stdscr)-5);
-	wresize(poswn,1,1);
-	mvwin(poswn,getmaxy(stdscr)-1,getmaxx(stdscr)-2);
-}
+	wresize(poswn,1,3);
+	mvwin(poswn,getmaxy(stdscr)-1,getmaxx(stdscr)-5);
+//	wresize(poswn,1,1);
+//	mvwin(poswn,getmaxy(stdscr)-1,getmaxx(stdscr)-2);
+}*/
