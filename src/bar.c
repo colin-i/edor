@@ -1,17 +1,21 @@
 #include"main0.h"
 //strlen,2;open,2;close;write,3
 #include"mainb.h"
-//move,17;wmove;getch,3;wgetch;getmaxy,3
-//getmaxx;2;getcury;getcurx,8;stdscr,14
-//keyname;strcmp;addch,10;mvaddch,7
-//addstr;wnoutrefresh,5;attrset,2
-//COLOR_PAIR
+//move,17;wmove;getch,3;wgetch;getmaxy,4
+//getmaxx;4;getcury;getcurx,8;stdscr,16
+//keyname;addch,10;mvaddch,7;addstr
+//wnoutrefresh,5;attrset,2;newwin
+//COLOR_PAIR;strcmp;sprintf
 #include"mainbc.h"
-
+int waddstr(WINDOW*,const char*);
 //#include<curses.h>
 int addnstr(const char*,int);//7
 int mvaddstr(int,int,const char*);
 int mvaddnstr(int,int,const char*,int);//3
+int wresize(WINDOW*,int,int);
+int mvwin(WINDOW*,int,int);
+int getbegx(const WINDOW*);
+int getbegy(const WINDOW*);
 //unistd.h
 #define F_OK 0
 int access(const char*,int);              
@@ -20,10 +24,10 @@ int atoi(const char*);
 
 static int com_left;
 #define max_path 0xff
-//10
 static char input1[max_path+1];
 static char input2[max_path+1];
 static char*input=input1;
+static WINDOW*poswn;
 
 char*bar_init(){
 	char*h="F1 for help";
@@ -456,4 +460,26 @@ int save(){
 	}
 	char a=0;
 	return command(&a);
+}
+WINDOW*position_init(){
+	poswn=newwin(1,1,getmaxy(stdscr)-1,getmaxx(stdscr)-3);
+	return poswn;
+}
+void position(int rw,int cl){
+	size_t y=ytext+(size_t)rw;
+	if(y>=rows_tot)y=rows_tot;
+	size_t x=xtext+c_to_xc(cl,rw);
+	if(x>rows[y].sz)x=rows[y].sz;
+	//
+	char posbuf[10+1+10+1];
+	int n=sprintf(posbuf,"%u,%u",y,x);
+	int mx=getmaxx(poswn);
+	int dif=mx-n;
+	if(dif){
+		mvwin(poswn,getbegy(poswn),getbegx(poswn)+dif);
+		wresize(poswn,1,n);
+	}
+//	wmove(poswn,0,0);
+	waddstr(poswn,posbuf);
+	wnoutrefresh(poswn);
 }

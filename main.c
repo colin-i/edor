@@ -3,11 +3,11 @@
 #include"src/mainc.h"
 //malloc,10;free,11;realloc,6
 #include"src/mainb.h"
-//move,4;wmove,27;getch;wgetch,2
+//move,4;wmove,27;getch;wgetch,2;newwin
 //getmaxy,16;getmaxx,33;stdscr,16
 //keyname,2;getcury,24;getcurx,19
-//strcmp,12;addch;mvaddch,2;addstr,3
-//wnoutrefresh,8;attrset,3;COLOR_PAIR,2
+//addch;mvaddch,2;addstr,3;wnoutrefresh,8
+//attrset,3;COLOR_PAIR,2;strcmp,12;sprintf
 
 //#include <string.h>
 void*memcpy(void*,const void*,size_t);//16
@@ -35,8 +35,7 @@ int noecho(void);
 int raw(void);
 int nonl(void);
 #define ALL_MOUSE_EVENTS 0xFffFFff
-WINDOW*newwin(int,int,int,int);
-int delwin(WINDOW*);
+int delwin(WINDOW*);//2
 int doupdate(void);//3
 int waddch(WINDOW*,const chtype);//4
 int waddstr(WINDOW*,const char*);//4
@@ -86,7 +85,6 @@ struct pollfd stdinfd={0,POLLIN,0};*/
 char*getenv(const char*);
 //#include<stdio.h>
 int puts(const char*);//2
-int sprintf(char*,const char*,...);
 int getchar(void);
 /*//signal.h
 void(*signal(int,void(*)(void)))(void);
@@ -1386,11 +1384,11 @@ static bool loopin(WINDOW*w){
 				args[0]=(char*)2;
 				args[1]=w;
 				int r=command((char*)args);
-				if(r==1){
+				if(r==-2)return true;
+				else if(r){
 					wnoutrefresh(w);
 					doupdate();
 				}
-				else if(r==-2)return true;
 			}
 			else if(!strcmp(s,"^B")){
 				if(textfile){
@@ -1617,51 +1615,56 @@ int main(int argc,char**argv){
 		if(ok){
 			text_init_e=text_init_b+text_sz+1;
 			if(color()){
-				keypad(w1,true);
-				noecho();
-				nonl();//no translation,faster
-				mousemask(ALL_MOUSE_EVENTS,NULL);
-				char cutbuf_file[128];
-				cutbuf_file[0]=0;
-				setfilebuf(argv[0],cutbuf_file);
-				bool loops=false;
-				do{
-					int r=getmaxy(w1)-1;
-					char*a=realloc(x_right,(size_t)r);
-					if(!a)break;
-					x_right=a;
-					int c=getmaxx(w1);
-					tabs_rsz=1+(c/tab_sz);
-					if(c%tab_sz)tabs_rsz++;
-					void*b=realloc(tabs,sizeof(int)*(size_t)(r*tabs_rsz));
-					if(!b)break;
-					tabs=(int*)b;
-					a=realloc(mapsel,(size_t)c+1);
-					if(!a)break;
-					mapsel=a;
-					WINDOW*w=newwin(r,c,0,0);
-					if(w){
-						keypad(w,true);
-						refreshpage(w);
-						wmove(w,0,0);
-						printhelp();
-						if(!mod_flag)mod_set(false);
-						else wnoutrefresh(stdscr);
-						loops=loopin(w);
-						delwin(w);
-					}else break;
-				}while(loops);
-				if(x_right){
-					free(x_right);
-					if(tabs){
-						free(tabs);
-						if(mapsel){
-							free(mapsel);
-							writefilebuf(cutbuf_file);
+				//WINDOW*pw=position_init();
+				//if(pw){
+					keypad(w1,true);
+					noecho();
+					nonl();//no translation,faster
+					mousemask(ALL_MOUSE_EVENTS,NULL);
+					char cutbuf_file[128];
+					cutbuf_file[0]=0;
+					setfilebuf(argv[0],cutbuf_file);
+					bool loops=false;
+					do{
+						int r=getmaxy(w1)-1;
+						char*a=realloc(x_right,(size_t)r);
+						if(!a)break;
+						x_right=a;
+						int c=getmaxx(w1);
+						tabs_rsz=1+(c/tab_sz);
+						if(c%tab_sz)tabs_rsz++;
+						void*b=realloc(tabs,sizeof(int)*(size_t)(r*tabs_rsz));
+						if(!b)break;
+						tabs=(int*)b;
+						a=realloc(mapsel,(size_t)c+1);
+						if(!a)break;
+						mapsel=a;
+						WINDOW*w=newwin(r,c,0,0);
+						if(w){
+							keypad(w,true);
+							refreshpage(w);
+							wmove(w,0,0);
+							printhelp();
+							if(!mod_flag)mod_set(false);
+							else wnoutrefresh(stdscr);
+							position(0,0);
+							loops=loopin(w);
+							delwin(w);
+						}else break;
+					}while(loops);
+					if(x_right){
+						free(x_right);
+						if(tabs){
+							free(tabs);
+							if(mapsel){
+								free(mapsel);
+								writefilebuf(cutbuf_file);
+							}
 						}
 					}
-				}
-				if(cutbuf)free(cutbuf);
+					if(cutbuf)free(cutbuf);
+					//delwin(pw);
+				//}
 			}
 		}
 		if(text_init_b){

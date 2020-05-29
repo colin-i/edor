@@ -21,8 +21,11 @@ const char*keyname(int);
 int wnoutrefresh(WINDOW*);
 int attrset(int);
 int COLOR_PAIR(int);
+WINDOW*newwin(int,int,int,int);
 //#include <string.h>
 int strcmp(const char*,const char*);
+//stdio.h
+int sprintf(char*,const char*,...);
 
 #define Char_Return 0xd
 #define Char_Backspace 0x7f
@@ -36,6 +39,8 @@ int save(void);
 int question(char*);
 int command(char*);
 void centering(WINDOW*,size_t*,size_t*);
+WINDOW*position_init(void);
+void position(int,int);
 
 #define tab_sz 6
 extern char ln_term[3];
