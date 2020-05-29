@@ -11,6 +11,7 @@ int getcury(const WINDOW*);
 int getcurx(const WINDOW*);
 typedef unsigned int chtype;
 int addch(const chtype);
+int waddch(WINDOW*,const chtype);
 int mvaddch(int,int,const chtype);
 int addstr(const char*);
 #define KEY_LEFT 0404

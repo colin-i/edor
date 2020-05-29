@@ -5,9 +5,10 @@
 #include"src/mainb.h"
 //move,4;wmove,27;getch;wgetch,2;newwin
 //getmaxy,16;getmaxx,33;stdscr,16
-//keyname,2;getcury,24;getcurx,19
-//addch;mvaddch,2;addstr,3;wnoutrefresh,8
-//attrset,3;COLOR_PAIR,2;strcmp,12;sprintf
+//keyname,2;getcury,27;getcurx,22
+//addch;waddch,4;mvaddch,2;addstr,3
+//wnoutrefresh,8;attrset,3;COLOR_PAIR,2
+//strcmp,12;sprintf
 
 //#include <string.h>
 void*memcpy(void*,const void*,size_t);//16
@@ -37,7 +38,6 @@ int nonl(void);
 #define ALL_MOUSE_EVENTS 0xFffFFff
 int delwin(WINDOW*);//2
 int doupdate(void);//3
-int waddch(WINDOW*,const chtype);//4
 int waddstr(WINDOW*,const char*);//4
 int waddnstr(WINDOW*,const char*,int);//2
 int werase(WINDOW*);
@@ -917,8 +917,10 @@ static void delete(size_t ybsel,size_t xbsel,size_t yesel,size_t xesel,int*rw,in
 	}
 	deleted(ybsel,xbsel,rw,cl,w);
 	refreshpage(w);
-	if(mod_flag)if(ybsel!=yesel||xbsel!=xesel)
-		mod_set(false);
+	if(ybsel!=yesel||xbsel!=xesel){
+		if(mod_flag)mod_set(false);
+		position(rw[0],cl[0]);//if(orig)not good, can be yesel++,x=0
+	}
 }
 static char*memtrm(char*a){
 	while(a[0]!=ln_term[0])a++;
@@ -984,8 +986,10 @@ static size_t pasting(row*d,int r,int c,WINDOW*w){
 	if(one)l=x+szc;
 	else rows_insert(d,max,y+1);
 	pasted(y-ytext,l,w);
-	if(mod_flag)if(cutbuf_r>1||cutbuf_sz>0)
-		mod_set(false);
+	if(cutbuf_sz){
+		if(mod_flag)mod_set(false);
+		position(getcury(w),getcurx(w));
+	}
 	return 0;
 }
 static void paste(WINDOW*w){
@@ -1196,8 +1200,14 @@ static void type(int cr,WINDOW*w){
 			refreshpage(w);
 		}
 	}
-	if(cr==Char_Return){if(enter(y,x,&rw,&cl,w))return;}
-	else if(cr==Char_Backspace){if(bcsp(y,x,&rw,&cl,w))return;}
+	if(cr==Char_Return){
+		if(enter(y,x,&rw,&cl,w))return;
+		position(rw,cl);
+	}
+	else if(cr==Char_Backspace){
+		if(bcsp(y,x,&rw,&cl,w))return;
+		position(rw,cl);
+	}
 	else if(cr==KEY_DC){if(delete_key(y,x,rw,cl,w))return;}
 	else{
 		char ch=cr&0xff;
@@ -1242,7 +1252,7 @@ static void type(int cr,WINDOW*w){
 			}
 			waddstr(w,mapsel);
 		}
-		//
+		position(rw,cl);
 	}
 	wmove(w,rw,cl);
 	if(mod_flag)mod_set(false);
@@ -1309,6 +1319,7 @@ static bool loopin(WINDOW*w){
 				visual_bool=false;
 				visual(' ');
 			}
+			position(getcury(w),getcurx(w));
 		}
 		else{
 			const char*s=keyname(c);
@@ -1349,6 +1360,7 @@ static bool loopin(WINDOW*w){
 								visual(v);
 							}
 						}else{
+							position(getcury(w),getcurx(w));
 							size_t y=ytext+(size_t)r;size_t x=xtext+c_to_xc(col,r);
 							set1membuf(y,x,&orig,&ybsel,&xbsel,&yesel,&xesel,w);
 							printsel(w,ybsel,xbsel,yesel,xesel,z);
@@ -1618,8 +1630,8 @@ int main(int argc,char**argv){
 		if(ok){
 			text_init_e=text_init_b+text_sz+1;
 			if(color()){
-				//WINDOW*pw=position_init();
-				//if(pw){
+				WINDOW*pw=position_init();
+				if(pw){
 					keypad(w1,true);
 					noecho();
 					nonl();//no translation,faster
@@ -1650,8 +1662,8 @@ int main(int argc,char**argv){
 							printhelp();
 							if(!mod_flag)mod_set(false);
 							else wnoutrefresh(stdscr);
-				//			position_reset();
-				//			position(0,0);
+							position_reset();
+							position(0,0);
 							loops=loopin(w);
 							delwin(w);
 						}else break;
@@ -1667,8 +1679,8 @@ int main(int argc,char**argv){
 						}
 					}
 					if(cutbuf)free(cutbuf);
-				//	delwin(pw);
-				//}
+					delwin(pw);
+				}
 			}
 		}
 		if(text_init_b){
