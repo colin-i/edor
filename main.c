@@ -779,7 +779,7 @@ static void printsel(WINDOW*w,size_t ybsel,size_t xbsel,size_t yesel,size_t xese
 	_re=re;_ce=ce;
 }
 static void visual(char a){
-	mvaddch(getmaxy(stdscr)-1,getmaxx(stdscr)-1,a);
+	mvaddch(getmaxy(stdscr)-1,getmaxx(stdscr)-2,a);
 	wnoutrefresh(stdscr);
 }
 static void pasted(size_t r,size_t x,WINDOW*w){
@@ -894,7 +894,7 @@ static void row_del(size_t a,size_t b){
 static void mod_set(bool flag){
 	mod_flag=flag;
 	chtype ch=mod_flag?' ':'*';
-	mvaddch(getmaxy(stdscr)-1,getmaxx(stdscr)-2,ch);
+	mvaddch(getmaxy(stdscr)-1,getmaxx(stdscr)-1,ch);
 	wnoutrefresh(stdscr);
 }
 static bool delete(size_t ybsel,size_t xbsel,size_t yesel,size_t xesel,int*rw,int*cl,WINDOW*w){
