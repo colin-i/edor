@@ -3,7 +3,7 @@
 #include"mainb.h"
 //move,18;wmove,2;getch,3;wgetch;getmaxy,4
 //getmaxx;3;getcury;getcurx,8;stdscr,15
-//keyname;addch,11;waddch;mvaddch,8;addstr
+//keyname;addch,10;waddch;mvaddch,9;addstr
 //wnoutrefresh,7;attrset,2;newwin
 //COLOR_PAIR;strcmp;sprintf
 #include"mainbc.h"
@@ -395,7 +395,7 @@ int command(char*comnrp){
 				r=find(comnrp,cursor,pos,visib,y);
 				if(r==-1)return -2;
 				int dif=rightexcl-getbegx(poswn);
-				if(dif>=0){
+				if(dif!=-1){
 					right-=dif+1;rightexcl=right+1;
 					visib=rightexcl-com_left;
 					if(visib<2)break;
@@ -403,7 +403,9 @@ int command(char*comnrp){
 				if(!r){
 					int sz=cursor-pos;if(sz>visib){
 						sz=visib;
-						addch('>');//the text was highlighted
+						mvaddch(y,rightexcl,'>');
+						//the text was highlighted
+						//but can be increased
 					}
 					//can be resized big,resized small
 					//if(dif>=0 here is not relevant
