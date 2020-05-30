@@ -4,7 +4,7 @@
 //malloc,10;free,11;realloc,6
 #include"src/mainb.h"
 //move,4;wmove,27;getch;wgetch,2;newwin
-//getmaxy,16;getmaxx,33;stdscr,16
+//getmaxy,16;getmaxx,32;stdscr,16
 //keyname,2;getcury,27;getcurx,22
 //addch;waddch,4;mvaddch,2;addstr,3
 //wnoutrefresh,8;attrset,3;COLOR_PAIR,2
@@ -1112,7 +1112,7 @@ static bool bcsp(size_t y,size_t x,int*rw,int*cl,WINDOW*w){
 	}
 	r->sz--;
 	if(xtext){
-		int mx=getmaxx(w)/4;
+		int mx=8;
 		if(c<mx){
 			if(c<0){c=0;xtext--;}
 			if(xtext){
@@ -1251,6 +1251,7 @@ static void type(int cr,WINDOW*w){
 				}
 			}
 			waddstr(w,mapsel);
+			x_right[rw]=true;
 		}
 		position(rw,cl);
 	}
