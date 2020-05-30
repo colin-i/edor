@@ -1,17 +1,17 @@
 #include"main0.h"
 //strlen,2;open,2;close;write,3
 #include"mainb.h"
-//move,17;wmove,2;getch,3;wgetch;getmaxy,4
+//move,18;wmove,2;getch,3;wgetch;getmaxy,4
 //getmaxx;3;getcury;getcurx,8;stdscr,15
-//keyname;addch,10;waddch;mvaddch,8;addstr
+//keyname;addch,11;waddch;mvaddch,8;addstr
 //wnoutrefresh,7;attrset,2;newwin
 //COLOR_PAIR;strcmp;sprintf
 #include"mainbc.h"
 
 //#include<curses.h>
-int addnstr(const char*,int);//7
+int addnstr(const char*,int);//8
 int mvaddstr(int,int,const char*);
-int mvaddnstr(int,int,const char*,int);//3
+int mvaddnstr(int,int,const char*,int);//2
 int mvwaddstr(WINDOW*,int,int,const char*);
 int wresize(WINDOW*,int,int);//2
 int mvwin(WINDOW*,int,int);//2
@@ -401,10 +401,15 @@ int command(char*comnrp){
 					if(visib<2)break;
 				}
 				if(!r){
-					int sz=cursor-pos;if(sz>visib)sz=visib;
-					if(dif>=0&&sz==visib)
-						mvaddch(y,rightexcl,'>');
-					mvaddnstr(y,com_left,input+pos,sz);
+					int sz=cursor-pos;if(sz>visib){
+						sz=visib;
+						addch('>');//the text was highlighted
+					}
+					//can be resized big,resized small
+					//if(dif>=0 here is not relevant
+					if(pos)mvaddch(y,com_left-1,'<');
+					else move(y,com_left);
+					addnstr(input+pos,sz);
 					move(y,ifback>right?right:ifback);
 					continue;
 				}

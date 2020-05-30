@@ -526,7 +526,11 @@ static int movment(int c,WINDOW*w){
 	return -1;
 }
 static void fixmembuf(size_t*y,size_t*x){
-	if(y[0]>=rows_tot)y[0]=rows_tot-1;
+	if(y[0]>=rows_tot){
+		y[0]=rows_tot-1;
+		x[0]=rows[y[0]].sz;
+		return;
+	}
 	size_t sz=rows[y[0]].sz;
 	if(x[0]>sz)x[0]=sz;
 }
