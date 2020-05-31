@@ -1588,11 +1588,12 @@ static void writefilebuf(char*cutbuf_file){
 		}
 	}
 }
-static bool color(){
-	if(start_color()==ERR)return false;
-	if(init_pair(1,COLOR_BLACK,COLOR_WHITE)==ERR)return false;
-	if(init_pair(2,COLOR_BLACK,COLOR_CYAN)==ERR)return false;
-	return true;
+static void color(){
+	if(start_color()!=ERR){
+		if(init_pair(1,COLOR_BLACK,COLOR_WHITE)!=ERR){//TERM vt100
+			init_pair(2,COLOR_BLACK,COLOR_CYAN);
+		}
+	}
 }
 int main(int argc,char**argv){
 	//signal(SIGINT,(void(*)(void))SIG_IGN);
@@ -1638,58 +1639,57 @@ int main(int argc,char**argv){
 		}
 		if(ok){
 			text_init_e=text_init_b+text_sz+1;
-			if(color()){
-				WINDOW*pw=position_init();
-				if(pw){
-					keypad(w1,true);
-					noecho();
-					nonl();//no translation,faster
-					mousemask(ALL_MOUSE_EVENTS,NULL);
-					char cutbuf_file[128];
-					cutbuf_file[0]=0;
-					setfilebuf(argv[0],cutbuf_file);
-					bool loops=false;
-					do{
-						int r=getmaxy(w1)-1;
-						char*a=realloc(x_right,(size_t)r);
-						if(!a)break;
-						x_right=a;
-						int c=getmaxx(w1);
-						tabs_rsz=1+(c/tab_sz);
-						if(c%tab_sz)tabs_rsz++;
-						void*b=realloc(tabs,sizeof(int)*(size_t)(r*tabs_rsz));
-						if(!b)break;
-						tabs=(int*)b;
-						a=realloc(mapsel,(size_t)c+1);
-						if(!a)break;
-						mapsel=a;
-						WINDOW*w=newwin(r,c,0,0);
-						if(w){
-							keypad(w,true);
-							refreshpage(w);
-							wmove(w,0,0);
-							printhelp();
-							if(!mod_flag)mod_set(false);
-							else wnoutrefresh(stdscr);
-							position_reset();
-							position(0,0);
-							loops=loopin(w);
-							delwin(w);
-						}else break;
-					}while(loops);
-					if(x_right){
-						free(x_right);
-						if(tabs){
-							free(tabs);
-							if(mapsel){
-								free(mapsel);
-								writefilebuf(cutbuf_file);
-							}
+			color();
+			WINDOW*pw=position_init();
+			if(pw){
+				keypad(w1,true);
+				noecho();
+				nonl();//no translation,faster
+				mousemask(ALL_MOUSE_EVENTS,NULL);
+				char cutbuf_file[128];
+				cutbuf_file[0]=0;
+				setfilebuf(argv[0],cutbuf_file);
+				bool loops=false;
+				do{
+					int r=getmaxy(w1)-1;
+					char*a=realloc(x_right,(size_t)r);
+					if(!a)break;
+					x_right=a;
+					int c=getmaxx(w1);
+					tabs_rsz=1+(c/tab_sz);
+					if(c%tab_sz)tabs_rsz++;
+					void*b=realloc(tabs,sizeof(int)*(size_t)(r*tabs_rsz));
+					if(!b)break;
+					tabs=(int*)b;
+					a=realloc(mapsel,(size_t)c+1);
+					if(!a)break;
+					mapsel=a;
+					WINDOW*w=newwin(r,c,0,0);
+					if(w){
+						keypad(w,true);
+						refreshpage(w);
+						wmove(w,0,0);
+						printhelp();
+						if(!mod_flag)mod_set(false);
+						else wnoutrefresh(stdscr);
+						position_reset();
+						position(0,0);
+						loops=loopin(w);
+						delwin(w);
+					}else break;
+				}while(loops);
+				if(x_right){
+					free(x_right);
+					if(tabs){
+						free(tabs);
+						if(mapsel){
+							free(mapsel);
+							writefilebuf(cutbuf_file);
 						}
 					}
-					if(cutbuf)free(cutbuf);
-					delwin(pw);
 				}
+				if(cutbuf)free(cutbuf);
+				delwin(pw);
 			}
 		}
 		if(text_init_b){
