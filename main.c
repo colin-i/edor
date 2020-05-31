@@ -117,8 +117,8 @@ static char helptext[]="INPUT"
 "\n    c = copy"
 "\n    d = delete"
 "\n    x = cut"
-"\n    i = indent"
-"\n    u = unindent"
+"\n    i = indent (I = once)"
+"\n    u = unindent (U = once)"
 "\nCtrl+p = paste"
 "\ncommand mode: left/right,ctrl+q"
 "\nCtrl+s = save file"
@@ -1291,23 +1291,25 @@ static void indent(bool b,size_t ybsel,size_t*xbsel,size_t yesel,size_t*xesel,in
 	int max=getmaxy(w);
 	if(re>max)re=max;
 	if(b){
-		xtext++;xbsel[0]++;
-		xesel[0]++;
+		xtext++;
+		if(xbsel){xbsel[0]++;xesel[0]++;}
 		if(rb)refreshrowsbot(w,0,rb);
 		if(re<max)refreshrowsbot(w,re,max);
 	}else{
 		if(xtext){
-			xtext--;xbsel[0]--;
-			xesel[0]--;
+			xtext--;
+			if(xbsel){xbsel[0]--;xesel[0]--;}
 			if(rb)refreshrowsbot(w,0,rb);
 			if(re<max)refreshrowsbot(w,re,max);
 		}else{
-			xbsel[0]=0;
-			if(yesel<rows_tot&&!rows[yesel].sz)xesel[0]=(size_t)getmaxx(w)-1;
-			else xesel[0]=0;
-			cl[0]=0;
 			refreshrowsbot(w,rb,re);
-			printsel(w,ybsel,0,yesel,xesel[0],-1);
+			if(xbsel){
+				xbsel[0]=0;
+				if(yesel<rows_tot-1&&!rows[yesel].sz)xesel[0]=(size_t)getmaxx(w)-1;
+				else xesel[0]=0;
+				cl[0]=0;
+				printsel(w,ybsel,0,yesel,xesel[0],-1);
+			}
 		}
 	}
 	if(mod_flag)mod_set(false);
@@ -1363,7 +1365,11 @@ static bool loopin(WINDOW*w){
 										if(delete(ybsel,xbsel,yesel,xesel,&r,&col,w))
 											if(orig)position(r,col);
 									}
-								}else unsel(w);
+								}else{
+									if(b=='I')indent(true,ybsel,0,yesel,0,0,w);
+									else if(b=='U')indent(false,ybsel,0,yesel,0,0,w);
+									unsel(w);
+								}
 								visual(v);
 							}
 						}else{
