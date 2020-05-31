@@ -59,7 +59,7 @@ typedef struct
 	mmask_t bstate;
 }
 MEVENT;
-#define OK 0
+//#define OK 0
 #define BUTTON1_CLICKED 0x4
 #define BUTTON4_PRESSED 0x10000
 #define BUTTON5_PRESSED 0x200000
@@ -70,7 +70,7 @@ MEVENT;
 #define KEY_PPAGE 0523
 #define KEY_NPAGE 0522
 #define KEY_MOUSE 0631
-int getmouse(MEVENT*);
+int getmouse(MEVENT*);//2
 //#include<poll.h>
 /*typedef unsigned int nfds_t;
 struct pollfd{
@@ -111,7 +111,7 @@ static int yhelp;
 static bool helpend;
 static int phelp;
 static char helptext[]="INPUT"
-"\nhelp: q(uit),up/down"
+"\nhelp: q(uit),up/down,mouse/touch v.scroll"
 "\narrows(Alt),home(Ctrl,Alt)/end(Ctrl),page up/down;mouse/touch press or v.scroll"
 "\nCtrl+v = visual mode"
 "\n    c = copy"
@@ -366,7 +366,12 @@ static bool helpin(WINDOW*w){
 	int c;
 	do{
 		c=getch();
-		if(c==KEY_DOWN)hmove(1);
+		if(c==KEY_MOUSE){
+			MEVENT e;
+			getmouse(&e);
+			if(e.bstate&BUTTON4_PRESSED)hmove(-1);
+			else if(e.bstate&BUTTON5_PRESSED)hmove(1);
+		}else if(c==KEY_DOWN)hmove(1);
 		else if(c==KEY_UP)hmove(-1);
 		else if(c==KEY_RESIZE)return true;
 	}while(c!='q');
@@ -447,12 +452,10 @@ static int home(WINDOW*w,size_t r){
 static int movment(int c,WINDOW*w){
 	if(c==KEY_MOUSE){
 		MEVENT e;
-		int a=getmouse(&e);
-		if(a==OK){
-			if(e.bstate&BUTTON4_PRESSED)tmove(w,getcury(w),false);
-			else if(e.bstate&BUTTON5_PRESSED)tmove(w,getcury(w),true);
-			else if(e.bstate&BUTTON1_CLICKED){amove(w,e.y-1,e.x-1);return -2;}
-		}
+		getmouse(&e);
+		if(e.bstate&BUTTON4_PRESSED)tmove(w,getcury(w),false);
+		else if(e.bstate&BUTTON5_PRESSED)tmove(w,getcury(w),true);
+		else if(e.bstate&BUTTON1_CLICKED){amove(w,e.y-1,e.x-1);return -2;}
 	}else if(c==KEY_UP){
 		int y=getcury(w);
 		if(y>0){amove(w,y-1,getcurx(w));return -2;}
