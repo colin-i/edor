@@ -59,7 +59,7 @@ typedef struct
 	mmask_t bstate;
 }
 MEVENT;
-//#define OK 0
+#define OK 0
 #define BUTTON1_CLICKED 0x4
 #define BUTTON4_PRESSED 0x10000
 #define BUTTON5_PRESSED 0x200000
@@ -368,9 +368,10 @@ static bool helpin(WINDOW*w){
 		c=getch();
 		if(c==KEY_MOUSE){
 			MEVENT e;
-			getmouse(&e);
-			if(e.bstate&BUTTON4_PRESSED)hmove(-1);
-			else if(e.bstate&BUTTON5_PRESSED)hmove(1);
+			if(getmouse(&e)==OK){
+				if(e.bstate&BUTTON4_PRESSED)hmove(-1);
+				else if(e.bstate&BUTTON5_PRESSED)hmove(1);
+			}
 		}else if(c==KEY_DOWN)hmove(1);
 		else if(c==KEY_UP)hmove(-1);
 		else if(c==KEY_RESIZE)return true;
@@ -452,10 +453,11 @@ static int home(WINDOW*w,size_t r){
 static int movment(int c,WINDOW*w){
 	if(c==KEY_MOUSE){
 		MEVENT e;
-		getmouse(&e);
-		if(e.bstate&BUTTON4_PRESSED)tmove(w,getcury(w),false);
-		else if(e.bstate&BUTTON5_PRESSED)tmove(w,getcury(w),true);
-		else if(e.bstate&BUTTON1_CLICKED){amove(w,e.y-1,e.x-1);return -2;}
+		if(getmouse(&e)==OK){//not checking if mousemask returns "complete failure"
+			if(e.bstate&BUTTON4_PRESSED)tmove(w,getcury(w),false);
+			else if(e.bstate&BUTTON5_PRESSED)tmove(w,getcury(w),true);
+			else if(e.bstate&BUTTON1_CLICKED){amove(w,e.y-1,e.x-1);return -2;}
+		}
 	}else if(c==KEY_UP){
 		int y=getcury(w);
 		if(y>0){amove(w,y-1,getcurx(w));return -2;}
