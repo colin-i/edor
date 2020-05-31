@@ -453,7 +453,7 @@ static int home(WINDOW*w,size_t r){
 static int movment(int c,WINDOW*w){
 	if(c==KEY_MOUSE){
 		MEVENT e;
-		if(getmouse(&e)==OK){//not checking if mousemask returns "complete failure"
+		if(getmouse(&e)==OK){//export TERM=vt100 cause mousemask to return 0
 			if(e.bstate&BUTTON4_PRESSED)tmove(w,getcury(w),false);
 			else if(e.bstate&BUTTON5_PRESSED)tmove(w,getcury(w),true);
 			else if(e.bstate&BUTTON1_CLICKED){amove(w,e.y-1,e.x-1);return -2;}
