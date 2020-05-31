@@ -117,8 +117,8 @@ static char helptext[]="INPUT"
 "\n    c = copy"
 "\n    d = delete"
 "\n    x = cut"
-"\n    i = indent (I = once)"
-"\n    u = unindent (U = once)"
+"\n    i = indent (I = keep visual mode)"
+"\n    u = unindent (U = keep visual mode)"
 "\nCtrl+p = paste"
 "\ncommand mode: left/right,ctrl+q"
 "\nCtrl+s = save file"
@@ -1350,8 +1350,8 @@ static bool loopin(WINDOW*w){
 					else{
 						int r=getcury(w);int col=getcurx(w);
 						if(!z){
-							if(b=='i'){indent(true,ybsel,&xbsel,yesel,&xesel,&col,w);z=-1;}
-							else if(b=='u'){indent(false,ybsel,&xbsel,yesel,&xesel,&col,w);z=-1;}
+							if(b=='I'){indent(true,ybsel,&xbsel,yesel,&xesel,&col,w);z=-1;}
+							else if(b=='U'){indent(false,ybsel,&xbsel,yesel,&xesel,&col,w);z=-1;}
 							else{
 								char v=' ';
 								visual_bool=b=='c';
@@ -1366,8 +1366,8 @@ static bool loopin(WINDOW*w){
 											if(orig)position(r,col);
 									}
 								}else{
-									if(b=='I')indent(true,ybsel,0,yesel,0,0,w);
-									else if(b=='U')indent(false,ybsel,0,yesel,0,0,w);
+									if(b=='i')indent(true,ybsel,0,yesel,0,0,w);
+									else if(b=='u')indent(false,ybsel,0,yesel,0,0,w);
 									unsel(w);
 								}
 								visual(v);
