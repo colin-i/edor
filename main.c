@@ -1401,7 +1401,7 @@ static bool loopin(WINDOW*w){
 				char aa=1;
 				int r=command(&aa);
 				if(r>0&&(size_t)r<=rows_tot){
-					ytext=(size_t)r-1;
+					ytext=(size_t)r-1;xtext=0;
 					centering(w,NULL,NULL);
 				}
 				else if(r==-2)return true;
