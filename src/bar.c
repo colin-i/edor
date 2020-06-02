@@ -21,7 +21,7 @@ int getbegy(const WINDOW*);
 #define F_OK 0
 int access(const char*,int);              
 //stdlib.h
-int atoi(const char*);
+int atoi(const char*);//3
 
 static int com_left;
 #define max_path 0xff
@@ -349,7 +349,31 @@ static int find(char*z,int cursor,int pos,int visib,int y){
 		return a==KEY_RESIZE?-1:1;
 	}
 }
-//-2resize,-1no/quit,0er,1okSave,...
+static bool go_to(int cursor){
+	int i=0;size_t y;size_t x;
+	for(;;){
+		if(input[i]==','){
+			input[i]=0;
+			y=(size_t)atoi(input);
+			x=(size_t)atoi(input+i+1);
+			break;
+		}
+		if(i==cursor){
+			y=(size_t)atoi(input);
+			x=1;break;
+		}
+		i++;
+	}
+	if(y>0&&y<=rows_tot){
+		ytext=y-1;
+		x--;if(x>rows[ytext].sz)
+			xtext=rows[ytext].sz;
+		else xtext=x;
+		return 1;
+	}
+	return 0;
+}
+//-2resize,-1no/quit,0er/boolFalse,1ok
 int command(char*comnrp){
 	int right=getbegx(poswn)-2;
 	int rightexcl=right+1;
@@ -389,7 +413,7 @@ int command(char*comnrp){
 				}
 			}else if(comnr==1){
 				input[cursor]=0;
-				r=atoi(input);
+				r=go_to(cursor);
 			}else{
 				int ifback=getcurx(stdscr);
 				r=find(comnrp,cursor,pos,visib,y);

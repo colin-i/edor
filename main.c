@@ -123,7 +123,7 @@ static char helptext[]="INPUT"
 "\ncommand mode: left/right,ctrl+q"
 "\nCtrl+s = save file"
 "\nCtrl+o = save file as..."
-"\nCtrl+g = go to line number"
+"\nCtrl+g = go to row[,column]"
 "\nCtrl+f = find text"
 "\n    Enter = next"
 "\n    Space = previous"
@@ -1400,12 +1400,11 @@ static bool loopin(WINDOW*w){
 			else if(!strcmp(s,"^G")){
 				char aa=1;
 				int r=command(&aa);
-				if(r>0&&(size_t)r<=rows_tot){
-					ytext=(size_t)r-1;xtext=0;
+				if(r==1){
 					centering(w,NULL,NULL);
 				}
-				else if(r==-2)return true;
-				else wmove(w,getcury(w),getcurx(w));
+				else if(r==0)wmove(w,getcury(w),getcurx(w));
+				else return true;
 			}
 			else if(!strcmp(s,"^F")){
 				char*args[2];
