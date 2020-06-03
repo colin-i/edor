@@ -1403,7 +1403,7 @@ static bool loopin(WINDOW*w){
 				if(r==1){
 					centering(w,NULL,NULL);
 				}
-				else if(r==0)wmove(w,getcury(w),getcurx(w));
+				else if(r>-2)wmove(w,getcury(w),getcurx(w));
 				else return true;
 			}
 			else if(!strcmp(s,"^F")){
