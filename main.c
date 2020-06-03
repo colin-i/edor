@@ -5,7 +5,7 @@
 #include"src/mainb.h"
 //move,4;wmove,27;getch;wgetch,2;newwin
 //getmaxy,16;getmaxx,32;stdscr,16
-//keyname,2;getcury,27;getcurx,22
+//keyname,2;getcury,28;getcurx,23
 //addch;waddch,4;mvaddch,2;addstr,3
 //wnoutrefresh,8;attrset,3;COLOR_PAIR,2
 //strcmp,12;sprintf
@@ -1653,6 +1653,7 @@ int main(int argc,char**argv){
 				cutbuf_file[0]=0;
 				setfilebuf(argv[0],cutbuf_file);
 				bool loops=false;
+				int cy=0;int cx=0;
 				do{
 					int r=getmaxy(w1)-1;
 					char*a=realloc(x_right,(size_t)r);
@@ -1671,13 +1672,14 @@ int main(int argc,char**argv){
 					if(w){
 						keypad(w,true);
 						refreshpage(w);
-						wmove(w,0,0);
+						wmove(w,cy,cx);
 						printhelp();
 						if(!mod_flag)mod_set(false);
 						else wnoutrefresh(stdscr);
 						position_reset();
 						position(0,0);
 						loops=loopin(w);
+						if(loops){cy=getcury(w);cx=getcurx(w);}
 						delwin(w);
 					}else break;
 				}while(loops);
