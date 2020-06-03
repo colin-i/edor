@@ -381,7 +381,7 @@ static bool helpin(WINDOW*w){
 }
 static void printhelp(){
 	move(getmaxy(stdscr)-1,0);
-	clrtoeol();//when resized one row up
+	clrtoeol();//resize to up,is over text
 	printinverted(bar_init());
 }
 static void sumove(WINDOW*w,int y){tmove(w,y,false);}
