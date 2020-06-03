@@ -4,7 +4,7 @@
 //malloc,10;free,11;realloc,6
 #include"src/mainb.h"
 //move,4;wmove,27;getch;wgetch,2;newwin
-//getmaxy,16;getmaxx,32;stdscr,16
+//getmaxy,17;getmaxx,32;stdscr,16
 //keyname,2;getcury,28;getcurx,23
 //addch;waddch,4;mvaddch,2;addstr,3
 //wnoutrefresh,8;attrset,3;COLOR_PAIR,2
@@ -1654,8 +1654,8 @@ int main(int argc,char**argv){
 				setfilebuf(argv[0],cutbuf_file);
 				bool loops=false;
 				int cy=0;int cx=0;
+				int r=getmaxy(w1)-1;
 				do{
-					int r=getmaxy(w1)-1;
 					char*a=realloc(x_right,(size_t)r);
 					if(!a)break;
 					x_right=a;
@@ -1677,9 +1677,18 @@ int main(int argc,char**argv){
 						if(!mod_flag)mod_set(false);
 						else wnoutrefresh(stdscr);
 						position_reset();
-						position(0,0);
+						position(cy,cx);
 						loops=loopin(w);
-						if(loops){cy=getcury(w);cx=getcurx(w);}
+						if(loops){//is already resized and the cursor fits in the screen, not in the new size
+							cy=getcury(w);
+							r=getmaxy(w1)-1;
+							if(cy==r){
+								cy=r-1;
+								if(ytext+1<rows_tot)ytext++;
+							}
+							cx=getcurx(w);
+							//c=getmaxx(w1);never if(cx>=c)
+						}
 						delwin(w);
 					}else break;
 				}while(loops);
