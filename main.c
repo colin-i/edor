@@ -817,35 +817,43 @@ static size_t row_pad_sz(size_t sz){
 	if(dif)return sz+((dif^row_pad)+1);
 	return sz;
 }
-static bool mal_spc_rea(row*rw,size_t l,size_t c,size_t r,char*mid){
-	char*src=rw->data;char*dst;
+static bool row_alloc(row*rw,size_t l,size_t c,size_t r){
 	size_t sz=l+c+r;
 	if(sz>=rw->spc){//[i]=0;addstr;=aux
+		char*src=rw->data;char*dst;
 		size_t size=row_pad_sz(sz);
 		if(text_init_b<=src&&src<text_init_e){
 			dst=(char*)malloc(size);
 			if(!dst)return true;
 			memcpy(dst,src,l);
-			if(!mid)memcpy(dst,src+l,r);//alloc only
+			//if(!mid)//alloc only
+			memcpy(dst,src+l,r);
 		}else{
 			dst=realloc(src,size);
 			if(!dst)return true;
-			src=dst;
+			//src=dst;
 		}
 		rw->data=dst;
 		rw->spc=size;
-	}else dst=src;
-	if(!mid)return false;//alloc mem only
+	}//else dst=src;
+	return false;
+}
+static void row_set(row*rw,size_t l,size_t c,size_t r,char*mid){
+	char*d=rw->data;
 	size_t j=l+c;size_t k=l+r;size_t i=j+r;
 	while(j<i){
-		i--;k--;dst[i]=src[k];
+		i--;k--;d[i]=d[k];
 	}
-	dst+=l;
+	d+=l;
 	while(c>0){
-		dst[0]=mid[0];
-		dst++;mid++;c--;
+		d[0]=mid[0];
+		d++;mid++;c--;
 	}
-	rw->sz=sz;
+	rw->sz=j+r;
+}
+static bool mal_spc_rea(row*rw,size_t l,size_t c,size_t r,char*mid){
+	if(row_alloc(rw,l,c,r))return true;
+	row_set(rw,l,c,r,mid);
 	return false;
 }
 static void deleted(size_t ybsel,size_t xbsel,int*r,int*c,WINDOW*w){
@@ -890,7 +898,7 @@ static void mod_set(bool flag){
 }
 static bool deleting_init(size_t ybsel,size_t xbsel,size_t yesel,size_t xesel){
 	if(ybsel==yesel)return false;
-	return mal_spc_rea(&rows[ybsel],xbsel,rows[yesel].sz-xesel,0,NULL);
+	return row_alloc(&rows[ybsel],xbsel,rows[yesel].sz-xesel,0);
 }
 static void deleting(size_t ybsel,size_t xbsel,size_t yesel,size_t xesel,int*rw,int*cl,WINDOW*w){
 	row*r1=&rows[ybsel];
@@ -903,7 +911,7 @@ static void deleting(size_t ybsel,size_t xbsel,size_t yesel,size_t xesel,int*rw,
 		}
 		r1->sz-=dif;
 	}else{
-		mal_spc_rea(r1,xbsel,rows[yesel].sz-xesel,0,rows[yesel].data+xesel);
+		row_set(r1,xbsel,rows[yesel].sz-xesel,0,rows[yesel].data+xesel);
 		row_del(ybsel+1,yesel);
 	}
 	deleted(ybsel,xbsel,rw,cl,w);
@@ -1270,11 +1278,11 @@ static void indent(bool b,size_t ybsel,size_t*xbsel,size_t yesel,size_t*xesel,in
 	if(b){
 		for(size_t i=ybsel;i<=ye;i++){
 			row*r=&rows[i];
-			if(mal_spc_rea(r,0,1,r->sz,NULL))return;
+			if(row_alloc(r,0,1,r->sz))return;
 		}
 		for(size_t i=ybsel;i<=ye;i++){
 			row*r=&rows[i];
-			mal_spc_rea(r,0,1,r->sz,"\t");
+			row_set(r,0,1,r->sz,"\t");
 		}
 		if(mod_flag)mod_set(false);
 	}else{
