@@ -11,7 +11,7 @@
 //strcmp,12;sprintf
 
 //#include <string.h>
-void*memcpy(void*,const void*,size_t);//16
+void*memcpy(void*,const void*,size_t);//14
 void*memset(void*,int,size_t);
 //sys/types.h
 typedef unsigned short mode_t;
@@ -537,17 +537,11 @@ static void fixmembuf(size_t*y,size_t*x){
 	size_t sz=rows[y[0]].sz;
 	if(x[0]>sz)x[0]=sz;
 }
-static size_t set2membuf(size_t yesel,size_t xesel){
-	if(xesel==rows[yesel].sz){
-		if(yesel<rows_tot-1)return ln_term_sz;
-		return 0;
-	}
-	return 1;
-}
 static bool writemembuf(size_t ybsel,size_t xbsel,size_t yesel,size_t xesel){
 	fixmembuf(&ybsel,&xbsel);
 	fixmembuf(&yesel,&xesel);
-	xesel+=set2membuf(yesel,xesel);
+	if(xesel==rows[yesel].sz){if(yesel<rows_tot-1){yesel++;xesel=0;}}
+	else xesel++;
 	row*b=&rows[ybsel];
 	bool one=ybsel==yesel;size_t size;
 	size_t sz1;
@@ -564,12 +558,8 @@ static bool writemembuf(size_t ybsel,size_t xbsel,size_t yesel,size_t xesel){
 		if(!v)return false;
 		cutbuf=v;cutbuf_spc=size;
 	}
-	bool inc_nl=rows[yesel].sz<xesel;
 	if(one){
-		size_t n=xesel-xbsel;
-		if(inc_nl)n-=ln_term_sz;
-		memcpy(cutbuf,b->data+xbsel,n);
-		if(inc_nl)memcpy(cutbuf+n,ln_term,ln_term_sz);
+		memcpy(cutbuf,b->data+xbsel,size);
 	}
 	else{
 		memcpy(cutbuf,b->data+xbsel,sz1);
@@ -582,13 +572,9 @@ static bool writemembuf(size_t ybsel,size_t xbsel,size_t yesel,size_t xesel){
 			memcpy(cutbuf+sz,ln_term,ln_term_sz);
 			sz+=ln_term_sz;
 		}
-		size_t n=xesel;
-		if(inc_nl)n-=ln_term_sz;
-		memcpy(cutbuf+sz,rows[yesel].data,n);
-		if(inc_nl)memcpy(cutbuf+sz+n,ln_term,ln_term_sz);
+		memcpy(cutbuf+sz,rows[yesel].data,xesel);
 	}
 	cutbuf_sz=size;cutbuf_r=yesel-ybsel+1;
-	if(inc_nl)cutbuf_r++;
 	return true;
 }
 static int mid(int r,int max){
