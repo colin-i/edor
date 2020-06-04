@@ -888,12 +888,7 @@ static void mod_set(bool flag){
 	mvaddch(getmaxy(stdscr)-1,getmaxx(stdscr)-1,ch);
 	wnoutrefresh(stdscr);
 }
-static bool delete(size_t ybsel,size_t xbsel,size_t yesel,size_t xesel,int*rw,int*cl,WINDOW*w){
-	fixmembuf(&ybsel,&xbsel);
-	fixmembuf(&yesel,&xesel);
-	if(xesel==rows[yesel].sz){if(yesel<rows_tot-1){yesel++;xesel=0;}}
-	else xesel++;
-	//
+static bool deleting(size_t ybsel,size_t xbsel,size_t yesel,size_t xesel,int*rw,int*cl,WINDOW*w){
 	row*r1=&rows[ybsel];
 	if(ybsel==yesel){
 		size_t sz=r1->sz;
@@ -910,6 +905,14 @@ static bool delete(size_t ybsel,size_t xbsel,size_t yesel,size_t xesel,int*rw,in
 	}
 	deleted(ybsel,xbsel,rw,cl,w);
 	refreshpage(w);
+	return true;
+}
+static bool delete(size_t ybsel,size_t xbsel,size_t yesel,size_t xesel,int*rw,int*cl,WINDOW*w){
+	fixmembuf(&ybsel,&xbsel);
+	fixmembuf(&yesel,&xesel);
+	if(xesel==rows[yesel].sz){if(yesel<rows_tot-1){yesel++;xesel=0;}}
+	else xesel++;
+	if(!deleting(ybsel,xbsel,yesel,xesel,rw,cl,w))return false;
 	if(mod_flag)if(ybsel!=yesel||xbsel!=xesel)mod_set(false);
 	return true;
 }
@@ -926,11 +929,7 @@ static void rows_insert(row*d,size_t sz,size_t off){
 	}
 	memcpy(rows+off,d,sz*sizeof(row));
 }
-static size_t pasting(row*d,int r,int c,WINDOW*w){
-	size_t y=ytext+(size_t)r;
-	size_t x=xtext+c_to_xc(c,r);
-	fixmembuf(&y,&x);
-	//
+static size_t pasting(row*d,size_t y,size_t x,WINDOW*w){
 	bool one=cutbuf_r==1;
 	size_t szc;size_t sz1r;size_t l;
 	size_t szr=rows[y].sz-x;
@@ -983,15 +982,21 @@ static size_t pasting(row*d,int r,int c,WINDOW*w){
 	}
 	return 0;
 }
-static void paste(WINDOW*w){
+static void paste(size_t y,size_t x,WINDOW*w){
 	row*d=(row*)malloc((cutbuf_r-1)*sizeof(row));
 	if(!d)return;
-	int r=getcury(w);int c=getcurx(w);
-	size_t n=pasting(d,r,c,w);
+	size_t n=pasting(d,y,x,w);
 	for(size_t i=0;i<n;i++){
 		free(d[i].data);
 	}
 	free(d);
+}
+static void past(WINDOW*w){
+	int r=getcury(w);
+	size_t y=ytext+(size_t)r;
+	size_t x=xtext+c_to_xc(getcurx(w),r);
+	fixmembuf(&y,&x);
+	paste(y,x,w);
 }
 static void vis(char c,WINDOW*w){
 	visual(c);
@@ -1373,7 +1378,7 @@ static bool loopin(WINDOW*w){
 					}
 				}while(z);
 			}
-			else if(!strcmp(s,"^P"))paste(w);
+			else if(!strcmp(s,"^P"))past(w);
 			else if((!strcmp(s,"^S"))||!strcmp(s,"^O")){
 				char*d=textfile;
 				int ret;
