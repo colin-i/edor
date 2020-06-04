@@ -950,7 +950,7 @@ static size_t pasting(row*d,size_t y,size_t x,WINDOW*w){
 			size_t len=ln-ln_term_sz;
 			size_t spc_sz=row_pad_sz(len);
 			void*v=malloc(spc_sz);
-			if(!v)return i;
+			if(!v)return i+1;
 			memcpy(v,cutbuf+sz,len);
 			d[i].data=v;
 			d[i].sz=len;
@@ -963,16 +963,16 @@ static size_t pasting(row*d,size_t y,size_t x,WINDOW*w){
 		size_t sizen=l+szr;
 		size_t spc_sz=row_pad_sz(sizen);
 		char*rn=malloc(spc_sz);
-		if(!rn)return n;
+		if(!rn)return max;
 		memcpy(rn,cutbuf+sz,l);
 		memcpy(rn+l,rows[y].data+x,szr);
 		d[n].data=rn;
 		d[n].sz=sizen;
 		d[n].spc=spc_sz;
 		//mem
-		if(rows_expand(max))return max;
+		if(rows_expand(max))return cutbuf_r;
 	}
-	if(mal_spc_rea(&rows[y],x,szc,sz1r,cutbuf))return max;
+	if(mal_spc_rea(&rows[y],x,szc,sz1r,cutbuf))return cutbuf_r;
 	if(one)l=x+szc;
 	else rows_insert(d,max,y+1);
 	pasted(y-ytext,l,w);
@@ -980,13 +980,14 @@ static size_t pasting(row*d,size_t y,size_t x,WINDOW*w){
 	return 0;
 }
 static bool paste(size_t y,size_t x,WINDOW*w){
-	row*d=(row*)malloc((cutbuf_r-1)*sizeof(row));
-	if(!d)return false;
+	row*d=NULL;
+	if(cutbuf_r>1){d=(row*)malloc((cutbuf_r-1)*sizeof(row));
+		if(!d)return false;}
 	size_t n=pasting(d,y,x,w);
-	for(size_t i=0;i<n;i++){
-		free(d[i].data);
+	for(size_t i=1;i<n;i++){
+		free(d[i-1].data);
 	}
-	free(d);
+	if(d)free(d);
 	return !n;
 }
 static void past(WINDOW*w){
