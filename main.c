@@ -888,7 +888,12 @@ static void mod_set(bool flag){
 	mvaddch(getmaxy(stdscr)-1,getmaxx(stdscr)-1,ch);
 	wnoutrefresh(stdscr);
 }
-static bool deleting(size_t ybsel,size_t xbsel,size_t yesel,size_t xesel,int*rw,int*cl,WINDOW*w){
+static bool deleting_init(size_t ybsel,size_t xbsel,size_t yesel,size_t xesel){
+	if(ybsel==yesel)return false;
+	size_t c=rows[yesel].sz-xesel;
+	return mal_spc_rea(&rows[ybsel],xbsel,c,0,NULL);
+}
+static void deleting(size_t ybsel,size_t xbsel,size_t yesel,size_t xesel,int*rw,int*cl,WINDOW*w){
 	row*r1=&rows[ybsel];
 	if(ybsel==yesel){
 		size_t sz=r1->sz;
@@ -900,19 +905,19 @@ static bool deleting(size_t ybsel,size_t xbsel,size_t yesel,size_t xesel,int*rw,
 		r1->sz-=dif;
 	}else{
 		size_t c=rows[yesel].sz-xesel;
-		if(mal_spc_rea(r1,xbsel,c,0,rows[yesel].data+xesel))return false;
+		mal_spc_rea(r1,xbsel,c,0,rows[yesel].data+xesel);
 		row_del(ybsel+1,yesel);
 	}
 	deleted(ybsel,xbsel,rw,cl,w);
 	refreshpage(w);
-	return true;
 }
 static bool delete(size_t ybsel,size_t xbsel,size_t yesel,size_t xesel,int*rw,int*cl,WINDOW*w){
 	fixmembuf(&ybsel,&xbsel);
 	fixmembuf(&yesel,&xesel);
 	if(xesel==rows[yesel].sz){if(yesel<rows_tot-1){yesel++;xesel=0;}}
 	else xesel++;
-	if(!deleting(ybsel,xbsel,yesel,xesel,rw,cl,w))return false;
+	if(deleting_init(ybsel,xbsel,yesel,xesel))return false;
+	deleting(ybsel,xbsel,yesel,xesel,rw,cl,w);
 	if(mod_flag)if(ybsel!=yesel||xbsel!=xesel)mod_set(false);
 	return true;
 }
