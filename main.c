@@ -890,8 +890,7 @@ static void mod_set(bool flag){
 }
 static bool deleting_init(size_t ybsel,size_t xbsel,size_t yesel,size_t xesel){
 	if(ybsel==yesel)return false;
-	size_t c=rows[yesel].sz-xesel;
-	return mal_spc_rea(&rows[ybsel],xbsel,c,0,NULL);
+	return mal_spc_rea(&rows[ybsel],xbsel,rows[yesel].sz-xesel,0,NULL);
 }
 static void deleting(size_t ybsel,size_t xbsel,size_t yesel,size_t xesel,int*rw,int*cl,WINDOW*w){
 	row*r1=&rows[ybsel];
@@ -904,8 +903,7 @@ static void deleting(size_t ybsel,size_t xbsel,size_t yesel,size_t xesel,int*rw,
 		}
 		r1->sz-=dif;
 	}else{
-		size_t c=rows[yesel].sz-xesel;
-		mal_spc_rea(r1,xbsel,c,0,rows[yesel].data+xesel);
+		mal_spc_rea(r1,xbsel,rows[yesel].sz-xesel,0,rows[yesel].data+xesel);
 		row_del(ybsel+1,yesel);
 	}
 	deleted(ybsel,xbsel,rw,cl,w);
