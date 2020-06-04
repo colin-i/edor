@@ -537,43 +537,45 @@ static void fixmembuf(size_t*y,size_t*x){
 	size_t sz=rows[y[0]].sz;
 	if(x[0]>sz)x[0]=sz;
 }
+static size_t sizemembuf(size_t ybsel,size_t xbsel,size_t yesel,size_t xesel){
+	if(ybsel==yesel)return xesel-xbsel;
+	size_t size=rows[ybsel].sz-xbsel+ln_term_sz;
+	for(size_t i=ybsel+1;i<yesel;i++){
+		size+=rows[i].sz+ln_term_sz;
+	}
+	return size+xesel;
+}
+static void cpymembuf(size_t ybsel,size_t xbsel,size_t yesel,size_t xesel){
+	row*b=&rows[ybsel];
+	if(ybsel==yesel){
+		memcpy(cutbuf,b->data+xbsel,xesel-xbsel);
+		return;
+	}
+	size_t sz1=b->sz-xbsel;
+	memcpy(cutbuf,b->data+xbsel,sz1);
+	memcpy(cutbuf+sz1,ln_term,ln_term_sz);
+	size_t sz=sz1+ln_term_sz;
+	for(size_t i=ybsel+1;i<yesel;i++){
+		size_t s=rows[i].sz;
+		memcpy(cutbuf+sz,rows[i].data,s);
+		sz+=s;
+		memcpy(cutbuf+sz,ln_term,ln_term_sz);
+		sz+=ln_term_sz;
+	}
+	memcpy(cutbuf+sz,rows[yesel].data,xesel);
+}
 static bool writemembuf(size_t ybsel,size_t xbsel,size_t yesel,size_t xesel){
 	fixmembuf(&ybsel,&xbsel);
 	fixmembuf(&yesel,&xesel);
 	if(xesel==rows[yesel].sz){if(yesel<rows_tot-1){yesel++;xesel=0;}}
 	else xesel++;
-	row*b=&rows[ybsel];
-	bool one=ybsel==yesel;size_t size;
-	size_t sz1;
-	if(one)size=xesel-xbsel;
-	else{
-		sz1=b->sz-xbsel;
-		size=sz1+ln_term_sz+xesel;
-		for(size_t i=ybsel+1;i<yesel;i++){
-			size+=rows[i].sz+ln_term_sz;
-		}
-	}
+	size_t size=sizemembuf(ybsel,xbsel,yesel,xesel);
 	if(cutbuf_spc<size){
 		void*v=realloc(cutbuf,size);
 		if(!v)return false;
 		cutbuf=v;cutbuf_spc=size;
 	}
-	if(one){
-		memcpy(cutbuf,b->data+xbsel,size);
-	}
-	else{
-		memcpy(cutbuf,b->data+xbsel,sz1);
-		memcpy(cutbuf+sz1,ln_term,ln_term_sz);
-		size_t sz=sz1+ln_term_sz;
-		for(size_t i=ybsel+1;i<yesel;i++){
-			size_t s=rows[i].sz;
-			memcpy(cutbuf+sz,rows[i].data,s);
-			sz+=s;
-			memcpy(cutbuf+sz,ln_term,ln_term_sz);
-			sz+=ln_term_sz;
-		}
-		memcpy(cutbuf+sz,rows[yesel].data,xesel);
-	}
+	cpymembuf(ybsel,xbsel,yesel,xesel);
 	cutbuf_sz=size;cutbuf_r=yesel-ybsel+1;
 	return true;
 }
