@@ -976,27 +976,29 @@ static size_t pasting(row*d,size_t y,size_t x,WINDOW*w){
 	if(one)l=x+szc;
 	else rows_insert(d,max,y+1);
 	pasted(y-ytext,l,w);
-	if(cutbuf_sz){
-		if(mod_flag)mod_set(false);
-		position(getcury(w),getcurx(w));
-	}
+	position(getcury(w),getcurx(w));
 	return 0;
 }
-static void paste(size_t y,size_t x,WINDOW*w){
+static bool paste(size_t y,size_t x,WINDOW*w){
 	row*d=(row*)malloc((cutbuf_r-1)*sizeof(row));
-	if(!d)return;
+	if(!d)return false;
 	size_t n=pasting(d,y,x,w);
 	for(size_t i=0;i<n;i++){
 		free(d[i].data);
 	}
 	free(d);
+	return !n;
 }
 static void past(WINDOW*w){
-	int r=getcury(w);
-	size_t y=ytext+(size_t)r;
-	size_t x=xtext+c_to_xc(getcurx(w),r);
-	fixmembuf(&y,&x);
-	paste(y,x,w);
+	if(cutbuf_sz){
+		int r=getcury(w);
+		size_t y=ytext+(size_t)r;
+		size_t x=xtext+c_to_xc(getcurx(w),r);
+		fixmembuf(&y,&x);
+		if(paste(y,x,w)){
+			if(mod_flag)mod_set(false);
+		}
+	}
 }
 static void vis(char c,WINDOW*w){
 	visual(c);
