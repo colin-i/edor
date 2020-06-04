@@ -1263,15 +1263,19 @@ static void indent(bool b,size_t ybsel,size_t*xbsel,size_t yesel,size_t*xesel,in
 			row*r=&rows[i];
 			mal_spc_rea(r,0,1,r->sz,"\t");
 		}
+		if(mod_flag)mod_set(false);
 	}else{
+		bool something=false;
 		for(size_t i=ybsel;i<=ye;i++){
 			row*r=&rows[i];size_t sz=r->sz;
 			if(sz){
 				char*d=r->data;
 				for(size_t j=1;j<sz;j++)d[j-1]=d[j];
 				r->sz=sz-1;
+				something=true;
 			}
 		}
+		if(mod_flag)if(something)mod_set(false);
 	}
 	int rb;if(ybsel<ytext)rb=0;
 	else rb=(int)(ybsel-ytext);
@@ -1300,7 +1304,6 @@ static void indent(bool b,size_t ybsel,size_t*xbsel,size_t yesel,size_t*xesel,in
 			}
 		}
 	}
-	if(mod_flag)mod_set(false);
 }
 static bool loopin(WINDOW*w){
 	int c;
