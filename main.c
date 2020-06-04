@@ -984,10 +984,12 @@ static bool paste(size_t y,size_t x,WINDOW*w){
 	if(cutbuf_r>1){d=(row*)malloc((cutbuf_r-1)*sizeof(row));
 		if(!d)return false;}
 	size_t n=pasting(d,y,x,w);
-	for(size_t i=1;i<n;i++){
-		free(d[i-1].data);
+	if(d){
+		for(size_t i=1;i<n;i++){
+			free(d[i-1].data);
+		}
+		free(d);
 	}
-	if(d)free(d);
 	return !n;
 }
 static void past(WINDOW*w){
