@@ -2,7 +2,7 @@
 //strlen,2;open,2;close;write,3;free,4
 //realloc;malloc,2
 #include"mainb.h"
-//move,18;wmove,4;getch,3;wgetch;getmaxy,4
+//move,18;wmove;getch,3;wgetch;getmaxy,4
 //getmaxx;3;getcury;getcurx,8;stdscr,15
 //keyname;addch,11;waddch;mvaddch,8;addstr
 //wnoutrefresh,7;attrset,2;newwin
