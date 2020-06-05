@@ -853,7 +853,7 @@ static void row_set(row*rw,size_t l,size_t c,size_t r,char*mid){
 }
 static bool mal_spc_rea(row*rw,size_t l,size_t c,size_t r,char*mid){
 	if(row_alloc(rw,l,c,r))return true;
-	row_set(rw,l,c,r,mid);
+	if(mid)row_set(rw,l,c,r,mid);
 	return false;
 }
 static void deleted(size_t ybsel,size_t xbsel,int*r,int*c,WINDOW*w){
