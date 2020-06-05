@@ -546,7 +546,6 @@ void position_reset(){
 	mvwin(poswn,getmaxy(stdscr)-1,getmaxx(stdscr)-5);
 }
 static bool undo_expand(){
-	if(undos_tot<undos_save)undos_save=0;
 	size_t sz=undos_tot+1;
 	size_t dif=sz&row_pad;
 	if(dif)sz+=((dif^row_pad)+1);
@@ -557,12 +556,16 @@ static bool undo_expand(){
 	}
 	return false;
 }
+static void undo_ok(){
+	if(undos_tot<undos_save)undos_save=0;
+	undos_tot++;
+}
 bool undo_add(size_t yb,size_t xb,size_t ye,size_t xe){
 	if(undo_expand())return true;
 	eundo*un=&undos[undos_tot];
 	un->yb=yb;un->xb=xb;un->ye=ye;un->xe=xe;
 	un->data=NULL;
-	undos_tot++;return false;
+	undo_ok();return false;
 }
 bool undo_add_del(size_t yb,size_t xb,size_t ye,size_t xe){
 	if(undo_expand())return true;
@@ -573,14 +576,14 @@ bool undo_add_del(size_t yb,size_t xb,size_t ye,size_t xe){
 	un->yb=yb;un->xb=xb;un->ye=ye;
 	un->data=v;
 	cpymembuf(yb,xb,ye,xe,v);
-	undos_tot++;return false;
+	undo_ok();return false;
 }
 bool undo_add_ind(size_t yb,size_t ye){
 	if(undo_expand())return true;
 	eundo*un=&undos[undos_tot];
 	un->ye=yb;un->yb=ye;
 	un->data=NULL;
-	undos_tot++;return false;
+	undo_ok();return false;
 }
 bool undo_add_ind_del(size_t yb,size_t ye){
 	if(undo_expand())return true;
@@ -593,7 +596,7 @@ bool undo_add_ind_del(size_t yb,size_t ye){
 		if(!rows[i].sz)d[i-yb]=ln_term[0];
 		else d[i-yb]=rows[i].data[0];
 	}
-	undos_tot++;return false;
+	undo_ok();return false;
 }
 void undo_free(){
 	if(undos){
