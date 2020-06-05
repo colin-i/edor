@@ -11,6 +11,10 @@ int open(const char*,int,...);
 int close(int);
 typedef int ssize_t;
 ssize_t write(int,const void*,size_t);
+//#include <stdlib.h>
+void free(void*);
+void*realloc(void*,size_t);
+void*malloc(size_t);
 
 typedef char bool;
 enum{false=0,true=1};
@@ -19,3 +23,4 @@ typedef struct{
 	size_t spc;
 	size_t sz;
 }row;
+#define NULL 0

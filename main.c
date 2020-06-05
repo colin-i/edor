@@ -1,7 +1,7 @@
 #include"src/main0.h"
-//strlen,2;open,3;close,3;write
+//strlen,2;open,3;close,3;write;free,11
+//realloc,6;malloc,10
 #include"src/mainc.h"
-//malloc,10;free,11;realloc,6
 #include"src/mainb.h"
 //move,4;wmove,27;getch;wgetch,2;newwin
 //getmaxy,17;getmaxx,32;stdscr,16
@@ -130,8 +130,9 @@ static char helptext[]="INPUT"
 "\n    c = cancel"
 "\n    any key to return"
 "\n-"
+"\nCtrl+u = undo(not ready,only type,paste)"
 "\nCtrl+b = build file"
-"\nCtrl+q = quit";//22
+"\nCtrl+q = quit";//23
 static bool visual_bool=false;
 static char*cutbuf=NULL;
 static size_t cutbuf_sz=0;
@@ -139,7 +140,6 @@ static size_t cutbuf_spc=0;
 static size_t cutbuf_r=1;
 static char*text_init_b=NULL;
 static char*text_init_e;
-#define row_pad 0xF
 static bool mod_flag=true;
 static int _rb;static int _cb;
 static int _re;static int _ce;
@@ -537,7 +537,7 @@ static void fixmembuf(size_t*y,size_t*x){
 	size_t sz=rows[y[0]].sz;
 	if(x[0]>sz)x[0]=sz;
 }
-static size_t sizemembuf(size_t ybsel,size_t xbsel,size_t yesel,size_t xesel){
+size_t sizemembuf(size_t ybsel,size_t xbsel,size_t yesel,size_t xesel){
 	if(ybsel==yesel)return xesel-xbsel;
 	size_t size=rows[ybsel].sz-xbsel+ln_term_sz;
 	for(size_t i=ybsel+1;i<yesel;i++){
@@ -545,7 +545,7 @@ static size_t sizemembuf(size_t ybsel,size_t xbsel,size_t yesel,size_t xesel){
 	}
 	return size+xesel;
 }
-static void cpymembuf(size_t ybsel,size_t xbsel,size_t yesel,size_t xesel){
+void cpymembuf(size_t ybsel,size_t xbsel,size_t yesel,size_t xesel){
 	row*b=&rows[ybsel];
 	if(ybsel==yesel){
 		memcpy(cutbuf,b->data+xbsel,xesel-xbsel);
@@ -885,17 +885,17 @@ static void row_del(size_t a,size_t b){
 	}
 	rows_tot-=c-a;
 }
-static void mod_set(bool flag){
+void mod_set(bool flag){
 	mod_flag=flag;
 	chtype ch=mod_flag?' ':'*';
 	mvaddch(getmaxy(stdscr)-1,getmaxx(stdscr)-1,ch);
 	wnoutrefresh(stdscr);
 }
-static bool deleting_init(size_t ybsel,size_t xbsel,size_t yesel,size_t xesel){
+bool deleting_init(size_t ybsel,size_t xbsel,size_t yesel,size_t xesel){
 	if(ybsel==yesel)return false;
 	return row_alloc(&rows[ybsel],xbsel,rows[yesel].sz-xesel,0);
 }
-static void deleting(size_t ybsel,size_t xbsel,size_t yesel,size_t xesel,int*rw,int*cl,WINDOW*w){
+void deleting(size_t ybsel,size_t xbsel,size_t yesel,size_t xesel){
 	row*r1=&rows[ybsel];
 	if(ybsel==yesel){
 		size_t sz=r1->sz;
@@ -909,18 +909,21 @@ static void deleting(size_t ybsel,size_t xbsel,size_t yesel,size_t xesel,int*rw,
 		row_set(r1,xbsel,rows[yesel].sz-xesel,0,rows[yesel].data+xesel);
 		row_del(ybsel+1,yesel);
 	}
-	deleted(ybsel,xbsel,rw,cl,w);
-	refreshpage(w);
 }
 static bool delete(size_t ybsel,size_t xbsel,size_t yesel,size_t xesel,int*rw,int*cl,WINDOW*w){
 	fixmembuf(&ybsel,&xbsel);
 	fixmembuf(&yesel,&xesel);
 	if(xesel==rows[yesel].sz){if(yesel<rows_tot-1){yesel++;xesel=0;}}
 	else xesel++;
-	if(deleting_init(ybsel,xbsel,yesel,xesel))return false;
-	deleting(ybsel,xbsel,yesel,xesel,rw,cl,w);
-	if(mod_flag)if(ybsel!=yesel||xbsel!=xesel)mod_set(false);
-	return true;
+	if(ybsel!=yesel||xbsel!=xesel){
+		if(deleting_init(ybsel,xbsel,yesel,xesel))return false;
+		//if(undo_add_del(ybsel,xbsel,yesel,xesel))return false;
+		deleting(ybsel,xbsel,yesel,xesel);
+		deleted(ybsel,xbsel,rw,cl,w);
+		refreshpage(w);
+		if(mod_flag)mod_set(false);
+		return true;
+	}return false;
 }
 static char*memtrm(char*a){
 	while(a[0]!=ln_term[0])a++;
@@ -935,18 +938,19 @@ static void rows_insert(row*d,size_t sz,size_t off){
 	}
 	memcpy(rows+off,d,sz*sizeof(row));
 }
-static size_t pasting(row*d,size_t y,size_t x,WINDOW*w){
-	bool one=cutbuf_r==1;
+static size_t pasting(row*d,size_t y,size_t x,size_t*xe,char*buf,size_t buf_sz,size_t buf_r,bool fromcopy){
+	bool one=buf_r==1;
 	size_t szc;size_t sz1r;size_t l;
 	size_t szr=rows[y].sz-x;
-	size_t max=cutbuf_r-1;
+	size_t max=buf_r-1;
 	if(one){
-		szc=cutbuf_sz;sz1r=szr;
+		szc=buf_sz;sz1r=szr;
+		l=x+szc;
 	}
 	else{
-		char*a=memtrm(cutbuf)+ln_term_sz;
+		char*a=memtrm(buf)+ln_term_sz;
 		sz1r=0;
-		size_t sz=(size_t)(a-cutbuf);
+		size_t sz=(size_t)(a-buf);
 		szc=sz-ln_term_sz;
 		size_t n=max-1;
 		//inter
@@ -957,7 +961,7 @@ static size_t pasting(row*d,size_t y,size_t x,WINDOW*w){
 			size_t spc_sz=row_pad_sz(len);
 			void*v=malloc(spc_sz);
 			if(!v)return i+1;
-			memcpy(v,cutbuf+sz,len);
+			memcpy(v,buf+sz,len);
 			d[i].data=v;
 			d[i].sz=len;
 			d[i].spc=spc_sz;
@@ -965,32 +969,32 @@ static size_t pasting(row*d,size_t y,size_t x,WINDOW*w){
 			a=b;
 		}
 		//last
-		l=cutbuf_sz-sz;
+		l=buf_sz-sz;
 		size_t sizen=l+szr;
 		size_t spc_sz=row_pad_sz(sizen);
 		char*rn=malloc(spc_sz);
 		if(!rn)return max;
-		memcpy(rn,cutbuf+sz,l);
+		memcpy(rn,buf+sz,l);
 		memcpy(rn+l,rows[y].data+x,szr);
 		d[n].data=rn;
 		d[n].sz=sizen;
 		d[n].spc=spc_sz;
 		//mem
-		if(rows_expand(max))return cutbuf_r;
+		if(rows_expand(max))return buf_r;
 	}
-	if(row_alloc(&rows[y],x,szc,sz1r))return cutbuf_r;
-	row_set(&rows[y],x,szc,sz1r,cutbuf);
-	if(one)l=x+szc;
-	else rows_insert(d,max,y+1);
-	pasted(y-ytext,l,w);
-	position(getcury(w),getcurx(w));
+	if(row_alloc(&rows[y],x,szc,sz1r))return buf_r;
+	if(fromcopy)if(undo_add(y,x,one?y:y+max,l))return buf_r;
+	row_set(&rows[y],x,szc,sz1r,buf);
+	if(!one)rows_insert(d,max,y+1);
+	xe[0]=l;
 	return 0;
 }
-static bool paste(size_t y,size_t x,WINDOW*w){
-	row*d=NULL;
-	if(cutbuf_r>1){d=(row*)malloc((cutbuf_r-1)*sizeof(row));
+static bool paste(size_t y,size_t x,size_t*xe,char*buf,size_t buf_sz,size_t buf_r,bool fromcopy){
+	row*d;
+	if(buf_r>1){d=(row*)malloc((buf_r-1)*sizeof(row));
 		if(!d)return false;}
-	size_t n=pasting(d,y,x,w);
+	else d=NULL;
+	size_t n=pasting(d,y,x,xe,buf,buf_sz,buf_r,fromcopy);
 	if(d){
 		for(size_t i=1;i<n;i++){
 			free(d[i-1].data);
@@ -1005,8 +1009,11 @@ static void past(WINDOW*w){
 		size_t y=ytext+(size_t)r;
 		size_t x=xtext+c_to_xc(getcurx(w),r);
 		fixmembuf(&y,&x);
-		if(paste(y,x,w)){
+		size_t xe;
+		if(paste(y,x,&xe,cutbuf,cutbuf_sz,cutbuf_r,true)){
+			pasted(y-ytext,xe,w);
 			if(mod_flag)mod_set(false);
+			position(getcury(w),getcurx(w));
 		}
 	}
 }
@@ -1204,8 +1211,9 @@ static void type(int cr,WINDOW*w){
 		refreshpage(w);
 	}else{
 		size_t dif=xx-x;
-		if(dif<(size_t)getmaxx(w))cl-=dif;
-		else{
+		bool in=dif<(size_t)getmaxx(w);
+		if(in)cl-=dif;
+		if(!in||cl<0){
 			xtext=r->sz;
 			cl=0;
 			refreshpage(w);
@@ -1223,6 +1231,7 @@ static void type(int cr,WINDOW*w){
 	else{
 		char ch=cr&0xff;
 		if(row_alloc(r,x,1,r->sz-x))return;
+		if(undo_add(y,x,y,x+1))return;
 		row_set(r,x,1,r->sz-x,&ch);
 		bool is_tab=ch=='\t';
 		int s=is_tab?tab_sz:1;
@@ -1428,8 +1437,9 @@ static bool loopin(WINDOW*w){
 					wnoutrefresh(w);
 					doupdate();
 				}
-			}
-			else if(!strcmp(s,"^B")){
+			}else if(!strcmp(s,"^U")){
+				undo(w);
+			}else if(!strcmp(s,"^B")){
 				if(textfile){
 					if(out_f(textfile,rows,rows_tot)){
 						visual_bool=true;
@@ -1711,6 +1721,7 @@ int main(int argc,char**argv){
 						if(mapsel){
 							free(mapsel);
 							writefilebuf(cutbuf_file);
+							undo_free();
 						}
 					}
 				}

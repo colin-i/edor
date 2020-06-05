@@ -1,7 +1,7 @@
 #include"main0.h"
-//strlen,3;open;close;write,2
+//strlen,3;open;close;write,2;free;realloc
 #include"mainc.h"
-//malloc;free;realloc
+//malloc
 #include"mainbc.h"
 
 typedef struct{

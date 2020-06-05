@@ -1,7 +1,8 @@
 #include"main0.h"
-//strlen,2;open,2;close;write,3
+//strlen,2;open,2;close;write,3;free,2
+//realloc;malloc
 #include"mainb.h"
-//move,18;wmove,2;getch,3;wgetch;getmaxy,4
+//move,18;wmove,3;getch,3;wgetch;getmaxy,4
 //getmaxx;3;getcury;getcurx,8;stdscr,15
 //keyname;addch,11;waddch;mvaddch,8;addstr
 //wnoutrefresh,7;attrset,2;newwin
@@ -29,6 +30,16 @@ static char input1[max_path+1];
 static char input2[max_path+1];
 static char*input=input1;
 static WINDOW*poswn;
+
+typedef struct{
+size_t yb;
+size_t xb;
+size_t ye;
+size_t xe;
+char*data;}eundo;
+static eundo*undos=NULL;
+static size_t undos_tot=0;
+static size_t undos_spc=0;
 
 char*bar_init(){
 	char*h="F1 for help";
@@ -273,7 +284,7 @@ void position(int rw,int cl){
 	mvwaddstr(poswn,0,0,posbuf);
 	wnoutrefresh(poswn);
 }
-void centering(WINDOW*w,size_t*rw,size_t*cl){
+void centering(WINDOW*w,int*rw,int*cl){
 	position(0,0);
 	size_t wd=(size_t)getmaxx(w)/3;
 	size_t c=0;char*d=rows[ytext].data;
@@ -289,7 +300,7 @@ void centering(WINDOW*w,size_t*rw,size_t*cl){
 	refreshpage(w);
 	wmove(w,(int)hg,(int)c);
 	if(rw){
-		rw[0]=hg;cl[0]=xc-xtext;
+		rw[0]=(int)hg;cl[0]=(int)(xc-xtext);
 	}
 }
 static void colorfind(int a,int y,int pos,int sz){
@@ -307,8 +318,8 @@ static int find(char*z,int cursor,int pos,int visib,int y){
       a pointer to void is a GNU extension*/
 	//z+=sizeof(void*);
 	WINDOW*w=((WINDOW**)((void*)z))[1];
-	size_t rw=(size_t)getcury(w);
-	size_t cl=c_to_xc(getcurx(w),(int)rw);
+	int rw=getcury(w);
+	int cl=(int)c_to_xc(getcurx(w),rw);
 	//
 	int sz=cursor-pos;
 	if(sz>visib)sz=visib;
@@ -317,7 +328,7 @@ static int find(char*z,int cursor,int pos,int visib,int y){
 	bool forward=true;
 	size_t y1;size_t x1;int phase=-1;
 	for(;;){
-		bool b=finding((size_t)cursor,rw,cl,forward);
+		bool b=finding((size_t)cursor,(size_t)rw,(size_t)cl,forward);
 		int a;if(b){
 			if(phase==-1){
 				y1=ytext;x1=xtext;
@@ -532,4 +543,94 @@ WINDOW*position_init(){
 void position_reset(){
 	wresize(poswn,1,3);
 	mvwin(poswn,getmaxy(stdscr)-1,getmaxx(stdscr)-5);
+}
+static bool undo_expand(){
+	size_t sz=undos_tot+1;
+	size_t dif=sz&row_pad;
+	if(dif)sz+=((dif^row_pad)+1);
+	if(sz>undos_spc){
+		void*v=realloc(undos,sz*sizeof(eundo));
+		if(!v)return true;
+		undos=v;undos_spc=sz;
+	}
+	return false;
+}
+bool undo_add(size_t yb,size_t xb,size_t ye,size_t xe){
+	if(undo_expand())return true;
+	eundo*un=&undos[undos_tot];
+	un->yb=yb;un->xb=xb;un->ye=ye;un->xe=xe;
+	un->data=NULL;undos_tot++;
+	return false;
+}
+bool undo_add_del(size_t yb,size_t xb,size_t ye,size_t xe){
+	if(undo_expand())return true;
+	eundo*un=&undos[undos_tot];
+	un->xe=sizemembuf(yb,xb,ye,xe);
+	void*v=malloc(un->xe);
+	if(!v)return true;
+	un->yb=yb;un->xb=xb;un->ye=ye-yb+1;
+	un->data=v;undos_tot++;
+	cpymembuf(yb,xb,ye,xe);
+	return false;
+}
+void undo_free(){
+	if(undos){
+		while(undos_tot){
+			undos_tot--;if(undos[undos_tot].data)
+				free(undos[undos_tot].data);
+		}
+		free(undos);
+	}
+}
+void undo(WINDOW*w){
+	if(!undos_tot)return;
+	eundo*un=&undos[undos_tot-1];char*d=un->data;
+	size_t y1=un->yb;size_t y2=un->ye;
+	if(y1<=y2){
+		size_t xb=un->xb;size_t xe=un->xe;
+		if(d){
+			/*paste(y1,xb,&xe,d,xe,y2,false);
+			ytext=y2;xtext=xe;
+			int rw;int cl;
+			centering(w,&rw,&cl);
+			refreshpage(w);
+			wmove(w,rw,cl);
+			free(d);*/
+		}
+		else{
+			if(deleting_init(y1,xb,y2,xe))return;
+			deleting(y1,xb,y2,xe);
+			ytext=y1;xtext=xb;
+			int rw;int cl;
+			centering(w,&rw,&cl);
+			refreshpage(w);
+			wmove(w,rw,cl);
+		}
+	}/*else{
+if(d){
+for(size_t i=y2;i<y1;i++){
+row*r=&rows[i];
+if(row_alloc(r,0,1,r->sz))return;
+}
+for(size_t i=y2;i<y1;i++){
+char a=d[i-y2];
+if(a==ln_term[0])continue;
+row*r=&rows[i];
+row_set(r,0,1,r->sz,&a);
+}
+free(d);
+}else{
+for(size_t i=y2;i<y1;i++){
+size_t n=rows[i].sz;char*dt=rows[i].data;
+for(size_t j=1;j<=n;j++)dt[j-1]=dt[j];
+rows[i].sz--;
+}}
+ytext=b;xtext=0;
+int rw;int cl;
+centering(w,&rw,&cl);
+refreshpage(w);
+wmove(w,rw,cl);
+}*/
+	undos_tot--;
+	if(!undos_tot)mod_set(true);
 }
