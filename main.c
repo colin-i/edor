@@ -827,7 +827,7 @@ static bool row_alloc(row*rw,size_t l,size_t c,size_t r){
 			if(!dst)return true;
 			memcpy(dst,src,l);
 			//if(!mid)//alloc only
-			memcpy(dst,src+l,r);
+			memcpy(dst+l,src+l,r);
 		}else{
 			dst=realloc(src,size);
 			if(!dst)return true;
