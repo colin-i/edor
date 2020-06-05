@@ -1,6 +1,6 @@
 #include"main0.h"
-//strlen,2;open,2;close;write,3;free,3
-//realloc;malloc
+//strlen,2;open,2;close;write,3;free,4
+//realloc;malloc,2
 #include"mainb.h"
 //move,18;wmove,4;getch,3;wgetch;getmaxy,4
 //getmaxx;3;getcury;getcurx,8;stdscr,15
@@ -573,6 +573,26 @@ bool undo_add_del(size_t yb,size_t xb,size_t ye,size_t xe){
 	cpymembuf(yb,xb,ye,xe,v);
 	undos_tot++;return false;
 }
+bool undo_add_ind(size_t yb,size_t ye){
+	if(undo_expand())return true;
+	eundo*un=&undos[undos_tot];
+	un->ye=yb;un->yb=ye;
+	un->data=NULL;
+	undos_tot++;return false;
+}
+bool undo_add_ind_del(size_t yb,size_t ye){
+	if(undo_expand())return true;
+	char*d=malloc(ye-yb);
+	if(!d)return true;
+	eundo*un=&undos[undos_tot];
+	un->ye=yb;un->yb=ye;
+	un->data=d;
+	for(size_t i=yb;i<ye;i++){
+		if(!rows[i].sz)d[i-yb]=ln_term[0];
+		else d[i-yb]=rows[i].data[0];
+	}
+	undos_tot++;return false;
+}
 void undo_free(){
 	if(undos){
 		while(undos_tot){
@@ -606,31 +626,32 @@ void undo(WINDOW*w){
 			refreshpage(w);
 			wmove(w,rw,cl);
 		}
-	}/*else{
-if(d){
-for(size_t i=y2;i<y1;i++){
-row*r=&rows[i];
-if(row_alloc(r,0,1,r->sz))return;
-}
-for(size_t i=y2;i<y1;i++){
-char a=d[i-y2];
-if(a==ln_term[0])continue;
-row*r=&rows[i];
-row_set(r,0,1,r->sz,&a);
-}
-free(d);
-}else{
-for(size_t i=y2;i<y1;i++){
-size_t n=rows[i].sz;char*dt=rows[i].data;
-for(size_t j=1;j<=n;j++)dt[j-1]=dt[j];
-rows[i].sz--;
-}}
-ytext=b;xtext=0;
-int rw;int cl;
-centering(w,&rw,&cl);
-refreshpage(w);
-wmove(w,rw,cl);
-}*/
+	}else{
+		if(d){
+			for(size_t i=y2;i<y1;i++){
+				row*r=&rows[i];
+				if(row_alloc(r,0,1,r->sz))return;
+			}
+			for(size_t i=y2;i<y1;i++){
+				char a=d[i-y2];
+				if(a==ln_term[0])continue;
+				row*r=&rows[i];
+				row_set(r,0,1,r->sz,&a);
+			}
+			free(d);
+		}else{
+			for(size_t i=y2;i<y1;i++){
+				size_t n=rows[i].sz;char*dt=rows[i].data;
+				for(size_t j=1;j<=n;j++)dt[j-1]=dt[j];
+				rows[i].sz--;
+			}
+		}
+		ytext=y2;xtext=0;
+		int rw;int cl;
+		centering(w,&rw,&cl);
+		refreshpage(w);
+		wmove(w,rw,cl);
+	}
 	undos_tot--;
 	if(!undos_tot)mod_set(true);
 }

@@ -32,6 +32,7 @@ bool no_char(char);
 void refreshpage(WINDOW*w);
 size_t c_to_xc(int,int);
 bool row_alloc(row*,size_t,size_t,size_t);
+void row_set(row*,size_t,size_t,size_t,char*);
 void deleting(size_t,size_t,size_t,size_t);
 void mod_set(bool);
 size_t sizemembuf(size_t,size_t,size_t,size_t);
@@ -48,6 +49,8 @@ void position(int,int);
 void position_reset(void);
 bool undo_add(size_t,size_t,size_t,size_t);
 bool undo_add_del(size_t,size_t,size_t,size_t);
+bool undo_add_ind(size_t,size_t);
+bool undo_add_ind_del(size_t,size_t);
 void undo_free(void);
 void undo(WINDOW*w);
 

@@ -130,7 +130,7 @@ static char helptext[]="INPUT"
 "\n    c = cancel"
 "\n    any key to return"
 "\n-"
-"\nCtrl+u = undo(ready only type,paste,delete)"
+"\nCtrl+u = undo, unstable at bspc,del,enter"
 "\nCtrl+b = build file"
 "\nCtrl+q = quit";//23
 static bool visual_bool=false;
@@ -838,7 +838,7 @@ bool row_alloc(row*rw,size_t l,size_t c,size_t r){
 	}//else dst=src;
 	return false;
 }
-static void row_set(row*rw,size_t l,size_t c,size_t r,char*mid){
+void row_set(row*rw,size_t l,size_t c,size_t r,char*mid){
 	char*d=rw->data;
 	size_t j=l+c;size_t k=l+r;size_t i=j+r;
 	while(j<i){
@@ -1291,6 +1291,7 @@ static void indent(bool b,size_t ybsel,size_t*xbsel,size_t yesel,size_t*xesel,in
 			row*r=&rows[i];
 			if(row_alloc(r,0,1,r->sz))return;
 		}
+		if(undo_add_ind(ybsel,ye))return;
 		for(size_t i=ybsel;i<ye;i++){
 			row*r=&rows[i];
 			row_set(r,0,1,r->sz,"\t");
@@ -1298,16 +1299,21 @@ static void indent(bool b,size_t ybsel,size_t*xbsel,size_t yesel,size_t*xesel,in
 		if(mod_flag)mod_set(false);
 	}else{
 		bool something=false;
-		for(size_t i=ybsel;i<ye;i++){
-			row*r=&rows[i];size_t sz=r->sz;
-			if(sz){
-				char*d=r->data;
-				for(size_t j=1;j<sz;j++)d[j-1]=d[j];
-				r->sz=sz-1;
-				something=true;
-			}
+		for(size_t i=ybsel;i<=ye;i++){
+			if(rows[i].sz){something=true;break;}
 		}
-		if(mod_flag)if(something)mod_set(false);
+		if(something){
+			if(undo_add_ind_del(ybsel,ye))return;
+			for(size_t i=ybsel;i<ye;i++){
+				row*r=&rows[i];size_t sz=r->sz;
+				if(sz){
+					char*d=r->data;
+					for(size_t j=1;j<sz;j++)d[j-1]=d[j];
+					r->sz=sz-1;
+				}
+			}
+			if(mod_flag)mod_set(false);
+		}
 	}
 	int rb;if(ybsel<ytext)rb=0;
 	else rb=(int)(ybsel-ytext);
