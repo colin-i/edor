@@ -1273,21 +1273,21 @@ static void type(int cr,WINDOW*w){
 static void indent(bool b,size_t ybsel,size_t*xbsel,size_t yesel,size_t*xesel,int*cl,WINDOW*w){
 	if(ybsel>=rows_tot)return;
 	size_t ye;
-	if(yesel>=rows_tot)ye=rows_tot-1;
-	else ye=yesel;
+	if(yesel>=rows_tot)ye=rows_tot;
+	else ye=yesel+1;
 	if(b){
-		for(size_t i=ybsel;i<=ye;i++){
+		for(size_t i=ybsel;i<ye;i++){
 			row*r=&rows[i];
 			if(row_alloc(r,0,1,r->sz))return;
 		}
-		for(size_t i=ybsel;i<=ye;i++){
+		for(size_t i=ybsel;i<ye;i++){
 			row*r=&rows[i];
 			row_set(r,0,1,r->sz,"\t");
 		}
 		if(mod_flag)mod_set(false);
 	}else{
 		bool something=false;
-		for(size_t i=ybsel;i<=ye;i++){
+		for(size_t i=ybsel;i<ye;i++){
 			row*r=&rows[i];size_t sz=r->sz;
 			if(sz){
 				char*d=r->data;
