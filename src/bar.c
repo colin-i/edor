@@ -1,8 +1,8 @@
 #include"main0.h"
-//strlen,2;open,2;close;write,3;free,2
+//strlen,2;open,2;close;write,3;free,3
 //realloc;malloc
 #include"mainb.h"
-//move,18;wmove,3;getch,3;wgetch;getmaxy,4
+//move,18;wmove,4;getch,3;wgetch;getmaxy,4
 //getmaxx;3;getcury;getcurx,8;stdscr,15
 //keyname;addch,11;waddch;mvaddch,8;addstr
 //wnoutrefresh,7;attrset,2;newwin
@@ -559,8 +559,8 @@ bool undo_add(size_t yb,size_t xb,size_t ye,size_t xe){
 	if(undo_expand())return true;
 	eundo*un=&undos[undos_tot];
 	un->yb=yb;un->xb=xb;un->ye=ye;un->xe=xe;
-	un->data=NULL;undos_tot++;
-	return false;
+	un->data=NULL;
+	undos_tot++;return false;
 }
 bool undo_add_del(size_t yb,size_t xb,size_t ye,size_t xe){
 	if(undo_expand())return true;
@@ -568,10 +568,10 @@ bool undo_add_del(size_t yb,size_t xb,size_t ye,size_t xe){
 	un->xe=sizemembuf(yb,xb,ye,xe);
 	void*v=malloc(un->xe);
 	if(!v)return true;
-	un->yb=yb;un->xb=xb;un->ye=ye-yb+1;
-	un->data=v;undos_tot++;
-	cpymembuf(yb,xb,ye,xe);
-	return false;
+	un->yb=yb;un->xb=xb;un->ye=ye;
+	un->data=v;
+	cpymembuf(yb,xb,ye,xe,v);
+	undos_tot++;return false;
 }
 void undo_free(){
 	if(undos){
@@ -589,16 +589,16 @@ void undo(WINDOW*w){
 	if(y1<=y2){
 		size_t xb=un->xb;size_t xe=un->xe;
 		if(d){
-			/*paste(y1,xb,&xe,d,xe,y2,false);
+			paste(y1,xb,&xe,d,xe,y2-y1+1,false);
 			ytext=y2;xtext=xe;
 			int rw;int cl;
 			centering(w,&rw,&cl);
 			refreshpage(w);
 			wmove(w,rw,cl);
-			free(d);*/
+			free(d);
 		}
 		else{
-			if(deleting_init(y1,xb,y2,xe))return;
+			if(y1<y2)if(row_alloc(&rows[y1],xb,rows[y2].sz-xe,0))return;
 			deleting(y1,xb,y2,xe);
 			ytext=y1;xtext=xb;
 			int rw;int cl;
