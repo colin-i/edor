@@ -53,6 +53,7 @@ bool undo_add_ind(size_t,size_t);
 bool undo_add_ind_del(size_t,size_t);
 void undo_free(void);
 void undo(WINDOW*w);
+void undo_save(void);
 
 #define Char_Return 0xd
 #define Char_Backspace 0x7f

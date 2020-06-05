@@ -1426,6 +1426,7 @@ static bool loopin(WINDOW*w){
 					if(ret==1){
 						if(d!=textfile)text_file=textfile;
 						mod_set(true);
+						undo_save();
 					}
 					else if(ret==-2)return true;
 				}

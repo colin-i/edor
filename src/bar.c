@@ -40,6 +40,7 @@ char*data;}eundo;
 static eundo*undos=NULL;
 static size_t undos_tot=0;
 static size_t undos_spc=0;
+static size_t undos_save=0;
 
 char*bar_init(){
 	char*h="F1 for help";
@@ -545,6 +546,7 @@ void position_reset(){
 	mvwin(poswn,getmaxy(stdscr)-1,getmaxx(stdscr)-5);
 }
 static bool undo_expand(){
+	if(undos_tot<undos_save)undos_save=0;
 	size_t sz=undos_tot+1;
 	size_t dif=sz&row_pad;
 	if(dif)sz+=((dif^row_pad)+1);
@@ -644,5 +646,7 @@ void undo(WINDOW*w){
 		centering(w,0,0);
 	}
 	undos_tot--;
-	if(!undos_tot)mod_set(true);
+	if(undos_tot==undos_save)mod_set(true);
+	else if(undos_tot==undos_save-1)mod_set(false);
 }
+void undo_save(){undos_save=undos_tot;}
