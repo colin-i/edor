@@ -611,20 +611,14 @@ void undo(WINDOW*w){
 		if(d){
 			paste(y1,xb,&xe,d,xe,y2-y1+1,false);
 			ytext=y2;xtext=xe;
-			int rw;int cl;
-			centering(w,&rw,&cl);
-			refreshpage(w);
-			wmove(w,rw,cl);
+			centering(w,0,0);
 			free(d);
 		}
 		else{
 			if(y1<y2)if(row_alloc(&rows[y1],xb,rows[y2].sz-xe,0))return;
 			deleting(y1,xb,y2,xe);
 			ytext=y1;xtext=xb;
-			int rw;int cl;
-			centering(w,&rw,&cl);
-			refreshpage(w);
-			wmove(w,rw,cl);
+			centering(w,0,0);
 		}
 	}else{
 		if(d){
@@ -647,10 +641,7 @@ void undo(WINDOW*w){
 			}
 		}
 		ytext=y2;xtext=0;
-		int rw;int cl;
-		centering(w,&rw,&cl);
-		refreshpage(w);
-		wmove(w,rw,cl);
+		centering(w,0,0);
 	}
 	undos_tot--;
 	if(!undos_tot)mod_set(true);

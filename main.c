@@ -130,7 +130,7 @@ static char helptext[]="INPUT"
 "\n    c = cancel"
 "\n    any key to return"
 "\n-"
-"\nCtrl+u = undo, unstable at bspc,del,enter"
+"\nCtrl+u = undo"
 "\nCtrl+b = build file"
 "\nCtrl+q = quit";//23
 static bool visual_bool=false;
@@ -1083,12 +1083,14 @@ static bool delete_key(size_t y,size_t x,int r,int c,WINDOW*w){
 		if(yy==rows_tot)return false;
 		row*r2=&rows[yy];
 		if(row_alloc(r1,x,r2->sz,0))return true;
+		if(undo_add_del(y,x,yy,0))return true;
 		row_set(r1,x,r2->sz,0,r2->data);
 		row_del(yy,yy);
 		rowfixdel(w,r,c,r1,x);
 		if(r+1<getmaxy(w))refreshrows(w,r+1);
 		return false;
 	}
+	if(undo_add_del(y,x,y,x+1))return true;
 	char*data=r1->data;
 	for(size_t i=x+1;i<sz;i++){
 		data[i-1]=data[i];
@@ -1107,6 +1109,7 @@ static bool bcsp(size_t y,size_t x,int*rw,int*cl,WINDOW*w){
 		size_t sz0=r0->sz;
 		size_t xx=xtext;c=end(w,yy);
 		if(row_alloc(r0,sz0,r1->sz,0))return true;
+		if(undo_add_del(yy,sz0,y,0))return true;
 		row_set(r0,sz0,r1->sz,0,r1->data);
 		row_del(y,y);
 		cl[0]=c;
@@ -1124,6 +1127,7 @@ static bool bcsp(size_t y,size_t x,int*rw,int*cl,WINDOW*w){
 		}
 		return false;
 	}
+	if(undo_add_del(y,x-1,y,x))return true;
 	row*r=&rows[y];
 	char*data=r->data;size_t sz=r->sz;
 	c-=data[x-1]=='\t'?tab_sz:1;
@@ -1164,6 +1168,7 @@ static bool enter(size_t y,size_t x,int*r,int*c,WINDOW*w){
 	size_t spc=row_pad_sz(sze);
 	char*v=malloc(spc);
 	if(!v)return true;
+	if(undo_add(y,x,y+1,tb))return true;
 	row rw;
 	memset(v,'\t',tb);
 	memcpy(v+tb,b+x,s);
