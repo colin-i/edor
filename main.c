@@ -851,11 +851,6 @@ static void row_set(row*rw,size_t l,size_t c,size_t r,char*mid){
 	}
 	rw->sz=j+r;
 }
-static bool mal_spc_rea(row*rw,size_t l,size_t c,size_t r,char*mid){
-	if(row_alloc(rw,l,c,r))return true;
-	if(mid)row_set(rw,l,c,r,mid);
-	return false;
-}
 static void deleted(size_t ybsel,size_t xbsel,int*r,int*c,WINDOW*w){
 	if(ybsel<ytext){ytext=ybsel;r[0]=0;}
 	else r[0]=(int)(ybsel-ytext);
@@ -983,7 +978,8 @@ static size_t pasting(row*d,size_t y,size_t x,WINDOW*w){
 		//mem
 		if(rows_expand(max))return cutbuf_r;
 	}
-	if(mal_spc_rea(&rows[y],x,szc,sz1r,cutbuf))return cutbuf_r;
+	if(row_alloc(&rows[y],x,szc,sz1r))return cutbuf_r;
+	row_set(&rows[y],x,szc,sz1r,cutbuf);
 	if(one)l=x+szc;
 	else rows_insert(d,max,y+1);
 	pasted(y-ytext,l,w);
@@ -1077,7 +1073,8 @@ static bool delete_key(size_t y,size_t x,int r,int c,WINDOW*w){
 		size_t yy=y+1;
 		if(yy==rows_tot)return false;
 		row*r2=&rows[yy];
-		if(mal_spc_rea(r1,x,r2->sz,0,r2->data))return true;
+		if(row_alloc(r1,x,r2->sz,0))return true;
+		row_set(r1,x,r2->sz,0,r2->data);
 		row_del(yy,yy);
 		rowfixdel(w,r,c,r1,x);
 		if(r+1<getmaxy(w))refreshrows(w,r+1);
@@ -1095,11 +1092,13 @@ static bool bcsp(size_t y,size_t x,int*rw,int*cl,WINDOW*w){
 	int c=cl[0];
 	if(xtext==0&&c==0){
 		if(y==0)return false;
-		row*r0=&rows[y-1];
+		size_t yy=y-1;
+		row*r0=&rows[yy];
 		row*r1=&rows[y];
 		size_t sz0=r0->sz;
-		size_t xx=xtext;c=end(w,y-1);
-		if(mal_spc_rea(r0,sz0,r1->sz,0,r1->data))return true;
+		size_t xx=xtext;c=end(w,yy);
+		if(row_alloc(r0,sz0,r1->sz,0))return true;
+		row_set(r0,sz0,r1->sz,0,r1->data);
 		row_del(y,y);
 		cl[0]=c;
 		int r=rw[0];
@@ -1223,7 +1222,8 @@ static void type(int cr,WINDOW*w){
 	else if(cr==KEY_DC){if(delete_key(y,x,rw,cl,w))return;}
 	else{
 		char ch=cr&0xff;
-		if(mal_spc_rea(r,x,1,r->sz-x,&ch))return;
+		if(row_alloc(r,x,1,r->sz-x))return;
+		row_set(r,x,1,r->sz-x,&ch);
 		bool is_tab=ch=='\t';
 		int s=is_tab?tab_sz:1;
 		//
