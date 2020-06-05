@@ -284,7 +284,7 @@ void position(int rw,int cl){
 	mvwaddstr(poswn,0,0,posbuf);
 	wnoutrefresh(poswn);
 }
-void centering(WINDOW*w,int*rw,int*cl){
+void centering(WINDOW*w,size_t*rw,size_t*cl){
 	position(0,0);
 	size_t wd=(size_t)getmaxx(w)/3;
 	size_t c=0;char*d=rows[ytext].data;
@@ -300,7 +300,7 @@ void centering(WINDOW*w,int*rw,int*cl){
 	refreshpage(w);
 	wmove(w,(int)hg,(int)c);
 	if(rw){
-		rw[0]=(int)hg;cl[0]=(int)(xc-xtext);
+		rw[0]=hg;cl[0]=xc-xtext;
 	}
 }
 static void colorfind(int a,int y,int pos,int sz){
@@ -318,8 +318,8 @@ static int find(char*z,int cursor,int pos,int visib,int y){
       a pointer to void is a GNU extension*/
 	//z+=sizeof(void*);
 	WINDOW*w=((WINDOW**)((void*)z))[1];
-	int rw=getcury(w);
-	int cl=(int)c_to_xc(getcurx(w),rw);
+	size_t xr=(size_t)getcury(w);
+	size_t xc=c_to_xc(getcurx(w),(int)xr);
 	//
 	int sz=cursor-pos;
 	if(sz>visib)sz=visib;
@@ -328,7 +328,7 @@ static int find(char*z,int cursor,int pos,int visib,int y){
 	bool forward=true;
 	size_t y1;size_t x1;int phase=-1;
 	for(;;){
-		bool b=finding((size_t)cursor,(size_t)rw,(size_t)cl,forward);
+		bool b=finding((size_t)cursor,xr,xc,forward);
 		int a;if(b){
 			if(phase==-1){
 				y1=ytext;x1=xtext;
@@ -343,11 +343,11 @@ static int find(char*z,int cursor,int pos,int visib,int y){
 				colorfind(1,y,pos,sz);
 				wnoutrefresh(stdscr);
 			}
-			centering(w,&rw,&cl);
+			centering(w,&xr,&xc);
 			a=wgetch(w);
 		}else a=getch();
 		if(a==Char_Return){
-			if(b)cl++;
+			if(b)xc+=(size_t)cursor;
 			forward=true;
 			continue;
 		}

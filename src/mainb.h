@@ -43,7 +43,7 @@ char*bar_init(void);
 int save(void);
 int question(char*);
 int command(char*);
-void centering(WINDOW*,int*,int*);
+void centering(WINDOW*,size_t*,size_t*);
 WINDOW*position_init(void);
 void position(int,int);
 void position_reset(void);
