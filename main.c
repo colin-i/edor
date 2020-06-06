@@ -8,7 +8,7 @@
 //keyname,2;getcury,28;getcurx,23
 //addch;waddch,4;mvaddch,2;addstr,3
 //wnoutrefresh,8;attrset,3;COLOR_PAIR,2
-//strcmp,12;sprintf
+//strcmp,18;sprintf
 
 //#include <string.h>
 void*memcpy(void*,const void*,size_t);//14
@@ -131,6 +131,7 @@ static char helptext[]="INPUT"
 "\n    any key to return"
 "\n-"
 "\nCtrl+u = undo"
+"\nCtrl+r = redo"
 "\nCtrl+b = build file"
 "\nCtrl+q = quit";//23
 static bool visual_bool=false;
@@ -1457,6 +1458,8 @@ static bool loopin(WINDOW*w){
 				}
 			}else if(!strcmp(s,"^U")){
 				undo(w);
+			}else if(!strcmp(s,"^R")){
+				redo(w);
 			}else if(!strcmp(s,"^B")){
 				if(textfile){
 					if(out_f(textfile,rows,rows_tot)){
