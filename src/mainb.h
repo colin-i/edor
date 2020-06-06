@@ -33,6 +33,7 @@ void refreshpage(WINDOW*w);
 size_t c_to_xc(int,int);
 bool row_alloc(row*,size_t,size_t,size_t);
 void row_set(row*,size_t,size_t,size_t,char*);
+bool deleting_init(size_t,size_t,size_t,size_t);
 void deleting(size_t,size_t,size_t,size_t);
 void mod_set(bool);
 size_t sizemembuf(size_t,size_t,size_t,size_t);

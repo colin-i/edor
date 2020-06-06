@@ -620,7 +620,7 @@ void undo(WINDOW*w){
 			free(d);
 		}
 		else{
-			if(y1!=y2)if(row_alloc(&rows[y1],xb,rows[y2].sz-xe,0))return;
+			if(deleting_init(y1,xb,y2,xe))return;
 			deleting(y1,xb,y2,xe);
 			ytext=y1;xtext=xb;
 			centering(w,0,0);

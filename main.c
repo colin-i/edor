@@ -906,19 +906,23 @@ void deleting(size_t ybsel,size_t xbsel,size_t yesel,size_t xesel){
 		row_del(ybsel+1,yesel);
 	}
 }
+bool deleting_init(size_t ybsel,size_t xbsel,size_t yesel,size_t xesel){
+	if(ybsel!=yesel){
+		size_t se=rows[yesel].sz-xesel;
+		size_t sb=rows[ybsel].sz-xbsel;
+		if(se>sb){//need deleting part at undo
+			return row_alloc(&rows[ybsel],rows[ybsel].sz,se-sb,0);
+		}
+	}
+	return false;
+}
 static bool delete(size_t ybsel,size_t xbsel,size_t yesel,size_t xesel,int*rw,int*cl,WINDOW*w){
 	fixmembuf(&ybsel,&xbsel);
 	fixmembuf(&yesel,&xesel);
 	if(xesel==rows[yesel].sz){if(yesel<rows_tot-1){yesel++;xesel=0;}}
 	else xesel++;
 	if(ybsel!=yesel||xbsel!=xesel){
-		if(ybsel!=yesel){
-			size_t se=rows[yesel].sz-xesel;
-			size_t sb=rows[ybsel].sz-xbsel;
-			if(se>sb){//need deleting part at undo
-				if(row_alloc(&rows[ybsel],rows[ybsel].sz,se-sb,0))return false;
-			}
-		}
+		if(deleting_init(ybsel,xbsel,yesel,xesel))return false;
 		if(undo_add_del(ybsel,xbsel,yesel,xesel))return false;
 		deleting(ybsel,xbsel,yesel,xesel);
 		deleted(ybsel,xbsel,rw,cl,w);
