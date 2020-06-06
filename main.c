@@ -112,7 +112,7 @@ static bool helpend;
 static int phelp;
 static char helptext[]="INPUT"
 "\nhelp: q(uit),up/down,mouse/touch v.scroll"
-"\narrows(Alt),home(Ctrl,Alt)/end(Ctrl),page up/down;mouse/touch press or v.scroll"
+"\narrows(Alt),home(Ctrl,Alt)/end(Ctrl),page up/down;mouse/touch click or v.scroll"
 "\nCtrl+v = visual mode"
 "\n    c = copy"
 "\n    d = delete"
