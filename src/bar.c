@@ -614,7 +614,7 @@ void undo(WINDOW*w){
 	if(y1<=y2){
 		size_t xb=un->xb;size_t xe=un->xe;
 		if(d){
-			paste(y1,xb,&xe,d,xe,y2-y1+1,false);
+			if(!paste(y1,xb,&xe,d,xe,y2-y1+1,false))return;
 			ytext=y2;xtext=xe;
 			centering(w,0,0);
 			free(d);
