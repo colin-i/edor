@@ -694,8 +694,10 @@ void undo_save(){undos_save=undos_tot;}
 bool undo_type(size_t yb,size_t xb,size_t ye,size_t xe){
 	if(undos_tot){
 		eundo*un=&undos[undos_tot-1];
-		if(un->ye==yb&&un->xe==xb){
-			un->xe++;return false;
+		if(!un->data&&un->yb<=un->ye){
+			if(un->ye==yb&&un->xe==xb){
+				un->xe++;return false;
+			}
 		}
 	}
 	return undo_add(yb,xb,ye,xe);
@@ -703,16 +705,18 @@ bool undo_type(size_t yb,size_t xb,size_t ye,size_t xe){
 bool undo_bcsp(size_t yb,size_t xb,size_t ye,size_t xe){
 	if(undos_tot){
 		eundo*un=&undos[undos_tot-1];
-		if(un->yb==ye&&un->xb==xe){
-			char*d;if(!(un->xe&row_pad)){
-				d=realloc(un->data,un->xe+row_pad+1);
-				if(!d)return true;
-				un->data=d;
-			}else d=un->data;
-			for(size_t i=un->xe;i>0;i--)d[i]=d[i-1];
-			d[0]=rows[yb].data[xb];
-			un->xb--;un->xe++;
-			return false;
+		if(un->data&&un->yb<=un->ye){
+			if(un->yb==ye&&un->xb==xe){
+				char*d;if(!(un->xe&row_pad)){
+					d=realloc(un->data,un->xe+row_pad+1);
+					if(!d)return true;
+					un->data=d;
+				}else d=un->data;
+				for(size_t i=un->xe;i>0;i--)d[i]=d[i-1];
+				d[0]=rows[yb].data[xb];
+				un->xb--;un->xe++;
+				return false;
+			}
 		}
 	}
 	return undo_add_del(yb,xb,ye,xe);
@@ -720,15 +724,17 @@ bool undo_bcsp(size_t yb,size_t xb,size_t ye,size_t xe){
 bool undo_delk(size_t yb,size_t xb,size_t ye,size_t xe){
 	if(undos_tot){
 		eundo*un=&undos[undos_tot-1];
-		if(un->yb==yb&&un->xb==xb){
-			char*d;if(!(un->xe&row_pad)){
-				d=realloc(un->data,un->xe+row_pad+1);
-				if(!d)return true;
-				un->data=d;
-			}else d=un->data;
-			d[un->xe]=rows[yb].data[xb];
-			un->xe++;
-			return false;
+		if(un->data&&un->yb<=un->ye){
+			if(un->yb==yb&&un->xb==xb){
+				char*d;if(!(un->xe&row_pad)){
+					d=realloc(un->data,un->xe+row_pad+1);
+					if(!d)return true;
+					un->data=d;
+				}else d=un->data;
+				d[un->xe]=rows[yb].data[xb];
+				un->xe++;
+				return false;
+			}
 		}
 	}
 	return undo_add_del(yb,xb,ye,xe);
