@@ -56,6 +56,9 @@ void undo_free(void);
 void undo(WINDOW*w);
 void redo(WINDOW*w);
 void undo_save(void);
+bool undo_type(size_t,size_t,size_t,size_t);
+bool undo_bcsp(size_t,size_t,size_t,size_t);
+bool undo_delk(size_t,size_t,size_t,size_t);
 
 #define Char_Return 0xd
 #define Char_Backspace 0x7f

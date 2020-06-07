@@ -1095,7 +1095,7 @@ static bool delete_key(size_t y,size_t x,int r,int c,WINDOW*w){
 		if(r+1<getmaxy(w))refreshrows(w,r+1);
 		return false;
 	}
-	if(undo_add_del(y,x,y,x+1))return true;
+	if(undo_delk(y,x,y,x+1))return true;
 	char*data=r1->data;
 	for(size_t i=x+1;i<sz;i++){
 		data[i-1]=data[i];
@@ -1132,7 +1132,7 @@ static bool bcsp(size_t y,size_t x,int*rw,int*cl,WINDOW*w){
 		}
 		return false;
 	}
-	if(undo_add_del(y,x-1,y,x))return true;
+	if(undo_bcsp(y,x-1,y,x))return true;
 	row*r=&rows[y];
 	char*data=r->data;size_t sz=r->sz;
 	c-=data[x-1]=='\t'?tab_sz:1;
@@ -1243,7 +1243,7 @@ static void type(int cr,WINDOW*w){
 	else{
 		char ch=cr&0xff;
 		if(row_alloc(r,x,1,r->sz-x))return;
-		if(undo_add(y,x,y,x+1))return;
+		if(undo_type(y,x,y,x+1))return;
 		row_set(r,x,1,r->sz-x,&ch);
 		bool is_tab=ch=='\t';
 		int s=is_tab?tab_sz:1;

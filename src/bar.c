@@ -1,6 +1,6 @@
 #include"main0.h"
 //strlen,2;open,2;close;write,3;free,4
-//realloc;malloc,2
+//realloc,3;malloc,2
 #include"mainb.h"
 //move,18;wmove;getch,3;wgetch;getmaxy,4
 //getmaxx;3;getcury;getcurx,8;stdscr,15
@@ -575,14 +575,10 @@ static void undo_release(size_t a,size_t b){
 		a++;
 	}
 }
-static bool undo_del(eundo*un,size_t yb,size_t xb,size_t ye,size_t xe,bool release){
+static bool undo_del_backward(eundo*un,size_t yb,size_t xb,size_t ye,size_t xe){
 	size_t x=sizemembuf(yb,xb,ye,xe);
 	void*v=malloc(x);
 	if(!v)return true;
-	if(release){
-		undo_release(undos_tot,undos_max);
-		undos_max=undos_tot;
-	}
 	un->yb=yb;un->xb=xb;un->ye=ye;un->xe=x;
 	un->data=v;
 	cpymembuf(yb,xb,ye,xe,v);
@@ -590,7 +586,19 @@ static bool undo_del(eundo*un,size_t yb,size_t xb,size_t ye,size_t xe,bool relea
 }
 bool undo_add_del(size_t yb,size_t xb,size_t ye,size_t xe){
 	if(undo_expand())return true;
-	if(undo_del(&undos[undos_tot],yb,xb,ye,xe,undos_tot!=undos_max))return true;
+	size_t x=sizemembuf(yb,xb,ye,xe);
+	size_t dif=x&row_pad;
+	if(dif)dif=(dif^row_pad)+1;
+	void*v=malloc(x+dif);
+	if(!v)return true;
+	if(undos_tot!=undos_max){
+		undo_release(undos_tot,undos_max);
+		undos_max=undos_tot;
+	}
+	eundo*un=&undos[undos_tot];
+	un->yb=yb;un->xb=xb;un->ye=ye;un->xe=x;
+	un->data=v;
+	cpymembuf(yb,xb,ye,xe,v);
 	undo_ok();return false;
 }
 bool undo_add_ind(size_t yb,size_t ye){
@@ -640,7 +648,7 @@ static void dos(WINDOW*w,eundo*un,size_t z){
 		}
 		else{
 			if(deleting_init(y1,xb,y2,xe))return;
-			if(undo_del(un,y1,xb,y2,xe,false))return;
+			if(undo_del_backward(un,y1,xb,y2,xe))return;
 			deleting(y1,xb,y2,xe);
 			ytext=y1;xtext=xb;
 			centering(w,0,0);
@@ -683,3 +691,45 @@ void redo(WINDOW*w){
 	dos(w,&undos[undos_tot],1);
 }
 void undo_save(){undos_save=undos_tot;}
+bool undo_type(size_t yb,size_t xb,size_t ye,size_t xe){
+	if(undos_tot){
+		eundo*un=&undos[undos_tot-1];
+		if(un->ye==yb&&un->xe==xb){
+			un->xe++;return false;
+		}
+	}
+	return undo_add(yb,xb,ye,xe);
+}
+bool undo_bcsp(size_t yb,size_t xb,size_t ye,size_t xe){
+	if(undos_tot){
+		eundo*un=&undos[undos_tot-1];
+		if(un->yb==ye&&un->xb==xe){
+			char*d;if(!(un->xe&row_pad)){
+				d=realloc(un->data,un->xe+row_pad+1);
+				if(!d)return true;
+				un->data=d;
+			}else d=un->data;
+			for(size_t i=un->xe;i>0;i--)d[i]=d[i-1];
+			d[0]=rows[yb].data[xb];
+			un->xb--;un->xe++;
+			return false;
+		}
+	}
+	return undo_add_del(yb,xb,ye,xe);
+}
+bool undo_delk(size_t yb,size_t xb,size_t ye,size_t xe){
+	if(undos_tot){
+		eundo*un=&undos[undos_tot-1];
+		if(un->yb==yb&&un->xb==xb){
+			char*d;if(!(un->xe&row_pad)){
+				d=realloc(un->data,un->xe+row_pad+1);
+				if(!d)return true;
+				un->data=d;
+			}else d=un->data;
+			d[un->xe]=rows[yb].data[xb];
+			un->xe++;
+			return false;
+		}
+	}
+	return undo_add_del(yb,xb,ye,xe);
+}
