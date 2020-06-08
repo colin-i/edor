@@ -2,16 +2,16 @@
 //strlen,2;open,2;close;write,3;free,4
 //realloc,3;malloc,2
 #include"mainb.h"
-//move,18;wmove;getch,3;wgetch;getmaxy,4
-//getmaxx;3;getcury;getcurx,8;stdscr,15
-//keyname;addch,11;waddch;mvaddch,8;addstr
-//wnoutrefresh,7;attrset,2;newwin
-//COLOR_PAIR;strcmp;sprintf
+//move,19;wmove;getch,3;wgetch;getmaxy,6
+//getmaxx;3;getcury;getcurx,8;stdscr,18
+//keyname;addch,12;waddch;mvaddch,8,addstr
+//wnoutrefresh,8;attrset,2;newwin
+//COLOR_PAIR;strcmp;sprintf,2
 #include"mainbc.h"
 
 //#include<curses.h>
 int addnstr(const char*,int);//8
-int mvaddstr(int,int,const char*);
+int mvaddstr(int,int,const char*);//2
 int mvaddnstr(int,int,const char*,int);//2
 int mvwaddstr(WINDOW*,int,int,const char*);
 int wresize(WINDOW*,int,int);//2
@@ -42,6 +42,7 @@ static size_t undos_tot=0;
 static size_t undos_spc=0;
 static size_t undos_save=0;
 static size_t undos_max=0;
+static int undo_v=0;
 
 char*bar_init(){
 	char*h="F1 for help";
@@ -386,12 +387,24 @@ static bool go_to(int cursor){
 	}
 	return 0;
 }
+static void undo_erase(int a){
+	int dif=undo_v-a;
+	while(dif>0){addch(' ');dif--;}
+	undo_v-=undo_v-a;
+}
+bool undo_clear(){
+	if(!undo_v)return false;
+	move(getmaxy(stdscr)-1,com_left);
+	undo_erase(0);
+	return true;
+}
 //-2resize,-1no/quit,0er/boolFalse,1ok
 int command(char*comnrp){
 	int right=getbegx(poswn)-2;
 	int rightexcl=right+1;
 	int visib=rightexcl-com_left;
 	if(visib<2)return 0;//phisical visib is 1
+	undo_clear();
 	int y=getmaxy(stdscr)-1;
 	move(y,com_left);
 	int cursor=0;
@@ -634,21 +647,21 @@ void undo_free(){
 		free(undos);
 	}
 }
-static void dos(WINDOW*w,eundo*un,size_t z){
+static bool dos(WINDOW*w,eundo*un,size_t z){
 	char*d=un->data;
 	size_t y1=un->yb;size_t y2=un->ye;
 	if(y1<=y2){
 		size_t xb=un->xb;size_t xe=un->xe;
 		if(d){
-			if(!paste(y1,xb,&xe,d,xe,y2-y1+1,false))return;
+			if(!paste(y1,xb,&xe,d,xe,y2-y1+1,false))return false;
 			un->xe=xe;un->data=NULL;
 			ytext=y2;xtext=xe;
 			centering(w,0,0);
 			free(d);
 		}
 		else{
-			if(deleting_init(y1,xb,y2,xe))return;
-			if(undo_del_backward(un,y1,xb,y2,xe))return;
+			if(deleting_init(y1,xb,y2,xe))return false;
+			if(undo_del_backward(un,y1,xb,y2,xe))return false;
 			deleting(y1,xb,y2,xe);
 			ytext=y1;xtext=xb;
 			centering(w,0,0);
@@ -657,7 +670,7 @@ static void dos(WINDOW*w,eundo*un,size_t z){
 		if(d){
 			for(size_t i=y2;i<y1;i++){
 				row*r=&rows[i];
-				if(row_alloc(r,0,1,r->sz))return;
+				if(row_alloc(r,0,1,r->sz))return false;
 			}
 			un->data=NULL;
 			for(size_t i=y2;i<y1;i++){
@@ -668,7 +681,7 @@ static void dos(WINDOW*w,eundo*un,size_t z){
 			}
 			free(d);
 		}else{
-			if(undo_ind_del(un,y2,y1,false))return;
+			if(undo_ind_del(un,y2,y1,false))return false;
 			for(size_t i=y2;i<y1;i++){
 				size_t n=rows[i].sz;char*dt=rows[i].data;
 				for(size_t j=1;j<=n;j++)dt[j-1]=dt[j];
@@ -681,14 +694,28 @@ static void dos(WINDOW*w,eundo*un,size_t z){
 	undos_tot+=z;
 	if(undos_tot==undos_save)mod_set(true);
 	else if(undos_tot==undos_save+z)mod_set(false);
+	return true;
+}
+static void undo_show(size_t n){
+	char nr[11];
+	int a=sprintf(nr,"%u",n);
+	mvaddstr(getmaxy(stdscr)-1,com_left,nr);
+	undo_erase(a);
+	wnoutrefresh(stdscr);
 }
 void undo(WINDOW*w){
 	if(!undos_tot)return;
-	dos(w,&undos[undos_tot-1],(size_t)-1);
+	if(dos(w,&undos[undos_tot-1],(size_t)-1)){
+		if(undos_tot<=undos_save)undo_show(undos_tot);
+		else undo_show(undos_tot-undos_save);
+	}
 }
 void redo(WINDOW*w){
 	if(undos_tot==undos_max)return;
-	dos(w,&undos[undos_tot],1);
+	if(dos(w,&undos[undos_tot],1)){
+		if(undos_tot>=undos_save)undo_show(undos_max-undos_tot);
+		else undo_show(undos_save-undos_tot);
+	}
 }
 void undo_save(){undos_save=undos_tot;}
 bool undo_type(size_t yb,size_t xb,size_t ye,size_t xe){

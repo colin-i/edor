@@ -4,10 +4,10 @@
 #include"src/mainc.h"
 #include"src/mainb.h"
 //move,4;wmove,27;getch;wgetch,2;newwin
-//getmaxy,17;getmaxx,32;stdscr,16
+//getmaxy,17;getmaxx,32;stdscr,17
 //keyname,2;getcury,28;getcurx,23
 //addch;waddch,4;mvaddch,2;addstr,3
-//wnoutrefresh,8;attrset,3;COLOR_PAIR,2
+//wnoutrefresh,9;attrset,3;COLOR_PAIR,2
 //strcmp,18;sprintf
 
 //#include <string.h>
@@ -1363,7 +1363,7 @@ static bool loopin(WINDOW*w){
 			if(visual_bool){
 				visual_bool=false;
 				visual(' ');
-			}
+			}else if(undo_clear())wnoutrefresh(stdscr);
 			position(getcury(w),getcurx(w));
 		}
 		else{
