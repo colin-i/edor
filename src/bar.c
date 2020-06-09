@@ -2,7 +2,7 @@
 //strlen,2;open,2;close;write,3;free,4
 //realloc,3;malloc,3
 #include"mainb.h"
-//move,19;wmove;getch,3;wgetch;getmaxy,6
+//move,19;wmove;getch,3;wgetch,2;getmaxy,6
 //getmaxx;3;getcury;getcurx,8;stdscr,18
 //keyname;addch,12;waddch;mvaddch,8,addstr
 //wnoutrefresh,8;attrset,2;newwin
@@ -768,4 +768,12 @@ bool undo_delk(size_t yb,size_t xb,size_t ye,size_t xe){
 		}
 	}
 	return undo_add_del(yb,xb,ye,xe);
+}
+void undo_loop(WINDOW*w){
+	for(;;){
+		int c=wgetch(w);
+		if(c==KEY_LEFT)undo(w);
+		else if(c==KEY_RIGHT)redo(w);
+		else break;
+	}
 }

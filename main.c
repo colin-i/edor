@@ -3,7 +3,7 @@
 //realloc,6;malloc,10
 #include"src/mainc.h"
 #include"src/mainb.h"
-//move,4;wmove,27;getch;wgetch,2;newwin
+//move,4;wmove,27;getch;wgetch,3;newwin
 //getmaxy,17;getmaxx,32;stdscr,17
 //keyname,2;getcury,28;getcurx,23
 //addch;waddch,4;mvaddch,2;addstr,3
@@ -71,16 +71,7 @@ MEVENT;
 #define KEY_NPAGE 0522
 #define KEY_MOUSE 0631
 int getmouse(MEVENT*);//2
-//#include<poll.h>
-/*typedef unsigned int nfds_t;
-struct pollfd{
-	int fd;
-	short events;
-	short revents;
-};
-int poll(struct pollfd[],nfds_t,int);
-#define POLLIN 0x0001
-struct pollfd stdinfd={0,POLLIN,0};*/
+int nodelay(WINDOW*,bool);//2
 //#include <stdlib.h>
 char*getenv(const char*);
 //#include<stdio.h>
@@ -101,6 +92,7 @@ size_t rows_tot=1;
 size_t ytext=0;
 size_t xtext=0;
 
+#define Char_Escape 27
 static char*mapsel=NULL;
 static char*text_file=NULL;
 static size_t rows_spc=1;
@@ -128,12 +120,13 @@ static char helptext[]="INPUT"
 "\n    Enter = next"
 "\n    Space = previous"
 "\n    c = cancel"
-"\n    any key to return"
+"\n    other key to return"
 "\n-"
 "\nCtrl+u = undo"
 "\nCtrl+r = redo"
+"\nAlt +u = undo mode: left undo,right redo,other key to return"
 "\nCtrl+b = build file"
-"\nCtrl+q = quit";//23
+"\nCtrl+q = quit";//24
 static bool visual_bool=false;
 static char*cutbuf=NULL;
 static size_t cutbuf_sz=0;
@@ -145,33 +138,6 @@ static bool mod_flag=true;
 static int _rb;static int _cb;
 static int _re;static int _ce;
 
-/*int ach(WINDOW*w){
-	if(poll(&stdinfd,1,0)<1)return 0;
-	return wget ch(w);
-}
-int nr_end_test(WINDOW*w,char t){
-	int nr=0;
-	int x=ach(w);
-	if(x==t)return -1;
-	while(x>47&&x<58){
-		nr*=10;
-		nr+=x-48;
-		x=ach(w);
-	}
-	if(x!=t)return -1;
-	return nr;
-}
-int mouse_test(WINDOW*w,int*x,int*y){
-	int a=nr_end_test(w,';');
-	if(a==-1)return -1;
-	x[0]=nr_end_test(w,';');
-	if(x[0]==-1)return -1;
-	//if(x>maxx)return -1;
-	y[0]=nr_end_test(w,'M');
-	if(y[0]==-1)return -1;
-	if(y[0]>get maxy(w))return -1;
-	return a;
-}*/
 bool no_char(char z){return z<32||z>=127;}
 static void tab_grow(WINDOW*w,int r,char*a,size_t sz,int*ptr){
 	x_right[r]=xtext<sz;
@@ -1460,6 +1426,11 @@ static bool loopin(WINDOW*w){
 				undo(w);
 			}else if(!strcmp(s,"^R")){
 				redo(w);
+			}else if(c==Char_Escape){
+				nodelay(w,true);
+				int z=wgetch(w);
+				nodelay(w,false);
+				if(z=='u'){vis('U',w);undo_loop(w);vis(' ',w);}
 			}else if(!strcmp(s,"^B")){
 				if(textfile){
 					if(out_f(textfile,rows,rows_tot)){
