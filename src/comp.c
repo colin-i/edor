@@ -1,7 +1,7 @@
 #include"main0.h"
-//strlen,3;open;close;write,2;free;realloc
+//strlen,3;open;close;write,2;free,2
+//realloc;malloc
 #include"mainc.h"
-//malloc
 #include"mainbc.h"
 
 typedef struct{
@@ -44,16 +44,16 @@ static bool out_wr(int f){
 }
 static bool insts_expand(size_t n){
 	size_t size=insts_sz+n;
-        if(size>insts_spc){
+	if(size>insts_spc){
 		size_t dif=size&0xf;
 		size_t sz=size;
 		if(dif)sz+=(dif^0xf)+1;
 		inst*d=(inst*)realloc(insts,sz*sizeof(inst));
-                if(!d)return false;
-                insts=d;insts_spc=sz;
+		if(d==nullptr)return false;
+		insts=d;insts_spc=sz;
 	}
 	insts_sz=size;
-        return true;
+	return true;
 }
 static bool out_parse(row*rws,size_t sz){
 	if(sz>1||rws[0].sz!=1||rws[0].data[0]<0x30||rws[0].data[0]>0x39)return false;
@@ -71,7 +71,7 @@ bool out_f(char*textfile,row*rws,size_t sz){
 	size_t e=strlen(ext);
 	size_t p=n+e+1;
 	char*s=(char*)malloc(p);
-	if(s){
+	if(s!=nullptr){
 		p--;
 		s[p]=0;
 		while(e){
@@ -84,7 +84,7 @@ bool out_f(char*textfile,row*rws,size_t sz){
 		}
 		int f=open(s,O_WRONLY|O_CREAT|O_TRUNC,S_IRUSR|S_IWUSR);
 		if(f!=-1){
-			insts=NULL;insts_spc=0;insts_sz=0;
+			insts=nullptr;insts_spc=0;insts_sz=0;
 			if(insts_expand(2)){
 				if(out_parse(rws,sz))
 					r=out_wr(f);

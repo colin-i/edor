@@ -6,13 +6,14 @@ AC_CONFIG_SRCDIR([main.c])
 #AC_CONFIG_HEADERS([config.h])
 
 AC_CONFIG_AUX_DIR([build-aux])
-# Add debug support
-#AC_ARG_ENABLE(debug,
-#  AS_HELP_STRING([--enable-debug],[enable debugging, default: no]),
-#  [case "${enableval}" in yes) debug=true ;; no) debug=false ;; *) AC_MSG_ERROR([bad value ${enableval} for --enable-debug]) ;; esac],
-#  [debug=false])
-#AM_CONDITIONAL(DEBUG, test x"$debug" = x"true")
-#AM_COND_IF(DEBUG, AC_DEFINE(DEBUG, 1, [Define to 0 if this is a release build]), AC_DEFINE(DEBUG, 0, [Define to 1 or higher if this is a debug build]))
+# compile with -x c++
+AC_ARG_ENABLE(cpp,
+  AS_HELP_STRING([--enable-cpp],[enable cpp, default: no]),
+  [case "${enableval}" in yes) cpp=true ;; no) cpp=false ;; *) AC_MSG_ERROR([bad value ${enableval} for --enable-cpp]) ;; esac],
+  [cpp=false])
+AM_CONDITIONAL(CPP, test x"$cpp" = x"true")
+#arm32 unwind
+#AM_COND_IF(DEBUG, AC_DEFINE(DEBUG, 1, [arm32 unwind]), AC_DEFINE(DEBUG, 0, [no arm32 unwind]))
 
 # Checks for programs.
 AC_PROG_CC

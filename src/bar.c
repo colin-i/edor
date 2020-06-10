@@ -1,6 +1,6 @@
 #include"main0.h"
 //strlen,2;open,2;close;write,3;free,4
-//realloc,3;malloc,3
+//realloc,3;malloc,4
 #include"mainb.h"
 //move,19;wmove;getch,3;wgetch,2;getmaxy,6
 //getmaxx;3;getcury;getcurx,8;stdscr,18
@@ -8,6 +8,12 @@
 //wnoutrefresh,8;attrset,2;newwin
 //COLOR_PAIR;strcmp;sprintf,2
 #include"mainbc.h"
+
+#define F_OK 0
+
+#ifdef __cplusplus
+extern "C"{
+#endif
 
 //#include<curses.h>
 int addnstr(const char*,int);//8
@@ -19,10 +25,13 @@ int mvwin(WINDOW*,int,int);//2
 int getbegx(const WINDOW*);//3
 int getbegy(const WINDOW*);
 //unistd.h
-#define F_OK 0
 int access(const char*,int);              
 //stdlib.h
 int atoi(const char*);//3
+
+#ifdef __cplusplus
+}
+#endif
 
 static int com_left;
 #define max_path 0xff
@@ -37,7 +46,7 @@ size_t xb;
 size_t ye;
 size_t xe;
 char*data;}eundo;
-static eundo*undos=NULL;
+static eundo*undos=nullptr;
 static size_t undos_tot=0;
 static size_t undos_spc=0;
 static size_t undos_save=0;
@@ -565,8 +574,8 @@ static bool undo_expand(){
 	if(dif)sz+=((dif^row_pad)+1);
 	if(sz>undos_spc){
 		void*v=realloc(undos,sz*sizeof(eundo));
-		if(!v)return true;
-		undos=v;undos_spc=sz;
+		if(v==nullptr)return true;
+		undos=(eundo*)v;undos_spc=sz;
 	}
 	return false;
 }
@@ -576,7 +585,7 @@ static void undo_ok(){
 }
 static void undo_release(size_t a,size_t b){
 	while(a<b){
-		if(undos[a].data)
+		if(undos[a].data!=nullptr)
 			free(undos[a].data);
 		a++;
 	}
@@ -592,13 +601,13 @@ bool undo_add(size_t yb,size_t xb,size_t ye,size_t xe){
 	undo_newway();
 	eundo*un=&undos[undos_tot];
 	un->yb=yb;un->xb=xb;un->ye=ye;un->xe=xe;
-	un->data=NULL;
+	un->data=nullptr;
 	undo_ok();return false;
 }
 static bool undo_del_backward(eundo*un,size_t yb,size_t xb,size_t ye,size_t xe){
 	size_t x=sizemembuf(yb,xb,ye,xe);
-	void*v=malloc(x);
-	if(!v)return true;
+	char*v=(char*)malloc(x);
+	if(v==nullptr)return true;
 	un->yb=yb;un->xb=xb;un->ye=ye;un->xe=x;
 	un->data=v;
 	cpymembuf(yb,xb,ye,xe,v);
@@ -609,8 +618,8 @@ bool undo_add_del(size_t yb,size_t xb,size_t ye,size_t xe){
 	size_t x=sizemembuf(yb,xb,ye,xe);
 	size_t dif=x&row_pad;
 	if(dif)dif=(dif^row_pad)+1;
-	void*v=malloc(x+dif);
-	if(!v)return true;
+	char*v=(char*)malloc(x+dif);
+	if(v==nullptr)return true;
 	undo_newway();
 	eundo*un=&undos[undos_tot];
 	un->yb=yb;un->xb=xb;un->ye=ye;un->xe=x;
@@ -623,7 +632,7 @@ bool undo_add_ind(size_t yb,size_t ye){
 	undo_newway();
 	eundo*un=&undos[undos_tot];
 	un->ye=yb;un->yb=ye;
-	un->data=NULL;
+	un->data=nullptr;
 	undo_ok();return false;
 }
 static void undo_ind_del(eundo*un,size_t yb,size_t ye,char*d){
@@ -636,14 +645,14 @@ static void undo_ind_del(eundo*un,size_t yb,size_t ye,char*d){
 }
 bool undo_add_ind_del(size_t yb,size_t ye){
 	if(undo_expand())return true;
-	char*d=malloc(ye-yb);
-	if(!d)return true;
+	void*d=malloc(ye-yb);
+	if(d==nullptr)return true;
 	undo_newway();
-	undo_ind_del(&undos[undos_tot],yb,ye,d);
+	undo_ind_del(&undos[undos_tot],yb,ye,(char*)d);
 	undo_ok();return false;
 }
 void undo_free(){
-	if(undos){
+	if(undos!=nullptr){
 		undo_release(0,undos_max);
 		free(undos);
 	}
@@ -653,11 +662,11 @@ static bool dos(WINDOW*w,eundo*un,size_t z){
 	size_t y1=un->yb;size_t y2=un->ye;
 	if(y1<=y2){
 		size_t xb=un->xb;size_t xe=un->xe;
-		if(d){
+		if(d!=nullptr){
 			if(!paste(y1,xb,&xe,d,xe,y2-y1+1,false))return false;
-			un->xe=xe;un->data=NULL;
+			un->xe=xe;un->data=nullptr;
 			ytext=y2;xtext=xe;
-			centering(w,0,0);
+			centering(w,nullptr,nullptr);
 			free(d);
 		}
 		else{
@@ -665,15 +674,15 @@ static bool dos(WINDOW*w,eundo*un,size_t z){
 			if(undo_del_backward(un,y1,xb,y2,xe))return false;
 			deleting(y1,xb,y2,xe);
 			ytext=y1;xtext=xb;
-			centering(w,0,0);
+			centering(w,nullptr,nullptr);
 		}
 	}else{
-		if(d){
+		if(d!=nullptr){
 			for(size_t i=y2;i<y1;i++){
 				row*r=&rows[i];
 				if(row_alloc(r,0,1,r->sz))return false;
 			}
-			un->data=NULL;
+			un->data=nullptr;
 			for(size_t i=y2;i<y1;i++){
 				char a=d[i-y2];
 				if(a==ln_term[0])continue;
@@ -682,9 +691,9 @@ static bool dos(WINDOW*w,eundo*un,size_t z){
 			}
 			free(d);
 		}else{
-			char*mem=malloc(y1-y2);
-			if(!mem)return false;
-			undo_ind_del(un,y2,y1,mem);
+			void*mem=malloc(y1-y2);
+			if(mem==nullptr)return false;
+			undo_ind_del(un,y2,y1,(char*)mem);
 			for(size_t i=y2;i<y1;i++){
 				size_t n=rows[i].sz;char*dt=rows[i].data;
 				for(size_t j=1;j<=n;j++)dt[j-1]=dt[j];
@@ -692,7 +701,7 @@ static bool dos(WINDOW*w,eundo*un,size_t z){
 			}
 		}
 		ytext=y2;xtext=0;
-		centering(w,0,0);
+		centering(w,nullptr,nullptr);
 	}
 	undos_tot+=z;
 	if(undos_tot==undos_save)mod_set(true);
@@ -724,7 +733,7 @@ void undo_save(){undos_save=undos_tot;}
 bool undo_type(size_t yb,size_t xb,size_t ye,size_t xe){
 	if(undos_tot){
 		eundo*un=&undos[undos_tot-1];
-		if(!un->data&&un->yb<=un->ye){
+		if(un->data==nullptr&&un->yb<=un->ye){
 			if(un->ye==yb&&un->xe==xb){
 				un->xe++;return false;
 			}
@@ -735,11 +744,11 @@ bool undo_type(size_t yb,size_t xb,size_t ye,size_t xe){
 bool undo_bcsp(size_t yb,size_t xb,size_t ye,size_t xe){
 	if(undos_tot){
 		eundo*un=&undos[undos_tot-1];
-		if(un->data&&un->yb<=un->ye){
+		if(un->data!=nullptr&&un->yb<=un->ye){
 			if(un->yb==ye&&un->xb==xe){
 				char*d;if(!(un->xe&row_pad)){
-					d=realloc(un->data,un->xe+row_pad+1);
-					if(!d)return true;
+					d=(char*)realloc(un->data,un->xe+row_pad+1);
+					if(d==nullptr)return true;
 					un->data=d;
 				}else d=un->data;
 				for(size_t i=un->xe;i>0;i--)d[i]=d[i-1];
@@ -754,11 +763,11 @@ bool undo_bcsp(size_t yb,size_t xb,size_t ye,size_t xe){
 bool undo_delk(size_t yb,size_t xb,size_t ye,size_t xe){
 	if(undos_tot){
 		eundo*un=&undos[undos_tot-1];
-		if(un->data&&un->yb<=un->ye){
+		if(un->data!=nullptr&&un->yb<=un->ye){
 			if(un->yb==yb&&un->xb==xb){
 				char*d;if(!(un->xe&row_pad)){
-					d=realloc(un->data,un->xe+row_pad+1);
-					if(!d)return true;
+					d=(char*)realloc(un->data,un->xe+row_pad+1);
+					if(d==nullptr)return true;
 					un->data=d;
 				}else d=un->data;
 				d[un->xe]=rows[yb].data[xb];

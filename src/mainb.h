@@ -1,23 +1,29 @@
-//#include<curses.h>
+
 typedef void WINDOW;
-int move(int,int);
-int wmove(WINDOW*,int,int);
-int getch(void);
-int wgetch(WINDOW*);
 extern WINDOW*stdscr;
-int getmaxy(const WINDOW*);
-int getmaxx(const WINDOW*);
-int getcury(const WINDOW*);
-int getcurx(const WINDOW*);
 typedef unsigned int chtype;
-int addch(const chtype);
-int waddch(WINDOW*,const chtype);
-int mvaddch(int,int,const chtype);
-int addstr(const char*);
 #define KEY_LEFT 0404
 #define KEY_RIGHT 0405
 #define KEY_DC 0512
 #define KEY_RESIZE 0632
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+//#include<curses.h>
+int move(int,int);
+int wmove(WINDOW*,int,int);
+int getch(void);
+int wgetch(WINDOW*);
+int getmaxy(const WINDOW*);
+int getmaxx(const WINDOW*);
+int getcury(const WINDOW*);
+int getcurx(const WINDOW*);
+int addch(const chtype);
+int waddch(WINDOW*,const chtype);
+int mvaddch(int,int,const chtype);
+int addstr(const char*);
 const char*keyname(int);
 int wnoutrefresh(WINDOW*);
 int attrset(int);
@@ -27,6 +33,10 @@ WINDOW*newwin(int,int,int,int);
 int strcmp(const char*,const char*);
 //stdio.h
 int sprintf(char*,const char*,...);
+
+#ifdef __cplusplus
+}
+#endif
 
 bool no_char(char);
 void refreshpage(WINDOW*w);

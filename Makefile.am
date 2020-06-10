@@ -2,7 +2,11 @@ AUTOMAKE_OPTIONS = subdir-objects
 bin_PROGRAMS = edor
 edor_CFLAGS = -Weverything -Wno-padded -Wno-conditional-uninitialized
 edor_SOURCES = main.c src/comp.c src/bar.c
-edor_LDADD = -lcurses
+edor_LDFLAGS = -lcurses
+if CPP
+edor_CFLAGS += -x c++ -Wno-old-style-cast -Wno-writable-strings -Wno-c++98-compat
+edor_LDFLAGS += -x none
+endif
 
 setinfofilecommand:
 	if [ ! -e ~/.@PROJ@info ]; then touch ~/.@PROJ@info; fi
