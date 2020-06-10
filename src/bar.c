@@ -554,7 +554,7 @@ int command(char*comnrp){
 	return r;
 }
 int save(){
-	if(textfile){
+	if(textfile!=nullptr){
 		return saving(false);
 	}
 	char a=0;

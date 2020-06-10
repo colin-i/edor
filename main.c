@@ -1442,7 +1442,7 @@ static bool loopin(WINDOW*w){
 				nodelay(w,false);
 				if(z=='u'){vis('U',w);undo_loop(w);vis(' ',w);}
 			}else if(!strcmp(s,"^B")){
-				if(textfile){
+				if(textfile!=nullptr){
 					if(out_f(textfile,rows,rows_tot)){
 						visual_bool=true;
 						vis('B',w);
@@ -1599,7 +1599,7 @@ static void setfilebuf(char*s,char*cutbuf_file){
 		if(a=='/'||a=='\\'){i++;break;}
 	}while(i);
 	char*h=getenv("HOME");
-	if(!h)return;
+	if(h==nullptr)return;
 	size_t l=strlen(h);
 	if(!l)return;
 	if(l+(sz-i)+7>128)return;
@@ -1668,7 +1668,7 @@ int main(int argc,char**argv){
 			text_init_e=text_init_b+text_sz+1;
 			color();
 			WINDOW*pw=position_init();
-			if(pw){
+			if(pw!=nullptr){
 				keypad(w1,true);
 				noecho();
 				nonl();//no translation,faster
@@ -1693,7 +1693,7 @@ int main(int argc,char**argv){
 					if(a==nullptr)break;
 					mapsel=(char*)a;
 					WINDOW*w=newwin(r,c,0,0);
-					if(w){
+					if(w!=nullptr){
 						keypad(w,true);
 						refreshpage(w);
 						wmove(w,cy,cx);
