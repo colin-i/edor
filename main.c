@@ -635,7 +635,7 @@ static void setmembuf(size_t y,size_t x,bool*orig,size_t*yb,size_t*xb,size_t*ye,
 			orig[0]=true;
 		}
 		else if(ye[0]>y){
-			if(y<rows_tot-1&&x>=rows[y].sz)x=rows[y].sz;
+			if(y<rows_tot-1&&x>rows[y].sz)x=rows[y].sz;
 			if(ye[0]<rows_tot-1&&xe[0]>=rows[ye[0]].sz){
 				size_t max=(size_t)getmaxx(w)-1;
 				if(rows[ye[0]].sz<xtext+max)xe[0]=xtext+max;
@@ -649,7 +649,7 @@ static void setmembuf(size_t y,size_t x,bool*orig,size_t*yb,size_t*xb,size_t*ye,
 			orig[0]=true;
 		}
 		else{
-			if(y<rows_tot-1&&x>=rows[y].sz)x=rows[y].sz;
+			if(y<rows_tot-1&&x>rows[y].sz)x=rows[y].sz;
 			yb[0]=y;xb[0]=x;
 		}
 	}
