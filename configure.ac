@@ -8,12 +8,15 @@ AC_CONFIG_SRCDIR([main.c])
 AC_CONFIG_AUX_DIR([build-aux])
 # compile with -x c++
 AC_ARG_ENABLE(cpp,
-  AS_HELP_STRING([--enable-cpp],[enable cpp, default: no]),
+  AS_HELP_STRING([--enable-cpp],[enable cpp, default: yes]),
   [case "${enableval}" in yes) cpp=true ;; no) cpp=false ;; *) AC_MSG_ERROR([bad value ${enableval} for --enable-cpp]) ;; esac],
-  [cpp=false])
+  [cpp=true])
 AM_CONDITIONAL(CPP, test x"$cpp" = x"true")
 #arm32 unwind
-#AM_COND_IF(DEBUG, AC_DEFINE(DEBUG, 1, [arm32 unwind]), AC_DEFINE(DEBUG, 0, [no arm32 unwind]))
+m_version=$(uname -m)
+#AM_COND_IF(test "$m_version" = "armv7l", AC_DEFINE(ARM7L, 1, [armv7l]), AC_DEFINE(ARM7L, 0, [no armv7l]))
+AM_CONDITIONAL(r7l, test "$m_version" = "armv7l")
+AM_COND_IF(r7l, AC_DEFINE(ARM7L, 1, [armv7l]), AC_DEFINE(ARM7L, 0, [no armv7l]))
 
 # Checks for programs.
 AC_PROG_CC

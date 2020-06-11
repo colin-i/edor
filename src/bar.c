@@ -53,8 +53,8 @@ static size_t undos_save=0;
 static size_t undos_max=0;
 static int undo_v=0;
 
-char*bar_init(){
-	char*h="F1 for help";
+const char*bar_init(){
+	const char*h="F1 for help";
 	com_left=(int)(strlen(h)+1);
 	return h;
 }
@@ -146,7 +146,7 @@ static void clear_com(int y,int sz,int pos,int cursor){
 	}
 }
 //1/0/-1 -2
-int question(char*q){
+int question(const char*q){
 	//if(com_left+sz>getmaxx(stdscr))return 1;
 	int y=getmaxy(stdscr)-1;
 	mvaddstr(y,com_left,q);

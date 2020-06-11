@@ -1,5 +1,5 @@
 #include"src/main0.h"
-//strlen,2;open,3;close,3;write;free,11
+//strlen,2;open,3;close,3;write,2;free,11
 //realloc,6;malloc,11
 #include"src/mainc.h"
 #include"src/mainb.h"
@@ -44,12 +44,6 @@ MEVENT;
 #define KEY_PPAGE 0523
 #define KEY_NPAGE 0522
 #define KEY_MOUSE 0631
-/*//signal.h
-void(*signal(int,void(*)(void)))(void);
-//asm-generic/signal.h
-#define SIG_IGN 1
-#define SIGINT 2
-#define SIGTSTP 20*/
 
 #ifdef __cplusplus
 extern "C" {
@@ -57,7 +51,7 @@ extern "C" {
 
 //#include <string.h>
 void*memcpy(void*,const void*,size_t);//14
-void*memset(void*,int,size_t);
+void*memset(void*,int,size_t);//2
 //#include <unistd.h>
 off_t lseek(int,off_t,int);//4
 ssize_t read(int,void*,size_t);//2
@@ -255,7 +249,7 @@ static void tmove(WINDOW*w,int y,bool right){
 		amove(w,y,x);
 	}
 }
-static void printinverted(char*s){
+static void printinverted(const char*s){
 	attrset(COLOR_PAIR(1));
 	addstr(s);
 	//attr set here,cause,print"   "
@@ -815,7 +809,7 @@ bool row_alloc(row*rw,size_t l,size_t c,size_t r){
 	}//else dst=src;
 	return false;
 }
-void row_set(row*rw,size_t l,size_t c,size_t r,char*mid){
+void row_set(row*rw,size_t l,size_t c,size_t r,const char*mid){
 	char*d=rw->data;
 	size_t j=l+c;size_t k=l+r;size_t i=j+r;
 	while(j<i){
@@ -1622,9 +1616,199 @@ static void color(){
 		}
 	}
 }
+
+#ifdef ARM7L
+//#include "libunwind.h"
+enum {
+ UNW_ARM_R0  = 0,
+ UNW_ARM_R1  = 1,
+ UNW_ARM_R2  = 2,
+ UNW_ARM_R3  = 3,
+ UNW_ARM_R4  = 4,
+ UNW_ARM_R5  = 5,
+ UNW_ARM_R6  = 6,
+ UNW_ARM_R7  = 7,
+ UNW_ARM_R8  = 8,
+ UNW_ARM_R9  = 9,
+ UNW_ARM_R10 = 10,
+ UNW_ARM_R11 = 11,
+ UNW_ARM_R12 = 12,
+ UNW_ARM_R13 = 13,
+ UNW_ARM_R14 = 14,
+ UNW_ARM_R15 = 15
+};
+enum {
+ UNW_REG_IP = -1,// instruction pointer
+ UNW_REG_SP = -2 // stack pointer
+};
+# define LIBUNWIND_CONTEXT_SIZE 167
+# define LIBUNWIND_CURSOR_SIZE 179
+//'long long' is incompatible with C++98
+typedef unsigned long long uint64_t;
+struct unw_context_t {
+ uint64_t data[LIBUNWIND_CONTEXT_SIZE];
+};
+typedef struct unw_context_t unw_context_t;
+struct unw_cursor_t {
+ uint64_t data[LIBUNWIND_CURSOR_SIZE];
+};
+typedef struct unw_cursor_t unw_cursor_t;
+typedef unsigned int unw_word_t;
+typedef int unw_regnum_t;
+#ifdef __cplusplus
+extern "C" {
+#endif
+int unw_getcontext(unw_context_t *);
+int unw_init_local(unw_cursor_t *, unw_context_t *);
+int unw_step(unw_cursor_t *);
+int unw_get_reg(unw_cursor_t *, unw_regnum_t, unw_word_t *);
+int unw_set_reg(unw_cursor_t *, unw_regnum_t, unw_word_t);
+#ifdef __cplusplus
+}
+#endif
+//typedef unsigned int size_t;
+//typedef int ssize_t;
+//#include <dlfcn.h>
+typedef struct {
+  const char* dli_fname;
+  void* dli_fbase;
+  const char* dli_sname;
+  void* dli_saddr;
+} Dl_info;
+//#include <signal.h>
+//arm-linux-androideabi/asm/signal.h
+#define SIGSEGV 11
+#define SA_SIGINFO 0x00000004
+typedef unsigned long sigset_t;
+//
+struct sigaction{
+void(*sa_sigaction)(int,void*,void*);
+sigset_t sa_mask;
+int sa_flags;
+void*sa_handler;
+//void*sa_restorer;
+};
+typedef struct{
+void *ss_sp;
+size_t ss_size;
+int ss_flags;
+}stack_t;
+//./arm-linux-androideabi/asm/sigcontext.h
+typedef struct{
+  unsigned long trap_no;
+  unsigned long error_code;
+  unsigned long oldmask;
+  unsigned long arm_r0;
+  unsigned long arm_r1;
+  unsigned long arm_r2;
+  unsigned long arm_r3;
+  unsigned long arm_r4;
+  unsigned long arm_r5;
+  unsigned long arm_r6;
+  unsigned long arm_r7;
+  unsigned long arm_r8;
+  unsigned long arm_r9;
+  unsigned long arm_r10;
+  unsigned long arm_fp;
+  unsigned long arm_ip;
+  unsigned long arm_sp;
+  unsigned long arm_lr;
+  unsigned long arm_pc;
+  unsigned long arm_cpsr;
+  unsigned long fault_address;
+}mcontext_t;
+//
+typedef struct{
+void *uc_link;
+sigset_t    uc_sigmask;
+stack_t     uc_stack;
+mcontext_t  uc_mcontext;
+}ucontext_t;
+//#include <stdlib.h>
+#define EXIT_FAILURE 1
+#define STDOUT_FILENO 0
+#ifdef __cplusplus
+extern "C" {
+#endif
+//dlfcn.h
+int dladdr(void* __addr, Dl_info* __info);
+//signal.h
+int sigaction(int sig,const struct sigaction*,struct sigaction*);
+//stdlib.h
+void exit(int);
+//stdio.h
+int snprintf(char* __buf, size_t __size, const char* __fmt, ...);
+#ifdef __cplusplus
+}
+#endif
+static void AddAddress(unsigned long ip,int address_count) {
+	Dl_info info;
+	dladdr((void*)ip, &info);
+	unsigned long relative_address = ip-(unsigned long)info.dli_fbase;
+	char buf[100];
+	int n=snprintf(buf,99,"  #%02zu:  0x%lx  %s\n", address_count, relative_address, info.dli_sname);
+	write(STDOUT_FILENO,&buf,(size_t)n);
+}
+static void CaptureBacktraceUsingLibUnwind(void*ucontext) {
+	// Initialize unw_context and unw_cursor.
+	unw_context_t unw_context;// = {};
+	unw_getcontext(&unw_context);
+	unw_cursor_t  unw_cursor;// = {};
+	unw_init_local(&unw_cursor, &unw_context);
+
+	// Get more contexts.
+	const mcontext_t* signal_mcontext = &(((const ucontext_t*)ucontext)->uc_mcontext);
+
+	// Set registers.
+	unw_set_reg(&unw_cursor, UNW_ARM_R0, signal_mcontext->arm_r0);
+	unw_set_reg(&unw_cursor, UNW_ARM_R1, signal_mcontext->arm_r1);
+	unw_set_reg(&unw_cursor, UNW_ARM_R2, signal_mcontext->arm_r2);
+	unw_set_reg(&unw_cursor, UNW_ARM_R3, signal_mcontext->arm_r3);
+	unw_set_reg(&unw_cursor, UNW_ARM_R4, signal_mcontext->arm_r4);
+	unw_set_reg(&unw_cursor, UNW_ARM_R5, signal_mcontext->arm_r5);
+	unw_set_reg(&unw_cursor, UNW_ARM_R6, signal_mcontext->arm_r6);
+	unw_set_reg(&unw_cursor, UNW_ARM_R7, signal_mcontext->arm_r7);
+	unw_set_reg(&unw_cursor, UNW_ARM_R8, signal_mcontext->arm_r8);
+	unw_set_reg(&unw_cursor, UNW_ARM_R9, signal_mcontext->arm_r9);
+	unw_set_reg(&unw_cursor, UNW_ARM_R10, signal_mcontext->arm_r10);
+	unw_set_reg(&unw_cursor, UNW_ARM_R11, signal_mcontext->arm_fp);
+	unw_set_reg(&unw_cursor, UNW_ARM_R12, signal_mcontext->arm_ip);
+	unw_set_reg(&unw_cursor, UNW_ARM_R13, signal_mcontext->arm_sp);
+	unw_set_reg(&unw_cursor, UNW_ARM_R14, signal_mcontext->arm_lr);
+	unw_set_reg(&unw_cursor, UNW_ARM_R15, signal_mcontext->arm_pc);
+
+	unw_set_reg(&unw_cursor, UNW_REG_IP, signal_mcontext->arm_pc);
+	unw_set_reg(&unw_cursor, UNW_REG_SP, signal_mcontext->arm_sp);
+
+	// unw_step() does not return the first IP.
+	AddAddress(signal_mcontext->arm_pc,0);
+	int address_count=1;
+	// Unwind frames one by one, going up the frame stack.
+	while (unw_step(&unw_cursor) > 0) {
+		unw_word_t ip = 0;
+		unw_get_reg(&unw_cursor, UNW_REG_IP, &ip);
+		AddAddress(ip,address_count);
+		if(address_count==29)break;
+		address_count++;
+	}
+}
+static void signalHandler(int sig,/*struct siginfo *info*/void* info,void* ucontext){
+(void)sig;(void)info;
+	CaptureBacktraceUsingLibUnwind(ucontext);
+	exit(EXIT_FAILURE);
+}
+//static void baz(int argc){int *foo = (int*)-1;if(argc==1)sprintf((char*)24,"%d\n", *foo);else free((void*)10);}
+#endif
+
 int main(int argc,char**argv){
-	//signal(SIGINT,(void(*)(void))SIG_IGN);
-	//signal(SIGTSTP,sig_handler);
+	#ifdef ARM7L
+	struct sigaction signalhandlerDescriptor;
+	memset(&signalhandlerDescriptor, 0, sizeof(signalhandlerDescriptor));
+	signalhandlerDescriptor.sa_flags = SA_SIGINFO;//SA_RESTART | SA_ONSTACK;
+	signalhandlerDescriptor.sa_sigaction = signalHandler;
+	sigaction(SIGSEGV, &signalhandlerDescriptor, nullptr);
+	//baz(argc);
+	#endif
 	WINDOW*w1=initscr();
 	if(w1!=nullptr){
 		raw();//stty,cooked;relevant for getchar at me

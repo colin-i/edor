@@ -5,8 +5,8 @@
 #include"mainbc.h"
 
 typedef struct{
-	char*name;
-	char*a;
+	const char*name;
+	const char*a;
 	size_t n;
 	char b;
 }inst;
@@ -19,7 +19,7 @@ static bool out_chr(int f,char c){
 	if(s!=1)return true;
 	return false;
 }
-static bool out_wrt(int f,char*c){
+static bool out_wrt(int f,const char*c){
 	size_t n=strlen(c);
 	size_t s=(size_t)write(f,c,n);
 	if(s!=n)return true;
@@ -67,7 +67,7 @@ static bool out_parse(row*rws,size_t sz){
 bool out_f(char*textfile,row*rws,size_t sz){
 	bool r=false;
 	size_t n=strlen(textfile);
-	char*ext=".s";
+	const char*ext=".s";
 	size_t e=strlen(ext);
 	size_t p=n+e+1;
 	char*s=(char*)malloc(p);

@@ -2,10 +2,9 @@ AUTOMAKE_OPTIONS = subdir-objects
 bin_PROGRAMS = edor
 edor_CFLAGS = -Weverything -Wno-padded -Wno-conditional-uninitialized
 edor_SOURCES = main.c src/comp.c src/bar.c
-edor_LDFLAGS = -lcurses
+edor_LDFLAGS = -rdynamic -lcurses
 if CPP
-edor_CFLAGS += -x c++ -Wno-old-style-cast -Wno-writable-strings -Wno-c++98-compat
-edor_LDFLAGS += -x none
+edor_CPPFLAGS = -x c++ -Wno-old-style-cast -Wno-c++98-compat -Wno-c++98-compat-pedantic
 endif
 
 setinfofilecommand:
