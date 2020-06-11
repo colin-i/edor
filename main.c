@@ -600,11 +600,11 @@ static void sel(WINDOW*w,int c1,int c2,int rb,int cb,int re,int ce){
 static void setmembuf(size_t y,size_t x,bool*orig,size_t*yb,size_t*xb,size_t*ye,size_t*xe,WINDOW*w){
 	if(orig[0]){
 		if(y<yb[0]){
+			if(y<rows_tot-1&&x>rows[y].sz)x=rows[y].sz;
 			if(yb[0]<rows_tot-1&&xb[0]==rows[yb[0]].sz){
 				size_t max=(size_t)getmaxx(w)-1;
 				if(rows[yb[0]].sz<xtext+max)xb[0]=xtext+max;
 			}
-			if(y<rows_tot-1&&x>rows[y].sz)x=rows[y].sz;
 			ye[0]=yb[0];yb[0]=y;
 			xe[0]=xb[0];xb[0]=x;
 			orig[0]=false;
