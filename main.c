@@ -597,7 +597,7 @@ static void sel(WINDOW*w,int c1,int c2,int rb,int cb,int re,int ce){
 		printrow(w,re,0,ce,c1,c2);
 	}
 }
-static void set1membuf(size_t y,size_t x,bool*orig,size_t*yb,size_t*xb,size_t*ye,size_t*xe,WINDOW*w){
+static void setmembuf(size_t y,size_t x,bool*orig,size_t*yb,size_t*xb,size_t*ye,size_t*xe,WINDOW*w){
 	if(orig[0]){
 		if(y<yb[0]){
 			if(yb[0]<rows_tot-1&&xb[0]==rows[yb[0]].sz){
@@ -1323,6 +1323,60 @@ static void indent(bool b,size_t ybsel,size_t*xbsel,size_t yesel,size_t*xesel,in
 		}
 	}
 }
+static bool visual_mode(WINDOW*w){
+	vis('V',w);
+	int rw=getcury(w);int cl=getcurx(w);
+	size_t ybsel=ytext+(size_t)rw;
+	size_t xbsel=xtext+c_to_xc(cl,rw);
+	size_t yesel=ybsel;size_t xesel=xbsel;
+	bool orig=true;
+	if(ybsel<rows_tot-1&&xbsel>=rows[ybsel].sz){
+		xbsel=rows[ybsel].sz;
+		xesel=xtext+(size_t)getmaxx(w)-1;
+	}
+	printsel(w,ybsel,xbsel,yesel,xesel,-1);
+	wmove(w,rw,cl);
+	int z;
+	do{
+		int b=wgetch(w);
+		z=movment(b,w);
+		if(z==1)return true;
+		else{
+			int r=getcury(w);int col=getcurx(w);
+			if(!z){
+				if(b=='I'){indent(true,ybsel,&xbsel,yesel,&xesel,&col,w);z=-1;}
+				else if(b=='U'){indent(false,ybsel,&xbsel,yesel,&xesel,&col,w);z=-1;}
+				else{
+					char v=' ';
+					visual_bool=b=='c';
+					if(visual_bool){
+						if(writemembuf(ybsel,xbsel,yesel,xesel)){v='C';unsel(w);}
+					}else if(b=='d'){
+						if(delet(ybsel,xbsel,yesel,xesel,&r,&col,w))
+							if(orig)position(r,col);
+					}else if(b=='x'){
+						if(writemembuf(ybsel,xbsel,yesel,xesel)){
+							if(delet(ybsel,xbsel,yesel,xesel,&r,&col,w))
+								if(orig)position(r,col);
+						}
+					}else{
+						if(b=='i')indent(true,ybsel,nullptr,yesel,nullptr,nullptr,w);
+						else if(b=='u')indent(false,ybsel,nullptr,yesel,nullptr,nullptr,w);
+						unsel(w);
+					}
+					visual(v);
+				}
+			}else{
+				position(getcury(w),getcurx(w));
+				size_t y=ytext+(size_t)r;size_t x=xtext+c_to_xc(col,r);
+				setmembuf(y,x,&orig,&ybsel,&xbsel,&yesel,&xesel,w);
+				printsel(w,ybsel,xbsel,yesel,xesel,z);
+			}
+			wmove(w,r,col);
+		}
+	}while(z);
+	return false;
+}
 static bool loopin(WINDOW*w){
 	int c;
 	for(;;){
@@ -1339,57 +1393,7 @@ static bool loopin(WINDOW*w){
 		else{
 			const char*s=keyname(c);
 			if(!strcmp(s,"^V")){
-				vis('V',w);
-				int rw=getcury(w);int cl=getcurx(w);
-				size_t ybsel=ytext+(size_t)rw;
-				size_t xbsel=xtext+c_to_xc(cl,rw);
-				size_t yesel=ybsel;size_t xesel=xbsel;
-				bool orig=true;
-				if(ybsel<rows_tot-1&&xbsel>=rows[ybsel].sz){
-					xbsel=rows[ybsel].sz;
-					xesel=xtext+(size_t)getmaxx(w)-1;
-				}
-				printsel(w,ybsel,xbsel,yesel,xesel,-1);
-				wmove(w,rw,cl);
-				int z;
-				do{
-					int b=wgetch(w);
-					z=movment(b,w);
-					if(z==1)return true;
-					else{
-						int r=getcury(w);int col=getcurx(w);
-						if(!z){
-							if(b=='I'){indent(true,ybsel,&xbsel,yesel,&xesel,&col,w);z=-1;}
-							else if(b=='U'){indent(false,ybsel,&xbsel,yesel,&xesel,&col,w);z=-1;}
-							else{
-								char v=' ';
-								visual_bool=b=='c';
-								if(visual_bool){
-									if(writemembuf(ybsel,xbsel,yesel,xesel)){v='C';unsel(w);}
-								}else if(b=='d'){
-									if(delet(ybsel,xbsel,yesel,xesel,&r,&col,w))
-										if(orig)position(r,col);
-								}else if(b=='x'){
-									if(writemembuf(ybsel,xbsel,yesel,xesel)){
-										if(delet(ybsel,xbsel,yesel,xesel,&r,&col,w))
-											if(orig)position(r,col);
-									}
-								}else{
-									if(b=='i')indent(true,ybsel,nullptr,yesel,nullptr,nullptr,w);
-									else if(b=='u')indent(false,ybsel,nullptr,yesel,nullptr,nullptr,w);
-									unsel(w);
-								}
-								visual(v);
-							}
-						}else{
-							position(getcury(w),getcurx(w));
-							size_t y=ytext+(size_t)r;size_t x=xtext+c_to_xc(col,r);
-							set1membuf(y,x,&orig,&ybsel,&xbsel,&yesel,&xesel,w);
-							printsel(w,ybsel,xbsel,yesel,xesel,z);
-						}
-						wmove(w,r,col);
-					}
-				}while(z);
+				if(visual_mode(w))return true;
 			}
 			else if(!strcmp(s,"^P"))past(w);
 			else if((!strcmp(s,"^S"))||!strcmp(s,"^O")){
