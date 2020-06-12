@@ -4,7 +4,7 @@
 #include"src/mainc.h"
 #include"src/mainb.h"
 //move,4;wmove,27;getch;wgetch,3;newwin
-//getmaxy,17;getmaxx,32;stdscr,17
+//getmaxy,17;getmaxx,31;stdscr,17
 //keyname,2;getcury,28;getcurx,23
 //addch;waddch,4;mvaddch,2;addstr,3
 //wnoutrefresh,9;attrset,3;COLOR_PAIR,2
