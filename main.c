@@ -609,11 +609,11 @@ static void setmembuf(size_t y,size_t x,bool*orig,size_t*yb,size_t*xb,size_t*ye,
 			xe[0]=xb[0];xb[0]=x;
 			orig[0]=false;
 		}
-		else if(y>yb[0]){
+		else if(y>yb[0]||xb[0]<=x){
 			if(y<rows_tot-1&&x>=rows[y].sz)x=xtext+(size_t)getmaxx(w)-1;
 			ye[0]=y;xe[0]=x;
 		}
-		else if(x<xb[0]){
+		else{// if(x<xb[0]){
 			if(yb[0]<rows_tot-1&&xb[0]==rows[yb[0]].sz){
 				size_t max=(size_t)getmaxx(w)-1;
 				if(rows[yb[0]].sz<xtext+max)xb[0]=xtext+max;
@@ -621,10 +621,6 @@ static void setmembuf(size_t y,size_t x,bool*orig,size_t*yb,size_t*xb,size_t*ye,
 			ye[0]=yb[0];
 			xe[0]=xb[0];xb[0]=x;
 			orig[0]=false;
-		}
-		else{
-			if(y<rows_tot-1&&x>=rows[y].sz)x=xtext+(size_t)getmaxx(w)-1;
-			ye[0]=y;xe[0]=x;
 		}
 	}else{
 		if(ye[0]<y){
@@ -665,15 +661,15 @@ size_t c_to_xc(int c,int r){
 	}
 	return (size_t)x;
 }
-static int xc_to_c(int col,int r){
+static int xc_to_c(size_t col,int r){
 	int*p=&tabs[tabs_rsz*r];
 	int n=p[0];
 	for(int i=0;i<n;i++){
 		p++;
-		if(p[0]<col)col+=tab_sz-1;
+		if((size_t)p[0]<col)col+=tab_sz-1;
 		else break;
 	}
-	return col;
+	return(int)col;
 }
 static void unsel(WINDOW*w){
 	sel(w,0,0,_rb,_cb,_re,_ce);
@@ -709,7 +705,7 @@ static void printsel(WINDOW*w,size_t ybsel,size_t xbsel,size_t yesel,size_t xese
 	else{
 		rb=(int)(ybsel-ytext);
 		if(xbsel<=xtext)cb=0;
-		else if(xbsel<=xtext+c_to_xc(cright,rb))cb=xc_to_c((int)(xbsel-xtext),rb);
+		else if(xbsel<=xtext+c_to_xc(cright,rb))cb=xc_to_c(xbsel-xtext,rb);
 		else{rb++;cb=0;}
 	}
 	int re;int ce;
@@ -720,7 +716,7 @@ static void printsel(WINDOW*w,size_t ybsel,size_t xbsel,size_t yesel,size_t xese
 	else{
 		re=(int)(yesel-ytext);
 		if(xtext+c_to_xc(cright,re)<=xesel)ce=cright;
-		else if(xtext<=xesel)ce=xc_to_c((int)(xesel-xtext),re);
+		else if(xtext<=xesel)ce=xc_to_c(xesel-xtext,re);
 		else{re--;ce=cright;}
 	}
 	int*t=&tabs[re*tabs_rsz];
