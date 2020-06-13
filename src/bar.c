@@ -1,5 +1,5 @@
 #include"main0.h"
-//strlen,2;open,2;close;write,3;free,4
+//strlen;open,2;close;write,3;free,4
 //realloc,3;malloc,4
 #include"mainb.h"
 //move,19;wmove;getch,3;wgetch,2;getmaxy,6
@@ -33,7 +33,9 @@ int atoi(const char*);//3
 }
 #endif
 
-static int com_left;
+#define b_inf_s "F1 for help"
+#define quest_ex_s "? y/C/n"
+static int com_left=sizeof(b_inf_s);
 #define max_path 0xff
 static char input1[max_path+1];
 static char input2[max_path+1];
@@ -55,9 +57,7 @@ static int undo_v=0;
 static bool new_f=false;
 
 const char*bar_init(){
-	const char*h="F1 for help";
-	com_left=(int)(strlen(h)+1);
-	return h;
+	return b_inf_s;
 }
 static bool wrt(int f){
 	size_t n=rows_tot-1;
@@ -154,11 +154,11 @@ int question(const char*q){
 	//if(com_left+sz>getmaxx(stdscr))return 1;
 	int y=getmaxy(stdscr)-1;
 	mvaddstr(y,com_left,q);
-	addstr("? y/C/n");
+	addstr(quest_ex_s);
 	int ch=getch();
 	if(ch==KEY_RESIZE)return -2;
 	move(y,com_left);
-	int sz=(int)(strlen(q)+sizeof("? y/C/n"));
+	int sz=(int)(strlen(q)+sizeof(quest_ex_s)-1);
 	for(int i=0;i<sz;i++)
 		addch(' ');
 	//memset(mapsel,' ',sz);mapsel[sz]=0;mvaddstr(y,com_left,mapsel);

@@ -1784,7 +1784,7 @@ int dladdr(void* __addr, Dl_info* __info);
 //signal.h
 int sigaction(int sig,const struct sigaction*,struct sigaction*);
 //stdlib.h
-void exit(int);
+void __attribute__((noreturn)) exit(int);
 //stdio.h
 int snprintf(char* __buf, size_t __size, const char* __fmt, ...);
 #ifdef __cplusplus
@@ -1841,7 +1841,7 @@ static void CaptureBacktraceUsingLibUnwind(void*ucontext) {
 		address_count++;
 	}
 }
-static void signalHandler(int sig,/*struct siginfo *info*/void* info,void* ucontext){
+static void __attribute__((noreturn)) signalHandler(int sig,/*struct siginfo *info*/void* info,void* ucontext){
 (void)sig;(void)info;
 	CaptureBacktraceUsingLibUnwind(ucontext);
 	exit(EXIT_FAILURE);

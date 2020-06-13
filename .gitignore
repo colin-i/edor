@@ -7,8 +7,6 @@ Makefile.in
 config.log
 config.status
 Makefile
-*.o
-*.s
 src/.dirstamp
 test.s
-edor
+edor*
