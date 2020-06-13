@@ -1510,7 +1510,7 @@ static bool loopin(WINDOW*w){
 			}
 			else if(!strcmp(s,"^Q")){
 				if(!mod_flag){
-					bar_clear();
+					//bar_clear();//not needed now but maniacly retain the size of the string for further versions
 					int q=question("And save");
 					if(q==1){
 						q=save();
