@@ -1814,7 +1814,7 @@ static void AddAddress(unsigned long ip,int address_count) {
 	dladdr((void*)ip, &info);
 	unsigned long relative_address = ip-(unsigned long)info.dli_fbase;
 	char buf[100];
-	int n=snprintf(buf,99,"  #%02zu:  0x%lx  %s\n", address_count, relative_address, info.dli_sname);
+	int n=snprintf(buf,99,"  #%02zu:  0x%lx  %s\r\n", address_count, relative_address, info.dli_sname);
 	write(STDOUT_FILENO,&buf,(size_t)n);
 }
 static void CaptureBacktraceUsingLibUnwind(void*ucontext) {
@@ -1959,7 +1959,7 @@ int main(int argc,char**argv){
 			ok=startfile(argv[1],&text_sz);
 			if(ok){
 				if(ok<1){
-					char txt[]={'N','o','r','m','a','l','i','z','e',' ','l','i','n','e',' ','e','n','d','i','n','g','s',' ','t','o',' ','\\','r',' ',' ','?',' ','n','=','n','o',',',' ','d','e','f','a','u','l','t','=','y','e','s',' ',0};
+					char txt[]={'N','o','r','m','a','l','i','z','e',' ','l','i','n','e',' ','e','n','d','i','n','g','s',' ','t','o',' ','\\','r',' ',' ','?',' ','n','=','n','o',',',' ','d','e','f','a','u','l','t','=','y','e','s','\r',0};
 					//           0   1   2   3   4   5   6   7   8   9  10  11  12  13  14  15  16  17  18  19  20  21  22  23  24  25   26  27  28  29  30  31  32  33  34  35  36  37  38  39  40  41  42  43  44  45  46  47  48  49  50
 					if(ln_term_sz==2){txt[28]='\\';txt[29]='n';}
 					else if(ln_term[0]=='\n')txt[27]='n';
