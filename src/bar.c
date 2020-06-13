@@ -2,9 +2,9 @@
 //strlen;open,2;close;write,3;free,4
 //realloc,3;malloc,4
 #include"mainb.h"
-//move,19;wmove;getch,3;wgetch,2;getmaxy,6
-//getmaxx;3;getcury;getcurx,8;stdscr,18
-//keyname;addch,12;waddch;mvaddch,8,addstr
+//move,20;wmove;getch,3;wgetch,2;getmaxy,8
+//getmaxx;3;getcury;getcurx,8;stdscr,20
+//keyname;addch,13;waddch;mvaddch,8,addstr
 //wnoutrefresh,8;attrset,2;newwin
 //COLOR_PAIR;strcmp;sprintf,2
 #include"mainbc.h"
@@ -17,7 +17,7 @@ extern "C"{
 
 //#include<curses.h>
 int addnstr(const char*,int);//8
-int mvaddstr(int,int,const char*);//2
+int mvaddstr(int,int,const char*);//3
 int mvaddnstr(int,int,const char*,int);//2
 int mvwaddstr(WINDOW*,int,int,const char*);
 int wresize(WINDOW*,int,int);//2
@@ -25,7 +25,7 @@ int mvwin(WINDOW*,int,int);//2
 int getbegx(const WINDOW*);//3
 int getbegy(const WINDOW*);
 //unistd.h
-int access(const char*,int);              
+int access(const char*,int);//2              
 //stdlib.h
 int atoi(const char*);//3
 
@@ -55,6 +55,8 @@ static size_t undos_save=0;
 static size_t undos_max=0;
 static int undo_v=0;
 static bool new_f=false;
+#define new_s "New Path"
+static bool new_v=false;
 
 const char*bar_init(){
 	return b_inf_s;
@@ -405,11 +407,19 @@ static void undo_erase(int a){
 	while(dif>0){addch(' ');dif--;}
 	undo_v-=undo_v-a;
 }
-bool undo_clear(){
-	if(!undo_v)return false;
-	move(getmaxy(stdscr)-1,com_left);
-	undo_erase(0);
-	return true;
+bool bar_clear(){
+	if(undo_v){
+		move(getmaxy(stdscr)-1,com_left);
+		undo_erase(0);
+		return true;
+	}
+	else if(new_v){
+		move(getmaxy(stdscr)-1,com_left);
+		for(int i=0;(size_t)i<sizeof(new_s)-1;i++)addch(' ');
+		new_v=false;
+		return true;
+	}
+	return false;
 }
 //-2resize,-1no/quit,0er/boolFalse,1ok
 int command(char*comnrp){
@@ -417,7 +427,7 @@ int command(char*comnrp){
 	int rightexcl=right+1;
 	int visib=rightexcl-com_left;
 	if(visib<2)return 0;//phisical visib is 1
-	undo_clear();
+	bar_clear();
 	int y=getmaxy(stdscr)-1;
 	move(y,com_left);
 	int cursor=0;
@@ -789,4 +799,12 @@ void undo_loop(WINDOW*w){
 		else if(c==KEY_RIGHT)redo(w);
 		else break;
 	}
+}
+bool new_visual(char*f){
+	if(access(f,F_OK)==-1){
+		new_v=true;new_f=true;textfile=f;
+		mvaddstr(getmaxy(stdscr)-1,com_left,new_s);
+		return true;
+	}
+	return false;
 }

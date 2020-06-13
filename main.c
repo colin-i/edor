@@ -356,7 +356,6 @@ static bool helpin(WINDOW*w){
 }
 static void printhelp(){
 	move(getmaxy(stdscr)-1,0);
-	clrtoeol();//resize to up,is over text
 	printinverted(bar_init());
 }
 static void sumove(WINDOW*w,int y){tmove(w,y,false);}
@@ -1435,7 +1434,7 @@ static bool loopin(WINDOW*w){
 			if(visual_bool){
 				visual_bool=false;
 				visual(' ');
-			}else if(undo_clear())wnoutrefresh(stdscr);
+			}else if(bar_clear())wnoutrefresh(stdscr);
 			position(getcury(w),getcurx(w));
 		}else if(c==Char_Escape){
 			nodelay(w,true);
@@ -1511,6 +1510,7 @@ static bool loopin(WINDOW*w){
 			}
 			else if(!strcmp(s,"^Q")){
 				if(!mod_flag){
+					bar_clear();
 					int q=question("And save");
 					if(q==1){
 						q=save();
@@ -1581,7 +1581,7 @@ static void rows_init(size_t size){
 	z->sz=(size_t)(b-a);z->spc=0;
 	rows_spc=rows_tot;
 }
-static int startpage(char*f,size_t*text_sz){
+static int startfile(char*f,size_t*text_sz){
 	int ok=0;
 	int fd=open(f,O_RDONLY);
 	if(fd!=-1){
@@ -1874,7 +1874,7 @@ static void proced(char*comline){
 	if(setfilebuf(comline,cutbuf_file)){
 		bool loops=false;
 		int cy=0;int cx=0;
-		int r=getmaxy(stdscr)-1;
+		int r=getmaxy(stdscr)-1;int old_r=r;
 		do{
 			void*a=realloc(x_right,(size_t)r);
 			if(a==nullptr)break;
@@ -1894,6 +1894,8 @@ static void proced(char*comline){
 				refreshpage(w);
 				wmove(w,cy,cx);
 				printhelp();
+				if(r<old_r)clrtoeol();//resize to up,is over text
+				old_r=r;
 				if(!mod_flag)mod_set(false);
 				else wnoutrefresh(stdscr);
 				position_reset();
@@ -1941,8 +1943,20 @@ int main(int argc,char**argv){
 		raw();//stty,cooked;relevant for getchar at me
 		size_t text_sz;
 		int ok=0;
-		if(argc==2){
-			ok=startpage(argv[1],&text_sz);
+		if(argc!=2||new_visual(argv[1])){
+			text_init_b=(char*)malloc(1);
+			if(text_init_b!=nullptr){
+				rows=(row*)malloc(sizeof(row));
+				if(rows!=nullptr){
+					text_init_b[0]=0;
+					text_sz=0;
+					rows[0].data=text_init_b;
+					rows[0].sz=0;rows[0].spc=0;
+					ok=1;
+				}
+			}
+		}else{
+			ok=startfile(argv[1],&text_sz);
 			if(ok){
 				if(ok<1){
 					char txt[]={'N','o','r','m','a','l','i','z','e',' ','l','i','n','e',' ','e','n','d','i','n','g','s',' ','t','o',' ','\\','r',' ',' ','?',' ','n','=','n','o',',',' ','d','e','f','a','u','l','t','=','y','e','s',' ',0};
@@ -1960,18 +1974,6 @@ int main(int argc,char**argv){
 						textfile=argv[1];
 					}
 					else ok=0;
-				}
-			}
-		}else{
-			text_init_b=(char*)malloc(1);
-			if(text_init_b!=nullptr){
-				rows=(row*)malloc(sizeof(row));
-				if(rows!=nullptr){
-					text_init_b[0]=0;
-					text_sz=0;
-					rows[0].data=text_init_b;
-					rows[0].sz=0;rows[0].spc=0;
-					ok=1;
 				}
 			}
 		}

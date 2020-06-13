@@ -63,14 +63,15 @@ bool undo_add_del(size_t,size_t,size_t,size_t);
 bool undo_add_ind(size_t,size_t);
 bool undo_add_ind_del(size_t,size_t);
 void undo_free(void);
-bool undo_clear(void);
-void undo(WINDOW*w);
-void redo(WINDOW*w);
+void undo(WINDOW*);
+void redo(WINDOW*);
 void undo_save(void);
 bool undo_type(size_t,size_t,size_t,size_t);
 bool undo_bcsp(size_t,size_t,size_t,size_t);
 bool undo_delk(size_t,size_t,size_t,size_t);
-void undo_loop(WINDOW*w);
+void undo_loop(WINDOW*);
+bool new_visual(char*);
+bool bar_clear(void);
 
 #define Char_Return 0xd
 #define Char_Backspace 0x7f
