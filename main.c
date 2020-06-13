@@ -1,10 +1,10 @@
 #include"src/main0.h"
-//strlen,2;open,3;close,3;write,2;free,11
-//realloc,6;malloc,11
+//strlen,2;open,3;close,3;write,2;free,12
+//realloc,6;malloc,12
 #include"src/mainc.h"
 #include"src/mainb.h"
 //move,4;wmove,27;getch;wgetch,3;newwin
-//getmaxy,17;getmaxx,33;stdscr,17
+//getmaxy,17;getmaxx,33;stdscr,20
 //keyname,2;getcury,28;getcurx,23
 //addch;waddch,4;mvaddch,2;addstr,3
 //wnoutrefresh,9;attrset,3;COLOR_PAIR,2
@@ -50,7 +50,7 @@ extern "C" {
 #endif
 
 //#include <string.h>
-void*memcpy(void*,const void*,size_t);//14
+void*memcpy(void*,const void*,size_t);//17
 void*memset(void*,int,size_t);//2
 //#include <unistd.h>
 off_t lseek(int,off_t,int);//4
@@ -106,32 +106,35 @@ static int tabs_rsz;
 static int yhelp;
 static bool helpend;
 static int phelp;
-static char helptext[]="INPUT"
-"\nhelp: q(uit),up/down,mouse/touch v.scroll"
-"\narrows(Alt),home(Ctrl,Alt)/end(Ctrl),page up/down;mouse/touch click or v.scroll"
-"\nCtrl+v = visual mode"
-"\nAlt +v = visual line mode"
-"\n    c = copy"
-"\n    d = delete"
-"\n    x = cut"
-"\n    i = indent (I = keep visual mode)"
-"\n    u = unindent (U = keep visual mode)"
-"\nCtrl+p = paste"
-"\ncommand mode: left/right,ctrl+q"
-"\nCtrl+s = save file"
-"\nCtrl+o = save file as..."
-"\nCtrl+g = go to row[,column]"
-"\nCtrl+f = find text"
-"\n    Enter = next"
-"\n    Space = previous"
-"\n    c = cancel"
-"\n    other key to return"
-"\n-"
-"\nCtrl+u = undo"
-"\nCtrl+r = redo"
-"\nAlt +u = undo mode: left undo,right redo,other key to return"
-"\nCtrl+b = build file"
-"\nCtrl+q = quit";//25
+static char*helptext;
+#define hel1 "USAGE\n"
+#define hel2 " [filepath]\
+\nINPUT\
+\nhelp: q(uit),up/down,mouse/touch v.scroll\
+\narrows(Alt),home(Ctrl,Alt)/end(Ctrl),page up/down;mouse/touch click or v.scroll\
+\nCtrl+v = visual mode\
+\nAlt +v = visual line mode\
+\n    c = copy\
+\n    d = delete\
+\n    x = cut\
+\n    i = indent (I = keep visual mode)\
+\n    u = unindent (U = keep visual mode)\
+\nCtrl+p = paste\
+\ncommand mode: left/right,ctrl+q\
+\nCtrl+s = save file\
+\nCtrl+o = save file as...\
+\nCtrl+g = go to row[,column]\
+\nCtrl+f = find text\
+\n    Enter = next\
+\n    Space = previous\
+\n    c = cancel\
+\n    other key to return\
+\n-\
+\nCtrl+u = undo\
+\nCtrl+r = redo\
+\nAlt +u = undo mode: left undo,right redo,other key to return\
+\nCtrl+b = build file\
+\nCtrl+q = quit"//27
 static bool visual_bool=false;
 static char*cutbuf=nullptr;
 static size_t cutbuf_sz=0;
@@ -1634,20 +1637,36 @@ static void getfilebuf(char*cutbuf_file){//,size_t off){
 		close(f);
 	}
 }
-static void setfilebuf(char*s,char*cutbuf_file){
+static bool help_init(char*f,size_t szf){
+	size_t sz1=sizeof(hel1)-1;
+	size_t sz2=sizeof(hel2);
+	char*a=(char*)malloc(sz1+szf+sz2);
+	if(a==nullptr)return false;
+	helptext=a;
+	memcpy(a,hel1,sz1);
+	a+=sz1;memcpy(a,f,szf);
+	memcpy(a+szf,hel2,sz2);
+	return true;
+}
+static bool setfilebuf(char*s,char*cutbuf_file){
 	size_t sz=strlen(s);size_t i=sz;
 	do{
 		i--;
 		char a=s[i];
 		if(a=='/'||a=='\\'){i++;break;}
 	}while(i);
+	bool b=help_init(&s[i],sz-i);
 	char*h=getenv("HOME");
-	if(h==nullptr)return;
-	size_t l=strlen(h);
-	if(!l)return;
-	if(l+(sz-i)+7>128)return;
-	sprintf(cutbuf_file,"%s/.%sinfo",h,&s[i]);
-	getfilebuf(cutbuf_file);//l-1
+	if(h!=nullptr){
+		size_t l=strlen(h);
+		if(l){
+			if(l+(sz-i)+7<=128){
+				sprintf(cutbuf_file,"%s/.%sinfo",h,&s[i]);
+				getfilebuf(cutbuf_file);//l-1
+			}
+		}
+	}
+	return b;
 }
 static void writefilebuf(char*cutbuf_file){
 	if(cutbuf_file[0]){
@@ -1849,6 +1868,65 @@ static void __attribute__((noreturn)) signalHandler(int sig,/*struct siginfo *in
 //static void baz(int argc){int *foo = (int*)-1;if(argc==1)sprintf((char*)24,"%d\n", *foo);else free((void*)10);}
 #endif
 
+static void proced(char*comline){
+	char cutbuf_file[128];
+	cutbuf_file[0]=0;
+	if(setfilebuf(comline,cutbuf_file)){
+		bool loops=false;
+		int cy=0;int cx=0;
+		int r=getmaxy(stdscr)-1;
+		do{
+			void*a=realloc(x_right,(size_t)r);
+			if(a==nullptr)break;
+			x_right=(bool*)a;
+			int c=getmaxx(stdscr);
+			tabs_rsz=1+(c/tab_sz);
+			if(c%tab_sz)tabs_rsz++;
+			void*b=realloc(tabs,sizeof(int)*(size_t)(r*tabs_rsz));
+			if(b==nullptr)break;
+			tabs=(int*)b;
+			a=realloc(mapsel,(size_t)c+1);
+			if(a==nullptr)break;
+			mapsel=(char*)a;
+			WINDOW*w=newwin(r,c,0,0);
+			if(w!=nullptr){
+				keypad(w,true);
+				refreshpage(w);
+				wmove(w,cy,cx);
+				printhelp();
+				if(!mod_flag)mod_set(false);
+				else wnoutrefresh(stdscr);
+				position_reset();
+				position(cy,cx);
+				loops=loopin(w);
+				if(loops){//is already resized and the cursor fits in the screen, not in the new size
+					cy=getcury(w);
+					r=getmaxy(stdscr)-1;
+					if(cy==r){
+						cy=r-1;
+						if(ytext+1<rows_tot)ytext++;
+					}
+					cx=getcurx(w);
+					//c=getmaxx(w1);never if(cx>=c)
+				}
+				delwin(w);
+			}else break;
+		}while(loops);
+		if(x_right!=nullptr){
+			free(x_right);
+			if(tabs!=nullptr){
+				free(tabs);
+				if(mapsel!=nullptr){
+					free(mapsel);
+					writefilebuf(cutbuf_file);
+					undo_free();
+				}
+			}
+		}
+		free(helptext);
+	}
+	if(cutbuf!=nullptr)free(cutbuf);
+}
 int main(int argc,char**argv){
 	#ifdef ARM7L
 	struct sigaction signalhandlerDescriptor;
@@ -1906,61 +1984,7 @@ int main(int argc,char**argv){
 				noecho();
 				nonl();//no translation,faster
 				mousemask(ALL_MOUSE_EVENTS,nullptr);//for error, export TERM=vt100
-				char cutbuf_file[128];
-				cutbuf_file[0]=0;
-				setfilebuf(argv[0],cutbuf_file);
-				bool loops=false;
-				int cy=0;int cx=0;
-				int r=getmaxy(w1)-1;
-				do{
-					void*a=realloc(x_right,(size_t)r);
-					if(a==nullptr)break;
-					x_right=(bool*)a;
-					int c=getmaxx(w1);
-					tabs_rsz=1+(c/tab_sz);
-					if(c%tab_sz)tabs_rsz++;
-					void*b=realloc(tabs,sizeof(int)*(size_t)(r*tabs_rsz));
-					if(b==nullptr)break;
-					tabs=(int*)b;
-					a=realloc(mapsel,(size_t)c+1);
-					if(a==nullptr)break;
-					mapsel=(char*)a;
-					WINDOW*w=newwin(r,c,0,0);
-					if(w!=nullptr){
-						keypad(w,true);
-						refreshpage(w);
-						wmove(w,cy,cx);
-						printhelp();
-						if(!mod_flag)mod_set(false);
-						else wnoutrefresh(stdscr);
-						position_reset();
-						position(cy,cx);
-						loops=loopin(w);
-						if(loops){//is already resized and the cursor fits in the screen, not in the new size
-							cy=getcury(w);
-							r=getmaxy(w1)-1;
-							if(cy==r){
-								cy=r-1;
-								if(ytext+1<rows_tot)ytext++;
-							}
-							cx=getcurx(w);
-							//c=getmaxx(w1);never if(cx>=c)
-						}
-						delwin(w);
-					}else break;
-				}while(loops);
-				if(x_right!=nullptr){
-					free(x_right);
-					if(tabs!=nullptr){
-						free(tabs);
-						if(mapsel!=nullptr){
-							free(mapsel);
-							writefilebuf(cutbuf_file);
-							undo_free();
-						}
-					}
-				}
-				if(cutbuf!=nullptr)free(cutbuf);
+				proced(argv[0]);
 				delwin(pw);
 			}
 		}
