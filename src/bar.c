@@ -52,6 +52,7 @@ static size_t undos_spc=0;
 static size_t undos_save=0;
 static size_t undos_max=0;
 static int undo_v=0;
+static bool new_f=false;
 
 const char*bar_init(){
 	const char*h="F1 for help";
@@ -100,9 +101,12 @@ static int bcdl(int y,int*p,int cursor){
 	p[0]=pos;
 	return cursor-1;
 }
-static bool saving(bool creat){
+static bool saving(){
 	int f;bool r;
-	if(creat)f=open(textfile,O_CREAT|O_WRONLY|O_TRUNC,S_IRUSR|S_IWUSR);
+	if(new_f){
+		f=open(textfile,O_CREAT|O_WRONLY|O_TRUNC,S_IRUSR|S_IWUSR);
+		new_f=f==-1;
+	}
 	else f=open(textfile,O_WRONLY|O_TRUNC);
 	if(f!=-1){
 		r=wrt(f);
@@ -120,7 +124,7 @@ static void inputpath(){
 static int saves(){
 	if(access(input,F_OK)==-1){
 		inputpath();
-		return saving(true);
+		new_f=true;return saving();
 	}
 	return -1;
 }
@@ -431,7 +435,7 @@ int command(char*comnrp){
 					r=question("Overwrite");
 					if(r==1){
 						inputpath();
-						r=saving(false);
+						new_f=false;r=saving();
 					}else if(!r){
 						if(pos)mvaddch(y,com_left-1,'<');
 						else move(y,com_left);
@@ -555,7 +559,7 @@ int command(char*comnrp){
 }
 int save(){
 	if(textfile!=nullptr){
-		return saving(false);
+		return saving();
 	}
 	char a=0;
 	return command(&a);
