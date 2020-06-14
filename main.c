@@ -129,15 +129,16 @@ static char*helptext;
 \nCtrl+o = save file as...\
 \nCtrl+g = go to row[,column]\
 \nCtrl+f = find text\
-\n    Enter = next\
-\n    Space = previous\
-\n    c     = cancel\
+\n    if found\
+\n      Enter = next\
+\n      Space = previous\
+\n    c = cancel\
 \n    other key to return\
 \nCtrl+u = undo\
 \nCtrl+r = redo\
 \nAlt +u = undo mode: left=undo,right=redo,other key to return\
 \nCtrl+b = build file\
-\nCtrl+q = quit"//26
+\nCtrl+q = quit"//27
 static bool visual_bool=false;
 static char*cutbuf=nullptr;
 static size_t cutbuf_sz=0;

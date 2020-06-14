@@ -362,15 +362,15 @@ static int find(char*z,int cursor,int pos,int visib,int y){
 			}
 			centering(w,&xr,&xc);
 			a=wgetch(w);
+			if(a==Char_Return){
+				xc+=(size_t)cursor;
+				forward=true;
+				continue;
+			}
+			if(a==' '){
+				forward=false;continue;
+			}
 		}else a=getch();
-		if(a==Char_Return){
-			xc+=(size_t)cursor;
-			forward=true;
-			continue;
-		}
-		if(a==' '){
-			forward=false;continue;
-		}
 		if(a=='c'){
 			return false;
 		}
