@@ -8,7 +8,7 @@
 //keyname,2;getcury,28;getcurx,23
 //addch;waddch,4;mvaddch,2;addstr,3
 //wnoutrefresh,9;attrset,3;COLOR_PAIR,2
-//strcmp,18;sprintf
+//strcmp,14;sprintf
 
 typedef long off_t;
 //sys/types.h
@@ -40,9 +40,13 @@ MEVENT;
 #define KEY_UP 0403
 #define KEY_DOWN 0402
 #define KEY_HOME 0406
-#define KEY_END 0550
-#define KEY_PPAGE 0523
+#define KEY_SF 0520
+#define KEY_SR 0521
 #define KEY_NPAGE 0522
+#define KEY_PPAGE 0523
+#define KEY_END 0550
+#define KEY_SLEFT 0611
+#define KEY_SRIGHT 0622
 #define KEY_MOUSE 0631
 
 #ifdef __cplusplus
@@ -111,14 +115,14 @@ static char*helptext;
 #define hel2 " [filepath]\
 \nINPUT\
 \nhelp: q(uit),up/down,mouse/touch v.scroll\
-\narrows(Alt),home(Ctrl,Alt)/end(Ctrl),page up/down;mouse/touch click or v.scroll\
+\narrows(Shift),home(Ctrl,Alt)/end(Ctrl),page up/down;mouse/touch click or v.scroll\
 \nCtrl+v = visual mode\
 \nAlt +v = visual line mode\
 \n    c = copy\
 \n    d = delete\
 \n    x = cut\
-\n    i = indent (I = keep visual mode)\
-\n    u = unindent (U = keep visual mode)\
+\n    i = indent (I = flow indent)\
+\n    u = unindent (U = flow unindent)\
 \nCtrl+p = paste\
 \ncommand mode: left/right,ctrl+q\
 \nCtrl+s = save file\
@@ -469,14 +473,16 @@ static int movment(int c,WINDOW*w){
 		if(ytext+1>rows_tot)ytext=rows_tot-1;
 		refreshpage(w);
 		amove(w,y,x);
-	}else if(c==KEY_RESIZE){
+	}else if(c==KEY_SLEFT)slmove(w,getcurx(w),false);
+	else if(c==KEY_SRIGHT)srmove(w,getcurx(w),true);
+	else if(c==KEY_SF)sdmove(w,getcury(w));
+	else if(c==KEY_SR)sumove(w,getcury(w));
+	else if(c==KEY_RESIZE){
 		return 1;
 	}
 	else{
 		const char*s=keyname(c);
-		if(!strcmp(s,"kLFT3"))slmove(w,getcurx(w),false);
-		else if(!strcmp(s,"kRIT3"))srmove(w,getcurx(w),true);
-		else if(!strcmp(s,"kHOM5")){
+		if(!strcmp(s,"kHOM5")){
 			ytext=0;xtext=0;
 			refreshpage(w);
 			wmove(w,0,0);
@@ -496,9 +502,7 @@ static int movment(int c,WINDOW*w){
 			else{xtext=0;x=0;}
 			refreshpage(w);
 			wmove(w,y,x);
-		}else if(!strcmp(s,"kUP3"))sumove(w,getcury(w));
-		else if(!strcmp(s,"kDN3"))sdmove(w,getcury(w));
-		else return 0;
+		}else return 0;
 	}
 	return -1;
 }
@@ -1286,7 +1290,7 @@ static void type(int cr,WINDOW*w){
 	wmove(w,rw,cl);
 	if(mod_flag)mod_set(false);
 }
-static void indent(bool b,size_t ybsel,size_t*xbsel,size_t yesel,size_t*xesel,int*cl,WINDOW*w){
+static void indent(bool b,size_t ybsel,size_t*xbsel,size_t yesel,size_t*xesel,WINDOW*w){
 	if(ybsel>=rows_tot)return;
 	size_t ye;
 	if(yesel>=rows_tot)ye=rows_tot;
@@ -1340,9 +1344,7 @@ static void indent(bool b,size_t ybsel,size_t*xbsel,size_t yesel,size_t*xesel,in
 			refreshrowsbot(w,rb,re);
 			if(xbsel){
 				xbsel[0]=0;
-				if(yesel<rows_tot-1&&!rows[yesel].sz)xesel[0]=(size_t)getmaxx(w)-1;
-				else xesel[0]=0;
-				cl[0]=0;
+				xesel[0]=v_l_x(yesel,xesel[0],rows_tot-1,w);
 				printsel(w,ybsel,0,yesel,xesel[0],-1);
 			}
 		}
@@ -1391,8 +1393,8 @@ static bool visual_mode(WINDOW*w,bool v_l){
 		else{
 			int r=getcury(w);int col=getcurx(w);
 			if(!z){
-				if(b=='I'){indent(true,ybsel,&xbsel,yesel,&xesel,&col,w);z=-1;}
-				else if(b=='U'){indent(false,ybsel,&xbsel,yesel,&xesel,&col,w);z=-1;}
+				if(b=='I'){indent(true,ybsel,&xbsel,yesel,&xesel,w);z=-1;}
+				else if(b=='U'){indent(false,ybsel,&xbsel,yesel,&xesel,w);z=-1;}
 				else{
 					char v=' ';
 					visual_bool=b=='c';
@@ -1407,8 +1409,8 @@ static bool visual_mode(WINDOW*w,bool v_l){
 								if(orig)position(r,col);
 						}
 					}else{
-						if(b=='i')indent(true,ybsel,nullptr,yesel,nullptr,nullptr,w);
-						else if(b=='u')indent(false,ybsel,nullptr,yesel,nullptr,nullptr,w);
+						if(b=='i')indent(true,ybsel,nullptr,yesel,nullptr,w);
+						else if(b=='u')indent(false,ybsel,nullptr,yesel,nullptr,w);
 						unsel(w);
 					}
 					visual(v);
