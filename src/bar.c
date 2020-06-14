@@ -533,33 +533,34 @@ int command(char*comnrp){
 		else{
 			const char*s=keyname(a);
 			if(!strcmp(s,"^Q")){r=-1;break;}
-			if(cursor==max_path)continue;
-			char ch=(char)a;
-			if(!no_char(ch)){
-				int x=getcurx(stdscr);
-				int off=pos+(x-com_left);
-				for(int i=cursor;i>off;i--){
-					input[i]=input[i-1];
+			if(cursor!=max_path){
+				char ch=(char)a;
+				if(!no_char(ch)){
+					int x=getcurx(stdscr);
+					int off=pos+(x-com_left);
+					for(int i=cursor;i>off;i--){
+						input[i]=input[i-1];
+					}
+					input[off]=ch;
+					int dif=right-x;
+					if(!dif){
+						if(!pos)mvaddch(y,com_left-1,'<');
+						else move(y,com_left);
+						pos++;
+						addnstr(input+pos,visib-1);
+					}else addch(ch);
+					int d=cursor-off;
+					if(d){
+						int n=right-x;
+						if(dif)x++;else n++;
+						if(d<n)n=d;
+						int i=off+1;
+						addnstr(input+i,n);
+						if(i+n==cursor)addch('>');
+						move(y,x);
+					}
+					cursor++;
 				}
-				input[off]=ch;
-				int dif=right-x;
-				if(!dif){
-					if(!pos)mvaddch(y,com_left-1,'<');
-					else move(y,com_left);
-					pos++;
-					addnstr(input+pos,visib-1);
-				}else addch(ch);
-				int d=cursor-off;
-				if(d){
-					int n=right-x;
-					if(dif)x++;else n++;
-					if(d<n)n=d;
-					int i=off+1;
-					addnstr(input+i,n);
-					if(i+n==cursor)addch('>');
-					move(y,x);
-				}
-				cursor++;
 			}
 		}
 	}
