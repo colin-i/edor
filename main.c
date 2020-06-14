@@ -131,14 +131,13 @@ static char*helptext;
 \nCtrl+f = find text\
 \n    Enter = next\
 \n    Space = previous\
-\n    c = cancel\
+\n    c     = cancel\
 \n    other key to return\
-\n-\
 \nCtrl+u = undo\
 \nCtrl+r = redo\
-\nAlt +u = undo mode: left undo,right redo,other key to return\
+\nAlt +u = undo mode: left=undo,right=redo,other key to return\
 \nCtrl+b = build file\
-\nCtrl+q = quit"//27
+\nCtrl+q = quit"//26
 static bool visual_bool=false;
 static char*cutbuf=nullptr;
 static size_t cutbuf_sz=0;
@@ -604,23 +603,11 @@ static void sel(WINDOW*w,int c1,int c2,int rb,int cb,int re,int ce){
 		printrow(w,re,0,ce,c1,c2);
 	}
 }
-static int xc_to_c(size_t col,int r){
-	int*p=&tabs[tabs_rsz*r];
-	int n=p[0];
-	for(int i=0;i<n;i++){
-		p++;
-		if((size_t)p[0]<col)col+=tab_sz-1;
-		else break;
-	}
-	return(int)col;
-}
 static size_t v_l_x(size_t y,size_t x,size_t rmax,WINDOW*w){
 	if(y<rmax){
-		int max=getmaxx(w)-1;
-		if(x>xtext){
-			int xc=xc_to_c(x-xtext,(int)(y-ytext));
-			if(xc<max)return x+(size_t)(max-xc);
-		}else return xtext+(size_t)max;
+		size_t ok=xtext+(size_t)getmaxx(w)-1;
+		if(ok<rows[y-ytext].sz)return rows[y-ytext].sz;
+		return ok;
 	}else if(y==rmax){
 		size_t sz=rows[y].sz;
 		if(sz&&x<sz-1)return sz-1;
@@ -692,6 +679,16 @@ static void setmembuf(size_t y,size_t x,bool*orig,size_t*yb,size_t*xb,size_t*ye,
 			yb[0]=y;xb[0]=x;
 		}
 	}
+}
+static int xc_to_c(size_t col,int r){
+	int*p=&tabs[tabs_rsz*r];
+	int n=p[0];
+	for(int i=0;i<n;i++){
+		p++;
+		if((size_t)p[0]<col)col+=tab_sz-1;
+		else break;
+	}
+	return(int)col;
 }
 size_t c_to_xc(int c,int r){
 	int*p=&tabs[tabs_rsz*r];
@@ -1361,12 +1358,8 @@ static bool visual_mode(WINDOW*w,bool v_l){
 	if(v_l){
 		if(ybsel<rmax){
 			xbsel=0;
-			xesel=rows[yesel].sz;
-			int max=getmaxx(w)-1;
-			if(xesel>xtext){
-				int x=xc_to_c(xesel-xtext,rw);
-				if(x<max)xesel+=(size_t)(max-x);
-			}else xesel=xtext+(size_t)max;
+			xesel=xtext+(size_t)getmaxx(w)-1;
+			if(xesel<rows[yesel].sz)xesel=rows[yesel].sz;
 		}
 		else{
 			xesel=xtext+(size_t)cl;
