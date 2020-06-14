@@ -346,8 +346,7 @@ static int find(char*z,int cursor,int pos,int visib,int y){
 	bool forward=true;
 	size_t y1;size_t x1;int phase=-1;
 	for(;;){
-		bool b=finding((size_t)cursor,xr,xc,forward);
-		int a;if(b){
+		int a;if(finding((size_t)cursor,xr,xc,forward)){
 			if(phase==-1){
 				y1=ytext;x1=xtext;
 				phase=0;
@@ -365,7 +364,7 @@ static int find(char*z,int cursor,int pos,int visib,int y){
 			a=wgetch(w);
 		}else a=getch();
 		if(a==Char_Return){
-			if(b)xc+=(size_t)cursor;
+			xc+=(size_t)cursor;
 			forward=true;
 			continue;
 		}
