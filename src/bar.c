@@ -343,39 +343,42 @@ static int find(char*z,int cursor,int pos,int visib,int y){
 	if(sz>visib)sz=visib;
 	colorfind(1,y,pos,sz);
 	//
-	bool forward=true;
-	size_t y1;size_t x1;int phase=-1;
-	for(;;){
-		int a;if(finding((size_t)cursor,xr,xc,forward)){
-			if(phase==-1){
-				y1=ytext;x1=xtext;
-				phase=0;
-				wnoutrefresh(stdscr);
-			}else if(y1==ytext&&x1==xtext){
+	if(finding((size_t)cursor,xr,xc,true)){
+		bool forward=true;
+		size_t y1=ytext;size_t x1=xtext;
+		bool phase=false;
+		wnoutrefresh(stdscr);
+		centering(w,&xr,&xc);
+		for(;;){
+			int a=wgetch(w);
+			if(a==Char_Return){
+				xc+=(size_t)cursor;
+				forward=true;
+			}else if(a==' '){
+				forward=false;
+			}else if(a=='c'){
+				return false;
+			}else{
+				return a==KEY_RESIZE?-1:true;
+			}
+			finding((size_t)cursor,xr,xc,forward);
+			if(y1==ytext&&x1==xtext){
 				colorfind(2,y,pos,sz);
-				phase=1;
+				phase=true;
 				wnoutrefresh(stdscr);
-			}else if(phase==1){
-				phase=0;
+			}else if(phase){
+				phase=false;
 				colorfind(1,y,pos,sz);
 				wnoutrefresh(stdscr);
 			}
 			centering(w,&xr,&xc);
-			a=wgetch(w);
-			if(a==Char_Return){
-				xc+=(size_t)cursor;
-				forward=true;
-				continue;
-			}
-			if(a==' '){
-				forward=false;continue;
-			}
-		}else a=getch();
-		if(a=='c'){
-			return false;
 		}
-		return a==KEY_RESIZE?-1:1;
 	}
+	int a=getch();
+	if(a=='c'){
+		return false;
+	}
+	return a==KEY_RESIZE?-1:true;
 }
 static bool go_to(int cursor){
 	int i=0;size_t y;size_t x;
