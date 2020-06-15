@@ -4,7 +4,7 @@
 #include"src/mainc.h"
 #include"src/mainb.h"
 //move,4;wmove,27;getch;wgetch,3;newwin
-//getmaxy,17;getmaxx,33;stdscr,20
+//getmaxy,18;getmaxx,33;stdscr,20
 //keyname,2;getcury,28;getcurx,23
 //addch;waddch,4;mvaddch,2;addstr,3
 //wnoutrefresh,9;attrset,3;COLOR_PAIR,2
@@ -771,7 +771,12 @@ static void visual(char a){
 	mvaddch(getmaxy(stdscr)-1,getmaxx(stdscr)-2,a);
 	wnoutrefresh(stdscr);
 }
+static void refreshrowscond(WINDOW*w,size_t y,size_t x,size_t r,size_t n){
+	if(y!=ytext||x!=xtext)refreshrows(w,0);
+	else refreshrowsbot(w,(int)r,n?getmaxy(w):(int)r+1);
+}
 static void pasted(size_t r,size_t x,WINDOW*w){
+	size_t z1=ytext;size_t z2=xtext;size_t z3=r;
 	size_t rws=cutbuf_r-1;
 	r+=rws;size_t maxy=(size_t)getmaxy(w);
 	if(maxy<=r){
@@ -792,7 +797,8 @@ static void pasted(size_t r,size_t x,WINDOW*w){
 		if(c>maxx){s++;c-=tab_sz;}
 		xtext=(size_t)(s-d);
 	}
-	refreshpage(w);wmove(w,(int)r,c);
+	refreshrowscond(w,z1,z2,z3,rws);
+	wmove(w,(int)r,c);
 }
 static bool rows_expand(size_t n){
 	size_t rowssize=rows_tot+n;
@@ -861,14 +867,9 @@ static void deleted(size_t ybsel,size_t xbsel,int*r,int*c,WINDOW*w){
 	int max=getmaxx(w);
 	size_t x=xbsel;
 	while(x>xtext){
-		x--;cl+=d[x]=='\t'?tab_sz:1;
-		if(cl>=max){
-			if(cl>max){
-				cl-=tab_sz;
-				x++;
-			}
-			break;
-		}
+		int n=d[x]=='\t'?tab_sz:1;
+		if(cl+n>=max)break;
+		x--;cl+=n;
 	}
 	xtext=x;
 	c[0]=cl;
@@ -919,12 +920,14 @@ static bool delet(size_t ybsel,size_t xbsel,size_t yesel,size_t xesel,int*rw,int
 	fixmembuf(&yesel,&xesel);
 	if(xesel==rows[yesel].sz){if(yesel<rows_tot-1){yesel++;xesel=0;}}
 	else xesel++;
-	if(ybsel!=yesel||xbsel!=xesel){
+	bool many=ybsel!=yesel;
+	if(many||xbsel!=xesel){
 		if(deleting_init(ybsel,xbsel,yesel,xesel))return false;
 		if(undo_add_del(ybsel,xbsel,yesel,xesel))return false;
 		deleting(ybsel,xbsel,yesel,xesel);
+		size_t z1=ytext;size_t z2=xtext;
 		deleted(ybsel,xbsel,rw,cl,w);
-		refreshpage(w);
+		refreshrowscond(w,z1,z2,ybsel-ytext,many);
 		if(mod_flag)mod_set(false);
 		return true;
 	}return false;
