@@ -302,10 +302,12 @@ void position(int rw,int cl){
 	mvwaddstr(poswn,0,0,posbuf);
 	wnoutrefresh(poswn);
 }
-void centering(WINDOW*w,size_t*rw,size_t*cl){
+static void centering2(WINDOW*w,size_t*rw,size_t*cl,bool right){
 	position(0,0);
-	size_t wd=(size_t)getmaxx(w)/3;
-	size_t c=0;char*d=rows[ytext].data;
+	int mx=getmaxx(w);
+	int wd=mx/3;
+	if(right)wd=mx-wd;
+	int c=0;char*d=rows[ytext].data;
 	size_t xc=xtext;
 	do{
 		if(!xtext)break;
@@ -316,10 +318,13 @@ void centering(WINDOW*w,size_t*rw,size_t*cl){
 	if((int)(ytext-hg)<0){hg=ytext;ytext=0;}
 	else ytext=ytext-hg;
 	refreshpage(w);
-	wmove(w,(int)hg,(int)c);
+	wmove(w,(int)hg,c);
 	if(rw){
 		rw[0]=hg;cl[0]=xc-xtext;
 	}
+}
+void centering(WINDOW*w,size_t*rw,size_t*cl){
+	centering2(w,rw,cl,false);
 }
 static void colorfind(int a,int y,int pos,int sz){
 	attrset(COLOR_PAIR(a));
@@ -683,7 +688,7 @@ static bool dos(WINDOW*w,eundo*un,size_t z){
 			if(!paste(y1,xb,&xe,d,xe,y2-y1+1,false))return false;
 			un->xe=xe;un->data=nullptr;
 			ytext=y2;xtext=xe;
-			centering(w,nullptr,nullptr);
+			centering2(w,nullptr,nullptr,true);
 			free(d);
 		}
 		else{
