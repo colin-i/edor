@@ -85,7 +85,8 @@ int nodelay(WINDOW*,bool);//2
 //#include <stdlib.h>
 char*getenv(const char*);
 //#include<stdio.h>
-int puts(const char*);//2
+int puts(const char*);//3
+int putchar(int);//2
 int getchar(void);
 
 #ifdef __cplusplus
@@ -1584,30 +1585,41 @@ static int startfile(char*f,size_t*text_sz){
 	int ok=0;
 	int fd=open(f,O_RDONLY);
 	if(fd!=-1){
-		size_t size=(size_t)lseek(fd,0,SEEK_END);
-		text_init_b=(char*)malloc(size);
-		if(text_init_b!=nullptr){
-			lseek(fd,0,SEEK_SET);
-			read(fd,text_init_b,size);
-			//
-			size_t i=size;
-			while(i>0){
-				i--;
-				if(text_init_b[i]=='\n'){
-					if(i&&text_init_b[i-1]=='\r'){
-						ln_term[0]='\r';
-						ln_term[1]='\n';
-						ln_term[2]=0;
-						ln_term_sz=2;
-					}
-					break;
-				}else if(text_init_b[i]=='\r'){
-					ln_term[0]='\r';
-					break;
-				}
+		if(is_dir(fd)){
+			putchar('\"');
+			size_t n=strlen(f);
+			for(size_t i=0;i<n;i++){
+				putchar(f[i]);
 			}
-			text_sz[0]=size;
-			ok=normalize(&text_init_b,text_sz,&rows_tot);
+			//puts(f);
+			puts("\" is a directory");
+		}
+		else{
+			size_t size=(size_t)lseek(fd,0,SEEK_END);
+			text_init_b=(char*)malloc(size);
+			if(text_init_b!=nullptr){
+				lseek(fd,0,SEEK_SET);
+				read(fd,text_init_b,size);
+				//
+				size_t i=size;
+				while(i>0){
+					i--;
+					if(text_init_b[i]=='\n'){
+						if(i&&text_init_b[i-1]=='\r'){
+							ln_term[0]='\r';
+							ln_term[1]='\n';
+							ln_term[2]=0;
+							ln_term_sz=2;
+						}
+						break;
+					}else if(text_init_b[i]=='\r'){
+						ln_term[0]='\r';
+						break;
+					}
+				}
+				text_sz[0]=size;
+				ok=normalize(&text_init_b,text_sz,&rows_tot);
+			}
 		}
 		close(fd);
 	}

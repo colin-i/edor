@@ -10,6 +10,34 @@
 #include"mainbc.h"
 
 #define F_OK 0
+//#include <sys/stat.h>
+struct timespec {
+  // Number of seconds.
+  long tv_sec;
+  // Number of nanoseconds. Must be less
+  long tv_nsec;
+};
+struct stat{
+  unsigned long long st_dev;
+  unsigned char __pad0[4];
+  unsigned long __st_ino;
+  unsigned int st_mode;
+  unsigned int st_nlink;
+  unsigned short st_uid;
+  unsigned short st_gid;
+  unsigned long long st_rdev;
+  unsigned char __pad3[4];
+  long long st_size;
+  unsigned long st_blksize;
+  unsigned long long st_blocks;
+  struct timespec st_atim;
+  struct timespec st_mtim;
+  struct timespec st_ctim;
+  unsigned long long st_ino;
+};
+#define S_IFMT 00170000
+#define S_IFDIR 0040000
+#define S_ISDIR(m) (((m) & S_IFMT) == S_IFDIR)
 
 #ifdef __cplusplus
 extern "C"{
@@ -28,6 +56,8 @@ int getbegy(const WINDOW*);
 int access(const char*,int);//2              
 //stdlib.h
 int atoi(const char*);//3
+//sys/stat.h
+int fstat(int,struct stat*);
 
 #ifdef __cplusplus
 }
@@ -816,5 +846,10 @@ bool new_visual(char*f){
 		mvaddstr(getmaxy(stdscr)-1,com_left,new_s);
 		return true;
 	}
+	return false;
+}
+bool is_dir(int fd){
+	struct stat st;
+	if(fstat(fd,&st)==0)return S_ISDIR(st.st_mode);
 	return false;
 }

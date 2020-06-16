@@ -72,6 +72,7 @@ bool undo_delk(size_t,size_t,size_t,size_t);
 void undo_loop(WINDOW*);
 bool new_visual(char*);
 bool bar_clear(void);
+bool is_dir(int);
 
 #define Char_Return 0xd
 #define Char_Backspace 0x7f
