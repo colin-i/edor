@@ -10,7 +10,7 @@
 #include"mainbc.h"
 
 #define F_OK 0
-//#include <sys/stat.h>
+/*//#include <sys/stat.h>//arm
 struct timespec {
   // Number of seconds.
   long tv_sec;
@@ -37,7 +37,7 @@ struct stat{
 };
 #define S_IFMT 00170000
 #define S_IFDIR 0040000
-#define S_ISDIR(m) (((m) & S_IFMT) == S_IFDIR)
+#define S_ISDIR(m) (((m) & S_IFMT) == S_IFDIR)*/
 
 #ifdef __cplusplus
 extern "C"{
@@ -57,7 +57,10 @@ int access(const char*,int);//2
 //stdlib.h
 int atoi(const char*);//3
 //sys/stat.h
-int fstat(int,struct stat*);
+//int fstat(int,struct stat*);
+//dirent
+void* fdopendir(int);
+int closedir(void*);
 
 #ifdef __cplusplus
 }
@@ -849,7 +852,9 @@ bool new_visual(char*f){
 	return false;
 }
 bool is_dir(int fd){
-	struct stat st;
-	if(fstat(fd,&st)==0)return S_ISDIR(st.st_mode);
+	//struct stat st;
+	//if(fstat(fd,&st)==0)return S_ISDIR(st.st_mode);
+	void*d=fdopendir(fd);
+	if(d!=nullptr){closedir(d);return true;}
 	return false;
 }
