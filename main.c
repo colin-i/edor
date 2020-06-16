@@ -867,7 +867,7 @@ static void deleted(size_t ybsel,size_t xbsel,int*r,int*c,WINDOW*w){
 	int max=getmaxx(w);
 	size_t x=xbsel;
 	while(x>xtext){
-		int n=d[x]=='\t'?tab_sz:1;
+		int n=d[x-1]=='\t'?tab_sz:1;
 		if(cl+n>=max)break;
 		x--;cl+=n;
 	}
