@@ -19,13 +19,12 @@ typedef unsigned short mode_t;
 #define SEEK_SET 0
 #define SEEK_END 2
 //
-typedef unsigned mmask_t;
 #define ALL_MOUSE_EVENTS 0xFffFFff
 #define COLOR_BLACK 0
 #define COLOR_CYAN 6
 #define COLOR_WHITE 7
 #define ERR -1
-typedef unsigned int mmask_t;
+typedef unsigned long mmask_t;
 typedef struct
 {
 	short id;// __attribute__((aligned(4)));
