@@ -712,7 +712,9 @@ static bool dos(WINDOW*w,eundo*un,size_t z){
 				row_set(r,0,1,r->sz,&a);
 			}
 			free(d);
-		}else{
+			ytext=y1;xtext=1;
+			centering2(w,nullptr,nullptr,true);
+	}else{
 			void*mem=malloc(y1-y2);
 			if(mem==nullptr)return false;
 			undo_ind_del(un,y2,y1,(char*)mem);
@@ -721,9 +723,9 @@ static bool dos(WINDOW*w,eundo*un,size_t z){
 				for(size_t j=1;j<=n;j++)dt[j-1]=dt[j];
 				rows[i].sz--;
 			}
+			ytext=y2;xtext=0;
+			centering2(w,nullptr,nullptr,false);
 		}
-		ytext=y2;xtext=0;
-		centering(w,nullptr,nullptr);
 	}
 	undos_tot+=z;
 	if(undos_tot==undos_save)mod_set(true);
