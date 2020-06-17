@@ -5,8 +5,8 @@
 //move,20;wmove;getch,3;wgetch,2;getmaxy,8
 //getmaxx;3;getcury;getcurx,8;stdscr,20
 //keyname;addch,13;waddch;mvaddch,8,addstr
-//wnoutrefresh,8;attrset,2;newwin
-//COLOR_PAIR;strcmp;sprintf,2
+//wnoutrefresh,7;attrset,4;newwin
+//COLOR_PAIR,2;strcmp;sprintf,2
 #include"mainbc.h"
 
 #define F_OK 0
@@ -46,7 +46,7 @@ extern "C"{
 //#include<curses.h>
 int addnstr(const char*,int);//8
 int mvaddstr(int,int,const char*);//3
-int mvaddnstr(int,int,const char*,int);//2
+int mvaddnstr(int,int,const char*,int);//3
 int mvwaddstr(WINDOW*,int,int,const char*);
 int wresize(WINDOW*,int,int);//2
 int mvwin(WINDOW*,int,int);//2
@@ -364,6 +364,12 @@ static void colorfind(int a,int y,int pos,int sz){
 	mvaddnstr(y,com_left,input+pos,sz);
 	attrset(0);
 }
+static void colorfindw(int a,int y,int pos,int sz){
+	attrset(COLOR_PAIR(a));
+	mvaddnstr(y,com_left,input+pos,sz);
+	attrset(0);
+	wnoutrefresh(stdscr);
+}
 //1,0,-1resz
 static int find(char*z,int cursor,int pos,int visib,int y){
 	/*warning: cast from
@@ -401,13 +407,11 @@ static int find(char*z,int cursor,int pos,int visib,int y){
 			}
 			finding((size_t)cursor,xr,xc,forward);
 			if(y1==ytext&&x1==xtext){
-				colorfind(2,y,pos,sz);
+				colorfindw(2,y,pos,sz);
 				phase=true;
-				wnoutrefresh(stdscr);
 			}else if(phase){
+				colorfindw(1,y,pos,sz);
 				phase=false;
-				colorfind(1,y,pos,sz);
-				wnoutrefresh(stdscr);
 			}
 			centering(w,&xr,&xc);
 		}
