@@ -27,6 +27,7 @@ int addstr(const char*);
 const char*keyname(int);
 int wnoutrefresh(WINDOW*);
 int attrset(int);
+int wattrset(WINDOW*,int);
 int COLOR_PAIR(int);
 WINDOW*newwin(int,int,int,int);
 //#include <string.h>
@@ -39,6 +40,7 @@ int sprintf(char*,const char*,...);
 #endif
 
 bool no_char(char);
+void refreshrowsbot(WINDOW*,int,int);
 void refreshpage(WINDOW*w);
 size_t c_to_xc(int,int);
 bool row_alloc(row*,size_t,size_t,size_t);
@@ -49,6 +51,8 @@ void mod_set(bool);
 size_t sizemembuf(size_t,size_t,size_t,size_t);
 void cpymembuf(size_t,size_t,size_t,size_t,char*);
 bool paste(size_t,size_t,size_t*,char*,size_t,size_t,bool);
+void vis(char,WINDOW*);
+void visual(char);
 
 const char*bar_init(void);
 int save(void);

@@ -7,8 +7,8 @@
 //getmaxy,18;getmaxx,33;stdscr,20
 //keyname,2;getcury,28;getcurx,23
 //addch;waddch,4;mvaddch,2;addstr,3
-//wnoutrefresh,9;attrset,3;COLOR_PAIR,2
-//strcmp,14;sprintf
+//wnoutrefresh,9;attrset,3;wattrset,2
+//COLOR_PAIR,2;strcmp,14;sprintf
 
 typedef long off_t;
 //sys/types.h
@@ -75,7 +75,6 @@ int waddnstr(WINDOW*,const char*,int);//2
 int werase(WINDOW*);
 int clrtoeol(void);//2
 int wclrtoeol(WINDOW*);//4
-int wattrset(WINDOW*,int);
 int start_color(void);
 int init_pair(short,short,short);//2
 int keypad(WINDOW*,bool);//2
@@ -132,13 +131,14 @@ static char*helptext;
 \n    if found\
 \n      Enter = next\
 \n      Space = previous\
+//\n      r     = set replace text\
 \n    c = cancel\
 \n    other key to return\
 \nCtrl+u = undo\
 \nCtrl+r = redo\
 \nAlt +u = undo mode: left=undo,right=redo,other key to return\
 \nCtrl+b = build file\
-\nCtrl+q = quit"//27
+\nCtrl+q = quit"//28
 static bool visual_bool=false;
 static char*cutbuf=nullptr;
 static size_t cutbuf_sz=0;
@@ -184,7 +184,7 @@ static void tab_grow(WINDOW*w,int r,char*a,size_t sz,int*ptr){
 		a[i]=0;waddstr(w,a+j);a[i]=aux;
 	}
 }
-static void refreshrowsbot(WINDOW*w,int i,int maxy){
+void refreshrowsbot(WINDOW*w,int i,int maxy){
 	size_t maxx=xtext+(size_t)getmaxx(w);
 	do{
 		size_t j=ytext+(size_t)i;
@@ -767,7 +767,7 @@ static void printsel(WINDOW*w,size_t ybsel,size_t xbsel,size_t yesel,size_t xese
 	_rb=rb;_cb=cb;
 	_re=re;_ce=ce;
 }
-static void visual(char a){
+void visual(char a){
 	mvaddch(getmaxy(stdscr)-1,getmaxx(stdscr)-2,a);
 	wnoutrefresh(stdscr);
 }
@@ -1024,7 +1024,7 @@ static void past(WINDOW*w){
 		}
 	}
 }
-static void vis(char c,WINDOW*w){
+void vis(char c,WINDOW*w){
 	visual(c);
 	wnoutrefresh(w);
 	doupdate();
@@ -1352,7 +1352,7 @@ static void indent(bool b,size_t ybsel,size_t*xbsel,size_t yesel,size_t*xesel,WI
 	}
 }
 static bool visual_mode(WINDOW*w,bool v_l){
-	vis('V',w);
+	visual('V');
 	int rw=getcury(w);int cl=getcurx(w);
 	size_t ybsel=ytext+(size_t)rw;
 	size_t yesel=ybsel;

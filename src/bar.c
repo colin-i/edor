@@ -2,11 +2,12 @@
 //strlen;open,2;close;write,3;free,4
 //realloc,3;malloc,4
 #include"mainb.h"
-//move,20;wmove;getch,3;wgetch,2;getmaxy,8
-//getmaxx;3;getcury;getcurx,8;stdscr,20
-//keyname;addch,13;waddch;mvaddch,8,addstr
-//wnoutrefresh,7;attrset,4;newwin
-//COLOR_PAIR,2;strcmp;sprintf,2
+//move,20;wmove,5;getch,3;wgetch,3
+//getmaxy,10;getmaxx;4;getcury,3
+//getcurx,12;stdscr,20;keyname;addch,13
+//waddch,2;mvaddch,8;addstr;wnoutrefresh,7
+//attrset,6;newwin;COLOR_PAIR,4;strcmp
+//sprintf,2
 #include"mainbc.h"
 
 #define F_OK 0
@@ -44,6 +45,7 @@ extern "C"{
 #endif
 
 //#include<curses.h>
+int mvwaddch(WINDOW*,int,int,const chtype);
 int addnstr(const char*,int);//8
 int mvaddstr(int,int,const char*);//3
 int mvaddnstr(int,int,const char*,int);//3
@@ -52,6 +54,7 @@ int wresize(WINDOW*,int,int);//2
 int mvwin(WINDOW*,int,int);//2
 int getbegx(const WINDOW*);//3
 int getbegy(const WINDOW*);
+int wdeleteln(WINDOW*);
 //unistd.h
 int access(const char*,int);//2              
 //stdlib.h
@@ -74,6 +77,8 @@ static char input1[max_path+1];
 static char input2[max_path+1];
 static char*input=input1;
 static WINDOW*poswn;
+//static char inputr[max_path+1];
+//static size_t cursorr;
 
 typedef struct{
 size_t yb;
@@ -370,6 +375,49 @@ static void colorfindw(int a,int y,size_t pos,size_t sz){
 	attrset(0);
 	wnoutrefresh(stdscr);
 }
+/*static bool replace_text(WINDOW*w,int yb){
+	vis('R',w);
+	wattrset(w,COLOR_PAIR(2));
+	cursorr=0;int rstart=yb;
+	int rstop=rstart+1;int cstart=getcurx(w);
+	for(;;){
+		int c=wgetch(w);
+		if(c==Char_Return){
+			wattrset(w,COLOR_PAIR(0));
+			refreshrowsbot(w,rstart,rstop);
+			wmove(w,yb,cstart);
+			visual(' ');
+			return false;
+		}
+		else if(c==Char_Backspace){
+			if(cursorr){
+				int x=getcurx(w);int y=getcury(w);
+				if(!x){
+					x=getmaxx(w)-1;if(y)y--;}
+				else x--;
+				mvwaddch(w,y,x,' ');
+				wmove(w,y,x);
+				cursorr--;
+			}
+		}
+		else if(c==KEY_RESIZE)return true;
+		else if(cursorr!=max_path&&!no_char((char)c)){
+			int cx=getcurx(w);
+			if(getmaxx(w)-1==cx){
+				int cy=getcury(w);
+				if(getmaxy(w)-1==cy){
+					wmove(w,0,0);
+					wdeleteln(w);
+					wmove(w,cy-1,cx);
+					rstart=0;
+				}else if(cy+1>rstop)rstop++;
+			}
+			waddch(w,(chtype)c);
+			inputr[cursorr]=(char)c;
+			cursorr++;
+		}
+	}
+}*/
 //1,0,-1resz
 static int find(char*z,size_t cursor,size_t pos,size_t visib,int y){
 	/*warning: cast from
@@ -400,7 +448,9 @@ static int find(char*z,size_t cursor,size_t pos,size_t visib,int y){
 				forward=true;
 			}else if(a==' '){
 				forward=false;
-			}else if(a=='c'){
+			}/*else if(a=='r'){
+				if(replace_text(w,getcury(w)))return -1;
+			}*/else if(a=='c'){
 				return false;
 			}else{
 				return a==KEY_RESIZE?-1:true;
