@@ -32,6 +32,7 @@ int COLOR_PAIR(int);
 WINDOW*newwin(int,int,int,int);
 //#include <string.h>
 int strcmp(const char*,const char*);
+void*memcpy(void*,const void*,size_t);
 //stdio.h
 int sprintf(char*,const char*,...);
 
@@ -90,3 +91,4 @@ extern row*rows;
 extern size_t rows_tot;
 extern size_t ytext;
 extern size_t xtext;
+extern bool mod_flag;

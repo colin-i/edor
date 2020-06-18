@@ -4,10 +4,10 @@
 #include"mainb.h"
 //move,20;wmove,5;getch,3;wgetch,3
 //getmaxy,10;getmaxx;4;getcury,3
-//getcurx,12;stdscr,20;keyname;addch,13
-//waddch,2;mvaddch,8;addstr;wnoutrefresh,7
-//attrset,6;newwin;COLOR_PAIR,4;strcmp
-//sprintf,2
+//getcurx,12;stdscr,22;keyname;addch,13
+//waddch,2;mvaddch,8;addstr;wnoutrefresh,8
+//attrset,4;newwin;COLOR_PAIR,3;strcmp
+//sprintf,2;memcpy
 #include"mainbc.h"
 
 #define F_OK 0
@@ -48,7 +48,7 @@ extern "C"{
 int mvwaddch(WINDOW*,int,int,const chtype);
 int addnstr(const char*,int);//8
 int mvaddstr(int,int,const char*);//3
-int mvaddnstr(int,int,const char*,int);//3
+int mvaddnstr(int,int,const char*,int);//2
 int mvwaddstr(WINDOW*,int,int,const char*);
 int wresize(WINDOW*,int,int);//2
 int mvwin(WINDOW*,int,int);//2
@@ -369,12 +369,6 @@ static void colorfind(int a,int y,size_t pos,size_t sz){
 	mvaddnstr(y,com_left,input+pos,(int)sz);
 	attrset(0);
 }
-static void colorfindw(int a,int y,size_t pos,size_t sz){
-	attrset(COLOR_PAIR(a));
-	mvaddnstr(y,com_left,input+pos,(int)sz);
-	attrset(0);
-	wnoutrefresh(stdscr);
-}
 /*static bool replace_text(WINDOW*w,int yb){
 	vis('R',w);
 	wattrset(w,COLOR_PAIR(2));
@@ -417,7 +411,33 @@ static void colorfindw(int a,int y,size_t pos,size_t sz){
 			cursorr++;
 		}
 	}
+}
+static bool replace(size_t cursor,row*r,size_t xc){
+	if(cursorr>cursor)if(row_alloc(r,r->sz,cursorr-cursor,0))return true;
+	//if(undo_add_replace(cursor))return true;
+	size_t left=xtext+xc;
+	if(cursorr>cursor)row_set(r,left,cursorr,r->sz-xtext-xc-cursor,inputr);
+	else{
+		memcpy(&r->data[left],inputr,cursorr);
+		row_set(r,left+cursorr,r->sz-left-cursor,0,&r->data[left+cursor]);
+	}
+	if(mod_flag)mod_set(false);
+	return false;
 }*/
+static bool delim_touch(size_t y1,size_t x1,size_t c){return ytext==y1&&(xtext==x1||(xtext<x1&&xtext+c>x1));}
+static bool delimiter(size_t y1,size_t x1,int y,size_t pos,size_t sz,size_t c,bool phase){
+	if(delim_touch(y1,x1,c)){
+		colorfind(2,y,pos,sz);
+		wnoutrefresh(stdscr);
+		//if(xtext!=x1)x1[0]=xtext;
+		return true;
+	}
+	if(phase){
+		colorfind(1,y,pos,sz);
+		wnoutrefresh(stdscr);
+	}
+	return false;
+}
 //1,0,-1resz
 static int find(char*z,size_t cursor,size_t pos,size_t visib,int y){
 	/*warning: cast from
@@ -441,6 +461,7 @@ static int find(char*z,size_t cursor,size_t pos,size_t visib,int y){
 		bool phase=false;
 		wnoutrefresh(stdscr);
 		centering(w,&xr,&xc);
+		//bool untouched=true;bool delimiter_touched=false;
 		for(;;){
 			int a=wgetch(w);
 			if(a==Char_Return){
@@ -448,21 +469,43 @@ static int find(char*z,size_t cursor,size_t pos,size_t visib,int y){
 				forward=true;
 			}else if(a==' '){
 				forward=false;
-			}/*else if(a=='r'){
+			}/*else if(a==Char_Backspace){
+				if(untouched){
+					if(replace(cursor,&rows[ytext+xr],xc))continue;
+					ytext+=xr;
+					xtext+=xc;
+					if(delim_touch(y1,x1,cursorr))delimiter_touched=true;
+					xtext+=cursorr;
+					untouched=false;
+					centering2(w,&xr,&xc,true);
+					continue;
+				}
+				if(forward)xc+=cursorr;
+				if(finding(cursor,xr,xc,forward)){
+					if(replace(cursor,&rows[ytext+xr],xc))continue;
+					phase=delimiter(y1,x1,y,pos,sz,cursorr,phase);
+					if(phase)delimiter_touched=true;
+					else if(ytext==y1&&xtext<x1)x1-=cursorr;
+					xtext+=cursorr;
+					centering2(w,&xr,&xc,true);
+					continue;
+				}
+				return true;
+			}else if(a=='r'){
 				if(replace_text(w,getcury(w)))return -1;
+				continue;
 			}*/else if(a=='c'){
 				return false;
 			}else{
 				return a==KEY_RESIZE?-1:true;
 			}
 			finding(cursor,xr,xc,forward);
-			if(y1==ytext&&x1==xtext){
-				colorfindw(2,y,pos,sz);
-				phase=true;
-			}else if(phase){
-				colorfindw(1,y,pos,sz);
-				phase=false;
+			phase=delimiter(y1,x1,y,pos,sz,cursor,phase);
+			/*if(delimiter_touched){
+				y1=ytext;x1=xtext;
+				delimiter_touched=false;
 			}
+			untouched=true;*/
 			centering(w,&xr,&xc);
 		}
 	}

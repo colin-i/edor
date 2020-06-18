@@ -8,7 +8,7 @@
 //keyname,2;getcury,28;getcurx,23
 //addch;waddch,4;mvaddch,2;addstr,3
 //wnoutrefresh,9;attrset,3;wattrset,2
-//COLOR_PAIR,2;strcmp,14;sprintf
+//COLOR_PAIR,2;strcmp,14;sprintf;memcpy,17
 
 typedef long off_t;
 //sys/types.h
@@ -53,7 +53,6 @@ extern "C" {
 #endif
 
 //#include <string.h>
-void*memcpy(void*,const void*,size_t);//17
 void*memset(void*,int,size_t);//2
 //#include <unistd.h>
 off_t lseek(int,off_t,int);//4
@@ -98,6 +97,7 @@ row*rows=nullptr;
 size_t rows_tot=1;
 size_t ytext=0;
 size_t xtext=0;
+bool mod_flag=true;
 
 #define Char_Escape 27
 static char*mapsel=nullptr;
@@ -129,16 +129,17 @@ static char*helptext;
 \nCtrl+g = go to row[,column]\
 \nCtrl+f = find text\
 \n    if found\
-\n      Enter = next\
-\n      Space = previous\
-//\n      r     = set replace text\
+\n      Enter     = next\
+\n      Space     = previous\
+//\n      Backspace = replace / (n/p)&replace\
+//\n      r         = set replace text\
 \n    c = cancel\
 \n    other key to return\
 \nCtrl+u = undo\
 \nCtrl+r = redo\
 \nAlt +u = undo mode: left=undo,right=redo,other key to return\
 \nCtrl+b = build file\
-\nCtrl+q = quit"//28
+\nCtrl+q = quit"//29
 static bool visual_bool=false;
 static char*cutbuf=nullptr;
 static size_t cutbuf_sz=0;
@@ -146,7 +147,6 @@ static size_t cutbuf_spc=0;
 static size_t cutbuf_r=1;
 static char*text_init_b=nullptr;
 static char*text_init_e;
-static bool mod_flag=true;
 static int _rb;static int _cb;
 static int _re;static int _ce;
 
@@ -844,7 +844,8 @@ bool row_alloc(row*rw,size_t l,size_t c,size_t r){
 }
 void row_set(row*rw,size_t l,size_t c,size_t r,const char*mid){
 	char*d=rw->data;
-	size_t j=l+c;size_t k=l+r;size_t i=j+r;
+	size_t j=l+c;size_t i=j+r;size_t k=rw->sz;
+	rw->sz=i;
 	while(j<i){
 		i--;k--;d[i]=d[k];
 	}
@@ -853,7 +854,6 @@ void row_set(row*rw,size_t l,size_t c,size_t r,const char*mid){
 		d[0]=mid[0];
 		d++;mid++;c--;
 	}
-	rw->sz=j+r;
 }
 static void deleted(size_t ybsel,size_t xbsel,int*r,int*c,WINDOW*w){
 	if(ybsel<ytext){ytext=ybsel;r[0]=0;}
