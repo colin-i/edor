@@ -359,19 +359,19 @@ static void centering2(WINDOW*w,size_t*rw,size_t*cl,bool right){
 void centering(WINDOW*w,size_t*rw,size_t*cl){
 	centering2(w,rw,cl,false);
 }
-static void colorfind(int a,int y,int pos,int sz){
+static void colorfind(int a,int y,size_t pos,size_t sz){
 	attrset(COLOR_PAIR(a));
-	mvaddnstr(y,com_left,input+pos,sz);
+	mvaddnstr(y,com_left,input+pos,(int)sz);
 	attrset(0);
 }
-static void colorfindw(int a,int y,int pos,int sz){
+static void colorfindw(int a,int y,size_t pos,size_t sz){
 	attrset(COLOR_PAIR(a));
-	mvaddnstr(y,com_left,input+pos,sz);
+	mvaddnstr(y,com_left,input+pos,(int)sz);
 	attrset(0);
 	wnoutrefresh(stdscr);
 }
 //1,0,-1resz
-static int find(char*z,int cursor,int pos,int visib,int y){
+static int find(char*z,size_t cursor,size_t pos,size_t visib,int y){
 	/*warning: cast from
       'char *' to 'size_t *' (aka
       'unsigned int *') increases required
@@ -383,11 +383,11 @@ static int find(char*z,int cursor,int pos,int visib,int y){
 	size_t xr=(size_t)getcury(w);
 	size_t xc=c_to_xc(getcurx(w),(int)xr);
 	//
-	int sz=cursor-pos;
+	size_t sz=cursor-pos;
 	if(sz>visib)sz=visib;
 	colorfind(1,y,pos,sz);
 	//
-	if(finding((size_t)cursor,xr,xc,true)){
+	if(finding(cursor,xr,xc,true)){
 		bool forward=true;
 		size_t y1=ytext;size_t x1=xtext;
 		bool phase=false;
@@ -396,7 +396,7 @@ static int find(char*z,int cursor,int pos,int visib,int y){
 		for(;;){
 			int a=wgetch(w);
 			if(a==Char_Return){
-				xc+=(size_t)cursor;
+				xc+=cursor;
 				forward=true;
 			}else if(a==' '){
 				forward=false;
@@ -405,7 +405,7 @@ static int find(char*z,int cursor,int pos,int visib,int y){
 			}else{
 				return a==KEY_RESIZE?-1:true;
 			}
-			finding((size_t)cursor,xr,xc,forward);
+			finding(cursor,xr,xc,forward);
 			if(y1==ytext&&x1==xtext){
 				colorfindw(2,y,pos,sz);
 				phase=true;
@@ -509,7 +509,7 @@ int command(char*comnrp){
 				r=go_to(cursor);
 			}else{
 				int ifback=getcurx(stdscr);
-				r=find(comnrp,cursor,pos,visib,y);
+				r=find(comnrp,(size_t)cursor,(size_t)pos,(size_t)visib,y);
 				if(r==-1)return -2;
 				int dif=rightexcl-getbegx(poswn);
 				if(dif!=-1){
