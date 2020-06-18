@@ -1,14 +1,12 @@
-#include"main0.h"
-//strlen;open,2;close;write,3;free,4
-//realloc,3;malloc,4
-#include"mainb.h"
+#include"main.h"
+//strlen;strcmp;open,2;close;write,3
+//free,4;realloc,4;malloc,5;sprintf,2
+//memcpy,2
 //move,20;wmove,5;getch,3;wgetch,3
 //getmaxy,10;getmaxx;4;getcury,3
 //getcurx,12;stdscr,22;keyname;addch,13
 //waddch,2;mvaddch,8;addstr;wnoutrefresh,8
-//attrset,4;newwin;COLOR_PAIR,3;strcmp
-//sprintf,2;memcpy
-#include"mainbc.h"
+//attrset,4;newwin;COLOR_PAIR,3
 
 #define F_OK 0
 /*//#include <sys/stat.h>//arm
@@ -38,7 +36,13 @@ struct stat{
 };
 #define S_IFMT 00170000
 #define S_IFDIR 0040000
-#define S_ISDIR(m) (((m) & S_IFMT) == S_IFDIR)*/
+#define S_ISDIR(m) (((m) & S_IFMT) == S_IFDIR)
+*/
+//asm-generic/fcntl.h
+#define O_CREAT 00000100
+//linux/stat.h
+#define S_IRUSR 00400
+#define S_IWUSR 00200
 
 #ifdef __cplusplus
 extern "C"{
@@ -77,8 +81,8 @@ static char input1[max_path+1];
 static char input2[max_path+1];
 static char*input=input1;
 static WINDOW*poswn;
-//static char inputr[max_path+1];
-//static size_t cursorr;
+static char inputr[max_path+1];
+static size_t cursorr;
 
 typedef struct{
 size_t yb;
@@ -369,7 +373,7 @@ static void colorfind(int a,int y,size_t pos,size_t sz){
 	mvaddnstr(y,com_left,input+pos,(int)sz);
 	attrset(0);
 }
-/*static bool replace_text(WINDOW*w,int yb){
+static bool replace_text(WINDOW*w,int yb){
 	vis('R',w);
 	wattrset(w,COLOR_PAIR(2));
 	cursorr=0;int rstart=yb;
@@ -411,109 +415,6 @@ static void colorfind(int a,int y,size_t pos,size_t sz){
 			cursorr++;
 		}
 	}
-}
-static bool replace(size_t cursor,row*r,size_t xc){
-	if(cursorr>cursor)if(row_alloc(r,r->sz,cursorr-cursor,0))return true;
-	//if(undo_add_replace(cursor))return true;
-	size_t left=xtext+xc;
-	if(cursorr>cursor)row_set(r,left,cursorr,r->sz-xtext-xc-cursor,inputr);
-	else{
-		memcpy(&r->data[left],inputr,cursorr);
-		row_set(r,left+cursorr,r->sz-left-cursor,0,&r->data[left+cursor]);
-	}
-	if(mod_flag)mod_set(false);
-	return false;
-}*/
-static bool delim_touch(size_t y1,size_t x1,size_t c){return ytext==y1&&(xtext==x1||(xtext<x1&&xtext+c>x1));}
-static bool delimiter(size_t y1,size_t x1,int y,size_t pos,size_t sz,size_t c,bool phase){
-	if(delim_touch(y1,x1,c)){
-		colorfind(2,y,pos,sz);
-		wnoutrefresh(stdscr);
-		//if(xtext!=x1)x1[0]=xtext;
-		return true;
-	}
-	if(phase){
-		colorfind(1,y,pos,sz);
-		wnoutrefresh(stdscr);
-	}
-	return false;
-}
-//1,0,-1resz
-static int find(char*z,size_t cursor,size_t pos,size_t visib,int y){
-	/*warning: cast from
-      'char *' to 'size_t *' (aka
-      'unsigned int *') increases required
-      alignment from 1 to 4*/
-	/*warning: arithmetic on
-      a pointer to void is a GNU extension*/
-	//z+=sizeof(void*);
-	WINDOW*w=((WINDOW**)((void*)z))[1];
-	size_t xr=(size_t)getcury(w);
-	size_t xc=c_to_xc(getcurx(w),(int)xr);
-	//
-	size_t sz=cursor-pos;
-	if(sz>visib)sz=visib;
-	colorfind(1,y,pos,sz);
-	//
-	if(finding(cursor,xr,xc,true)){
-		bool forward=true;
-		size_t y1=ytext;size_t x1=xtext;
-		bool phase=false;
-		wnoutrefresh(stdscr);
-		centering(w,&xr,&xc);
-		//bool untouched=true;bool delimiter_touched=false;
-		for(;;){
-			int a=wgetch(w);
-			if(a==Char_Return){
-				xc+=cursor;
-				forward=true;
-			}else if(a==' '){
-				forward=false;
-			}/*else if(a==Char_Backspace){
-				if(untouched){
-					if(replace(cursor,&rows[ytext+xr],xc))continue;
-					ytext+=xr;
-					xtext+=xc;
-					if(delim_touch(y1,x1,cursorr))delimiter_touched=true;
-					xtext+=cursorr;
-					untouched=false;
-					centering2(w,&xr,&xc,true);
-					continue;
-				}
-				if(forward)xc+=cursorr;
-				if(finding(cursor,xr,xc,forward)){
-					if(replace(cursor,&rows[ytext+xr],xc))continue;
-					phase=delimiter(y1,x1,y,pos,sz,cursorr,phase);
-					if(phase)delimiter_touched=true;
-					else if(ytext==y1&&xtext<x1)x1-=cursorr;
-					xtext+=cursorr;
-					centering2(w,&xr,&xc,true);
-					continue;
-				}
-				return true;
-			}else if(a=='r'){
-				if(replace_text(w,getcury(w)))return -1;
-				continue;
-			}*/else if(a=='c'){
-				return false;
-			}else{
-				return a==KEY_RESIZE?-1:true;
-			}
-			finding(cursor,xr,xc,forward);
-			phase=delimiter(y1,x1,y,pos,sz,cursor,phase);
-			/*if(delimiter_touched){
-				y1=ytext;x1=xtext;
-				delimiter_touched=false;
-			}
-			untouched=true;*/
-			centering(w,&xr,&xc);
-		}
-	}
-	int a=getch();
-	if(a=='c'){
-		return false;
-	}
-	return a==KEY_RESIZE?-1:true;
 }
 static bool go_to(int cursor){
 	int i=0;size_t y;size_t x;
@@ -557,6 +458,399 @@ bool bar_clear(){
 		return true;
 	}
 	return false;
+}
+int save(){
+	if(textfile!=nullptr){
+		return saving();
+	}
+	char a=0;
+	return command(&a);
+}
+WINDOW*position_init(){
+	poswn=newwin(1,3,0,0);
+	return poswn;
+}
+void position_reset(){
+	wresize(poswn,1,3);
+	mvwin(poswn,getmaxy(stdscr)-1,getmaxx(stdscr)-5);
+}
+static bool undo_expand(){
+	size_t sz=undos_tot+1;
+	size_t dif=sz&row_pad;
+	if(dif)sz+=((dif^row_pad)+1);
+	if(sz>undos_spc){
+		void*v=realloc(undos,sz*sizeof(eundo));
+		if(v==nullptr)return false;
+		undos=(eundo*)v;undos_spc=sz;
+	}
+	return true;
+}
+static void undo_ok(){
+	if(undos_tot<undos_save)undos_save=0;
+	undos_tot++;undos_max++;
+}
+static void undo_release(size_t a,size_t b){
+	while(a<b){
+		if(undos[a].data!=nullptr)
+			free(undos[a].data);
+		a++;
+	}
+}
+static void undo_newway(){
+	if(undos_tot!=undos_max){
+		undo_release(undos_tot,undos_max);
+		undos_max=undos_tot;
+	}
+}
+bool undo_add(size_t yb,size_t xb,size_t ye,size_t xe){
+	if(undo_expand()){
+		undo_newway();
+		eundo*un=&undos[undos_tot];
+		un->yb=yb;un->xb=xb;un->ye=ye;un->xe=xe;
+		un->data=nullptr;
+		undo_ok();return false;}
+	return true;
+}
+static bool undo_del_backward(eundo*un,size_t yb,size_t xb,size_t ye,size_t xe){
+	size_t x=sizemembuf(yb,xb,ye,xe);
+	char*v=(char*)malloc(x);
+	if(v==nullptr)return true;
+	un->yb=yb;un->xb=xb;un->ye=ye;un->xe=x;
+	un->data=v;
+	cpymembuf(yb,xb,ye,xe,v);
+	return false;
+}
+bool undo_add_del(size_t yb,size_t xb,size_t ye,size_t xe){
+	if(undo_expand()){
+		size_t x=sizemembuf(yb,xb,ye,xe);
+		size_t dif=x&row_pad;
+		if(dif)dif=(dif^row_pad)+1;
+		char*v=(char*)malloc(x+dif);
+		if(v!=nullptr){
+			undo_newway();
+			eundo*un=&undos[undos_tot];
+			un->yb=yb;un->xb=xb;un->ye=ye;un->xe=x;
+			un->data=v;
+			cpymembuf(yb,xb,ye,xe,v);
+			undo_ok();return false;}}
+	return true;
+}
+bool undo_add_ind(size_t yb,size_t ye){
+	if(undo_expand()){
+		undo_newway();
+		eundo*un=&undos[undos_tot];
+		un->ye=yb;un->yb=ye;
+		un->data=nullptr;
+		undo_ok();return false;}
+	return true;
+}
+static void undo_ind_del(eundo*un,size_t yb,size_t ye,char*d){
+	un->yb=ye;un->ye=yb;
+	un->data=d;
+	for(size_t i=yb;i<ye;i++){
+		if(!rows[i].sz)d[i-yb]=ln_term[0];
+		else d[i-yb]=rows[i].data[0];
+	}
+}
+bool undo_add_ind_del(size_t yb,size_t ye){
+	if(undo_expand()){
+		void*d=malloc(ye-yb);
+		if(d!=nullptr){
+			undo_newway();
+			undo_ind_del(&undos[undos_tot],yb,ye,(char*)d);
+			undo_ok();return false;}}
+	return true;
+}
+void undo_free(){
+	if(undos!=nullptr){
+		undo_release(0,undos_max);
+		free(undos);
+	}
+}
+static bool undo_add_replace(size_t cursor){
+	if(undo_expand()){
+		char*d=(char*)malloc(1+sizeof(cursor)+cursor);
+		if(d!=nullptr){
+			undo_newway();
+			eundo*un=&undos[undos_tot];
+			un->yb=ytext;un->xb=xtext;
+			un->ye=un->yb;un->xe=cursorr;
+			un->data=d;
+			d[0]=ln_term[0];((size_t*)((void*)&d[1]))[0]=cursor;
+			memcpy(&d[1]+sizeof(cursor),input,cursor);
+			undo_ok();return false;}}
+	return true;
+}
+static bool undo_replace(eundo*un,char*data,size_t yb,size_t xb,size_t xe,bool is_undo){
+	size_t*sz_p=(size_t*)((void*)&data[1]);
+	size_t sz2=sz_p[0];
+	row*r=&rows[yb];
+	int memdif=(int)(sz2-xe);
+	size_t sz=r->sz;
+	if(memdif>0){
+		if(row_alloc(r,sz,(size_t)memdif,0))return true;
+	}
+	else if(xe>sz2&&is_undo){
+		data=(char*)realloc(data,xe);
+		if(!data)return true;
+		un->data=data;sz_p=(size_t*)((void*)&data[1]);
+	}
+	char*a=&r->data[xb];
+	char*b=(char*)(sz_p+1);
+	if(memdif>0){
+		for(size_t i=0;i<xe;i++){
+			char c=a[i];a[i]=b[i];b[i]=c;
+		}
+		size_t left=xb+xe;
+		row_set(r,left,(size_t)memdif,sz-left,&b[xe]);
+	}else{
+		for(size_t i=0;i<sz2;i++){
+			char c=a[i];a[i]=b[i];b[i]=c;
+		}
+		if(is_undo)
+			for(size_t i=sz2;i<xe;i++)b[i]=a[i];
+		row_set(r,xb+sz2,sz-xb-xe,0,&r->data[xb+xe]);
+	}
+	sz_p[0]=xe;un->xe=sz2;
+	ytext=yb;xtext=xb+sz2;
+	return false;
+}
+static bool dos(WINDOW*w,eundo*un,size_t vl){
+	char*d=un->data;
+	size_t y1=un->yb;size_t y2=un->ye;
+	if(y1<=y2){
+		size_t xb=un->xb;size_t xe=un->xe;
+		if(d!=nullptr){
+			if(y1==y2&&d[0]==ln_term[0]){
+				if(undo_replace(un,d,y1,xb,xe,vl!=1))return false;
+				centering2(w,nullptr,nullptr,true);
+			}else{
+				if(!paste(y1,xb,&xe,d,xe,y2-y1+1,false))return false;
+				un->xe=xe;un->data=nullptr;
+				ytext=y2;xtext=xe;
+				centering2(w,nullptr,nullptr,true);
+				free(d);
+			}
+		}
+		else{
+			if(deleting_init(y1,xb,y2,xe))return false;
+			if(undo_del_backward(un,y1,xb,y2,xe))return false;
+			deleting(y1,xb,y2,xe);
+			ytext=y1;xtext=xb;
+			centering(w,nullptr,nullptr);
+		}
+	}else{
+		if(d!=nullptr){
+			for(size_t i=y2;i<y1;i++){
+				row*r=&rows[i];
+				if(row_alloc(r,0,1,r->sz))return false;
+			}
+			un->data=nullptr;
+			for(size_t i=y2;i<y1;i++){
+				char a=d[i-y2];
+				if(a==ln_term[0])continue;
+				row*r=&rows[i];
+				row_set(r,0,1,r->sz,&a);
+			}
+			free(d);
+			ytext=y1;xtext=1;
+			centering2(w,nullptr,nullptr,true);
+	}else{
+			void*mem=malloc(y1-y2);
+			if(mem==nullptr)return false;
+			undo_ind_del(un,y2,y1,(char*)mem);
+			for(size_t i=y2;i<y1;i++){
+				size_t n=rows[i].sz;char*dt=rows[i].data;
+				for(size_t j=1;j<=n;j++)dt[j-1]=dt[j];
+				rows[i].sz--;
+			}
+			ytext=y2;xtext=0;
+			centering2(w,nullptr,nullptr,false);
+		}
+	}
+	undos_tot+=vl;
+	if(undos_tot==undos_save)mod_set(true);
+	else if(undos_tot==undos_save+vl)mod_set(false);
+	return true;
+}
+static void undo_show(size_t n){
+	char nr[11];
+	int a=sprintf(nr,"%u",n);
+	mvaddstr(getmaxy(stdscr)-1,com_left,nr);
+	undo_erase(a);
+	wnoutrefresh(stdscr);
+}
+void undo(WINDOW*w){
+	if(!undos_tot)return;
+	if(dos(w,&undos[undos_tot-1],(size_t)-1)){
+		if(undos_tot<=undos_save)undo_show(undos_tot);
+		else undo_show(undos_tot-undos_save);
+	}
+}
+void redo(WINDOW*w){
+	if(undos_tot==undos_max)return;
+	if(dos(w,&undos[undos_tot],1)){
+		if(undos_tot>=undos_save)undo_show(undos_max-undos_tot);
+		else undo_show(undos_save-undos_tot);
+	}
+}
+void undo_save(){undos_save=undos_tot;}
+bool undo_type(size_t yb,size_t xb,size_t ye,size_t xe){
+	if(undos_tot){
+		eundo*un=&undos[undos_tot-1];
+		if(un->data==nullptr&&un->yb<=un->ye){
+			if(un->ye==yb&&un->xe==xb){
+				un->xe++;return false;
+			}
+		}
+	}
+	return undo_add(yb,xb,ye,xe);
+}
+bool undo_bcsp(size_t yb,size_t xb,size_t ye,size_t xe){
+	if(undos_tot){
+		eundo*un=&undos[undos_tot-1];
+		if(un->data!=nullptr&&un->yb<=un->ye){
+			if(un->yb==ye&&un->xb==xe){
+				char*d;if(!(un->xe&row_pad)){
+					d=(char*)realloc(un->data,un->xe+row_pad+1);
+					if(d==nullptr)return true;
+					un->data=d;
+				}else d=un->data;
+				for(size_t i=un->xe;i>0;i--)d[i]=d[i-1];
+				d[0]=rows[yb].data[xb];
+				un->xb--;un->xe++;
+				return false;
+			}
+		}
+	}
+	return undo_add_del(yb,xb,ye,xe);
+}
+bool undo_delk(size_t yb,size_t xb,size_t ye,size_t xe){
+	if(undos_tot){
+		eundo*un=&undos[undos_tot-1];
+		if(un->data!=nullptr&&un->yb<=un->ye){
+			if(un->yb==yb&&un->xb==xb){
+				char*d;if(!(un->xe&row_pad)){
+					d=(char*)realloc(un->data,un->xe+row_pad+1);
+					if(d==nullptr)return true;
+					un->data=d;
+				}else d=un->data;
+				d[un->xe]=rows[yb].data[xb];
+				un->xe++;
+				return false;
+			}
+		}
+	}
+	return undo_add_del(yb,xb,ye,xe);
+}
+void undo_loop(WINDOW*w){
+	for(;;){
+		int c=wgetch(w);
+		if(c==KEY_LEFT)undo(w);
+		else if(c==KEY_RIGHT)redo(w);
+		else break;
+	}
+}
+static bool replace(size_t cursor){
+	row*r=&rows[ytext];
+	if(cursorr>cursor)if(row_alloc(r,r->sz,cursorr-cursor,0))return true;
+	if(undo_add_replace(cursor))return true;
+	if(cursorr>cursor)row_set(r,xtext,cursorr,r->sz-xtext-cursor,inputr);
+	else{
+		memcpy(&r->data[xtext],inputr,cursorr);
+		row_set(r,xtext+cursorr,r->sz-xtext-cursor,0,&r->data[xtext+cursor]);
+	}
+	if(mod_flag)mod_set(false);
+	return false;
+}
+static bool delim_touch(size_t y1,size_t x1,size_t c){return ytext==y1&&(xtext==x1||(xtext<x1&&xtext+c>x1));}
+static bool delimiter(size_t y1,size_t x1,int y,size_t pos,size_t sz,size_t c,bool phase){
+	if(delim_touch(y1,x1,c)){
+		colorfind(2,y,pos,sz);
+		wnoutrefresh(stdscr);
+		return true;
+	}
+	if(phase){
+		colorfind(1,y,pos,sz);
+		wnoutrefresh(stdscr);
+	}
+	return false;
+}
+//1,0,-1resz
+static int find(char*z,size_t cursor,size_t pos,size_t visib,int y){
+	/*warning: cast from
+      'char *' to 'size_t *' (aka
+      'unsigned int *') increases required
+      alignment from 1 to 4*/
+	/*warning: arithmetic on
+      a pointer to void is a GNU extension*/
+	//z+=sizeof(void*);
+	WINDOW*w=((WINDOW**)((void*)z))[1];
+	size_t xr=(size_t)getcury(w);
+	size_t xc=c_to_xc(getcurx(w),(int)xr);
+	//
+	size_t sz=cursor-pos;
+	if(sz>visib)sz=visib;
+	colorfind(1,y,pos,sz);
+	//
+	if(finding(cursor,xr,xc,true)){
+		bool forward=true;
+		size_t y1=ytext;size_t x1=xtext;
+		bool phase=false;
+		wnoutrefresh(stdscr);
+		centering(w,&xr,&xc);
+		bool untouched=true;bool delimiter_touched=false;
+		for(;;){
+			int a=wgetch(w);
+			if(a==Char_Return){
+				xc+=cursor;
+				forward=true;
+			}else if(a==' '){
+				forward=false;
+			}else if(a==Char_Backspace){
+				size_t iferrory=ytext;size_t iferrorx=xtext;
+				if(untouched){
+					ytext+=xr;xtext+=xc;
+					if(replace(cursor)){ytext=iferrory;xtext=iferrorx;continue;}
+					if(delim_touch(y1,x1,cursorr))delimiter_touched=true;
+					xtext+=cursorr;
+					untouched=false;
+					centering2(w,&xr,&xc,true);
+					continue;
+				}
+				if(finding(cursor,xr,xc,forward)){
+					if(replace(cursor)){ytext=iferrory;xtext=iferrorx;continue;}
+					phase=delimiter(y1,x1,y,pos,sz,cursorr,phase);
+					if(phase)delimiter_touched=true;
+					else if(ytext==y1&&xtext<x1)x1-=cursor-cursorr;
+					xtext+=cursorr;
+					centering2(w,&xr,&xc,true);
+					continue;
+				}
+				return true;
+			}else if(a=='r'){
+				if(replace_text(w,getcury(w)))return -1;
+				continue;
+			}else if(a=='c'){
+				return false;
+			}else{
+				return a==KEY_RESIZE?-1:true;
+			}
+			finding(cursor,xr,xc,forward);
+			phase=delimiter(y1,x1,y,pos,sz,cursor,phase);
+			if(delimiter_touched){
+				y1=ytext;x1=xtext;
+				delimiter_touched=false;
+			}
+			untouched=true;
+			centering(w,&xr,&xc);
+		}
+	}
+	int a=getch();
+	if(a=='c'){
+		return false;
+	}
+	return a==KEY_RESIZE?-1:true;
 }
 //-2resize,-1no/quit,0er/boolFalse,1ok
 int command(char*comnrp){
@@ -704,241 +998,6 @@ int command(char*comnrp){
 	clear_com(y,visib,pos,cursor);
 	wnoutrefresh(stdscr);
 	return r;
-}
-int save(){
-	if(textfile!=nullptr){
-		return saving();
-	}
-	char a=0;
-	return command(&a);
-}
-WINDOW*position_init(){
-	poswn=newwin(1,3,0,0);
-	return poswn;
-}
-void position_reset(){
-	wresize(poswn,1,3);
-	mvwin(poswn,getmaxy(stdscr)-1,getmaxx(stdscr)-5);
-}
-static bool undo_expand(){
-	size_t sz=undos_tot+1;
-	size_t dif=sz&row_pad;
-	if(dif)sz+=((dif^row_pad)+1);
-	if(sz>undos_spc){
-		void*v=realloc(undos,sz*sizeof(eundo));
-		if(v==nullptr)return true;
-		undos=(eundo*)v;undos_spc=sz;
-	}
-	return false;
-}
-static void undo_ok(){
-	if(undos_tot<undos_save)undos_save=0;
-	undos_tot++;undos_max++;
-}
-static void undo_release(size_t a,size_t b){
-	while(a<b){
-		if(undos[a].data!=nullptr)
-			free(undos[a].data);
-		a++;
-	}
-}
-static void undo_newway(){
-	if(undos_tot!=undos_max){
-		undo_release(undos_tot,undos_max);
-		undos_max=undos_tot;
-	}
-}
-bool undo_add(size_t yb,size_t xb,size_t ye,size_t xe){
-	if(undo_expand())return true;
-	undo_newway();
-	eundo*un=&undos[undos_tot];
-	un->yb=yb;un->xb=xb;un->ye=ye;un->xe=xe;
-	un->data=nullptr;
-	undo_ok();return false;
-}
-static bool undo_del_backward(eundo*un,size_t yb,size_t xb,size_t ye,size_t xe){
-	size_t x=sizemembuf(yb,xb,ye,xe);
-	char*v=(char*)malloc(x);
-	if(v==nullptr)return true;
-	un->yb=yb;un->xb=xb;un->ye=ye;un->xe=x;
-	un->data=v;
-	cpymembuf(yb,xb,ye,xe,v);
-	return false;
-}
-bool undo_add_del(size_t yb,size_t xb,size_t ye,size_t xe){
-	if(undo_expand())return true;
-	size_t x=sizemembuf(yb,xb,ye,xe);
-	size_t dif=x&row_pad;
-	if(dif)dif=(dif^row_pad)+1;
-	char*v=(char*)malloc(x+dif);
-	if(v==nullptr)return true;
-	undo_newway();
-	eundo*un=&undos[undos_tot];
-	un->yb=yb;un->xb=xb;un->ye=ye;un->xe=x;
-	un->data=v;
-	cpymembuf(yb,xb,ye,xe,v);
-	undo_ok();return false;
-}
-bool undo_add_ind(size_t yb,size_t ye){
-	if(undo_expand())return true;
-	undo_newway();
-	eundo*un=&undos[undos_tot];
-	un->ye=yb;un->yb=ye;
-	un->data=nullptr;
-	undo_ok();return false;
-}
-static void undo_ind_del(eundo*un,size_t yb,size_t ye,char*d){
-	un->yb=ye;un->ye=yb;
-	un->data=d;
-	for(size_t i=yb;i<ye;i++){
-		if(!rows[i].sz)d[i-yb]=ln_term[0];
-		else d[i-yb]=rows[i].data[0];
-	}
-}
-bool undo_add_ind_del(size_t yb,size_t ye){
-	if(undo_expand())return true;
-	void*d=malloc(ye-yb);
-	if(d==nullptr)return true;
-	undo_newway();
-	undo_ind_del(&undos[undos_tot],yb,ye,(char*)d);
-	undo_ok();return false;
-}
-void undo_free(){
-	if(undos!=nullptr){
-		undo_release(0,undos_max);
-		free(undos);
-	}
-}
-static bool dos(WINDOW*w,eundo*un,size_t z){
-	char*d=un->data;
-	size_t y1=un->yb;size_t y2=un->ye;
-	if(y1<=y2){
-		size_t xb=un->xb;size_t xe=un->xe;
-		if(d!=nullptr){
-			if(!paste(y1,xb,&xe,d,xe,y2-y1+1,false))return false;
-			un->xe=xe;un->data=nullptr;
-			ytext=y2;xtext=xe;
-			centering2(w,nullptr,nullptr,true);
-			free(d);
-		}
-		else{
-			if(deleting_init(y1,xb,y2,xe))return false;
-			if(undo_del_backward(un,y1,xb,y2,xe))return false;
-			deleting(y1,xb,y2,xe);
-			ytext=y1;xtext=xb;
-			centering(w,nullptr,nullptr);
-		}
-	}else{
-		if(d!=nullptr){
-			for(size_t i=y2;i<y1;i++){
-				row*r=&rows[i];
-				if(row_alloc(r,0,1,r->sz))return false;
-			}
-			un->data=nullptr;
-			for(size_t i=y2;i<y1;i++){
-				char a=d[i-y2];
-				if(a==ln_term[0])continue;
-				row*r=&rows[i];
-				row_set(r,0,1,r->sz,&a);
-			}
-			free(d);
-			ytext=y1;xtext=1;
-			centering2(w,nullptr,nullptr,true);
-	}else{
-			void*mem=malloc(y1-y2);
-			if(mem==nullptr)return false;
-			undo_ind_del(un,y2,y1,(char*)mem);
-			for(size_t i=y2;i<y1;i++){
-				size_t n=rows[i].sz;char*dt=rows[i].data;
-				for(size_t j=1;j<=n;j++)dt[j-1]=dt[j];
-				rows[i].sz--;
-			}
-			ytext=y2;xtext=0;
-			centering2(w,nullptr,nullptr,false);
-		}
-	}
-	undos_tot+=z;
-	if(undos_tot==undos_save)mod_set(true);
-	else if(undos_tot==undos_save+z)mod_set(false);
-	return true;
-}
-static void undo_show(size_t n){
-	char nr[11];
-	int a=sprintf(nr,"%u",n);
-	mvaddstr(getmaxy(stdscr)-1,com_left,nr);
-	undo_erase(a);
-	wnoutrefresh(stdscr);
-}
-void undo(WINDOW*w){
-	if(!undos_tot)return;
-	if(dos(w,&undos[undos_tot-1],(size_t)-1)){
-		if(undos_tot<=undos_save)undo_show(undos_tot);
-		else undo_show(undos_tot-undos_save);
-	}
-}
-void redo(WINDOW*w){
-	if(undos_tot==undos_max)return;
-	if(dos(w,&undos[undos_tot],1)){
-		if(undos_tot>=undos_save)undo_show(undos_max-undos_tot);
-		else undo_show(undos_save-undos_tot);
-	}
-}
-void undo_save(){undos_save=undos_tot;}
-bool undo_type(size_t yb,size_t xb,size_t ye,size_t xe){
-	if(undos_tot){
-		eundo*un=&undos[undos_tot-1];
-		if(un->data==nullptr&&un->yb<=un->ye){
-			if(un->ye==yb&&un->xe==xb){
-				un->xe++;return false;
-			}
-		}
-	}
-	return undo_add(yb,xb,ye,xe);
-}
-bool undo_bcsp(size_t yb,size_t xb,size_t ye,size_t xe){
-	if(undos_tot){
-		eundo*un=&undos[undos_tot-1];
-		if(un->data!=nullptr&&un->yb<=un->ye){
-			if(un->yb==ye&&un->xb==xe){
-				char*d;if(!(un->xe&row_pad)){
-					d=(char*)realloc(un->data,un->xe+row_pad+1);
-					if(d==nullptr)return true;
-					un->data=d;
-				}else d=un->data;
-				for(size_t i=un->xe;i>0;i--)d[i]=d[i-1];
-				d[0]=rows[yb].data[xb];
-				un->xb--;un->xe++;
-				return false;
-			}
-		}
-	}
-	return undo_add_del(yb,xb,ye,xe);
-}
-bool undo_delk(size_t yb,size_t xb,size_t ye,size_t xe){
-	if(undos_tot){
-		eundo*un=&undos[undos_tot-1];
-		if(un->data!=nullptr&&un->yb<=un->ye){
-			if(un->yb==yb&&un->xb==xb){
-				char*d;if(!(un->xe&row_pad)){
-					d=(char*)realloc(un->data,un->xe+row_pad+1);
-					if(d==nullptr)return true;
-					un->data=d;
-				}else d=un->data;
-				d[un->xe]=rows[yb].data[xb];
-				un->xe++;
-				return false;
-			}
-		}
-	}
-	return undo_add_del(yb,xb,ye,xe);
-}
-void undo_loop(WINDOW*w){
-	for(;;){
-		int c=wgetch(w);
-		if(c==KEY_LEFT)undo(w);
-		else if(c==KEY_RIGHT)redo(w);
-		else break;
-	}
 }
 bool new_visual(char*f){
 	if(access(f,F_OK)==-1){

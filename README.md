@@ -1,11 +1,10 @@
-# EDitor & compilatOR
+# EDitOR
 ```sh
 autoreconf -i
 ./configure
 make install
 ```
 Use *\-\-prefix=your_path* at *./configure* if needed (example: at Termux in Android).\
-Outputting arm assembly files.\
 Uninstall command is *make uninstall*.\
 *\-\-disable\-cpp* to set c rules.
 ###### Donations

@@ -1,14 +1,13 @@
-#include"src/main0.h"
+#include"src/main.h"
 //strlen,2;open,3;close,3;write,2;free,12
-//realloc,6;malloc,12
-#include"src/mainc.h"
-#include"src/mainb.h"
+//realloc,6;malloc,12;strcmp,14;sprintf
+//memcpy,17
 //move,4;wmove,27;getch;wgetch,3;newwin
 //getmaxy,18;getmaxx,33;stdscr,20
 //keyname,2;getcury,28;getcurx,23
 //addch;waddch,4;mvaddch,2;addstr,3
 //wnoutrefresh,9;attrset,3;wattrset,2
-//COLOR_PAIR,2;strcmp,14;sprintf;memcpy,17
+//COLOR_PAIR,2
 
 typedef long off_t;
 //sys/types.h
@@ -131,15 +130,14 @@ static char*helptext;
 \n    if found\
 \n      Enter     = next\
 \n      Space     = previous\
-//\n      Backspace = replace / (n/p)&replace\
-//\n      r         = set replace text\
+\n      Backspace = replace / (n/p)&replace\
+\n      r         = set replace text\
 \n    c = cancel\
 \n    other key to return\
 \nCtrl+u = undo\
 \nCtrl+r = redo\
 \nAlt +u = undo mode: left=undo,right=redo,other key to return\
-\nCtrl+b = build file\
-\nCtrl+q = quit"//29
+\nCtrl+q = quit"//28
 static bool visual_bool=false;
 static char*cutbuf=nullptr;
 static size_t cutbuf_sz=0;
@@ -1485,15 +1483,7 @@ static bool loopin(WINDOW*w){
 				undo(w);
 			}else if(!strcmp(s,"^R")){
 				redo(w);
-			}else if(!strcmp(s,"^B")){
-				if(textfile!=nullptr){
-					if(out_f(textfile,rows,rows_tot)){
-						visual_bool=true;
-						vis('B',w);
-					}
-				}
-			}
-			else if(!strcmp(s,"KEY_F(1)")){
+			}else if(!strcmp(s,"KEY_F(1)")){
 				int cy=getcury(w);int cx=getcurx(w);
 				werase(w);
 				phelp=0;

@@ -8,5 +8,4 @@ config.log
 config.status
 Makefile
 src/.dirstamp
-test.s
 edor*
