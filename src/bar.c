@@ -866,6 +866,16 @@ static int find(char*z,size_t cursor,size_t pos,size_t visib,int y){
 	}
 	return a==KEY_RESIZE?-1:true;
 }
+static void command_rewrite(int y,int x,int pos,int cursor,int visib){
+	if(pos)mvaddch(y,com_left-1,'<');
+	else move(y,com_left);
+	int len=cursor-pos;
+	bool rt=len>visib;
+	if(rt)len=visib;
+	addnstr(input+pos,len);
+	if(rt)addch('>');
+	move(y,x);
+}
 //-2resize,-1no/quit,0er/boolFalse,1ok
 int command(char*comnrp){
 	int right=getbegx(poswn)-2;
@@ -892,14 +902,7 @@ int command(char*comnrp){
 						inputpath();
 						new_f=false;r=saving();
 					}else if(!r){
-						if(pos)mvaddch(y,com_left-1,'<');
-						else move(y,com_left);
-						int len=cursor-pos;
-						bool rt=len>visib;
-						if(rt)len=visib;
-						addnstr(input+pos,len);
-						if(rt)addch('>');
-						move(y,x);
+						command_rewrite(y,x,pos,cursor,visib);
 						continue;
 					}else if(r==-2)return -2;
 					wnoutrefresh(stdscr);
@@ -923,13 +926,7 @@ int command(char*comnrp){
 					//but can be increased
 					//can be resized big,resized small
 					//if(dif>=0 here is not relevant
-					if(pos)mvaddch(y,com_left-1,'<');
-					else move(y,com_left);
-					int sz=cursor-pos;bool b=sz>visib;
-					if(b)sz=visib;
-					addnstr(input+pos,sz);
-					if(b)addch('>');
-					move(y,ifback>right?right:ifback);
+					command_rewrite(y,ifback>right?right:ifback,pos,cursor,visib);
 					continue;
 				}
 			}
