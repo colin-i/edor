@@ -3,10 +3,10 @@
 //free,4;realloc,4;malloc,5;sprintf,2
 //memcpy,2
 //move,20;wmove,5;getch,3;wgetch,3
-//getmaxy,10;getmaxx;4;getcury,4
-//getcurx,12;stdscr,22;keyname;addch,13
+//getmaxy,10;getmaxx;4;getcury,5
+//getcurx,13;stdscr,22;keyname;addch,13
 //waddch,2;mvaddch,8;addstr;wnoutrefresh,8
-//attrset,4;newwin;COLOR_PAIR,3
+//attrset,2;wattrset,3;newwin;COLOR_PAIR,4
 
 #define F_OK 0
 /*//#include <sys/stat.h>//arm
@@ -835,6 +835,15 @@ static int find(char*z,size_t cursor,size_t pos,size_t visib,int y){
 				cursorr=0;wattrset(w,COLOR_PAIR(2));
 				int rstart=getcury(w);
 				if(replace_text(w,rstart,getcurx(w),rstart,rstart+1))return -1;
+				continue;
+			}else if(a=='R'){
+				wattrset(w,COLOR_PAIR(2));
+				int yb=getcury(w);int xb=getcurx(w);
+				int rstart=yb;int rstop=yb+1;
+				for(size_t i=0;i<cursorr;i++){
+					replace_text_add(w,inputr[i],&rstart,&rstop);
+				}
+				if(replace_text(w,yb,xb,rstart,rstop))return -1;
 				continue;
 			}else if(a=='c'){
 				return false;

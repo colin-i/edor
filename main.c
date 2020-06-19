@@ -132,7 +132,7 @@ static char*helptext;
 \n      Space     = previous\
 \n      Backspace = replace / (n/p)&replace\
 \n      r         = reset replace text\
-//\n      R         = set replace text\
+\n      R         = modify replace text\
 \n    c = cancel\
 \n    other key to return\
 \nCtrl+u = undo\
