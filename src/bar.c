@@ -4,8 +4,8 @@
 //memcpy,2
 //move,21;wmove,5;getch,3;wgetch,3
 //getmaxy,12;getmaxx;4;getcury,5;doupdate
-//getcurx,13;stdscr,24;keyname;addch,13
-//waddch,2;mvaddch,8;addstr;wnoutrefresh,8
+//getcurx,13;stdscr,24;keyname;addch,14
+//waddch,2;mvaddch,9;addstr;wnoutrefresh,8
 //attrset,2;wattrset,3;newwin;COLOR_PAIR,4
 
 #define F_OK 0
@@ -50,9 +50,9 @@ extern "C"{
 
 //#include<curses.h>
 int mvwaddch(WINDOW*,int,int,const chtype);
-int addnstr(const char*,int);//8
+int addnstr(const char*,int);//9
 int mvaddstr(int,int,const char*);//4
-int mvaddnstr(int,int,const char*,int);//2
+int mvaddnstr(int,int,const char*,int);
 int mvwaddstr(WINDOW*,int,int,const char*);
 int wresize(WINDOW*,int,int);//2
 int mvwin(WINDOW*,int,int);//2
@@ -169,7 +169,7 @@ bool bar_clear(){
 		for(size_t i=0;i<sizeof(new_s)-1;i++)addch(' ');
 		new_v=false;
 		return true;
-	}else if(err_l){
+	}else if(err_l>3){
 		move(getmaxy(stdscr)-1,com_left);
 		for(int i=0;i<err_l;i++)addch(' ');
 		return true;
@@ -177,8 +177,11 @@ bool bar_clear(){
 	return false;
 }
 void err_set(WINDOW*w){
-	if(err_l){//waiting for normal clear_com
-	mvaddnstr(getmaxy(stdscr)-1,com_left,err_s,err_l);
+	if(err_l>3){//waiting for normal clear_com
+	int y=getmaxy(stdscr)-1;
+	mvaddch(y,com_left,'\"');
+	addnstr(err_s,err_l-2);
+	addch('\"');
 	wnoutrefresh(stdscr);
 	wnoutrefresh(w);//newpath+save
 	doupdate();}
@@ -191,7 +194,7 @@ static bool saving(){
 		if(new_f){
 			bar_clear();//is troubleing with the bool,and more
 			err_s=strerror(errno);
-			err_l=(int)strlen(err_s);
+			err_l=(int)strlen(err_s)+2;
 			int rg=get_right-com_left;
 			if(err_l>rg)err_l=rg;
 		}

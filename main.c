@@ -1504,12 +1504,12 @@ static bool loopin(WINDOW*w){
 					int q=question("And save");
 					if(q==1){
 						q=save();
+						if(!q)err_set(w);
 					}
 					if(q==-2)return true;
 					else if(!q){
 						wnoutrefresh(stdscr);
 						wmove(w,getcury(w),getcurx(w));
-						err_set(w);
 						continue;
 					}
 				}
