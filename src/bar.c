@@ -3,7 +3,7 @@
 //free,4;realloc,4;malloc,5;sprintf,2
 //memcpy,2
 //move,20;wmove,5;getch,3;wgetch,3
-//getmaxy,10;getmaxx;4;getcury,3
+//getmaxy,10;getmaxx;4;getcury,4
 //getcurx,12;stdscr,22;keyname;addch,13
 //waddch,2;mvaddch,8;addstr;wnoutrefresh,8
 //attrset,4;newwin;COLOR_PAIR,3
@@ -373,17 +373,30 @@ static void colorfind(int a,int y,size_t pos,size_t sz){
 	mvaddnstr(y,com_left,input+pos,(int)sz);
 	attrset(0);
 }
-static bool replace_text(WINDOW*w,int yb){
+static void replace_text_add(WINDOW*w,chtype c,int*rstart,int*rstop){
+	int cx=getcurx(w);
+	if(getmaxx(w)-1==cx){
+		int cy=getcury(w);
+		if(getmaxy(w)-1==cy){
+			wmove(w,0,0);
+			wdeleteln(w);
+			wmove(w,cy-1,cx);
+			rstart[0]=0;
+		}
+	}else if(cx==0){
+		int cy=getcury(w);
+		if(cy==rstop[0])rstop[0]++;
+	}
+	waddch(w,c);
+}
+static bool replace_text(WINDOW*w,int yb,int xb,int rstart,int rstop){
 	vis('R',w);
-	wattrset(w,COLOR_PAIR(2));
-	cursorr=0;int rstart=yb;
-	int rstop=rstart+1;int cstart=getcurx(w);
 	for(;;){
 		int c=wgetch(w);
 		if(c==Char_Return){
 			wattrset(w,COLOR_PAIR(0));
 			refreshrowsbot(w,rstart,rstop);
-			wmove(w,yb,cstart);
+			wmove(w,yb,xb);
 			visual(' ');
 			return false;
 		}
@@ -400,17 +413,7 @@ static bool replace_text(WINDOW*w,int yb){
 		}
 		else if(c==KEY_RESIZE)return true;
 		else if(cursorr!=max_path&&!no_char((char)c)){
-			int cx=getcurx(w);
-			if(getmaxx(w)-1==cx){
-				int cy=getcury(w);
-				if(getmaxy(w)-1==cy){
-					wmove(w,0,0);
-					wdeleteln(w);
-					wmove(w,cy-1,cx);
-					rstart=0;
-				}else if(cy+1>rstop)rstop++;
-			}
-			waddch(w,(chtype)c);
+			replace_text_add(w,(chtype)c,&rstart,&rstop);
 			inputr[cursorr]=(char)c;
 			cursorr++;
 		}
@@ -829,7 +832,9 @@ static int find(char*z,size_t cursor,size_t pos,size_t visib,int y){
 				}
 				return true;
 			}else if(a=='r'){
-				if(replace_text(w,getcury(w)))return -1;
+				cursorr=0;wattrset(w,COLOR_PAIR(2));
+				int rstart=getcury(w);
+				if(replace_text(w,rstart,getcurx(w),rstart,rstart+1))return -1;
 				continue;
 			}else if(a=='c'){
 				return false;

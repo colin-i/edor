@@ -131,13 +131,14 @@ static char*helptext;
 \n      Enter     = next\
 \n      Space     = previous\
 \n      Backspace = replace / (n/p)&replace\
-\n      r         = set replace text\
+\n      r         = reset replace text\
+//\n      R         = set replace text\
 \n    c = cancel\
 \n    other key to return\
 \nCtrl+u = undo\
 \nCtrl+r = redo\
 \nAlt +u = undo mode: left=undo,right=redo,other key to return\
-\nCtrl+q = quit"//28
+\nCtrl+q = quit"//30
 static bool visual_bool=false;
 static char*cutbuf=nullptr;
 static size_t cutbuf_sz=0;
