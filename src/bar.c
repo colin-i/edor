@@ -172,6 +172,7 @@ bool bar_clear(){
 	}else if(err_l>3){
 		move(getmaxy(stdscr)-1,com_left);
 		for(int i=0;i<err_l;i++)addch(' ');
+		err_l=0;
 		return true;
 	}
 	return false;
