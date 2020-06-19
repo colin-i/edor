@@ -2,10 +2,10 @@
 //strlen,2;strcmp;open,2;close;write,3
 //free,4;realloc,4;malloc,5;sprintf,2
 //memcpy,2
-//move,21;wmove,5;getch,3;wgetch,3
-//getmaxy,12;getmaxx;4;getcury,5;doupdate
-//getcurx,13;stdscr,24;keyname;addch,14
-//waddch,2;mvaddch,9;addstr;wnoutrefresh,8
+//move,21;wmove,6;getch,3;wgetch,3
+//getmaxy,12;getmaxx;4;getcury,6
+//getcurx,14;stdscr,24;keyname;addch,14
+//waddch,2;mvaddch,9;addstr;wnoutrefresh,7
 //attrset,2;wattrset,3;newwin;COLOR_PAIR,4
 
 #define F_OK 0
@@ -171,21 +171,20 @@ bool bar_clear(){
 		return true;
 	}else if(err_l>3){
 		move(getmaxy(stdscr)-1,com_left);
-		for(int i=0;i<err_l;i++)addch(' ');
-		err_l=0;
+		while(err_l){addch(' ');err_l--;}
 		return true;
 	}
 	return false;
 }
 void err_set(WINDOW*w){
 	if(err_l>3){//waiting for normal clear_com
-	int y=getmaxy(stdscr)-1;
-	mvaddch(y,com_left,'\"');
-	addnstr(err_s,err_l-2);
-	addch('\"');
-	wnoutrefresh(stdscr);
-	wnoutrefresh(w);//newpath+save
-	doupdate();}
+		int y=getmaxy(stdscr)-1;
+		mvaddch(y,com_left,'\"');
+		addnstr(err_s,err_l-2);
+		addch('\"');
+		wnoutrefresh(stdscr);
+		wmove(w,getcury(w),getcurx(w));//newpath+save
+	}
 }
 static bool saving(){
 	int f;bool r;

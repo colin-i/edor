@@ -2,12 +2,12 @@
 //strlen,2;open,3;close,3;write,2;free,12
 //realloc,6;malloc,12;strcmp,14;sprintf
 //memcpy,17
-//move,4;wmove,27;getch;wgetch,3;newwin
-//getmaxy,18;getmaxx,33;stdscr,20
-//keyname,2;getcury,28;getcurx,23
+//move,5;wmove,29;getch;wgetch,3;newwin
+//getmaxy,19;getmaxx,33;stdscr,20
+//keyname,2;getcury,30;getcurx,25
 //addch;waddch,4;mvaddch,2;addstr,3
-//wnoutrefresh,9;attrset,3;wattrset,2
-//COLOR_PAIR,2;doupdate,3
+//wnoutrefresh,5;attrset,3;wattrset,2
+//COLOR_PAIR,2
 
 typedef long off_t;
 //sys/types.h
@@ -69,8 +69,7 @@ int nonl(void);
 int delwin(WINDOW*);//2
 int waddstr(WINDOW*,const char*);//4
 int waddnstr(WINDOW*,const char*,int);//2
-int werase(WINDOW*);
-int clrtoeol(void);//2
+int clrtoeol(void);//3
 int wclrtoeol(WINDOW*);//4
 int start_color(void);
 int init_pair(short,short,short);//2
@@ -1024,8 +1023,7 @@ static void past(WINDOW*w){
 }
 void vis(char c,WINDOW*w){
 	visual(c);
-	wnoutrefresh(w);
-	doupdate();
+	wmove(w,getcury(w),getcurx(w));
 }
 static void delete_fast(WINDOW*w,int r,int c,char*data,size_t x,size_t sz){
 	int*t=&tabs[tabs_rsz*r];int n=t[0];
@@ -1477,8 +1475,7 @@ static bool loopin(WINDOW*w){
 				int r=command((char*)args);
 				if(r==-2)return true;
 				else if(r){
-					wnoutrefresh(w);
-					doupdate();
+					wmove(w,getcury(w),getcurx(w));
 				}
 			}else if(!strcmp(s,"^U")){
 				undo(w);
@@ -1486,12 +1483,10 @@ static bool loopin(WINDOW*w){
 				redo(w);
 			}else if(!strcmp(s,"KEY_F(1)")){
 				int cy=getcury(w);int cx=getcurx(w);
-				werase(w);
 				phelp=0;
 				helpshow(0);
-				wnoutrefresh(w);
-				wnoutrefresh(stdscr);
-				doupdate();
+				int mx=getmaxy(stdscr)-2;
+				for(int i=getcury(stdscr)+1;i<mx;i++){move(i,0);clrtoeol();}
 				if(helpin(w)){
 					ungetch(c);
 					return true;

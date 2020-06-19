@@ -51,7 +51,6 @@ ssize_t write(int,const void*,size_t);
 void free(void*);
 void*realloc(void*,size_t);
 void*malloc(size_t);
-int doupdate(void);
 
 #ifdef __cplusplus
 }
