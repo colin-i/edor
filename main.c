@@ -7,7 +7,7 @@
 //keyname,2;getcury,28;getcurx,23
 //addch;waddch,4;mvaddch,2;addstr,3
 //wnoutrefresh,9;attrset,3;wattrset,2
-//COLOR_PAIR,2
+//COLOR_PAIR,2;doupdate,3
 
 typedef long off_t;
 //sys/types.h
@@ -67,7 +67,6 @@ int noecho(void);
 int raw(void);
 int nonl(void);
 int delwin(WINDOW*);//2
-int doupdate(void);//3
 int waddstr(WINDOW*,const char*);//4
 int waddnstr(WINDOW*,const char*,int);//2
 int werase(WINDOW*);
@@ -1449,8 +1448,9 @@ static bool loopin(WINDOW*w){
 			else if((!strcmp(s,"^S"))||!strcmp(s,"^O")){
 				char*d=textfile;
 				int ret;
-				if(s[1]=='S')ret=save();
-				else{char aa=0;ret=command(&aa);}
+				if(s[1]=='S'){
+					ret=save();
+				}else{char aa=0;ret=command(&aa);}
 				if(ret){
 					if(ret==1){
 						if(d!=textfile)text_file=textfile;
@@ -1458,7 +1458,7 @@ static bool loopin(WINDOW*w){
 						undo_save();
 					}
 					else if(ret==-2)return true;
-				}
+				}else err_set(w);
 				wmove(w,getcury(w),getcurx(w));
 			}
 			else if(!strcmp(s,"^G")){
@@ -1500,7 +1500,7 @@ static bool loopin(WINDOW*w){
 			}
 			else if(!strcmp(s,"^Q")){
 				if(!mod_flag){
-					//bar_clear();//not needed now but maniacly retain the size of the string for further versions
+					bar_clear();//errors
 					int q=question("And save");
 					if(q==1){
 						q=save();
@@ -1509,6 +1509,7 @@ static bool loopin(WINDOW*w){
 					else if(!q){
 						wnoutrefresh(stdscr);
 						wmove(w,getcury(w),getcurx(w));
+						err_set(w);
 						continue;
 					}
 				}

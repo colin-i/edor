@@ -1,10 +1,10 @@
 #include"main.h"
-//strlen;strcmp;open,2;close;write,3
+//strlen,2;strcmp;open,2;close;write,3
 //free,4;realloc,4;malloc,5;sprintf,2
 //memcpy,2
-//move,20;wmove,5;getch,3;wgetch,3
-//getmaxy,10;getmaxx;4;getcury,5
-//getcurx,13;stdscr,22;keyname;addch,13
+//move,21;wmove,5;getch,3;wgetch,3
+//getmaxy,12;getmaxx;4;getcury,5;doupdate
+//getcurx,13;stdscr,24;keyname;addch,13
 //waddch,2;mvaddch,8;addstr;wnoutrefresh,8
 //attrset,2;wattrset,3;newwin;COLOR_PAIR,4
 
@@ -51,7 +51,7 @@ extern "C"{
 //#include<curses.h>
 int mvwaddch(WINDOW*,int,int,const chtype);
 int addnstr(const char*,int);//8
-int mvaddstr(int,int,const char*);//3
+int mvaddstr(int,int,const char*);//4
 int mvaddnstr(int,int,const char*,int);//2
 int mvwaddstr(WINDOW*,int,int,const char*);
 int wresize(WINDOW*,int,int);//2
@@ -68,11 +68,18 @@ int atoi(const char*);//3
 //dirent
 void* fdopendir(int);
 int closedir(void*);
+//errno
+int* __errno(void) __attribute__((__const__));
+#define errno (*__errno())
+//string.h
+char *strerror(int);
 
 #ifdef __cplusplus
 }
 #endif
 
+static int err_l=0;
+static char*err_s;
 #define b_inf_s "F1 for help"
 #define quest_ex_s "? y/C/n"
 static int com_left=sizeof(b_inf_s);
@@ -83,6 +90,7 @@ static char*input=input1;
 static WINDOW*poswn;
 static char inputr[max_path+1];
 static size_t cursorr=0;
+#define get_right getbegx(poswn)-1
 
 typedef struct{
 size_t yb;
@@ -145,11 +153,48 @@ static int bcdl(int y,int*p,int cursor){
 	p[0]=pos;
 	return cursor-1;
 }
+static void undo_erase(int a){
+	int dif=undo_v-a;
+	while(dif>0){addch(' ');dif--;}
+	undo_v-=undo_v-a;
+}
+bool bar_clear(){
+	if(undo_v){
+		move(getmaxy(stdscr)-1,com_left);
+		undo_erase(0);
+		return true;
+	}
+	else if(new_v){
+		move(getmaxy(stdscr)-1,com_left);
+		for(size_t i=0;i<sizeof(new_s)-1;i++)addch(' ');
+		new_v=false;
+		return true;
+	}else if(err_l){
+		move(getmaxy(stdscr)-1,com_left);
+		for(int i=0;i<err_l;i++)addch(' ');
+		return true;
+	}
+	return false;
+}
+void err_set(WINDOW*w){
+	if(err_l){//waiting for normal clear_com
+	mvaddnstr(getmaxy(stdscr)-1,com_left,err_s,err_l);
+	wnoutrefresh(stdscr);
+	wnoutrefresh(w);//newpath+save
+	doupdate();}
+}
 static bool saving(){
 	int f;bool r;
 	if(new_f){
 		f=open(textfile,O_CREAT|O_WRONLY|O_TRUNC,S_IRUSR|S_IWUSR);
 		new_f=f==-1;
+		if(new_f){
+			bar_clear();//is troubleing with the bool,and more
+			err_s=strerror(errno);
+			err_l=(int)strlen(err_s);
+			int rg=get_right-com_left;
+			if(err_l>rg)err_l=rg;
+		}
 	}
 	else f=open(textfile,O_WRONLY|O_TRUNC);
 	if(f!=-1){
@@ -442,25 +487,6 @@ static bool go_to(int cursor){
 		return 1;
 	}
 	return 0;
-}
-static void undo_erase(int a){
-	int dif=undo_v-a;
-	while(dif>0){addch(' ');dif--;}
-	undo_v-=undo_v-a;
-}
-bool bar_clear(){
-	if(undo_v){
-		move(getmaxy(stdscr)-1,com_left);
-		undo_erase(0);
-		return true;
-	}
-	else if(new_v){
-		move(getmaxy(stdscr)-1,com_left);
-		for(int i=0;(size_t)i<sizeof(new_s)-1;i++)addch(' ');
-		new_v=false;
-		return true;
-	}
-	return false;
 }
 int save(){
 	if(textfile!=nullptr){
@@ -878,8 +904,8 @@ static void command_rewrite(int y,int x,int pos,int cursor,int visib){
 }
 //-2resize,-1no/quit,0er/boolFalse,1ok
 int command(char*comnrp){
-	int right=getbegx(poswn)-2;
-	int rightexcl=right+1;
+	int rightexcl=get_right;
+	int right=rightexcl-1;
 	int visib=rightexcl-com_left;
 	if(visib<2)return 0;//phisical visib is 1
 	bar_clear();

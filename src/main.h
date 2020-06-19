@@ -51,6 +51,7 @@ ssize_t write(int,const void*,size_t);
 void free(void*);
 void*realloc(void*,size_t);
 void*malloc(size_t);
+int doupdate(void);
 
 #ifdef __cplusplus
 }
@@ -106,6 +107,7 @@ void undo_loop(WINDOW*);
 bool new_visual(char*);
 bool bar_clear(void);
 bool is_dir(int);
+void err_set(WINDOW*);
 
 #define Char_Return 0xd
 #define Char_Backspace 0x7f
