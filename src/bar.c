@@ -82,7 +82,7 @@ static char input2[max_path+1];
 static char*input=input1;
 static WINDOW*poswn;
 static char inputr[max_path+1];
-static size_t cursorr;
+static size_t cursorr=0;
 
 typedef struct{
 size_t yb;
