@@ -1,7 +1,7 @@
 #                                               -*- Autoconf -*-
 # Process this file with autoconf to produce a configure script.
 AC_PREREQ([2.69])
-AC_INIT([edor], [0.1], [BUG-REPORT-ADDRESS])
+AC_INIT([edor], [0.1])
 AC_CONFIG_SRCDIR([main.c])
 #AC_CONFIG_HEADERS([config.h])
 
