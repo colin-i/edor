@@ -112,8 +112,7 @@ static char*helptext;
 \nINPUT\
 \nhelp: q(uit),up/down,mouse/touch v.scroll\
 \narrows(Shift),home(Ctrl,Alt)/end(Ctrl),page up/down;mouse/touch click or v.scroll\
-\nCtrl+v = visual mode\
-\nAlt +v = visual line mode\
+\nCtrl+v = visual mode; Alt+v = visual line mode\
 \n    c = copy\
 \n    d = delete\
 \n    x = cut\
@@ -124,7 +123,7 @@ static char*helptext;
 \nCtrl+s = save file\
 \nCtrl+o = save file as...\
 \nCtrl+g = go to row[,column]\
-\nCtrl+f = find text\
+\nCtrl+f = find text; Alt+f = refind text\
 \n    if found\
 \n      Enter     = next\
 \n      Space     = previous\
@@ -136,7 +135,7 @@ static char*helptext;
 \nCtrl+u = undo\
 \nCtrl+r = redo\
 \nAlt +u = undo mode: left=undo,right=redo,other key to return\
-\nCtrl+q = quit"//30
+\nCtrl+q = quit"//29
 static bool visual_bool=false;
 static char*cutbuf=nullptr;
 static size_t cutbuf_sz=0;
@@ -1419,6 +1418,17 @@ static bool visual_mode(WINDOW*w,bool v_l){
 	}while(z);
 	return false;
 }
+static bool find_mode(int nr,WINDOW*w){
+	char*args[2];
+	args[0]=(char*)nr;
+	args[1]=(char*)w;
+	int r=command((char*)args);
+	if(r==-2)return true;
+	else if(r){
+		wmove(w,getcury(w),getcurx(w));
+	}
+	return false;
+}
 static bool loopin(WINDOW*w){
 	int c;
 	for(;;){
@@ -1436,6 +1446,7 @@ static bool loopin(WINDOW*w){
 			int z=wgetch(w);
 			nodelay(w,false);
 			if(z=='v'){if(visual_mode(w,true))return true;}
+			else if(z=='f'){if(find_mode(3,w))return true;}
 			else if(z=='u'){vis('U',w);undo_loop(w);vis(' ',w);}
 		}else{
 			const char*s=keyname(c);
@@ -1469,14 +1480,7 @@ static bool loopin(WINDOW*w){
 				else return true;
 			}
 			else if(!strcmp(s,"^F")){
-				char*args[2];
-				args[0]=(char*)2;
-				args[1]=(char*)w;
-				int r=command((char*)args);
-				if(r==-2)return true;
-				else if(r){
-					wmove(w,getcury(w),getcurx(w));
-				}
+				if(find_mode(2,w))return true;
 			}else if(!strcmp(s,"^U")){
 				undo(w);
 			}else if(!strcmp(s,"^R")){

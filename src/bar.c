@@ -86,11 +86,13 @@ static int com_left=sizeof(b_inf_s);
 #define max_path 0xff
 static char input1[max_path+1];
 static char input2[max_path+1];
-static char*input=input1;
+static char*input0=input1;
 static WINDOW*poswn;
 static char inputr[max_path+1];
 static size_t cursorr=0;
 #define get_right getbegx(poswn)-1
+static char inputf[max_path+1];
+static int cursorf=0;
 
 typedef struct{
 size_t yb;
@@ -120,7 +122,7 @@ static bool wrt(int f){
 	}
 	return (size_t)write(f,rows[n].data,rows[n].sz)==rows[n].sz;
 }
-static int bcdl(int y,int*p,int cursor){
+static int bcdl(int y,int*p,char*input,int cursor){
 	int x=getcurx(stdscr);
 	bool left=x==com_left;
 	int pos=p[0];
@@ -207,14 +209,14 @@ static bool saving(){
 	return r;
 }
 static void inputpath(){
-	textfile=input;
-	if(input==input1)input=input2;
-	else input=input1;
+	textfile=input0;
+	if(input0==input1)input0=input2;
+	else input0=input1;
 	//good for other commands that are not storing the result
 }
 //-1exist,0er,1ok
 static int saves(){
-	if(access(input,F_OK)==-1){
+	if(access(input0,F_OK)==-1){
 		inputpath();
 		new_f=true;return saving();
 	}
@@ -258,7 +260,7 @@ int question(const char*q){
 	else if(ch=='n')return -1;
 	return 0;
 }
-static int del(int x,int cursor,int dif){
+static int del(int x,char*input,int cursor,int dif){
 	if(x==cursor)return cursor;
 	cursor--;
 	for(int i=x;i<cursor;i++){
@@ -277,10 +279,10 @@ static int inputcmp(char*S1,size_t L1,size_t l2){
 	size_t n=L1-l2;
 	size_t i=0;
 	while(i<=n){
-		if(S1[i]==input[0]){
+		if(S1[i]==inputf[0]){
 			size_t j=1;
 			for(;j<l2;j++){
-				if(S1[i+j]!=input[j])break;
+				if(S1[i+j]!=inputf[j])break;
 			}
 			if(j==l2)return(int)i;
 			i+=j;
@@ -322,12 +324,12 @@ static int inputrcmp(char*S1,size_t L1,size_t l2){
 	size_t i=L1;
 	while(l2<=i){
 		i--;
-		if(S1[i]==input[m]){
+		if(S1[i]==inputf[m]){
 			size_t j=m;
 			size_t p=i-j;
 			while(j>0){
 				j--;
-				if(S1[p+j]!=input[j]){
+				if(S1[p+j]!=inputf[j]){
 					j++;
 					break;
 				}
@@ -418,7 +420,7 @@ void centering(WINDOW*w,size_t*rw,size_t*cl){
 }
 static void colorfind(int a,int y,size_t pos,size_t sz){
 	attrset(COLOR_PAIR(a));
-	mvaddnstr(y,com_left,input+pos,(int)sz);
+	mvaddnstr(y,com_left,inputf+pos,(int)sz);
 	attrset(0);
 }
 static void replace_text_add(WINDOW*w,chtype c,int*rstart,int*rstop){
@@ -470,14 +472,14 @@ static bool replace_text(WINDOW*w,int yb,int xb,int rstart,int rstop){
 static bool go_to(int cursor){
 	int i=0;size_t y;size_t x;
 	for(;;){
-		if(input[i]==','){
-			input[i]=0;
-			y=(size_t)atoi(input);
-			x=(size_t)atoi(input+i+1);
+		if(input0[i]==','){
+			input0[i]=0;
+			y=(size_t)atoi(input0);
+			x=(size_t)atoi(input0+i+1);
 			break;
 		}
 		if(i==cursor){
-			y=(size_t)atoi(input);
+			y=(size_t)atoi(input0);
 			x=1;break;
 		}
 		i++;
@@ -609,7 +611,7 @@ static bool undo_add_replace(size_t cursor){
 			un->ye=un->yb;un->xe=cursorr;
 			un->data=d;
 			d[0]=ln_term[0];((size_t*)((void*)&d[1]))[0]=cursor;
-			memcpy(&d[1]+sizeof(cursor),input,cursor);
+			memcpy(&d[1]+sizeof(cursor),inputf,cursor);
 			undo_ok();return false;}}
 	return true;
 }
@@ -895,7 +897,7 @@ static int find(char*z,size_t cursor,size_t pos,size_t visib,int y){
 	}
 	return a==KEY_RESIZE?-1:true;
 }
-static void command_rewrite(int y,int x,int pos,int cursor,int visib){
+static void command_rewrite(int y,int x,int pos,char*input,int cursor,int visib){
 	if(pos)mvaddch(y,com_left-1,'<');
 	else move(y,com_left);
 	int len=cursor-pos;
@@ -912,11 +914,18 @@ int command(char*comnrp){
 	int visib=rightexcl-com_left;
 	if(visib<2)return 0;//phisical visib is 1
 	bar_clear();
-	int y=getmaxy(stdscr)-1;
-	move(y,com_left);
-	int cursor=0;
-	int pos=0;int r;
-	for(;;){
+	int y=getmaxy(stdscr)-1;int pos=0;
+	char*input;int cursor;
+	if(comnrp[0]>1){
+		input=inputf;
+		if(comnrp[0]==3)cursor=cursorf;
+		else cursor=0;
+	}else{input=input0;cursor=0;}
+	if(!cursor)move(y,com_left);
+	else{
+		command_rewrite(y,com_left,0,input,cursor,visib);
+	}
+	int r;for(;;){
 		int a=getch();
 		if(a==Char_Return){
 			char comnr=comnrp[0];
@@ -931,7 +940,7 @@ int command(char*comnrp){
 						inputpath();
 						new_f=false;r=saving();
 					}else if(!r){
-						command_rewrite(y,x,pos,cursor,visib);
+						command_rewrite(y,x,pos,input0,cursor,visib);
 						continue;
 					}else if(r==-2)return -2;
 					wnoutrefresh(stdscr);
@@ -955,14 +964,15 @@ int command(char*comnrp){
 					//but can be increased
 					//can be resized big,resized small
 					//if(dif>=0 here is not relevant
-					command_rewrite(y,ifback>right?right:ifback,pos,cursor,visib);
+					command_rewrite(y,ifback>right?right:ifback,pos,inputf,cursor,visib);
 					continue;
 				}
+				cursorf=cursor;
 			}
 			break;
 		}
 		else if(a==Char_Backspace){
-			cursor=bcdl(y,&pos,cursor);
+			cursor=bcdl(y,&pos,input,cursor);
 		}
 		else if(a==KEY_LEFT){
 			int x=getcurx(stdscr);
@@ -997,7 +1007,7 @@ int command(char*comnrp){
 		}
 		else if(a==KEY_DC){
 			int x=getcurx(stdscr);
-			cursor=del(x-com_left+pos,cursor,rightexcl-x);
+			cursor=del(x-com_left+pos,input,cursor,rightexcl-x);
 			move(y,x);
 		}
 		else if(a==KEY_RESIZE)return -2;
