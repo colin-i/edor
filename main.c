@@ -1419,10 +1419,11 @@ static bool visual_mode(WINDOW*w,bool v_l){
 	return false;
 }
 static bool find_mode(int nr,WINDOW*w){
-	char*args[2];
+	char*args[3];
 	args[0]=(char*)nr;
 	args[1]=(char*)w;
 	int r=command((char*)args);
+	cursorf=((int*)(void*)args[2])[0];
 	if(r==-2)return true;
 	else if(r){
 		wmove(w,getcury(w),getcurx(w));

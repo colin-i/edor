@@ -78,6 +78,8 @@ char *strerror(int);
 }
 #endif
 
+int cursorf=0;
+
 static int err_l=0;
 static char*err_s;
 #define b_inf_s "F1 for help"
@@ -92,7 +94,6 @@ static char inputr[max_path+1];
 static size_t cursorr=0;
 #define get_right getbegx(poswn)-1
 static char inputf[max_path+1];
-static int cursorf=0;
 
 typedef struct{
 size_t yb;
@@ -917,6 +918,7 @@ int command(char*comnrp){
 	int y=getmaxy(stdscr)-1;int pos=0;
 	char*input;int cursor;
 	if(comnrp[0]>1){
+		((int**)(void*)comnrp)[2]=&cursor;
 		input=inputf;
 		if(comnrp[0]==3)cursor=cursorf;
 		else cursor=0;
@@ -952,7 +954,6 @@ int command(char*comnrp){
 			}else{
 				int ifback=getcurx(stdscr);
 				r=find(comnrp,(size_t)cursor,(size_t)pos,(size_t)visib,y);
-				cursorf=cursor;
 				if(r==-1)return -2;
 				int dif=rightexcl-getbegx(poswn);
 				if(dif!=-1){
