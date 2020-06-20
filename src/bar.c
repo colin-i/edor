@@ -952,6 +952,7 @@ int command(char*comnrp){
 			}else{
 				int ifback=getcurx(stdscr);
 				r=find(comnrp,(size_t)cursor,(size_t)pos,(size_t)visib,y);
+				cursorf=cursor;
 				if(r==-1)return -2;
 				int dif=rightexcl-getbegx(poswn);
 				if(dif!=-1){
@@ -967,7 +968,6 @@ int command(char*comnrp){
 					command_rewrite(y,ifback>right?right:ifback,pos,inputf,cursor,visib);
 					continue;
 				}
-				cursorf=cursor;
 			}
 			break;
 		}
