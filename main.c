@@ -53,6 +53,7 @@ extern "C" {
 
 //#include <string.h>
 void*memset(void*,int,size_t);//2
+char*strrchr(const char*,int);//2
 //#include <unistd.h>
 off_t lseek(int,off_t,int);//4
 ssize_t read(int,void*,size_t);//2
@@ -1663,8 +1664,13 @@ static bool setfilebuf(char*s,char*cutbuf_file){
 		size_t l=strlen(h);
 		if(l){
 			if(l+(sz-i)+7<=128){
-				sprintf(cutbuf_file,"%s/.%sinfo",h,&s[i]);
-				getfilebuf(cutbuf_file);//l-1
+				char*r=strrchr(h,'/');
+				bool w=r==nullptr;
+				if(w)r=strrchr(h,'\\');
+				if(r!=nullptr){
+					sprintf(cutbuf_file,"%s%c.%sinfo",h,w?'\\':'/',&s[i]);
+					getfilebuf(cutbuf_file);//l-1
+				}
 			}
 		}
 	}
