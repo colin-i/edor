@@ -78,8 +78,6 @@ char *strerror(int);
 }
 #endif
 
-int cursorf=0;
-
 static int err_l=0;
 static char*err_s;
 #define b_inf_s "F1 for help"
@@ -94,6 +92,7 @@ static char inputr[max_path+1];
 static size_t cursorr=0;
 #define get_right getbegx(poswn)-1
 static char inputf[max_path+1];
+static int cursorf=0;
 
 typedef struct{
 size_t yb;
@@ -811,7 +810,7 @@ static bool delimiter(size_t y1,size_t x1,int y,size_t pos,size_t sz,size_t c,bo
 	}
 	return false;
 }
-//1,0,-1resz
+//1,0,-2resz
 static int find(char*z,size_t cursor,size_t pos,size_t visib,int y){
 	/*warning: cast from
       'char *' to 'size_t *' (aka
@@ -866,7 +865,7 @@ static int find(char*z,size_t cursor,size_t pos,size_t visib,int y){
 			}else if(a=='r'){
 				cursorr=0;wattrset(w,COLOR_PAIR(2));
 				int rstart=getcury(w);
-				if(replace_text(w,rstart,getcurx(w),rstart,rstart+1))return -1;
+				if(replace_text(w,rstart,getcurx(w),rstart,rstart+1))return -2;
 				continue;
 			}else if(a=='R'){
 				wattrset(w,COLOR_PAIR(2));
@@ -875,12 +874,12 @@ static int find(char*z,size_t cursor,size_t pos,size_t visib,int y){
 				for(size_t i=0;i<cursorr;i++){
 					replace_text_add(w,inputr[i],&rstart,&rstop);
 				}
-				if(replace_text(w,yb,xb,rstart,rstop))return -1;
+				if(replace_text(w,yb,xb,rstart,rstop))return -2;
 				continue;
 			}else if(a=='c'){
 				return false;
 			}else{
-				return a==KEY_RESIZE?-1:true;
+				return a==KEY_RESIZE?-2:true;
 			}
 			finding(cursor,xr,xc,forward);
 			phase=delimiter(y1,x1,y,pos,sz,cursor,phase);
@@ -896,7 +895,7 @@ static int find(char*z,size_t cursor,size_t pos,size_t visib,int y){
 	if(a=='c'){
 		return false;
 	}
-	return a==KEY_RESIZE?-1:true;
+	return a==KEY_RESIZE?-2:true;
 }
 static void command_rewrite(int y,int x,int pos,char*input,int cursor,int visib){
 	if(pos)mvaddch(y,com_left-1,'<');
@@ -916,9 +915,8 @@ int command(char*comnrp){
 	if(visib<2)return 0;//phisical visib is 1
 	bar_clear();
 	int y=getmaxy(stdscr)-1;int pos=0;
-	char*input;int cursor;
-	if(comnrp[0]>1){
-		((int**)(void*)comnrp)[2]=&cursor;
+	char*input;int cursor;bool is_find=comnrp[0]>1;
+	if(is_find){
 		input=inputf;
 		if(comnrp[0]==3)cursor=cursorf;
 		else cursor=0;
@@ -951,10 +949,10 @@ int command(char*comnrp){
 			}else if(comnr==1){
 				input[cursor]=0;
 				r=go_to(cursor);
-			}else{
+			}else{//if is_find
 				int ifback=getcurx(stdscr);
 				r=find(comnrp,(size_t)cursor,(size_t)pos,(size_t)visib,y);
-				if(r==-1)return -2;
+				if(r==-2)break;
 				int dif=rightexcl-getbegx(poswn);
 				if(dif!=-1){
 					right-=dif+1;rightexcl=right+1;
@@ -1011,7 +1009,7 @@ int command(char*comnrp){
 			cursor=del(x-com_left+pos,input,cursor,rightexcl-x);
 			move(y,x);
 		}
-		else if(a==KEY_RESIZE)return -2;
+		else if(a==KEY_RESIZE){r=-2;break;}
 		else{
 			const char*s=keyname(a);
 			if(!strcmp(s,"^Q")){r=-1;break;}
@@ -1046,8 +1044,11 @@ int command(char*comnrp){
 			}
 		}
 	}
-	clear_com(y,visib,pos,cursor);
-	wnoutrefresh(stdscr);
+	if(r!=-2){
+		clear_com(y,visib,pos,cursor);
+		wnoutrefresh(stdscr);
+	}
+	if(is_find)cursorf=cursor;
 	return r;
 }
 bool new_visual(char*f){
