@@ -1,5 +1,5 @@
 
-#include "src/sep.h"
+#include "sep.h"
 
 #ifndef __cplusplus
 #define nullptr 0

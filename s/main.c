@@ -1,4 +1,4 @@
-#include"src/main.h"
+#include"main.h"
 //strlen,2;open,3;close,3;write,2;free,12
 //realloc,6;malloc,12;strcmp,14;sprintf
 //memcpy,17
@@ -8,7 +8,7 @@
 //addch;waddch,4;mvaddch,2;addstr,3
 //wnoutrefresh,5;attrset,3;wattrset,2
 //COLOR_PAIR,2
-#include"src/sep.h"
+#include"sep.h"
 
 typedef long off_t;
 //sys/types.h
