@@ -19,11 +19,15 @@ AM_CONDITIONAL(r7l, test "$m_version" = "armv7l")
 AM_COND_IF(r7l, AC_DEFINE(ARM7L, 1, [armv7l]), AC_DEFINE(ARM7L, 0, [no armv7l]))
 
 # Checks for programs.
+# Checks for header files.
 AC_PROG_CC
+AC_CHECK_HEADERS(stdlib.h string.h)
+AS_IF([test x"$cpp" = x"true"],
+      [AC_LANG([C++]) AC_CHECK_HEADERS(filesystem)],
+      [AC_MSG_NOTICE([no cpp, no predefined preffered_separator])]
+     )
 
 # Checks for libraries.
-
-# Checks for header files.
 
 # Checks for typedefs, structures, and compiler characteristics.
 

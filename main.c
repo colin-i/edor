@@ -8,6 +8,7 @@
 //addch;waddch,4;mvaddch,2;addstr,3
 //wnoutrefresh,5;attrset,3;wattrset,2
 //COLOR_PAIR,2
+#include"src/sep.h"
 
 typedef long off_t;
 //sys/types.h
@@ -53,7 +54,6 @@ extern "C" {
 
 //#include <string.h>
 void*memset(void*,int,size_t);//2
-char*strrchr(const char*,int);//2
 //#include <unistd.h>
 off_t lseek(int,off_t,int);//4
 ssize_t read(int,void*,size_t);//2
@@ -1651,11 +1651,14 @@ static bool help_init(char*f,size_t szf){
 	return true;
 }
 static bool setfilebuf(char*s,char*cutbuf_file){
+#if (!defined(__cplusplus)) || (!defined(HAVE_FILESYSTEM))
+	set_path_separator(s);
+#endif
 	size_t sz=strlen(s);size_t i=sz;
 	do{
 		i--;
 		char a=s[i];
-		if(a=='/'||a=='\\'){i++;break;}
+		if(a==path_separator){i++;break;}
 	}while(i);
 	bool b=help_init(&s[i],sz-i);
 	char*h=getenv("HOME");
@@ -1663,13 +1666,8 @@ static bool setfilebuf(char*s,char*cutbuf_file){
 		size_t l=strlen(h);
 		if(l){
 			if(l+(sz-i)+7<=128){
-				char*r=strrchr(h,'/');
-				bool w=r==nullptr;
-				if(w)r=strrchr(h,'\\');
-				if(r!=nullptr){
-					sprintf(cutbuf_file,"%s%c.%sinfo",h,w?'\\':'/',&s[i]);
-					getfilebuf(cutbuf_file);//l-1
-				}
+				sprintf(cutbuf_file,"%s%c.%sinfo",h,path_separator,&s[i]);
+				getfilebuf(cutbuf_file);//l-1
 			}
 		}
 	}
