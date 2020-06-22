@@ -604,7 +604,7 @@ static void sel(WINDOW*w,int c1,int c2,int rb,int cb,int re,int ce){
 static size_t v_l_x(size_t y,size_t x,size_t rmax,WINDOW*w){
 	if(y<rmax){
 		size_t ok=xtext+(size_t)getmaxx(w)-1;
-		if(ok<rows[y-ytext].sz)return rows[y-ytext].sz;
+		if(ok<rows[y].sz)return rows[y].sz;
 		return ok;
 	}else if(y==rmax){
 		size_t sz=rows[y].sz;
@@ -1651,7 +1651,7 @@ static bool help_init(char*f,size_t szf){
 	return true;
 }
 static bool setfilebuf(char*s,char*cutbuf_file){
-#if (!defined(__cplusplus)) || (!defined(HAVE_FILESYSTEM))
+#if (!defined(__cplusplus)) || ((!defined(USE_FS)) && (!defined(USE__FS)))
 	set_path_separator(s);
 #endif
 	size_t sz=strlen(s);size_t i=sz;

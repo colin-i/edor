@@ -5,9 +5,13 @@
 #define nullptr 0
 #endif
 
-#if defined(__cplusplus) && defined(HAVE_FILESYSTEM)
+#if defined(__cplusplus) && (defined(USE_FS) || defined(USE__FS))
 #include<filesystem>
+#ifdef USE_FS
+char path_separator=std::filesystem::path::preferred_separator;
+#else
 char path_separator=std::__fs::filesystem::path::preferred_separator;
+#endif
 
 #else
 char path_separator;
