@@ -1651,7 +1651,7 @@ static bool help_init(char*f,size_t szf){
 	return true;
 }
 static bool setfilebuf(char*s,char*cutbuf_file){
-#if (!defined(__cplusplus)) || ((!defined(USE_FS)) && (!defined(USE__FS)))
+#if ((!defined(USE_FS)) && (!defined(USE__FS)))
 	set_path_separator(s);
 #endif
 	size_t sz=strlen(s);size_t i=sz;

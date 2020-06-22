@@ -5,7 +5,7 @@
 #define nullptr 0
 #endif
 
-#if defined(__cplusplus) && (defined(USE_FS) || defined(USE__FS))
+#if (defined(USE_FS) || defined(USE__FS))
 #include<filesystem>
 #ifdef USE_FS
 char path_separator=std::filesystem::path::preferred_separator;
