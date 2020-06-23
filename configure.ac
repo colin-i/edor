@@ -12,8 +12,7 @@ AC_ARG_ENABLE(cpp,
   [cpp=true])
 AM_CONDITIONAL(CPP, test x"$cpp" = x"true")
 #arm32 unwind
-m_version=$(uname -m)
-AS_IF([test "$m_version" = "armv7l"],
+AS_IF([test "$(uname -m)" = "armv7l"],
       [AC_DEFINE(ARM7L, 1, [armv7l])],
       [AC_DEFINE(ARM7L, 0, [no armv7l])]
      )
@@ -23,18 +22,25 @@ AS_IF([test "$m_version" = "armv7l"],
 AC_PROG_CC
 AC_CHECK_HEADERS(stdlib.h string.h)
 
-if test x"$cpp" = x"true"; then :
+AS_IF([test x"$cpp" = x"true"],[
+AC_LANG([C++])
 AC_MSG_NOTICE([checking for filesystem preffered_separator])
-$CC -x c++ -c -o /dev/null fs.h > /dev/null 2>&1
-if test x"$?" = x"0"; then :
-AC_DEFINE(USE_FS, 1, [use fs])
-else
-$CC -x c++ -c -o /dev/null _fs.h > /dev/null 2>&1
-if test x"$?" = x"0"; then :
-AC_DEFINE(USE__FS, 1, [use __fs])
-fi
-fi
-fi
+AC_COMPILE_IFELSE([AC_LANG_SOURCE([[
+#include <filesystem>
+char a=std::filesystem::path::preferred_separator;
+]])],
+  [AC_DEFINE(USE_FS, 1, [use filesystem])],
+[
+	AC_MSG_NOTICE([checking for __fs::filesystem preffered_separator])
+	AC_COMPILE_IFELSE([AC_LANG_SOURCE([[
+	#include <filesystem>
+	char a=std::__fs::filesystem::path::preferred_separator;
+	]])],
+	  [AC_DEFINE(USE__FS, 1, [use __fs])],
+	[
+	])
+])
+],[])
 
 # Checks for libraries.
 
