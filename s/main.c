@@ -1691,122 +1691,27 @@ static void color(){
 }
 
 #ifdef ARM7L
-//#include "libunwind.h"
-enum {
- UNW_ARM_R0  = 0,
- UNW_ARM_R1  = 1,
- UNW_ARM_R2  = 2,
- UNW_ARM_R3  = 3,
- UNW_ARM_R4  = 4,
- UNW_ARM_R5  = 5,
- UNW_ARM_R6  = 6,
- UNW_ARM_R7  = 7,
- UNW_ARM_R8  = 8,
- UNW_ARM_R9  = 9,
- UNW_ARM_R10 = 10,
- UNW_ARM_R11 = 11,
- UNW_ARM_R12 = 12,
- UNW_ARM_R13 = 13,
- UNW_ARM_R14 = 14,
- UNW_ARM_R15 = 15
-};
-enum {
- UNW_REG_IP = -1,// instruction pointer
- UNW_REG_SP = -2 // stack pointer
-};
-# define LIBUNWIND_CONTEXT_SIZE 167
-# define LIBUNWIND_CURSOR_SIZE 179
-//'long long' is incompatible with C++98
-typedef unsigned long long uint64_t;
-struct unw_context_t {
- uint64_t data[LIBUNWIND_CONTEXT_SIZE];
-};
-typedef struct unw_context_t unw_context_t;
-struct unw_cursor_t {
- uint64_t data[LIBUNWIND_CURSOR_SIZE];
-};
-typedef struct unw_cursor_t unw_cursor_t;
-typedef unsigned int unw_word_t;
-typedef int unw_regnum_t;
-#ifdef __cplusplus
-extern "C" {
+#ifdef HAVE_LIBUNWIND_H
+#include<libunwind.h>
+#else
+#include"inc/main/libunwind.h"
 #endif
-int unw_getcontext(unw_context_t *);
-int unw_init_local(unw_cursor_t *, unw_context_t *);
-int unw_step(unw_cursor_t *);
-int unw_get_reg(unw_cursor_t *, unw_regnum_t, unw_word_t *);
-int unw_set_reg(unw_cursor_t *, unw_regnum_t, unw_word_t);
-#ifdef __cplusplus
-}
+#ifdef HAVE_DLFCN_H
+#include<dlfcn.h>
+#else
+#include"inc/main/dlfcn.h"
 #endif
-//typedef unsigned int size_t;
-//typedef int ssize_t;
-//#include <dlfcn.h>
-typedef struct {
-  const char* dli_fname;
-  void* dli_fbase;
-  const char* dli_sname;
-  void* dli_saddr;
-} Dl_info;
-//#include <signal.h>
-//arm-linux-androideabi/asm/signal.h
-#define SIGSEGV 11
-#define SA_SIGINFO 0x00000004
-typedef unsigned long sigset_t;
-//
-struct sigaction{
-void(*sa_sigaction)(int,void*,void*);
-sigset_t sa_mask;
-int sa_flags;
-void*sa_handler;
-//void*sa_restorer;
-};
-typedef struct{
-void *ss_sp;
-size_t ss_size;
-int ss_flags;
-}stack_t;
-//./arm-linux-androideabi/asm/sigcontext.h
-typedef struct{
-  unsigned long trap_no;
-  unsigned long error_code;
-  unsigned long oldmask;
-  unsigned long arm_r0;
-  unsigned long arm_r1;
-  unsigned long arm_r2;
-  unsigned long arm_r3;
-  unsigned long arm_r4;
-  unsigned long arm_r5;
-  unsigned long arm_r6;
-  unsigned long arm_r7;
-  unsigned long arm_r8;
-  unsigned long arm_r9;
-  unsigned long arm_r10;
-  unsigned long arm_fp;
-  unsigned long arm_ip;
-  unsigned long arm_sp;
-  unsigned long arm_lr;
-  unsigned long arm_pc;
-  unsigned long arm_cpsr;
-  unsigned long fault_address;
-}mcontext_t;
-//
-typedef struct{
-void *uc_link;
-sigset_t    uc_sigmask;
-stack_t     uc_stack;
-mcontext_t  uc_mcontext;
-}ucontext_t;
+#ifdef HAVE_SIGNAL_H
+#include<signal.h>
+#else
+#include"inc/main/signal.h"
+#endif
 //#include <stdlib.h>
 #define EXIT_FAILURE 1
 #define STDOUT_FILENO 0
 #ifdef __cplusplus
 extern "C" {
 #endif
-//dlfcn.h
-int dladdr(void* __addr, Dl_info* __info);
-//signal.h
-int sigaction(int sig,const struct sigaction*,struct sigaction*);
 //stdlib.h
 void __attribute__((noreturn)) exit(int);
 //stdio.h
@@ -1865,7 +1770,7 @@ static void CaptureBacktraceUsingLibUnwind(void*ucontext) {
 		address_count++;
 	}
 }
-static void __attribute__((noreturn)) signalHandler(int sig,/*struct siginfo *info*/void* info,void* ucontext){
+static void __attribute__((noreturn)) signalHandler(int sig,struct siginfo *info,void* ucontext){
 (void)sig;(void)info;
 	CaptureBacktraceUsingLibUnwind(ucontext);
 	exit(EXIT_FAILURE);

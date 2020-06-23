@@ -108,7 +108,7 @@ static size_t undos_max=0;
 static int undo_v=0;
 static bool new_f=false;
 #define new_s "New Path"
-static bool new_v=false;
+static int new_v=0;
 
 const char*bar_init(){
 	return b_inf_s;
@@ -160,16 +160,10 @@ static void undo_erase(int a){
 	while(dif>0){addch(' ');dif--;}
 	undo_v-=undo_v-a;
 }
-bool bar_clear(){
-	if(undo_v){
+static bool bar_clear_mini(){
+	if(new_v){
 		move(getmaxy(stdscr)-1,com_left);
-		undo_erase(0);
-		return true;
-	}
-	else if(new_v){
-		move(getmaxy(stdscr)-1,com_left);
-		for(size_t i=0;i<sizeof(new_s)-1;i++)addch(' ');
-		new_v=false;
+		while(new_v){addch(' ');new_v--;}
 		return true;
 	}else if(err_l>3){
 		move(getmaxy(stdscr)-1,com_left);
@@ -177,6 +171,14 @@ bool bar_clear(){
 		return true;
 	}
 	return false;
+}
+bool bar_clear(){
+	if(undo_v){
+		move(getmaxy(stdscr)-1,com_left);
+		undo_erase(0);
+		return true;
+	}
+	return bar_clear_mini();
 }
 void err_set(WINDOW*w){
 	if(err_l>3){//waiting for normal clear_com
@@ -650,6 +652,7 @@ static bool undo_replace(eundo*un,char*data,size_t yb,size_t xb,size_t xe,bool i
 	return false;
 }
 static bool dos(WINDOW*w,eundo*un,size_t vl){
+	bar_clear_mini();
 	char*d=un->data;
 	size_t y1=un->yb;size_t y2=un->ye;
 	if(y1<=y2){
@@ -1053,7 +1056,7 @@ int command(char*comnrp){
 }
 bool new_visual(char*f){
 	if(access(f,F_OK)==-1){
-		new_v=true;new_f=true;textfile=f;
+		new_v=sizeof(new_s);new_f=true;textfile=f;
 		mvaddstr(getmaxy(stdscr)-1,com_left,new_s);
 		return true;
 	}

@@ -11,16 +11,18 @@ AC_ARG_ENABLE(cpp,
   [case "${enableval}" in yes) cpp=true ;; no) cpp=false ;; *) AC_MSG_ERROR([bad value ${enableval} for --enable-cpp]) ;; esac],
   [cpp=true])
 AM_CONDITIONAL(CPP, test x"$cpp" = x"true")
-#arm32 unwind
-AS_IF([test "$(uname -m)" = "armv7l"],
-      [AC_DEFINE(ARM7L, 1, [armv7l])],
-      [AC_DEFINE(ARM7L, 0, [no armv7l])]
-     )
 
 # Checks for programs.
 # Checks for header files.
 AC_PROG_CC
 AC_CHECK_HEADERS(stdlib.h string.h)
+
+#arm32 unwind
+AS_IF([test "$(uname -m)" = "armv7l"],
+  [AC_DEFINE(ARM7L, 1, [armv7l])
+  AC_CHECK_HEADERS(dlfcn.h libunwind.h signal.h)],
+  [AC_DEFINE(ARM7L, 0, [no armv7l])]
+)
 
 AS_IF([test x"$cpp" = x"true"],[
 AC_LANG([C++])
