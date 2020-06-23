@@ -15,7 +15,7 @@ AM_CONDITIONAL(CPP, test x"$cpp" = x"true")
 # Checks for programs.
 # Checks for header files.
 AC_PROG_CC
-AC_CHECK_HEADERS(stdlib.h string.h)
+AC_CHECK_HEADERS(curses.h stdlib.h string.h)
 
 #arm32 unwind
 AS_IF([test "$(uname -m)" = "armv7l"],
@@ -26,14 +26,14 @@ AS_IF([test "$(uname -m)" = "armv7l"],
 
 AS_IF([test x"$cpp" = x"true"],[
 AC_LANG([C++])
-AC_MSG_NOTICE([checking for filesystem preffered_separator])
+AC_MSG_NOTICE([checking for filesystem preferred_separator])
 AC_COMPILE_IFELSE([AC_LANG_SOURCE([[
 #include <filesystem>
 char a=std::filesystem::path::preferred_separator;
 ]])],
   [AC_DEFINE(USE_FS, 1, [use filesystem])],
 [
-	AC_MSG_NOTICE([checking for __fs::filesystem preffered_separator])
+	AC_MSG_NOTICE([checking for __fs::filesystem preferred_separator])
 	AC_COMPILE_IFELSE([AC_LANG_SOURCE([[
 	#include <filesystem>
 	char a=std::__fs::filesystem::path::preferred_separator;

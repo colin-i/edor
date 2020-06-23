@@ -1,12 +1,15 @@
-#include"main.h"
+#include "macro.h"
+
+#ifdef HAVE_CURSES_H
+#include<curses.h>
+#else
+#include"inc/bar/curses.h"
+#endif
+
+#include"extern.h"
 //strlen,2;strcmp;open,2;close;write,3
 //free,4;realloc,4;malloc,5;sprintf,2
 //memcpy,2
-//move,21;wmove,6;getch,3;wgetch,3
-//getmaxy,12;getmaxx;4;getcury,6
-//getcurx,14;stdscr,24;keyname;addch,14
-//waddch,2;mvaddch,9;addstr;wnoutrefresh,7
-//attrset,2;wattrset,3;newwin;COLOR_PAIR,4
 
 #define F_OK 0
 /*//#include <sys/stat.h>//arm
@@ -48,17 +51,6 @@ struct stat{
 extern "C"{
 #endif
 
-//#include<curses.h>
-int mvwaddch(WINDOW*,int,int,const chtype);
-int addnstr(const char*,int);//9
-int mvaddstr(int,int,const char*);//4
-int mvaddnstr(int,int,const char*,int);
-int mvwaddstr(WINDOW*,int,int,const char*);
-int wresize(WINDOW*,int,int);//2
-int mvwin(WINDOW*,int,int);//2
-int getbegx(const WINDOW*);//3
-int getbegy(const WINDOW*);
-int wdeleteln(WINDOW*);
 //unistd.h
 int access(const char*,int);//2              
 //stdlib.h

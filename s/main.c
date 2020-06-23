@@ -1,13 +1,15 @@
-#include"main.h"
+#include "macro.h"
+
+#ifdef HAVE_CURSES_H
+#include<curses.h>
+#else
+#include"inc/main/curses.h"
+#endif
+
+#include"extern.h"
 //strlen,2;open,3;close,3;write,2;free,12
 //realloc,6;malloc,12;strcmp,14;sprintf
 //memcpy,17
-//move,5;wmove,29;getch;wgetch,3;newwin
-//getmaxy,19;getmaxx,33;stdscr,20
-//keyname,2;getcury,30;getcurx,25
-//addch;waddch,4;mvaddch,2;addstr,3
-//wnoutrefresh,5;attrset,3;wattrset,2
-//COLOR_PAIR,2
 #include"sep.h"
 
 typedef long off_t;
@@ -18,35 +20,6 @@ typedef unsigned short mode_t;
 //#include <bits/seek_constants.h>
 #define SEEK_SET 0
 #define SEEK_END 2
-//
-#define ALL_MOUSE_EVENTS 0xFffFFff
-#define COLOR_BLACK 0
-#define COLOR_CYAN 6
-#define COLOR_WHITE 7
-#define ERR -1
-typedef unsigned long mmask_t;
-typedef struct
-{
-	short id;// __attribute__((aligned(4)));
-	int x,y,z;
-	mmask_t bstate;
-}
-MEVENT;
-//#define OK 0
-#define BUTTON1_CLICKED 0x4
-#define BUTTON4_PRESSED 0x10000
-#define BUTTON5_PRESSED 0x200000
-#define KEY_UP 0403
-#define KEY_DOWN 0402
-#define KEY_HOME 0406
-#define KEY_SF 0520
-#define KEY_SR 0521
-#define KEY_NPAGE 0522
-#define KEY_PPAGE 0523
-#define KEY_END 0550
-#define KEY_SLEFT 0611
-#define KEY_SRIGHT 0622
-#define KEY_MOUSE 0631
 
 #ifdef __cplusplus
 extern "C" {
@@ -57,26 +30,6 @@ void*memset(void*,int,size_t);//2
 //#include <unistd.h>
 off_t lseek(int,off_t,int);//4
 ssize_t read(int,void*,size_t);//2
-//#include<curses.h>
-WINDOW*initscr(void);
-int endwin(void);
-int ungetch(int);
-chtype winch(WINDOW*);
-int winnstr(WINDOW*,char*,int);//2
-mmask_t mousemask(mmask_t,mmask_t*);
-int noecho(void);
-int raw(void);
-int nonl(void);
-int delwin(WINDOW*);//2
-int waddstr(WINDOW*,const char*);//4
-int waddnstr(WINDOW*,const char*,int);//2
-int clrtoeol(void);//3
-int wclrtoeol(WINDOW*);//4
-int start_color(void);
-int init_pair(short,short,short);//2
-int keypad(WINDOW*,bool);//2
-int getmouse(MEVENT*);//2
-int nodelay(WINDOW*,bool);//2
 //#include <stdlib.h>
 char*getenv(const char*);
 //#include<stdio.h>
