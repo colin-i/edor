@@ -25,11 +25,11 @@ AC_CHECK_HEADERS(stdlib.h string.h)
 
 if test x"$cpp" = x"true"; then :
 AC_MSG_NOTICE([checking for filesystem preffered_separator])
-$CC -x c++ -fsyntax-only fs.h > /dev/null 2>&1
+$CC -x c++ -c -o /dev/null fs.h > /dev/null 2>&1
 if test x"$?" = x"0"; then :
 AC_DEFINE(USE_FS, 1, [use fs])
 else
-$CC -x c++ -fsyntax-only _fs.h > /dev/null 2>&1
+$CC -x c++ -c -o /dev/null _fs.h > /dev/null 2>&1
 if test x"$?" = x"0"; then :
 AC_DEFINE(USE__FS, 1, [use __fs])
 fi
