@@ -1274,24 +1274,25 @@ static void indent(bool b,size_t ybsel,size_t*xbsel,size_t yesel,size_t*xesel,WI
 	int max=getmaxy(w);
 	if(re>max)re=max;
 	if(b){
-		xtext++;
-		if(xbsel){xbsel[0]++;xesel[0]++;}
-		if(rb)refreshrowsbot(w,0,rb);
-		if(re<max)refreshrowsbot(w,re,max);
-	}else{
-		if(xtext){
-			xtext--;
-			if(xbsel){xbsel[0]--;xesel[0]--;}
+		if(xbsel){
+			xbsel[0]++;xesel[0]++;
+			xtext++;
 			if(rb)refreshrowsbot(w,0,rb);
 			if(re<max)refreshrowsbot(w,re,max);
-		}else{
-			refreshrowsbot(w,rb,re);
-			if(xbsel){
-				xbsel[0]=0;
-				xesel[0]=v_l_x(yesel,xesel[0],rows_tot-1,w);
+		}else refreshrowsbot(w,rb,re);
+	}else{
+		if(xbsel){
+			if(xtext){
+				xbsel[0]--;xesel[0]--;
+				xtext--;
+				if(rb)refreshrowsbot(w,0,rb);
+				if(re<max)refreshrowsbot(w,re,max);
+			}else{
+				xbsel[0]=0;xesel[0]=v_l_x(yesel,xesel[0],rows_tot-1,w);
+				refreshrowsbot(w,rb,re);
 				printsel(w,ybsel,0,yesel,xesel[0],-1);
 			}
-		}
+		}else refreshrowsbot(w,rb,re);
 	}
 }
 static bool visual_mode(WINDOW*w,bool v_l){
@@ -1333,8 +1334,13 @@ static bool visual_mode(WINDOW*w,bool v_l){
 		else{
 			int r=getcury(w);int col=getcurx(w);
 			if(!z){
-				if(b=='I'){indent(true,ybsel,&xbsel,yesel,&xesel,w);z=-1;}
-				else if(b=='U'){indent(false,ybsel,&xbsel,yesel,&xesel,w);z=-1;}
+				if(b=='I'){z=-1;indent(true,ybsel,&xbsel,yesel,&xesel,w);}
+				else if(b=='U'){
+					z=-1;
+					bool edge=xtext==0;
+					indent(false,ybsel,&xbsel,yesel,&xesel,w);
+					if(edge){amove(w,r,col);continue;}
+				}
 				else{
 					char v=' ';
 					visual_bool=b=='c';
@@ -1349,8 +1355,15 @@ static bool visual_mode(WINDOW*w,bool v_l){
 								if(orig)position(r,col);
 						}
 					}else{
-						if(b=='i')indent(true,ybsel,nullptr,yesel,nullptr,w);
-						else if(b=='u')indent(false,ybsel,nullptr,yesel,nullptr,w);
+						if(b=='i'){
+							indent(true,ybsel,nullptr,yesel,nullptr,w);
+							amove(w,r,col);
+							col=getcurx(w);
+						}else if(b=='u'){
+							indent(false,ybsel,nullptr,yesel,nullptr,w);
+							amove(w,r,col);
+							col=getcurx(w);
+						}
 						unsel(w);
 					}
 					visual(v);
