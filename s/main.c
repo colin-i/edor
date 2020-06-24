@@ -1648,14 +1648,10 @@ static void color(){
 #else
 #include"inc/main/armv7/libunwind.h"
 #endif
-#ifdef HAVE_STDLIB_H
-#include"stdlib.h"
-#else
+#ifndef HAVE_STDLIB_H
 #include"inc/main/armv7/stdlib.h"
 #endif
-#ifdef HAVE_STDIO_H
-#include"stdio.h"
-#else
+#ifndef HAVE_STDIO_H
 #include"inc/main/armv7/stdio.h"
 #endif
 #ifdef HAVE_SIGNAL_H
