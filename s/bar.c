@@ -5,6 +5,11 @@
 #else
 #include"inc/bar/curses.h"
 #endif
+#ifdef HAVE_DIRENT_H
+#include<dirent.h>
+#else
+#include"inc/bar/dirent.h"
+#endif
 #ifdef HAVE_FCNTL_H
 #include<fcntl.h>
 #else
@@ -37,9 +42,6 @@
 extern "C"{
 #endif
 
-//dirent
-void* fdopendir(int);
-int closedir(void*);
 //errno
 int* __errno(void) __attribute__((__const__));
 #define errno (*__errno())
@@ -1033,7 +1035,7 @@ bool new_visual(char*f){
 	return false;
 }
 bool is_dir(int fd){
-	void*d=fdopendir(fd);
+	DIR*d=fdopendir(fd);
 	if(d!=nullptr){closedir(d);return true;}
 	return false;
 }

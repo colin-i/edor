@@ -1638,30 +1638,30 @@ static void color(){
 }
 
 #ifdef ARM7L
-#ifdef HAVE_LIBUNWIND_H
-#include<libunwind.h>
-#else
-#include"inc/main/libunwind.h"
-#endif
 #ifdef HAVE_DLFCN_H
 #include<dlfcn.h>
 #else
-#include"inc/main/dlfcn.h"
+#include"inc/main/armv7/dlfcn.h"
 #endif
-#ifdef HAVE_SIGNAL_H
-#include<signal.h>
+#ifdef HAVE_LIBUNWIND_H
+#include<libunwind.h>
 #else
-#include"inc/main/signal.h"
+#include"inc/main/armv7/libunwind.h"
+#endif
+#ifdef HAVE_STDLIB_H
+#include"stdlib.h"
+#else
+#include"inc/main/armv7/stdlib.h"
 #endif
 #ifdef HAVE_STDIO_H
 #include"stdio.h"
 #else
 #include"inc/main/armv7/stdio.h"
 #endif
-#ifdef HAVE_STDLIB_H
-#include"stdlib.h"
+#ifdef HAVE_SIGNAL_H
+#include<signal.h>
 #else
-#include"inc/main/armv7/stdlib.h"
+#include"inc/main/armv7/signal.h"
 #endif
 static void AddAddress(unsigned long ip,int address_count) {
 	Dl_info info;

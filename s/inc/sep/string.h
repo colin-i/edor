@@ -1,10 +1,10 @@
 
-#include"inc/stddef.h"
+#define is_sep_c
+#include "inc/string.h"
 
 #ifdef __cplusplus
 extern "C"{
 #endif
-size_t strlen(const char*);
 char*strrchr(const char*,int);
 #ifdef __cplusplus
 }

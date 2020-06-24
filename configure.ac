@@ -15,13 +15,14 @@ AM_CONDITIONAL(CPP, test x"$cpp" = x"true")
 # Checks for programs.
 # Checks for header files.
 AC_PROG_CC
-AC_CHECK_HEADERS(curses.h fcntl.h stdio.h stdlib.h string.h unistd.h)
+AC_CHECK_HEADERS(curses.h dirent.h fcntl.h stdio.h stdlib.h string.h unistd.h)
 
 #arm32 unwind
 AS_IF([test "$(uname -m)" = "armv7l"],
   [AC_DEFINE(ARM7L, 1, [armv7l])
-#  AC_CHECK_HEADERS(stdio.h stdlib.h)]
-  AC_CHECK_HEADERS(dlfcn.h libunwind.h signal.h)],
+#  AC_CHECK_HEADERS(stdlib.h stdio.h)
+  AC_CHECK_HEADERS(dlfcn.h libunwind.h signal.h)
+  ],
   [AC_DEFINE(ARM7L, 0, [no armv7l])]
 )
 

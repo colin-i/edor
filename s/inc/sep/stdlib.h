@@ -1,7 +1,3 @@
-#ifdef __cplusplus
-extern "C"{
-#endif
-char*getenv(const char*);
-#ifdef __cplusplus
-}
-#endif
+
+#define is_sep_c
+#include "inc/stdlib.h"
