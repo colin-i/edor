@@ -1,14 +1,12 @@
 
-#include"inc/stddef.h"
-//sys/types.h
-typedef int ssize_t;
+#include "inc/unistd.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-int close(int);
-ssize_t write(int,const void*,size_t);
+#define F_OK 0
+int access(const char*,int);
 
 #ifdef __cplusplus
 }

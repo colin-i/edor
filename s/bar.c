@@ -5,6 +5,11 @@
 #else
 #include"inc/bar/curses.h"
 #endif
+#ifdef HAVE_FCNTL_H
+#include<fcntl.h>
+#else
+#include"inc/bar/fcntl.h"
+#endif
 #ifdef HAVE_STDLIB_H
 #include"stdlib.h"
 #else
@@ -13,7 +18,7 @@
 #ifdef HAVE_STDIO_H
 #include"stdio.h"
 #else
-#include"inc/bar/stdio.h"
+#include"inc/stdio.h"
 #endif
 #ifdef HAVE_STRING_H
 #include"string.h"
@@ -28,19 +33,10 @@
 
 #include"extern.h"
 
-//asm-generic/fcntl.h
-#define O_CREAT 00000100
-//linux/stat.h
-#define S_IRUSR 00400
-#define S_IWUSR 00200
-
 #ifdef __cplusplus
 extern "C"{
 #endif
 
-//unistd.h
-#define F_OK 0
-int access(const char*,int);//2              
 //dirent
 void* fdopendir(int);
 int closedir(void*);

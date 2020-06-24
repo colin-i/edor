@@ -1,9 +1,9 @@
 
+#include "inc/stdio.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-int sprintf(char*,const char*,...);
 
 int puts(const char*);
 int putchar(int);

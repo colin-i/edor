@@ -5,6 +5,11 @@
 #else
 #include"inc/main/curses.h"
 #endif
+#ifdef HAVE_FCNTL_H
+#include<fcntl.h>
+#else
+#include"inc/main/fcntl.h"
+#endif
 #ifdef HAVE_STDLIB_H
 #include"stdlib.h"
 #else
@@ -29,13 +34,6 @@
 #include"extern.h"
 
 #include"sep.h"
-
-//typedef unsigned short mode_t;at open,3rd argument
-//asm-generic/fcntl.h
-#define O_RDONLY 00000000
-//#include <bits/seek_constants.h>
-#define SEEK_SET 0
-#define SEEK_END 2
 
 char ln_term[3]="\n";
 size_t ln_term_sz=1;

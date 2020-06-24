@@ -1,0 +1,3 @@
+
+#define O_WRONLY 00000001
+#define O_TRUNC 00001000
