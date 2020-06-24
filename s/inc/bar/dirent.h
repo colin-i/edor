@@ -1,9 +1,5 @@
 
-typedef struct{
-unsigned long long d_ino;//uint64_t
-//... not used in this program
-//only for empty struct warning
-} DIR;
+typedef struct DIR DIR;
 
 #ifdef __cplusplus
 extern "C" {

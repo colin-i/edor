@@ -10,6 +10,11 @@
 #else
 #include"inc/bar/dirent.h"
 #endif
+#ifdef HAVE_ERRNO_H
+#include<errno.h>
+#else
+#include"inc/bar/errno.h"
+#endif
 #ifdef HAVE_FCNTL_H
 #include<fcntl.h>
 #else
@@ -37,18 +42,6 @@
 #endif
 
 #include"extern.h"
-
-#ifdef __cplusplus
-extern "C"{
-#endif
-
-//errno
-int* __errno(void) __attribute__((__const__));
-#define errno (*__errno())
-
-#ifdef __cplusplus
-}
-#endif
 
 static int err_l=0;
 static char*err_s;
