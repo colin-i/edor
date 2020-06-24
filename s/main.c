@@ -5,41 +5,37 @@
 #else
 #include"inc/main/curses.h"
 #endif
+#ifdef HAVE_STDLIB_H
+#include"stdlib.h"
+#else
+#include"inc/main/stdlib.h"
+#endif
+#ifdef HAVE_STDIO_H
+#include"stdio.h"
+#else
+#include"inc/main/stdio.h"
+#endif
+#ifdef HAVE_STRING_H
+#include"string.h"
+#else
+#include"inc/main/string.h"
+#endif
+#ifdef HAVE_UNISTD_H
+#include"unistd.h"
+#else
+#include"inc/main/unistd.h"
+#endif
 
 #include"extern.h"
-//strlen,2;open,3;close,3;write,2;free,12
-//realloc,6;malloc,12;strcmp,14;sprintf
-//memcpy,17
+
 #include"sep.h"
 
-typedef long off_t;
-//sys/types.h
-typedef unsigned short mode_t;
+//typedef unsigned short mode_t;at open,3rd argument
 //asm-generic/fcntl.h
 #define O_RDONLY 00000000
 //#include <bits/seek_constants.h>
 #define SEEK_SET 0
 #define SEEK_END 2
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-//#include <string.h>
-void*memset(void*,int,size_t);//2
-//#include <unistd.h>
-off_t lseek(int,off_t,int);//4
-ssize_t read(int,void*,size_t);//2
-//#include <stdlib.h>
-char*getenv(const char*);
-//#include<stdio.h>
-int puts(const char*);//3
-int putchar(int);//2
-int getchar(void);
-
-#ifdef __cplusplus
-}
-#endif
 
 char ln_term[3]="\n";
 size_t ln_term_sz=1;
@@ -1659,18 +1655,15 @@ static void color(){
 #else
 #include"inc/main/signal.h"
 #endif
-//#include <stdlib.h>
-#define EXIT_FAILURE 1
-#define STDOUT_FILENO 0
-#ifdef __cplusplus
-extern "C" {
+#ifdef HAVE_STDIO_H
+#include"stdio.h"
+#else
+#include"inc/main/armv7/stdio.h"
 #endif
-//stdlib.h
-void __attribute__((noreturn)) exit(int);
-//stdio.h
-int snprintf(char* __buf, size_t __size, const char* __fmt, ...);
-#ifdef __cplusplus
-}
+#ifdef HAVE_STDLIB_H
+#include"stdlib.h"
+#else
+#include"inc/main/armv7/stdlib.h"
 #endif
 static void AddAddress(unsigned long ip,int address_count) {
 	Dl_info info;
