@@ -78,20 +78,22 @@ static int new_v=0;
 const char*bar_init(){
 	return b_inf_s;
 }
-static bool wrt(int f){
+//command return
+static int wrt(int f){
 	size_t n=rows_tot-1;
 	for(size_t i=0;i<n;i++){
 		row*r=&rows[i];
 		if((size_t)write(f,r->data,r->sz)!=r->sz)return false;
 		if((size_t)write(f,ln_term,ln_term_sz)!=ln_term_sz)return false;
 	}
-	return (size_t)write(f,rows[n].data,rows[n].sz)==rows[n].sz;
+	if((size_t)write(f,rows[n].data,rows[n].sz)==rows[n].sz)return 1;
+	return 0;
 }
 static int bcdl(int y,int*p,char*input,int cursor){
 	int x=getcurx(stdscr);
 	bool left=x==com_left;
 	int pos=p[0];
-	if(!pos&&left)return cursor;
+	if(!pos&&left==true)return cursor;
 	int of=x-com_left;
 	for(int i=pos+of;i<cursor;i++){
 		input[i-1]=input[i];
@@ -107,7 +109,7 @@ static int bcdl(int y,int*p,char*input,int cursor){
 		move(y,x);
 		return cursor-1;
 	}
-	if(!left){
+	if(left==false){
 		pos--;
 		if(!pos)mvaddch(y,com_left-1,' ');
 		else move(y,com_left);
@@ -155,12 +157,13 @@ void err_set(WINDOW*w){
 		wmove(w,getcury(w),getcurx(w));//newpath+save
 	}
 }
-static bool saving(){
-	int f;bool r;
-	if(new_f){
+//command return
+static int saving(){
+	int f;int r;
+	if(new_f==true){
 		f=open(textfile,O_CREAT|O_WRONLY|O_TRUNC,S_IRUSR|S_IWUSR);
 		new_f=f==-1;
-		if(new_f){
+		if(new_f==true){
 			bar_clear();//is troubleing with the bool,and more
 			err_s=strerror(errno);
 			err_l=(int)strlen(err_s)+2;
@@ -172,7 +175,7 @@ static bool saving(){
 	if(f!=-1){
 		r=wrt(f);
 		close(f);
-	}else r=false;
+	}else r=0;
 	return r;
 }
 static void inputpath(){
@@ -335,7 +338,7 @@ static bool findingb(size_t cursor,size_t r,size_t c){
 }
 static bool finding(size_t cursor,size_t r,size_t c,bool f){
 	if(!cursor)return false;
-	if(f)return findingf(cursor,r,c);
+	if(f==true)return findingf(cursor,r,c);
 	return findingb(cursor,r,c);
 }
 void position(int rw,int cl){
@@ -365,7 +368,7 @@ static void centering2(WINDOW*w,size_t*rw,size_t*cl,bool right){
 	position(0,0);
 	int mx=getmaxx(w);
 	int wd=mx/3;
-	if(right)wd=mx-wd;
+	if(right==true)wd=mx-wd;
 	int c=0;char*d=rows[ytext].data;
 	size_t xc=xtext;
 	do{
@@ -429,14 +432,14 @@ static bool replace_text(WINDOW*w,int yb,int xb,int rstart,int rstop){
 			}
 		}
 		else if(c==KEY_RESIZE)return true;
-		else if(cursorr!=max_path&&!no_char((char)c)){
+		else if(cursorr!=max_path&&no_char((char)c)==false){
 			replace_text_add(w,(chtype)c,&rstart,&rstop);
 			inputr[cursorr]=(char)c;
 			cursorr++;
 		}
 	}
 }
-static bool go_to(int cursor){
+static int go_to(int cursor){
 	int i=0;size_t y;size_t x;
 	for(;;){
 		if(input0[i]==','){
@@ -504,7 +507,7 @@ static void undo_newway(){
 	}
 }
 bool undo_add(size_t yb,size_t xb,size_t ye,size_t xe){
-	if(undo_expand()){
+	if(undo_expand()==true){
 		undo_newway();
 		eundo*un=&undos[undos_tot];
 		un->yb=yb;un->xb=xb;un->ye=ye;un->xe=xe;
@@ -522,7 +525,7 @@ static bool undo_del_backward(eundo*un,size_t yb,size_t xb,size_t ye,size_t xe){
 	return false;
 }
 bool undo_add_del(size_t yb,size_t xb,size_t ye,size_t xe){
-	if(undo_expand()){
+	if(undo_expand()==true){
 		size_t x=sizemembuf(yb,xb,ye,xe);
 		size_t dif=x&row_pad;
 		if(dif)dif=(dif^row_pad)+1;
@@ -537,7 +540,7 @@ bool undo_add_del(size_t yb,size_t xb,size_t ye,size_t xe){
 	return true;
 }
 bool undo_add_ind(size_t yb,size_t ye){
-	if(undo_expand()){
+	if(undo_expand()==true){
 		undo_newway();
 		eundo*un=&undos[undos_tot];
 		un->ye=yb;un->yb=ye;
@@ -554,7 +557,7 @@ static void undo_ind_del(eundo*un,size_t yb,size_t ye,char*d){
 	}
 }
 bool undo_add_ind_del(size_t yb,size_t ye){
-	if(undo_expand()){
+	if(undo_expand()==true){
 		void*d=malloc(ye-yb);
 		if(d!=nullptr){
 			undo_newway();
@@ -569,7 +572,7 @@ void undo_free(){
 	}
 }
 static bool undo_add_replace(size_t cursor){
-	if(undo_expand()){
+	if(undo_expand()==true){
 		char*d=(char*)malloc(1+sizeof(cursor)+cursor);
 		if(d!=nullptr){
 			undo_newway();
@@ -589,10 +592,10 @@ static bool undo_replace(eundo*un,char*data,size_t yb,size_t xb,size_t xe,bool i
 	int memdif=(int)(sz2-xe);
 	size_t sz=r->sz;
 	if(memdif>0){
-		if(row_alloc(r,sz,(size_t)memdif,0))return true;
+		if(row_alloc(r,sz,(size_t)memdif,0)==true)return true;
 	}
-	else if(xe>sz2&&is_undo){
-		data=(char*)realloc(data,xe);
+	else if(xe>sz2&&is_undo==true){
+		data=(char*)realloc(data,1+sizeof(xe)+xe);
 		if(!data)return true;
 		un->data=data;sz_p=(size_t*)((void*)&data[1]);
 	}
@@ -608,7 +611,7 @@ static bool undo_replace(eundo*un,char*data,size_t yb,size_t xb,size_t xe,bool i
 		for(size_t i=0;i<sz2;i++){
 			char c=a[i];a[i]=b[i];b[i]=c;
 		}
-		if(is_undo)
+		if(is_undo==true)
 			for(size_t i=sz2;i<xe;i++)b[i]=a[i];
 		row_set(r,xb+sz2,sz-xb-xe,0,&r->data[xb+xe]);
 	}
@@ -624,10 +627,10 @@ static bool dos(WINDOW*w,eundo*un,size_t vl){
 		size_t xb=un->xb;size_t xe=un->xe;
 		if(d!=nullptr){
 			if(y1==y2&&d[0]==ln_term[0]){
-				if(undo_replace(un,d,y1,xb,xe,vl!=1))return false;
+				if(undo_replace(un,d,y1,xb,xe,vl!=1)==true)return false;
 				centering2(w,nullptr,nullptr,true);
 			}else{
-				if(!paste(y1,xb,&xe,d,xe,y2-y1+1,false))return false;
+				if(paste(y1,xb,&xe,d,xe,y2-y1+1,false)==false)return false;
 				un->xe=xe;un->data=nullptr;
 				ytext=y2;xtext=xe;
 				centering2(w,nullptr,nullptr,true);
@@ -635,8 +638,8 @@ static bool dos(WINDOW*w,eundo*un,size_t vl){
 			}
 		}
 		else{
-			if(deleting_init(y1,xb,y2,xe))return false;
-			if(undo_del_backward(un,y1,xb,y2,xe))return false;
+			if(deleting_init(y1,xb,y2,xe)==true)return false;
+			if(undo_del_backward(un,y1,xb,y2,xe)==true)return false;
 			deleting(y1,xb,y2,xe);
 			ytext=y1;xtext=xb;
 			centering(w,nullptr,nullptr);
@@ -645,7 +648,7 @@ static bool dos(WINDOW*w,eundo*un,size_t vl){
 		if(d!=nullptr){
 			for(size_t i=y2;i<y1;i++){
 				row*r=&rows[i];
-				if(row_alloc(r,0,1,r->sz))return false;
+				if(row_alloc(r,0,1,r->sz)==true)return false;
 			}
 			un->data=nullptr;
 			for(size_t i=y2;i<y1;i++){
@@ -684,14 +687,14 @@ static void undo_show(size_t n){
 }
 void undo(WINDOW*w){
 	if(!undos_tot)return;
-	if(dos(w,&undos[undos_tot-1],(size_t)-1)){
+	if(dos(w,&undos[undos_tot-1],(size_t)-1)==true){
 		if(undos_tot<=undos_save)undo_show(undos_tot);
 		else undo_show(undos_tot-undos_save);
 	}
 }
 void redo(WINDOW*w){
 	if(undos_tot==undos_max)return;
-	if(dos(w,&undos[undos_tot],1)){
+	if(dos(w,&undos[undos_tot],1)==true){
 		if(undos_tot>=undos_save)undo_show(undos_max-undos_tot);
 		else undo_show(undos_save-undos_tot);
 	}
@@ -755,24 +758,24 @@ void undo_loop(WINDOW*w){
 }
 static bool replace(size_t cursor){
 	row*r=&rows[ytext];
-	if(cursorr>cursor)if(row_alloc(r,r->sz,cursorr-cursor,0))return true;
+	if(cursorr>cursor)if(row_alloc(r,r->sz,cursorr-cursor,0)==true)return true;
 	if(undo_add_replace(cursor))return true;
 	if(cursorr>cursor)row_set(r,xtext,cursorr,r->sz-xtext-cursor,inputr);
 	else{
 		memcpy(&r->data[xtext],inputr,cursorr);
 		row_set(r,xtext+cursorr,r->sz-xtext-cursor,0,&r->data[xtext+cursor]);
 	}
-	if(mod_flag)mod_set(false);
+	if(mod_flag==true)mod_set(false);
 	return false;
 }
 static bool delim_touch(size_t y1,size_t x1,size_t c){return ytext==y1&&(xtext==x1||(xtext<x1&&xtext+c>x1));}
 static bool delimiter(size_t y1,size_t x1,int y,size_t pos,size_t sz,size_t c,bool phase){
-	if(delim_touch(y1,x1,c)){
+	if(delim_touch(y1,x1,c)==true){
 		colorfind(2,y,pos,sz);
 		wnoutrefresh(stdscr);
 		return true;
 	}
-	if(phase){
+	if(phase==true){
 		colorfind(1,y,pos,sz);
 		wnoutrefresh(stdscr);
 	}
@@ -795,7 +798,7 @@ static int find(char*z,size_t cursor,size_t pos,size_t visib,int y){
 	if(sz>visib)sz=visib;
 	colorfind(1,y,pos,sz);
 	//
-	if(finding(cursor,xr,xc,true)){
+	if(finding(cursor,xr,xc,true)==true){
 		bool forward=true;
 		size_t y1=ytext;size_t x1=xtext;
 		bool phase=false;
@@ -811,29 +814,29 @@ static int find(char*z,size_t cursor,size_t pos,size_t visib,int y){
 				forward=false;
 			}else if(a==Char_Backspace){
 				size_t iferrory=ytext;size_t iferrorx=xtext;
-				if(untouched){
+				if(untouched==true){
 					ytext+=xr;xtext+=xc;
-					if(replace(cursor)){ytext=iferrory;xtext=iferrorx;continue;}
-					if(delim_touch(y1,x1,cursorr))delimiter_touched=true;
+					if(replace(cursor)==true){ytext=iferrory;xtext=iferrorx;continue;}
+					if(delim_touch(y1,x1,cursorr)==true)delimiter_touched=true;
 					xtext+=cursorr;
 					untouched=false;
 					centering2(w,&xr,&xc,true);
 					continue;
 				}
-				if(finding(cursor,xr,xc,forward)){
-					if(replace(cursor)){ytext=iferrory;xtext=iferrorx;continue;}
+				if(finding(cursor,xr,xc,forward)==true){
+					if(replace(cursor)==true){ytext=iferrory;xtext=iferrorx;continue;}
 					phase=delimiter(y1,x1,y,pos,sz,cursorr,phase);
-					if(phase)delimiter_touched=true;
+					if(phase==true)delimiter_touched=true;
 					else if(ytext==y1&&xtext<x1)x1-=cursor-cursorr;
 					xtext+=cursorr;
 					centering2(w,&xr,&xc,true);
 					continue;
 				}
-				return true;
+				return 1;
 			}else if(a=='r'){
 				cursorr=0;wattrset(w,COLOR_PAIR(2));
 				int rstart=getcury(w);
-				if(replace_text(w,rstart,getcurx(w),rstart,rstart+1))return -2;
+				if(replace_text(w,rstart,getcurx(w),rstart,rstart+1)==true)return -2;
 				continue;
 			}else if(a=='R'){
 				wattrset(w,COLOR_PAIR(2));
@@ -842,16 +845,16 @@ static int find(char*z,size_t cursor,size_t pos,size_t visib,int y){
 				for(size_t i=0;i<cursorr;i++){
 					replace_text_add(w,inputr[i],&rstart,&rstop);
 				}
-				if(replace_text(w,yb,xb,rstart,rstop))return -2;
+				if(replace_text(w,yb,xb,rstart,rstop)==true)return -2;
 				continue;
 			}else if(a=='c'){
-				return false;
+				return 0;
 			}else{
-				return a==KEY_RESIZE?-2:true;
+				return a==KEY_RESIZE?-2:1;
 			}
 			finding(cursor,xr,xc,forward);
 			phase=delimiter(y1,x1,y,pos,sz,cursor,phase);
-			if(delimiter_touched){
+			if(delimiter_touched==true){
 				y1=ytext;x1=xtext;
 				delimiter_touched=false;
 			}
@@ -861,21 +864,21 @@ static int find(char*z,size_t cursor,size_t pos,size_t visib,int y){
 	}
 	int a=getch();
 	if(a=='c'){
-		return false;
+		return 0;
 	}
-	return a==KEY_RESIZE?-2:true;
+	return a==KEY_RESIZE?-2:1;
 }
 static void command_rewrite(int y,int x,int pos,char*input,int cursor,int visib){
 	if(pos)mvaddch(y,com_left-1,'<');
 	else move(y,com_left);
 	int len=cursor-pos;
 	bool rt=len>visib;
-	if(rt)len=visib;
+	if(rt==true)len=visib;
 	addnstr(input+pos,len);
-	if(rt)addch('>');
+	if(rt==true)addch('>');
 	move(y,x);
 }
-//-2resize,-1no/quit,0er/boolFalse,1ok
+//-2resize,-1no/quit,0er/fals,1ok
 int command(char*comnrp){
 	int rightexcl=get_right;
 	int right=rightexcl-1;
@@ -884,7 +887,7 @@ int command(char*comnrp){
 	bar_clear();
 	int y=getmaxy(stdscr)-1;int pos=0;
 	char*input;int cursor;bool is_find=comnrp[0]>1;
-	if(is_find){
+	if(is_find==true){
 		input=inputf;
 		if(comnrp[0]==3)cursor=cursorf;
 		else cursor=0;
@@ -983,7 +986,7 @@ int command(char*comnrp){
 			if(!strcmp(s,"^Q")){r=-1;break;}
 			if(cursor!=max_path){
 				char ch=(char)a;
-				if(!no_char(ch)){
+				if(no_char(ch)==false){
 					int x=getcurx(stdscr);
 					int off=pos+(x-com_left);
 					for(int i=cursor;i>off;i--){
@@ -1016,7 +1019,7 @@ int command(char*comnrp){
 		clear_com(y,visib,pos,cursor);
 		wnoutrefresh(stdscr);
 	}
-	if(is_find)cursorf=cursor;
+	if(is_find==true)cursorf=cursor;
 	return r;
 }
 bool new_visual(char*f){
