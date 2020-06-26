@@ -94,6 +94,87 @@ static char*text_init_e;
 static int _rb;static int _cb;
 static int _re;static int _ce;
 
+#ifdef ARM7L
+#ifdef HAVE_DLFCN_H
+#include<dlfcn.h>
+#else
+#include"inc/main/armv7/dlfcn.h"
+#endif
+#ifdef HAVE_LIBUNWIND_H
+#include<libunwind.h>
+#else
+#include"inc/main/armv7/libunwind.h"
+#endif
+#ifndef HAVE_STDLIB_H
+#include"inc/main/armv7/stdlib.h"
+#endif
+#ifndef HAVE_STDIO_H
+#include"inc/main/armv7/stdio.h"
+#endif
+#ifdef HAVE_SIGNAL_H
+#include<signal.h>
+#else
+#include"inc/main/armv7/signal.h"
+#endif
+static void AddAddress(unsigned long ip,int address_count) {
+	Dl_info info;
+	dladdr((void*)ip, &info);
+	unsigned long relative_address = ip-(unsigned long)info.dli_fbase;
+	char buf[100];
+	int n=snprintf(buf,99,"  #%02zu:  0x%lx  %s\r\n", address_count, relative_address, info.dli_sname);
+	write(STDOUT_FILENO,&buf,(size_t)n);
+}
+static void CaptureBacktraceUsingLibUnwind(void*ucontext) {
+	// Initialize unw_context and unw_cursor.
+	unw_context_t unw_context;// = {};
+	unw_getcontext(&unw_context);
+	unw_cursor_t  unw_cursor;// = {};
+	unw_init_local(&unw_cursor, &unw_context);
+
+	// Get more contexts.
+	const mcontext_t* signal_mcontext = &(((const ucontext_t*)ucontext)->uc_mcontext);
+
+	// Set registers.
+	unw_set_reg(&unw_cursor, UNW_ARM_R0, signal_mcontext->arm_r0);
+	unw_set_reg(&unw_cursor, UNW_ARM_R1, signal_mcontext->arm_r1);
+	unw_set_reg(&unw_cursor, UNW_ARM_R2, signal_mcontext->arm_r2);
+	unw_set_reg(&unw_cursor, UNW_ARM_R3, signal_mcontext->arm_r3);
+	unw_set_reg(&unw_cursor, UNW_ARM_R4, signal_mcontext->arm_r4);
+	unw_set_reg(&unw_cursor, UNW_ARM_R5, signal_mcontext->arm_r5);
+	unw_set_reg(&unw_cursor, UNW_ARM_R6, signal_mcontext->arm_r6);
+	unw_set_reg(&unw_cursor, UNW_ARM_R7, signal_mcontext->arm_r7);
+	unw_set_reg(&unw_cursor, UNW_ARM_R8, signal_mcontext->arm_r8);
+	unw_set_reg(&unw_cursor, UNW_ARM_R9, signal_mcontext->arm_r9);
+	unw_set_reg(&unw_cursor, UNW_ARM_R10, signal_mcontext->arm_r10);
+	unw_set_reg(&unw_cursor, UNW_ARM_R11, signal_mcontext->arm_fp);
+	unw_set_reg(&unw_cursor, UNW_ARM_R12, signal_mcontext->arm_ip);
+	unw_set_reg(&unw_cursor, UNW_ARM_R13, signal_mcontext->arm_sp);
+	unw_set_reg(&unw_cursor, UNW_ARM_R14, signal_mcontext->arm_lr);
+	unw_set_reg(&unw_cursor, UNW_ARM_R15, signal_mcontext->arm_pc);
+
+	unw_set_reg(&unw_cursor, UNW_REG_IP, signal_mcontext->arm_pc);
+	unw_set_reg(&unw_cursor, UNW_REG_SP, signal_mcontext->arm_sp);
+
+	// unw_step() does not return the first IP.
+	AddAddress(signal_mcontext->arm_pc,0);
+	int address_count=1;
+	// Unwind frames one by one, going up the frame stack.
+	while (unw_step(&unw_cursor) > 0) {
+		unw_word_t ip = 0;
+		unw_get_reg(&unw_cursor, UNW_REG_IP, &ip);
+		AddAddress(ip,address_count);
+		if(address_count==29)break;
+		address_count++;
+	}
+}
+static void __attribute__((noreturn)) signalHandler(int sig,struct siginfo *info,void* ucontext){
+(void)sig;(void)info;
+	CaptureBacktraceUsingLibUnwind(ucontext);
+	exit(EXIT_FAILURE);
+}
+//static void baz(int argc){int *foo = (int*)-1;if(argc==1)sprintf((char*)24,"%d\n", *foo);else free((void*)10);}
+#endif
+
 bool no_char(char z){return z<32||z>=127;}
 static void tab_grow(WINDOW*w,int r,char*a,size_t sz,int*ptr){
 	x_right[r]=xtext<sz;
@@ -1665,87 +1746,6 @@ static void color(){
 		}
 	}
 }
-
-#ifdef ARM7L
-#ifdef HAVE_DLFCN_H
-#include<dlfcn.h>
-#else
-#include"inc/main/armv7/dlfcn.h"
-#endif
-#ifdef HAVE_LIBUNWIND_H
-#include<libunwind.h>
-#else
-#include"inc/main/armv7/libunwind.h"
-#endif
-#ifndef HAVE_STDLIB_H
-#include"inc/main/armv7/stdlib.h"
-#endif
-#ifndef HAVE_STDIO_H
-#include"inc/main/armv7/stdio.h"
-#endif
-#ifdef HAVE_SIGNAL_H
-#include<signal.h>
-#else
-#include"inc/main/armv7/signal.h"
-#endif
-static void AddAddress(unsigned long ip,int address_count) {
-	Dl_info info;
-	dladdr((void*)ip, &info);
-	unsigned long relative_address = ip-(unsigned long)info.dli_fbase;
-	char buf[100];
-	int n=snprintf(buf,99,"  #%02zu:  0x%lx  %s\r\n", address_count, relative_address, info.dli_sname);
-	write(STDOUT_FILENO,&buf,(size_t)n);
-}
-static void CaptureBacktraceUsingLibUnwind(void*ucontext) {
-	// Initialize unw_context and unw_cursor.
-	unw_context_t unw_context;// = {};
-	unw_getcontext(&unw_context);
-	unw_cursor_t  unw_cursor;// = {};
-	unw_init_local(&unw_cursor, &unw_context);
-
-	// Get more contexts.
-	const mcontext_t* signal_mcontext = &(((const ucontext_t*)ucontext)->uc_mcontext);
-
-	// Set registers.
-	unw_set_reg(&unw_cursor, UNW_ARM_R0, signal_mcontext->arm_r0);
-	unw_set_reg(&unw_cursor, UNW_ARM_R1, signal_mcontext->arm_r1);
-	unw_set_reg(&unw_cursor, UNW_ARM_R2, signal_mcontext->arm_r2);
-	unw_set_reg(&unw_cursor, UNW_ARM_R3, signal_mcontext->arm_r3);
-	unw_set_reg(&unw_cursor, UNW_ARM_R4, signal_mcontext->arm_r4);
-	unw_set_reg(&unw_cursor, UNW_ARM_R5, signal_mcontext->arm_r5);
-	unw_set_reg(&unw_cursor, UNW_ARM_R6, signal_mcontext->arm_r6);
-	unw_set_reg(&unw_cursor, UNW_ARM_R7, signal_mcontext->arm_r7);
-	unw_set_reg(&unw_cursor, UNW_ARM_R8, signal_mcontext->arm_r8);
-	unw_set_reg(&unw_cursor, UNW_ARM_R9, signal_mcontext->arm_r9);
-	unw_set_reg(&unw_cursor, UNW_ARM_R10, signal_mcontext->arm_r10);
-	unw_set_reg(&unw_cursor, UNW_ARM_R11, signal_mcontext->arm_fp);
-	unw_set_reg(&unw_cursor, UNW_ARM_R12, signal_mcontext->arm_ip);
-	unw_set_reg(&unw_cursor, UNW_ARM_R13, signal_mcontext->arm_sp);
-	unw_set_reg(&unw_cursor, UNW_ARM_R14, signal_mcontext->arm_lr);
-	unw_set_reg(&unw_cursor, UNW_ARM_R15, signal_mcontext->arm_pc);
-
-	unw_set_reg(&unw_cursor, UNW_REG_IP, signal_mcontext->arm_pc);
-	unw_set_reg(&unw_cursor, UNW_REG_SP, signal_mcontext->arm_sp);
-
-	// unw_step() does not return the first IP.
-	AddAddress(signal_mcontext->arm_pc,0);
-	int address_count=1;
-	// Unwind frames one by one, going up the frame stack.
-	while (unw_step(&unw_cursor) > 0) {
-		unw_word_t ip = 0;
-		unw_get_reg(&unw_cursor, UNW_REG_IP, &ip);
-		AddAddress(ip,address_count);
-		if(address_count==29)break;
-		address_count++;
-	}
-}
-static void __attribute__((noreturn)) signalHandler(int sig,struct siginfo *info,void* ucontext){
-(void)sig;(void)info;
-	CaptureBacktraceUsingLibUnwind(ucontext);
-	exit(EXIT_FAILURE);
-}
-//static void baz(int argc){int *foo = (int*)-1;if(argc==1)sprintf((char*)24,"%d\n", *foo);else free((void*)10);}
-#endif
 
 static void proced(char*comline){
 	char cutbuf_file[128];
