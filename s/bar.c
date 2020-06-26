@@ -91,7 +91,6 @@ static int wrt(int f){
 }
 static int bcdl(int y,int*p,char*input,int cursor){
 	int x=getcurx(stdscr);
-	//bool left=x==com_left;left==true
 	int pos=p[0];
 	if(pos==0&&x==com_left)return cursor;
 	int of=x-com_left;
@@ -109,18 +108,12 @@ static int bcdl(int y,int*p,char*input,int cursor){
 		move(y,x);
 		return cursor-1;
 	}
-	//if(left==false){
-	pos--;
+	pos--;int n=x-com_left;
 	if(pos==0)mvaddch(y,com_left-1,' ');
-	else move(y,com_left);
-	addnstr(input+pos,x-com_left);
+	else if(n!=0)move(y,com_left);
+	addnstr(input+pos,n);
 	p[0]=pos;
 	return cursor-1;
-	//}
-	//pos--;
-	//if(pos==0)mvaddch(y,com_left-1,' ');
-	//p[0]=pos;
-	//return cursor-1;
 }
 static void undo_erase(int a){
 	int dif=undo_v-a;
