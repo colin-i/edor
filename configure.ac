@@ -52,7 +52,9 @@ char a=std::filesystem::path::preferred_separator;
 	  AC_MSG_RESULT(no)
 	])
 ])
-],[])
+],[
+AC_CHECK_HEADERS(stdbool.h)
+])
 
 # Checks for libraries.
 
