@@ -5,7 +5,7 @@
 #include<stdbool.h>
 #else
 typedef char bool;
-enum{false=0,true=1};
+enum{false=0!=0,true=1==1};
 #endif
 
 #define nullptr 0
