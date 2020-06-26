@@ -73,11 +73,11 @@ static char*helptext;
 \nCtrl+g = go to row[,column]\
 \nCtrl+f = find text; Alt+f = refind text\
 \n    if found\
-\n      Enter     = next\
-\n      Space     = previous\
-\n      Backspace = replace / (n/p)&replace\
-\n      r         = reset replace text\
-\n      R         = modify replace text\
+\n      Enter       = next\
+\n      Space       = previous\
+\n      Right Arrow = [(next/prev)&] replace\
+\n      r           = reset replace text\
+\n      R           = modify replace text\
 \n    c = cancel\
 \n    other key to return\
 \nCtrl+u = undo\
