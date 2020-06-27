@@ -31,68 +31,7 @@
 #include"inc/main/unistd.h"
 #endif
 
-#include"extern.h"
-
 #include"sep.h"
-
-char ln_term[3]="\n";
-size_t ln_term_sz=1;
-char*textfile=nullptr;
-row*rows=nullptr;
-size_t rows_tot=1;
-size_t ytext=0;
-size_t xtext=0;
-bool mod_flag=true;
-
-#define Char_Escape 27
-static char*mapsel=nullptr;
-static char*text_file=nullptr;
-static size_t rows_spc=1;
-static bool*x_right=nullptr;
-static int*tabs=nullptr;
-static int tabs_rsz;
-static int yhelp;
-static bool helpend;
-static int phelp;
-static char*helptext;
-#define hel1 "USAGE\n"
-#define hel2 " [filepath]\
-\nINPUT\
-\nhelp: q(uit),up/down,mouse/touch v.scroll\
-\narrows(Shift),home(Ctrl,Alt)/end(Ctrl),page up/down;mouse/touch click or v.scroll\
-\nCtrl+v = visual mode; Alt+v = visual line mode\
-\n    c = copy\
-\n    d = delete\
-\n    x = cut\
-\n    i = indent (I = flow indent)\
-\n    u = unindent (U = flow unindent)\
-\nCtrl+p = paste\
-\ncommand mode: left/right,ctrl+q\
-\nCtrl+s = save file\
-\nCtrl+o = save file as...\
-\nCtrl+g = go to row[,column]\
-\nCtrl+f = find text; Alt+f = refind text\
-\n    if found\
-\n      Enter       = next\
-\n      Space       = previous\
-\n      Right Arrow = [(next/prev)&] replace\
-\n      r           = reset replace text\
-\n      R           = modify replace text\
-\n    c = cancel\
-\n    other key to return\
-\nCtrl+u = undo\
-\nCtrl+r = redo\
-\nAlt +u = undo mode: left=undo,right=redo,other key to return\
-\nCtrl+q = quit"//29
-static bool visual_bool=false;
-static char*cutbuf=nullptr;
-static size_t cutbuf_sz=0;
-static size_t cutbuf_spc=0;
-static size_t cutbuf_r=1;
-static char*text_init_b=nullptr;
-static char*text_init_e;
-static int _rb;static int _cb;
-static int _re;static int _ce;
 
 #ifdef ARM7L
 #ifdef HAVE_DLFCN_H
@@ -174,6 +113,67 @@ static void __attribute__((noreturn)) signalHandler(int sig,struct siginfo *info
 }
 //static void baz(int argc){int *foo = (int*)-1;if(argc==1)sprintf((char*)24,"%d\n", *foo);else free((void*)10);}
 #endif
+
+#include"extern.h"
+
+char ln_term[3]="\n";
+size_t ln_term_sz=1;
+char*textfile=NULL;
+row*rows=NULL;
+size_t rows_tot=1;
+size_t ytext=0;
+size_t xtext=0;
+bool mod_flag=true;
+
+#define Char_Escape 27
+static char*mapsel=NULL;
+static char*text_file=NULL;
+static size_t rows_spc=1;
+static bool*x_right=NULL;
+static int*tabs=NULL;
+static int tabs_rsz;
+static int yhelp;
+static bool helpend;
+static int phelp;
+static char*helptext;
+#define hel1 "USAGE\n"
+#define hel2 " [filepath]\
+\nINPUT\
+\nhelp: q(uit),up/down,mouse/touch v.scroll\
+\narrows(Shift),home(Ctrl,Alt)/end(Ctrl),page up/down;mouse/touch click or v.scroll\
+\nCtrl+v = visual mode; Alt+v = visual line mode\
+\n    c = copy\
+\n    d = delete\
+\n    x = cut\
+\n    i = indent (I = flow indent)\
+\n    u = unindent (U = flow unindent)\
+\nCtrl+p = paste\
+\ncommand mode: left/right,ctrl+q\
+\nCtrl+s = save file\
+\nCtrl+o = save file as...\
+\nCtrl+g = go to row[,column]\
+\nCtrl+f = find text; Alt+f = refind text\
+\n    if found\
+\n      Enter       = next\
+\n      Space       = previous\
+\n      Right Arrow = [(next/prev)&] replace\
+\n      r           = reset replace text\
+\n      R           = modify replace text\
+\n    c = cancel\
+\n    other key to return\
+\nCtrl+u = undo\
+\nCtrl+r = redo\
+\nAlt +u = undo mode: left=undo,right=redo,other key to return\
+\nCtrl+q = quit"//29
+static bool visual_bool=false;
+static char*cutbuf=NULL;
+static size_t cutbuf_sz=0;
+static size_t cutbuf_spc=0;
+static size_t cutbuf_r=1;
+static char*text_init_b=NULL;
+static char*text_init_e;
+static int _rb;static int _cb;
+static int _re;static int _ce;
 
 bool no_char(char z){return z<32||z>=127;}
 static void tab_grow(WINDOW*w,int r,char*a,size_t sz,int*ptr){
@@ -575,7 +575,7 @@ static bool writemembuf(size_t ybsel,size_t xbsel,size_t yesel,size_t xesel){
 	size_t size=sizemembuf(ybsel,xbsel,yesel,xesel);
 	if(cutbuf_spc<size){
 		void*v=realloc(cutbuf,size);
-		if(v==nullptr)return false;
+		if(v==NULL)return false;
 		cutbuf=(char*)v;cutbuf_spc=size;
 	}
 	cpymembuf(ybsel,xbsel,yesel,xesel,cutbuf);
@@ -829,7 +829,7 @@ static bool rows_expand(size_t n){
 	size_t rowssize=rows_tot+n;
 	if(rowssize>rows_spc){
 		row*m=(row*)realloc(rows,rowssize*sizeof(row));
-		if(m==nullptr)return true;
+		if(m==NULL)return true;
 		rows=m;rows_spc=rowssize;
 	}
 	return false;
@@ -853,12 +853,12 @@ bool row_alloc(row*rw,size_t l,size_t c,size_t r){
 		size_t size=row_pad_sz(sz);
 		if(text_init_b<=src&&src<text_init_e){
 			dst=(char*)malloc(size);
-			if(dst==nullptr)return true;
+			if(dst==NULL)return true;
 			memcpy(dst,src,l);
 			memcpy(dst+l,src+l,r);
 		}else{
 			dst=(char*)realloc(src,size);
-			if(dst==nullptr)return true;
+			if(dst==NULL)return true;
 			//src=dst;
 		}
 		rw->data=dst;
@@ -994,7 +994,7 @@ static size_t pasting(row*d,size_t y,size_t x,size_t*xe,char*buf,size_t buf_sz,s
 			size_t len=ln-ln_term_sz;
 			size_t spc_sz=row_pad_sz(len);
 			void*v=malloc(spc_sz);
-			if(v==nullptr)return i+1;
+			if(v==NULL)return i+1;
 			memcpy(v,buf+sz,len);
 			d[i].data=(char*)v;
 			d[i].sz=len;
@@ -1007,7 +1007,7 @@ static size_t pasting(row*d,size_t y,size_t x,size_t*xe,char*buf,size_t buf_sz,s
 		size_t sizen=l+szr;
 		size_t spc_sz=row_pad_sz(sizen);
 		char*rn=(char*)malloc(spc_sz);
-		if(rn==nullptr)return max;
+		if(rn==NULL)return max;
 		memcpy(rn,buf+sz,l);
 		memcpy(rn+l,rows[y].data+x,szr);
 		d[n].data=rn;
@@ -1028,10 +1028,10 @@ static size_t pasting(row*d,size_t y,size_t x,size_t*xe,char*buf,size_t buf_sz,s
 bool paste(size_t y,size_t x,size_t*xe,char*buf,size_t buf_sz,size_t buf_r,bool fromcopy){
 	row*d;
 	if(buf_r>1){d=(row*)malloc((buf_r-1)*sizeof(row));
-		if(d==nullptr)return false;}
-	else d=nullptr;
+		if(d==NULL)return false;}
+	else d=NULL;
 	size_t n=pasting(d,y,x,xe,buf,buf_sz,buf_r,fromcopy);
-	if(d!=nullptr){
+	if(d!=NULL){
 		for(size_t i=1;i<n;i++){
 			free(d[i-1].data);
 		}
@@ -1210,7 +1210,7 @@ static bool enter(size_t y,size_t x,int*r,int*c,WINDOW*w){
 	size_t sze=tb+s;
 	size_t spc=row_pad_sz(sze);
 	char*v=(char*)malloc(spc);
-	if(v==nullptr)return true;
+	if(v==NULL)return true;
 	if(undo_add(y,x,y+1,tb)==false){
 		row rw;
 		memset(v,'\t',tb);
@@ -1370,14 +1370,14 @@ static void indent(bool b,size_t ybsel,size_t*xbsel,size_t yesel,size_t*xesel,WI
 	int max=getmaxy(w);
 	if(re>max)re=max;
 	if(b/*true*/){
-		if(xbsel!=nullptr){
+		if(xbsel!=NULL){
 			xbsel[0]++;xesel[0]++;
 			xtext++;
 			if(rb!=0)refreshrowsbot(w,0,rb);
 			if(re<max)refreshrowsbot(w,re,max);
 		}else refreshrowsbot(w,rb,re);
 	}else{
-		if(xbsel!=nullptr){
+		if(xbsel!=NULL){
 			if(xtext!=0){
 				xbsel[0]--;xesel[0]--;
 				xtext--;
@@ -1452,11 +1452,11 @@ static bool visual_mode(WINDOW*w,bool v_l){
 						}
 					}else{
 						if(b=='i'){
-							indent(true,ybsel,nullptr,yesel,nullptr,w);
+							indent(true,ybsel,NULL,yesel,NULL,w);
 							amove(w,r,col);
 							col=getcurx(w);
 						}else if(b=='u'){
-							indent(false,ybsel,nullptr,yesel,nullptr,w);
+							indent(false,ybsel,NULL,yesel,NULL,w);
 							amove(w,r,col);
 							col=getcurx(w);
 						}
@@ -1531,7 +1531,7 @@ static bool loopin(WINDOW*w){
 				char aa=1;
 				int r=command(&aa);
 				if(r==1){
-					centering(w,nullptr,nullptr);
+					centering(w,NULL,NULL);
 				}
 				else if(r>-2)wmove(w,getcury(w),getcurx(w));
 				else return true;
@@ -1581,7 +1581,7 @@ static int normalize(char**c,size_t*size,size_t*r){
 	char*text_w=c[0];
 	size_t sz=size[0];
 	char*norm=(char*)malloc(2*sz+1);//-1 ok but,when sz=0,not ok
-	if(norm!=nullptr){
+	if(norm!=NULL){
 		size_t j=0;ok=1;
 		for(size_t i=0;i<sz;i++){
 			char a=text_w[i];
@@ -1642,7 +1642,7 @@ static int startfile(char*f,size_t*text_sz){
 		else{
 			size_t size=(size_t)lseek(fd,0,SEEK_END);
 			text_init_b=(char*)malloc(size);
-			if(text_init_b!=nullptr){
+			if(text_init_b!=NULL){
 				lseek(fd,0,SEEK_SET);
 				read(fd,text_init_b,size);
 				//
@@ -1682,7 +1682,7 @@ static void getfilebuf(char*cutbuf_file){//,size_t off){
 		size_t sz=(size_t)lseek(f,0,SEEK_END);
 		if(sz!=0){
 			char*v=(char*)malloc(sz);
-			if(v!=nullptr){
+			if(v!=NULL){
 				lseek(f,0,SEEK_SET);
 				cutbuf_sz=(size_t)read(f,v,sz);
 				if(normalize(&v,&cutbuf_sz,&cutbuf_r)!=0){
@@ -1697,7 +1697,7 @@ static bool help_init(char*f,size_t szf){
 	size_t sz1=sizeof(hel1)-1;
 	size_t sz2=sizeof(hel2);
 	char*a=(char*)malloc(sz1+szf+sz2);
-	if(a!=nullptr){
+	if(a!=NULL){
 		helptext=a;
 		memcpy(a,hel1,sz1);
 		a+=sz1;memcpy(a,f,szf);
@@ -1718,7 +1718,7 @@ static bool setfilebuf(char*s,char*cutbuf_file){
 	}while(i!=0);
 	bool b=help_init(&s[i],sz-i);
 	char*h=getenv("HOME");
-	if(h!=nullptr){
+	if(h!=NULL){
 		size_t l=strlen(h);
 		if(l!=0){
 			if(l+(sz-i)+7<=128){
@@ -1755,19 +1755,19 @@ static void proced(char*comline){
 		int r=getmaxy(stdscr)-1;int old_r=r;
 		do{
 			void*a=realloc(x_right,(size_t)r);
-			if(a==nullptr)break;
+			if(a==NULL)break;
 			x_right=(bool*)a;
 			int c=getmaxx(stdscr);
 			tabs_rsz=1+(c/tab_sz);
 			if((c%tab_sz)!=0)tabs_rsz++;
 			void*b=realloc(tabs,sizeof(int)*(size_t)(r*tabs_rsz));
-			if(b==nullptr)break;
+			if(b==NULL)break;
 			tabs=(int*)b;
 			a=realloc(mapsel,(size_t)c+1);
-			if(a==nullptr)break;
+			if(a==NULL)break;
 			mapsel=(char*)a;
 			WINDOW*w=newwin(r,c,0,0);
-			if(w!=nullptr){
+			if(w!=NULL){
 				keypad(w,true);
 				refreshpage(w);
 				wmove(w,cy,cx);
@@ -1792,11 +1792,11 @@ static void proced(char*comline){
 				delwin(w);
 			}else break;
 		}while(loops/*true*/);
-		if(x_right!=nullptr){
+		if(x_right!=NULL){
 			free(x_right);
-			if(tabs!=nullptr){
+			if(tabs!=NULL){
 				free(tabs);
-				if(mapsel!=nullptr){
+				if(mapsel!=NULL){
 					free(mapsel);
 					writefilebuf(cutbuf_file);
 					undo_free();
@@ -1805,7 +1805,7 @@ static void proced(char*comline){
 		}
 		free(helptext);
 	}
-	if(cutbuf!=nullptr)free(cutbuf);
+	if(cutbuf!=NULL)free(cutbuf);
 }
 int main(int argc,char**argv){
 	#ifdef ARM7L
@@ -1813,19 +1813,19 @@ int main(int argc,char**argv){
 	memset(&signalhandlerDescriptor, 0, sizeof(signalhandlerDescriptor));
 	signalhandlerDescriptor.sa_flags = SA_SIGINFO;//SA_RESTART | SA_ONSTACK;
 	signalhandlerDescriptor.sa_sigaction = signalHandler;
-	sigaction(SIGSEGV, &signalhandlerDescriptor, nullptr);
+	sigaction(SIGSEGV, &signalhandlerDescriptor, NULL);
 	//baz(argc);
 	#endif
 	WINDOW*w1=initscr();
-	if(w1!=nullptr){
+	if(w1!=NULL){
 		raw();//stty,cooked;relevant for getchar at me
 		size_t text_sz;
 		int ok=0;
 		if(argc!=2||new_visual(argv[1])/*true*/){
 			text_init_b=(char*)malloc(1);
-			if(text_init_b!=nullptr){
+			if(text_init_b!=NULL){
 				rows=(row*)malloc(sizeof(row));
-				if(rows!=nullptr){
+				if(rows!=NULL){
 					text_init_b[0]=0;
 					text_sz=0;
 					rows[0].data=text_init_b;
@@ -1847,7 +1847,7 @@ int main(int argc,char**argv){
 				}
 				if(ok!=0){
 					rows=(row*)malloc(rows_tot*sizeof(row));
-					if(rows!=nullptr){
+					if(rows!=NULL){
 						rows_init(text_sz);
 						textfile=argv[1];
 					}
@@ -1859,17 +1859,17 @@ int main(int argc,char**argv){
 			text_init_e=text_init_b+text_sz+1;
 			color();
 			WINDOW*pw=position_init();
-			if(pw!=nullptr){
+			if(pw!=NULL){
 				keypad(w1,true);
 				noecho();
 				nonl();//no translation,faster
-				mousemask(ALL_MOUSE_EVENTS,nullptr);//for error, export TERM=vt100
+				mousemask(ALL_MOUSE_EVENTS,NULL);//for error, export TERM=vt100
 				proced(argv[0]);
 				delwin(pw);
 			}
 		}
-		if(text_init_b!=nullptr){
-			if(rows!=nullptr){
+		if(text_init_b!=NULL){
+			if(rows!=NULL){
 				text_free(0,rows_tot);
 				free(rows);
 				//puts(text_file
@@ -1877,7 +1877,7 @@ int main(int argc,char**argv){
 			free(text_init_b);
 		}
 		endwin();
-		if(text_file!=nullptr)puts(text_file);
+		if(text_file!=NULL)puts(text_file);
 	}
 	return 0;
 }

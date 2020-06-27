@@ -53,7 +53,7 @@ char a=std::filesystem::path::preferred_separator;
 	])
 ])
 ],[
-AC_CHECK_HEADERS(stdbool.h)
+AC_CHECK_HEADERS(stdbool.h stddef.h)
 ])
 
 # Checks for libraries.
