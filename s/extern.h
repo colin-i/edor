@@ -1,9 +1,4 @@
 
-#ifdef __cplusplus
-#undef NULL
-#define NULL nullptr
-#endif
-
 bool no_char(char);
 void refreshrowsbot(WINDOW*,int,int);
 void refreshpage(WINDOW*w);

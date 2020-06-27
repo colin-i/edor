@@ -65,7 +65,7 @@ size_t xb;
 size_t ye;
 size_t xe;
 char*data;}eundo;
-static eundo*undos=NULL;
+static eundo*undos=nullptr;
 static size_t undos_tot=0;
 static size_t undos_spc=0;
 static size_t undos_save=0;
@@ -374,7 +374,7 @@ static void centering2(WINDOW*w,size_t*rw,size_t*cl,bool right){
 	else ytext=ytext-hg;
 	refreshpage(w);
 	wmove(w,(int)hg,c);
-	if(rw!=NULL){
+	if(rw!=nullptr){
 		rw[0]=hg;cl[0]=xc-xtext;
 	}
 }
@@ -457,7 +457,7 @@ static int go_to(int cursor){
 	return 0;
 }
 int save(){
-	if(textfile!=NULL){
+	if(textfile!=nullptr){
 		return saving();
 	}
 	char a=0;
@@ -477,7 +477,7 @@ static bool undo_expand(){
 	if(dif!=0)sz+=((dif^row_pad)+1);
 	if(sz>undos_spc){
 		void*v=realloc(undos,sz*sizeof(eundo));
-		if(v==NULL)return false;
+		if(v==nullptr)return false;
 		undos=(eundo*)v;undos_spc=sz;
 	}
 	return true;
@@ -488,7 +488,7 @@ static void undo_ok(){
 }
 static void undo_release(size_t a,size_t b){
 	while(a<b){
-		if(undos[a].data!=NULL)
+		if(undos[a].data!=nullptr)
 			free(undos[a].data);
 		a++;
 	}
@@ -504,14 +504,14 @@ bool undo_add(size_t yb,size_t xb,size_t ye,size_t xe){
 		undo_newway();
 		eundo*un=&undos[undos_tot];
 		un->yb=yb;un->xb=xb;un->ye=ye;un->xe=xe;
-		un->data=NULL;
+		un->data=nullptr;
 		undo_ok();return false;}
 	return true;
 }
 static bool undo_del_backward(eundo*un,size_t yb,size_t xb,size_t ye,size_t xe){
 	size_t x=sizemembuf(yb,xb,ye,xe);
 	char*v=(char*)malloc(x);
-	if(v==NULL)return true;
+	if(v==nullptr)return true;
 	un->yb=yb;un->xb=xb;un->ye=ye;un->xe=x;
 	un->data=v;
 	cpymembuf(yb,xb,ye,xe,v);
@@ -523,7 +523,7 @@ bool undo_add_del(size_t yb,size_t xb,size_t ye,size_t xe){
 		size_t dif=x&row_pad;
 		if(dif!=0)dif=(dif^row_pad)+1;
 		char*v=(char*)malloc(x+dif);
-		if(v!=NULL){
+		if(v!=nullptr){
 			undo_newway();
 			eundo*un=&undos[undos_tot];
 			un->yb=yb;un->xb=xb;un->ye=ye;un->xe=x;
@@ -537,7 +537,7 @@ bool undo_add_ind(size_t yb,size_t ye){
 		undo_newway();
 		eundo*un=&undos[undos_tot];
 		un->ye=yb;un->yb=ye;
-		un->data=NULL;
+		un->data=nullptr;
 		undo_ok();return false;}
 	return true;
 }
@@ -552,14 +552,14 @@ static void undo_ind_del(eundo*un,size_t yb,size_t ye,char*d){
 bool undo_add_ind_del(size_t yb,size_t ye){
 	if(undo_expand()/*true*/){
 		void*d=malloc(ye-yb);
-		if(d!=NULL){
+		if(d!=nullptr){
 			undo_newway();
 			undo_ind_del(&undos[undos_tot],yb,ye,(char*)d);
 			undo_ok();return false;}}
 	return true;
 }
 void undo_free(){
-	if(undos!=NULL){
+	if(undos!=nullptr){
 		undo_release(0,undos_max);
 		free(undos);
 	}
@@ -567,7 +567,7 @@ void undo_free(){
 static bool undo_add_replace(size_t cursor){
 	if(undo_expand()/*true*/){
 		char*d=(char*)malloc(1+sizeof(cursor)+cursor);
-		if(d!=NULL){
+		if(d!=nullptr){
 			undo_newway();
 			eundo*un=&undos[undos_tot];
 			un->yb=ytext;un->xb=xtext;
@@ -589,7 +589,7 @@ static bool undo_replace(eundo*un,char*data,size_t yb,size_t xb,size_t xe,bool i
 	}
 	else if(xe>sz2&&is_undo/*true*/){
 		data=(char*)realloc(data,1+sizeof(xe)+xe);
-		if(data==NULL)return true;
+		if(data==nullptr)return true;
 		un->data=data;sz_p=(size_t*)((void*)&data[1]);
 	}
 	char*a=&r->data[xb];
@@ -618,15 +618,15 @@ static bool dos(WINDOW*w,eundo*un,size_t vl){
 	size_t y1=un->yb;size_t y2=un->ye;
 	if(y1<=y2){
 		size_t xb=un->xb;size_t xe=un->xe;
-		if(d!=NULL){
+		if(d!=nullptr){
 			if(y1==y2&&d[0]==ln_term[0]){
 				if(undo_replace(un,d,y1,xb,xe,vl!=1)/*true*/)return false;
-				centering2(w,NULL,NULL,true);
+				centering2(w,nullptr,nullptr,true);
 			}else{
 				if(paste(y1,xb,&xe,d,xe,y2-y1+1,false)==false)return false;
-				un->xe=xe;un->data=NULL;
+				un->xe=xe;un->data=nullptr;
 				ytext=y2;xtext=xe;
-				centering2(w,NULL,NULL,true);
+				centering2(w,nullptr,nullptr,true);
 				free(d);
 			}
 		}
@@ -635,15 +635,15 @@ static bool dos(WINDOW*w,eundo*un,size_t vl){
 			if(undo_del_backward(un,y1,xb,y2,xe)/*true*/)return false;
 			deleting(y1,xb,y2,xe);
 			ytext=y1;xtext=xb;
-			centering(w,NULL,NULL);
+			centering(w,nullptr,nullptr);
 		}
 	}else{
-		if(d!=NULL){
+		if(d!=nullptr){
 			for(size_t i=y2;i<y1;i++){
 				row*r=&rows[i];
 				if(row_alloc(r,0,1,r->sz)/*true*/)return false;
 			}
-			un->data=NULL;
+			un->data=nullptr;
 			for(size_t i=y2;i<y1;i++){
 				char a=d[i-y2];
 				if(a==ln_term[0])continue;
@@ -652,10 +652,10 @@ static bool dos(WINDOW*w,eundo*un,size_t vl){
 			}
 			free(d);
 			ytext=y1;xtext=1;
-			centering2(w,NULL,NULL,true);
+			centering2(w,nullptr,nullptr,true);
 	}else{
 			void*mem=malloc(y1-y2);
-			if(mem==NULL)return false;
+			if(mem==nullptr)return false;
 			undo_ind_del(un,y2,y1,(char*)mem);
 			for(size_t i=y2;i<y1;i++){
 				size_t n=rows[i].sz;char*dt=rows[i].data;
@@ -663,7 +663,7 @@ static bool dos(WINDOW*w,eundo*un,size_t vl){
 				rows[i].sz--;
 			}
 			ytext=y2;xtext=0;
-			centering2(w,NULL,NULL,false);
+			centering2(w,nullptr,nullptr,false);
 		}
 	}
 	undos_tot+=vl;
@@ -696,7 +696,7 @@ void undo_save(){undos_save=undos_tot;}
 bool undo_type(size_t yb,size_t xb,size_t ye,size_t xe){
 	if(undos_tot!=0){
 		eundo*un=&undos[undos_tot-1];
-		if(un->data==NULL&&un->yb<=un->ye){
+		if(un->data==nullptr&&un->yb<=un->ye){
 			if(un->ye==yb&&un->xe==xb){
 				un->xe++;return false;
 			}
@@ -707,11 +707,11 @@ bool undo_type(size_t yb,size_t xb,size_t ye,size_t xe){
 bool undo_bcsp(size_t yb,size_t xb,size_t ye,size_t xe){
 	if(undos_tot!=0){
 		eundo*un=&undos[undos_tot-1];
-		if(un->data!=NULL&&un->yb<=un->ye){
+		if(un->data!=nullptr&&un->yb<=un->ye){
 			if(un->yb==ye&&un->xb==xe){
 				char*d;if((un->xe&row_pad)==0){
 					d=(char*)realloc(un->data,un->xe+row_pad+1);
-					if(d==NULL)return true;
+					if(d==nullptr)return true;
 					un->data=d;
 				}else d=un->data;
 				for(size_t i=un->xe;i>0;i--)d[i]=d[i-1];
@@ -726,11 +726,11 @@ bool undo_bcsp(size_t yb,size_t xb,size_t ye,size_t xe){
 bool undo_delk(size_t yb,size_t xb,size_t ye,size_t xe){
 	if(undos_tot!=0){
 		eundo*un=&undos[undos_tot-1];
-		if(un->data!=NULL&&un->yb<=un->ye){
+		if(un->data!=nullptr&&un->yb<=un->ye){
 			if(un->yb==yb&&un->xb==xb){
 				char*d;if((un->xe&row_pad)==0){
 					d=(char*)realloc(un->data,un->xe+row_pad+1);
-					if(d==NULL)return true;
+					if(d==nullptr)return true;
 					un->data=d;
 				}else d=un->data;
 				d[un->xe]=rows[yb].data[xb];
@@ -1027,6 +1027,6 @@ bool new_visual(char*f){
 }
 bool is_dir(int fd){
 	DIR*d=fdopendir(fd);
-	if(d!=NULL){closedir(d);return true;}
+	if(d!=nullptr){closedir(d);return true;}
 	return false;
 }

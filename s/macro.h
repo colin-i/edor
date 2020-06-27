@@ -14,11 +14,12 @@ enum{false=0!=0,true=1==1};
 
 #ifdef HAVE_STDDEF_H
 #include<stddef.h>
+//there are warnings at cpp with NULL from stddef at comparisons
+#define nullptr NULL
 #else
-#define NULL ((void*)0)
+#define nullptr ((void*)0)
 #endif
 
-//for cpp we set after it will be defined
 #endif
 
 typedef struct{
