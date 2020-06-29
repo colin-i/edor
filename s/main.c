@@ -147,7 +147,7 @@ static char*helptext;
 \n    x = cut\
 \n    i = indent (I = flow indent)\
 \n    u = unindent (U = flow unindent)\
-\nCtrl+p = paste\
+\nCtrl+p = paste; Alt+p = paste at the beginning of the row\
 \ncommand mode: left/right,ctrl+q\
 \nCtrl+s = save file\
 \nCtrl+o = save file as...\
@@ -1503,6 +1503,7 @@ static bool loopin(WINDOW*w){
 			int z=wgetch(w);
 			nodelay(w,false);
 			if(z=='v'){if(visual_mode(w,true)/*true*/)return true;}
+			else if(z=='p'){wmove(w,getcury(w),0);past(w);}
 			else if(z=='f'){if(find_mode(3,w)/*true*/)return true;}
 			else if(z=='u'){vis('U',w);undo_loop(w);vis(' ',w);}
 		}else{
