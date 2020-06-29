@@ -2,7 +2,7 @@
 #include "sep.h"
 
 #ifndef __cplusplus
-#define nullptr 0
+#include "null.h"
 #endif
 
 #if (defined(USE_FS) || defined(USE__FS))

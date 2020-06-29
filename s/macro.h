@@ -12,13 +12,7 @@ typedef char bool;
 enum{false=0!=0,true=1==1};
 #endif
 
-#ifdef HAVE_STDDEF_H
-#include<stddef.h>
-//there are warnings at cpp with NULL from stddef at comparisons
-#define nullptr NULL
-#else
-#define nullptr ((void*)0)
-#endif
+#include "null.h"
 
 #endif
 
