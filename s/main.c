@@ -1219,11 +1219,6 @@ static bool enter(size_t y,size_t x,int*r,int*c,WINDOW*w){
 		rw.data=v;rw.sz=sze;rw.spc=spc;
 		rows_insert(&rw,1,y+1);
 		bool fix=tb>=xtext;
-		int cprev;if(fix/*true*/){
-			cprev=c[0];
-			c[0]=(int)(tb-xtext)*tab_sz;
-		}
-		else{xtext=tb;c[0]=0;}
 		int row=r[0];
 		if(row==(getmaxy(w)-1))ytext++;
 		else{
@@ -1232,18 +1227,21 @@ static bool enter(size_t y,size_t x,int*r,int*c,WINDOW*w){
 				int*t=&tabs[tabs_rsz*row];
 				int a=t[0];
 				int*p=t+a;
-				int*z=p;
+				int*z=p;int cprev=c[0];
 				while(p!=t){
 					if(p[0]<cprev)break;
 					p--;
 				}
 				t[0]-=z-p;
+				c[0]=(int)(tb-xtext)*tab_sz;
 				wclrtoeol(w);
 				x_right[row]=xtext<rows[y].sz;
 				refreshrows(w,row+1);
 				return false;
 			}
 		}
+		if(fix/*true*/)c[0]=(int)(tb-xtext)*tab_sz;
+		else{xtext=tb;c[0]=0;}
 		refreshpage(w);
 		return false;
 	}
@@ -1832,6 +1830,7 @@ int main(int argc,char**argv){
 					rows[0].data=text_init_b;
 					rows[0].sz=0;rows[0].spc=0;
 					ok=1;
+					text_init_e=text_init_b+1;
 				}
 			}
 		}else{
@@ -1851,13 +1850,13 @@ int main(int argc,char**argv){
 					if(rows!=nullptr){
 						rows_init(text_sz);
 						textfile=argv[1];
+						text_init_e=text_init_b+text_sz+1;
 					}
 					else ok=0;
 				}
 			}
 		}
 		if(ok!=0){
-			text_init_e=text_init_b+text_sz+1;
 			color();
 			WINDOW*pw=position_init();
 			if(pw!=nullptr){
