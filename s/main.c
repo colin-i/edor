@@ -199,14 +199,14 @@ static void tab_grow(WINDOW*w,int r,char*a,size_t sz,int*ptr){
 				waddch(w,' ');
 			}
 		}else if(no_char(z)/*true*/){
-			a[i]='?';char aux=a[i+1];a[i+1]=0;
+			a[i]='?';char aux=a[i+1];a[i+1]='\0';
 			waddstr(w,a+j);a[i+1]=aux;a[i]=z;
 			c+=i-j+1;j=i+1;
 		}
 	}
 	if(c<max){
 		char aux=a[i];
-		a[i]=0;waddstr(w,a+j);a[i]=aux;
+		a[i]='\0';waddstr(w,a+j);a[i]=aux;
 	}
 }
 void refreshrowsbot(WINDOW*w,int i,int maxy){
@@ -343,7 +343,7 @@ static void helpshow(int n){
 			move(y,0);
 			int sum=i-j+cstart;
 			if(cstart!=0){addch(' ');cstart=0;}
-			char aux=helptext[i];helptext[i]=0;
+			char aux=helptext[i];helptext[i]='\0';
 			addstr(&helptext[j]);
 			helptext[i]=aux;
 			if(sum<max)clrtoeol();
@@ -1605,7 +1605,7 @@ static int normalize(char**c,size_t*size,size_t*r){
 			}
 			norm[j]=a;j++;
 		}
-		norm[j]=0;size[0]=j;
+		norm[j]='\0';size[0]=j;
 		free(text_w);c[0]=norm;
 	}
 	return ok;
@@ -1652,7 +1652,7 @@ static int startfile(char*f,size_t*text_sz){
 						if(i!=0&&text_init_b[i-1]=='\r'){
 							ln_term[0]='\r';
 							ln_term[1]='\n';
-							ln_term[2]=0;
+							ln_term[2]='\0';
 							ln_term_sz=2;
 						}
 						break;
@@ -1747,7 +1747,7 @@ static void color(){
 
 static void proced(char*comline){
 	char cutbuf_file[128];
-	cutbuf_file[0]=0;
+	cutbuf_file[0]='\0';
 	if(setfilebuf(comline,cutbuf_file)/*true*/){
 		bool loops=false;
 		int cy=0;int cx=0;
@@ -1825,7 +1825,7 @@ int main(int argc,char**argv){
 			if(text_init_b!=nullptr){
 				rows=(row*)malloc(sizeof(row));
 				if(rows!=nullptr){
-					text_init_b[0]=0;
+					text_init_b[0]='\0';
 					text_sz=0;
 					rows[0].data=text_init_b;
 					rows[0].sz=0;rows[0].spc=0;

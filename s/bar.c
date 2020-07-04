@@ -198,12 +198,12 @@ static void clear_com(int y,int sz,int pos,int cursor){
 		sz++;
 		for(int i=0;i<sz;i++)
 			addch(' ');
-		//memset(mapsel,' ',(size_t)sz+1);mapsel[sz+1]=0;addstr(mapsel);
+		//memset(mapsel,' ',(size_t)sz+1);mapsel[sz+1]='\0';addstr(mapsel);
 	}
 	else{
 		for(int i=0;i<len;i++)
 			addch(' ');
-		//memset(mapsel,' ',(size_t)len);mapsel[len]=0;addstr(mapsel);
+		//memset(mapsel,' ',(size_t)len);mapsel[len]='\0';addstr(mapsel);
 	}
 }
 //1/0/-1 -2
@@ -218,7 +218,7 @@ int question(const char*q){
 	int sz=(int)(strlen(q)+sizeof(quest_ex_s)-1);
 	for(int i=0;i<sz;i++)
 		addch(' ');
-	//memset(mapsel,' ',sz);mapsel[sz]=0;mvaddstr(y,com_left,mapsel);
+	//memset(mapsel,' ',sz);mapsel[sz]='\0';mvaddstr(y,com_left,mapsel);
 	if(ch=='y')return 1;
 	else if(ch=='n')return -1;
 	return 0;
@@ -436,7 +436,7 @@ static int go_to(int cursor){
 	int i=0;size_t y;size_t x;
 	for(;;){
 		if(input0[i]==','){
-			input0[i]=0;
+			input0[i]='\0';
 			y=(size_t)atoi(input0);
 			x=(size_t)atoi(input0+i+1);
 			break;
@@ -896,7 +896,7 @@ int command(char*comnrp){
 		if(a==Char_Return){
 			char comnr=comnrp[0];
 			if(comnr==0){
-				input[cursor]=0;
+				input[cursor]='\0';
 				r=saves();
 				if(r==-1){
 					int x=getcurx(stdscr);
@@ -913,7 +913,7 @@ int command(char*comnrp){
 					return r;
 				}
 			}else if(comnr==1){
-				input[cursor]=0;
+				input[cursor]='\0';
 				r=go_to(cursor);
 			}else{//if is_find
 				int ifback=getcurx(stdscr);
