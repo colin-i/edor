@@ -13,8 +13,10 @@ AC_ARG_ENABLE(cpp,
 AM_CONDITIONAL(CPP, test x"$cpp" = x"true")
 
 # Checks for programs.
-# Checks for header files.
 AC_PROG_CC
+
+# Checks for header files.
+
 AC_CHECK_HEADERS(dirent.h errno.h fcntl.h stdio.h stdlib.h string.h unistd.h)
 AC_CHECK_HEADERS(curses.h, [AC_SUBST(CSS, "")], [AC_SUBST(CSS, "-Wno-padded")])
 
@@ -27,9 +29,12 @@ AS_IF([test "$(uname -m)" = "armv7l"],
   ]
 )
 
+# Checks for libraries.
+
+# Checks for typedefs, structures, and compiler characteristics.
 AS_IF([test x"$cpp" = x"true"],[
 AC_LANG([C++])
-AC_MSG_CHECKING([checking for filesystem preferred_separator])
+AC_MSG_CHECKING([checking for filesystem::preferred_separator])
 AC_COMPILE_IFELSE([AC_LANG_SOURCE([[
 #include <filesystem>
 char a=std::filesystem::path::preferred_separator;
@@ -40,7 +45,7 @@ char a=std::filesystem::path::preferred_separator;
   ],
 [
 	AC_MSG_RESULT(no)
-	AC_MSG_CHECKING([checking for __fs::filesystem preferred_separator])
+	AC_MSG_CHECKING([checking for __fs::filesystem::preferred_separator])
 	AC_COMPILE_IFELSE([AC_LANG_SOURCE([[
 	#include <filesystem>
 	char a=std::__fs::filesystem::path::preferred_separator;
@@ -56,10 +61,6 @@ char a=std::filesystem::path::preferred_separator;
 ],[
 AC_CHECK_HEADERS(stdbool.h stddef.h)
 ])
-
-# Checks for libraries.
-
-# Checks for typedefs, structures, and compiler characteristics.
 
 # Checks for library functions.
 

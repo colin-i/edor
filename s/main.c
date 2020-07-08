@@ -149,8 +149,7 @@ static char*helptext;
 \n    u = unindent (U = flow unindent)\
 \nCtrl+p = paste; Alt+p = paste at the beginning of the row\
 \ncommand mode: left/right,ctrl+q\
-\nCtrl+s = save file\
-\nCtrl+o = save file as...\
+\nCtrl+s = save file; Alt+s = save file as...\
 \nCtrl+g = go to row[,column]\
 \nCtrl+f = find text; Alt+f = refind text\
 \n    if found\
@@ -164,7 +163,7 @@ static char*helptext;
 \nCtrl+u = undo\
 \nCtrl+r = redo\
 \nAlt +u = undo mode: left=undo,right=redo,other key to return\
-\nCtrl+q = quit"//29
+\nCtrl+q = quit"//28
 static bool visual_bool=false;
 static char*cutbuf=nullptr;
 static size_t cutbuf_sz=0;
@@ -289,12 +288,10 @@ static void printinverted(const char*s){
 	attrset(0);
 }
 static void helpposition(){
-	int x=getcurx(stdscr);int y=getcury(stdscr);
 	move(getmaxy(stdscr)-2,0);
 	if(helpend/*true*/)printinverted("BOT");
 	else if(yhelp==0)printinverted("TOP");
 	else addstr("---");
-	move(y,x);
 }
 static int helpmanag(int n){
 	int max=getmaxx(stdscr);
@@ -326,7 +323,7 @@ static int helpmanag(int n){
 	if(i!=0&&helptext[i-1]=='\n')return i;
 	return i+1;
 }
-static void helpshow(int n){
+static int helpshow(int n){
 	int max=getmaxx(stdscr);
 	int i=phelp;int j=i;
 	yhelp=n;int y=0;
@@ -358,6 +355,7 @@ static void helpshow(int n){
 		}
 	}while(helpend==false);
 	helpposition();
+	return y;
 }
 static void hmove(int n){
 	if(helpend/*true*/&&(n>0))return;
@@ -1484,6 +1482,23 @@ static bool find_mode(int nr,WINDOW*w){
 	}
 	return false;
 }
+static bool savetofile(WINDOW*w,bool has_file){
+	char*d=textfile;
+	int ret;
+	if(has_file){
+		ret=save();
+	}else{char aa=0;ret=command(&aa);}
+	if(ret!=0){
+		if(ret==1){
+			if(d!=textfile)text_file=textfile;
+			mod_set(true);
+			undo_save();
+		}
+		else if(ret==-2)return true;
+	}else err_set(w);
+	wmove(w,getcury(w),getcurx(w));
+	return false;
+}
 static bool loopin(WINDOW*w){
 	int c;
 	for(;;){
@@ -1504,27 +1519,16 @@ static bool loopin(WINDOW*w){
 			else if(z=='p'){wmove(w,getcury(w),0);past(w);}
 			else if(z=='f'){if(find_mode(3,w)/*true*/)return true;}
 			else if(z=='u'){vis('U',w);undo_loop(w);vis(' ',w);}
+			else if(z=='s'){bool b=savetofile(w,false);if(b/*true*/)return true;}
 		}else{
 			const char*s=keyname(c);
 			if(strcmp(s,"^V")==0){
 				if(visual_mode(w,false)/*true*/)return true;
 			}
 			else if(strcmp(s,"^P")==0)past(w);
-			else if((strcmp(s,"^S")==0)||strcmp(s,"^O")==0){
-				char*d=textfile;
-				int ret;
-				if(s[1]=='S'){
-					ret=save();
-				}else{char aa=0;ret=command(&aa);}
-				if(ret!=0){
-					if(ret==1){
-						if(d!=textfile)text_file=textfile;
-						mod_set(true);
-						undo_save();
-					}
-					else if(ret==-2)return true;
-				}else err_set(w);
-				wmove(w,getcury(w),getcurx(w));
+			else if((strcmp(s,"^S")==0)){
+				bool b=savetofile(w,true);
+				if(b/*true*/)return true;
 			}
 			else if(strcmp(s,"^G")==0){
 				char aa=1;
@@ -1544,9 +1548,10 @@ static bool loopin(WINDOW*w){
 			}else if(strcmp(s,"KEY_F(1)")==0){
 				int cy=getcury(w);int cx=getcurx(w);
 				phelp=0;
-				helpshow(0);
+				int i=helpshow(0);
 				int mx=getmaxy(stdscr)-2;
-				for(int i=getcury(stdscr)+1;i<mx;i++){move(i,0);clrtoeol();}
+				for(;i<mx;i++){move(i,0);clrtoeol();}
+				move(mx,3);clrtoeol();
 				if(helpin(w)/*true*/){
 					ungetch(c);
 					return true;
