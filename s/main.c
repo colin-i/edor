@@ -11,22 +11,22 @@
 #include"inc/main/fcntl.h"
 #endif
 #ifdef HAVE_STDLIB_H
-#include"stdlib.h"
+#include<stdlib.h>
 #else
 #include"inc/main/stdlib.h"
 #endif
 #ifdef HAVE_STDIO_H
-#include"stdio.h"
+#include<stdio.h>
 #else
 #include"inc/main/stdio.h"
 #endif
 #ifdef HAVE_STRING_H
-#include"string.h"
+#include<string.h>
 #else
 #include"inc/main/string.h"
 #endif
 #ifdef HAVE_UNISTD_H
-#include"unistd.h"
+#include<unistd.h>
 #else
 #include"inc/main/unistd.h"
 #endif

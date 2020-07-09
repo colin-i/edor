@@ -34,7 +34,7 @@ AS_IF([test "$(uname -m)" = "armv7l"],
 # Checks for typedefs, structures, and compiler characteristics.
 AS_IF([test x"$cpp" = x"true"],[
 AC_LANG([C++])
-AC_MSG_CHECKING([checking for filesystem::preferred_separator])
+AC_MSG_CHECKING([checking for std::filesystem::preferred_separator])
 AC_COMPILE_IFELSE([AC_LANG_SOURCE([[
 #include <filesystem>
 char a=std::filesystem::path::preferred_separator;
@@ -45,7 +45,7 @@ char a=std::filesystem::path::preferred_separator;
   ],
 [
 	AC_MSG_RESULT(no)
-	AC_MSG_CHECKING([checking for __fs::filesystem::preferred_separator])
+	AC_MSG_CHECKING([checking for std::__fs::filesystem::preferred_separator])
 	AC_COMPILE_IFELSE([AC_LANG_SOURCE([[
 	#include <filesystem>
 	char a=std::__fs::filesystem::path::preferred_separator;

@@ -16,12 +16,12 @@ char path_separator=std::__fs::filesystem::path::preferred_separator;
 #else
 char path_separator;
 #ifdef HAVE_STDLIB_H
-#include"stdlib.h"
+#include<stdlib.h>
 #else
 #include"inc/sep/stdlib.h"
 #endif
 #ifdef HAVE_STRING_H
-#include"string.h"
+#include<string.h>
 #else
 #include"inc/sep/string.h"
 #endif
