@@ -1,4 +1,5 @@
 AUTOMAKE_OPTIONS = subdir-objects
+
 bin_PROGRAMS = edor
 edor_SOURCES = main.c bar.c sep.c
 edor_LDFLAGS = -rdynamic -lcurses

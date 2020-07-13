@@ -1,7 +1,10 @@
 #                                               -*- Autoconf -*-
 # Process this file with autoconf to produce a configure script.
 AC_PREREQ([2.69])
+
 AC_INIT([edor], [0.1])
+AC_SUBST([PROJ], 'edor')
+
 AC_CONFIG_SRCDIR([s/main.c])
 
 AC_CONFIG_AUX_DIR([build-aux])
@@ -34,7 +37,7 @@ AS_IF([test "$(uname -m)" = "armv7l"],
 # Checks for typedefs, structures, and compiler characteristics.
 AS_IF([test x"$cpp" = x"true"],[
 AC_LANG([C++])
-AC_MSG_CHECKING([checking for std::filesystem::preferred_separator])
+AC_MSG_CHECKING([for std::filesystem::preferred_separator])
 AC_COMPILE_IFELSE([AC_LANG_SOURCE([[
 #include <filesystem>
 char a=std::filesystem::path::preferred_separator;
@@ -45,7 +48,7 @@ char a=std::filesystem::path::preferred_separator;
   ],
 [
 	AC_MSG_RESULT(no)
-	AC_MSG_CHECKING([checking for std::__fs::filesystem::preferred_separator])
+	AC_MSG_CHECKING([for std::__fs::filesystem::preferred_separator])
 	AC_COMPILE_IFELSE([AC_LANG_SOURCE([[
 	#include <filesystem>
 	char a=std::__fs::filesystem::path::preferred_separator;
@@ -67,7 +70,5 @@ AC_CHECK_HEADERS(stdbool.h stddef.h)
 AM_INIT_AUTOMAKE
 
 AC_CONFIG_FILES([Makefile s/Makefile])
-
-AC_SUBST([PROJ], 'edor')
 
 AC_OUTPUT
