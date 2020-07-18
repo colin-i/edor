@@ -173,6 +173,7 @@ static char*text_init_b=nullptr;
 static char*text_init_e;
 static int _rb;static int _cb;
 static int _re;static int _ce;
+#define view_margin 8
 
 bool no_char(char z){return z<32||z>=127;}
 static void tab_grow(WINDOW*w,int r,char*a,size_t sz,int*ptr){
@@ -1107,8 +1108,16 @@ static void rowfixdel(WINDOW*w,int r,int c,row*rw,size_t i){
 	}
 	x_right[r]=mx!=0;
 }
-static bool delete_key(size_t y,size_t x,int r,int c,WINDOW*w){
-	row*r1=&rows[y];size_t sz=r1->sz;
+static bool delete_key(size_t y,size_t x,int r,int*cc,WINDOW*w){
+	row*r1=&rows[y];int maxx=getmaxx(w);int c=*cc;
+	bool margin=c+view_margin>maxx;
+	if(margin/*true*/){while(c+view_margin>maxx){
+			c-=r1->data[xtext]=='\t'?tab_sz:1;
+			xtext++;
+		}
+		refreshpage(w);*cc=c;
+	}
+	size_t sz=r1->sz;
 	if(x==sz){
 		size_t yy=y+1;
 		if(yy==rows_tot)return false;
@@ -1125,6 +1134,7 @@ static bool delete_key(size_t y,size_t x,int r,int c,WINDOW*w){
 		return true;
 	}
 	if(undo_delk(y,x,y,x+1)==false){
+		if(margin/*true*/)wmove(w,r,c);
 		char*data=r1->data;
 		for(size_t i=x+1;i<sz;i++){
 			data[i-1]=data[i];
@@ -1175,11 +1185,10 @@ static bool bcsp(size_t y,size_t x,int*rw,int*cl,WINDOW*w){
 		}
 		r->sz--;
 		if(xtext!=0){
-			int mx=8;
-			if(c<mx){
+			if(c<view_margin){
 				if(c<0){c=0;xtext--;}
 				if(xtext!=0){
-					while(c<mx){
+					while(c<view_margin){
 						xtext--;
 						c+=data[xtext]=='\t'?tab_sz:1;
 						if(xtext==0)break;
@@ -1274,7 +1283,7 @@ static void type(int cr,WINDOW*w){
 		if(bcsp(y,x,&rw,&cl,w)/*true*/)return;
 		position(rw,cl);
 	}
-	else if(cr==KEY_DC){if(delete_key(y,x,rw,cl,w)/*true*/)return;}
+	else if(cr==KEY_DC){if(delete_key(y,x,rw,&cl,w)/*true*/)return;}
 	else{
 		char ch=cr&0xff;
 		if(row_alloc(r,x,1,r->sz-x)/*true*/)return;
