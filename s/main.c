@@ -512,7 +512,8 @@ static int movment(int c,WINDOW*w){
 			wmove(w,0,0);
 		}else if(strcmp(s,"kEND5")==0){
 			size_t max=(size_t)getmaxy(w);
-			ytext=rows_tot<=max?0:rows_tot-max;
+			size_t y_test=rows_tot<=max?0:rows_tot-max;
+			if(ytext<y_test)ytext=y_test;
 			size_t a=rows_tot-1;
 			int y=(int)(a-ytext);
 			int x=end(w,a);
