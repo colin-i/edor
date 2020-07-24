@@ -807,7 +807,7 @@ static int find(char*z,size_t cursor,size_t pos,size_t visib,int y){
 				forward=true;
 			}else if(a==' '){
 				forward=false;
-			}else if(a==KEY_RIGHT){
+			}else if(a==KEY_LEFT){
 				size_t iferrory=ytext;size_t iferrorx=xtext;
 				if(untouched/*true*/){
 					ytext+=xr;xtext+=xc;

@@ -155,7 +155,7 @@ static char*helptext;
 \n    if found\
 \n      Enter       = next\
 \n      Space       = previous\
-\n      Right Arrow = [(next/prev)&] replace\
+\n      Left Arrow = [(next/prev)&] replace\
 \n      r           = reset replace text\
 \n      R           = modify replace text\
 \n    c = cancel\
