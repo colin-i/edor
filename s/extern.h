@@ -1,7 +1,8 @@
 
 bool no_char(char);
 void refreshrowsbot(WINDOW*,int,int);
-void refreshpage(WINDOW*w);
+#define refreshrows(w,i) refreshrowsbot(w,i,getmaxy(w))
+#define refreshpage(w) refreshrows(w,0)
 size_t c_to_xc(int,int);
 bool row_alloc(row*,size_t,size_t,size_t);
 void row_set(row*,size_t,size_t,size_t,const char*);

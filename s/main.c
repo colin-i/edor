@@ -224,12 +224,6 @@ void refreshrowsbot(WINDOW*w,int i,int maxy){
 		i++;
 	}while(i<maxy);
 }
-static void refreshrows(WINDOW*w,int i){
-	refreshrowsbot(w,i,getmaxy(w));
-}
-void refreshpage(WINDOW*w){
-	refreshrows(w,0);
-}
 static bool bmove(WINDOW*w,int r,int c,bool back){
 	wmove(w,r,c);
 	char chr=(char)winch(w);
@@ -797,7 +791,7 @@ void visual(char a){
 	wnoutrefresh(stdscr);
 }
 static void refreshrowscond(WINDOW*w,size_t y,size_t x,size_t r,size_t n){
-	if(y!=ytext||x!=xtext)refreshrows(w,0);
+	if(y!=ytext||x!=xtext)refreshpage(w);
 	else refreshrowsbot(w,(int)r,n!=0?getmaxy(w):(int)r+1);
 }
 static void pasted(size_t r,size_t x,WINDOW*w){
@@ -1526,7 +1520,11 @@ static bool loopin(WINDOW*w){
 			int z=wgetch(w);
 			nodelay(w,false);
 			if(z=='v'){if(visual_mode(w,true)/*true*/)return true;}
-			else if(z=='p'){wmove(w,getcury(w),0);past(w);}
+			else if(z=='p'){
+				int y=getcury(w);
+				if(xtext!=0){xtext=0;refreshpage(w);}
+				wmove(w,y,0);past(w);
+			}
 			else if(z=='f'){if(find_mode(3,w)/*true*/)return true;}
 			else if(z=='u'){vis('U',w);undo_loop(w);vis(' ',w);}
 			else if(z=='s'){bool b=savetofile(w,false);if(b/*true*/)return true;}
