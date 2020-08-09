@@ -698,7 +698,9 @@ bool undo_type(size_t yb,size_t xb,size_t ye,size_t xe){
 		eundo*un=&undos[undos_tot-1];
 		if(un->data==nullptr&&un->yb<=un->ye){
 			if(un->ye==yb&&un->xe==xb){
-				un->xe++;return false;
+				if(mod_flag==false){
+					un->xe++;return false;
+				}
 			}
 		}
 	}
@@ -709,15 +711,17 @@ bool undo_bcsp(size_t yb,size_t xb,size_t ye,size_t xe){
 		eundo*un=&undos[undos_tot-1];
 		if(un->data!=nullptr&&un->yb<=un->ye){
 			if(un->yb==ye&&un->xb==xe){
-				char*d;if((un->xe&row_pad)==0){
-					d=(char*)realloc(un->data,un->xe+row_pad+1);
-					if(d==nullptr)return true;
-					un->data=d;
-				}else d=un->data;
-				for(size_t i=un->xe;i>0;i--)d[i]=d[i-1];
-				d[0]=rows[yb].data[xb];
-				un->xb--;un->xe++;
-				return false;
+				if(mod_flag==false){
+					char*d;if((un->xe&row_pad)==0){
+						d=(char*)realloc(un->data,un->xe+row_pad+1);
+						if(d==nullptr)return true;
+						un->data=d;
+					}else d=un->data;
+					for(size_t i=un->xe;i>0;i--)d[i]=d[i-1];
+					d[0]=rows[yb].data[xb];
+					un->xb--;un->xe++;
+					return false;
+				}
 			}
 		}
 	}
@@ -728,14 +732,16 @@ bool undo_delk(size_t yb,size_t xb,size_t ye,size_t xe){
 		eundo*un=&undos[undos_tot-1];
 		if(un->data!=nullptr&&un->yb<=un->ye){
 			if(un->yb==yb&&un->xb==xb){
-				char*d;if((un->xe&row_pad)==0){
-					d=(char*)realloc(un->data,un->xe+row_pad+1);
-					if(d==nullptr)return true;
-					un->data=d;
-				}else d=un->data;
-				d[un->xe]=rows[yb].data[xb];
-				un->xe++;
-				return false;
+				if(mod_flag==false){
+					char*d;if((un->xe&row_pad)==0){
+						d=(char*)realloc(un->data,un->xe+row_pad+1);
+						if(d==nullptr)return true;
+						un->data=d;
+					}else d=un->data;
+					d[un->xe]=rows[yb].data[xb];
+					un->xe++;
+					return false;
+				}
 			}
 		}
 	}
