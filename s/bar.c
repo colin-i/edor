@@ -447,7 +447,8 @@ static int go_to(int cursor){
 		}
 		i++;
 	}
-	if(y>0&&y<=rows_tot){
+	if(y>0){
+		if(y>rows_tot)y=rows_tot;
 		ytext=y-1;
 		x--;if(x>rows[ytext].sz)
 			xtext=rows[ytext].sz;
