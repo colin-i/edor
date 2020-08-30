@@ -1892,5 +1892,5 @@ int main(int argc,char**argv){
 		endwin();
 		if(text_file!=nullptr)puts(text_file);
 	}
-	return 0;
+	return EXIT_SUCCESS;
 }
