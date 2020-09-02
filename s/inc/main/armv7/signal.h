@@ -4,9 +4,9 @@ typedef unsigned int size_t;
 #define SA_SIGINFO 0x00000004
 typedef unsigned long sigset_t;
 //
-typedef struct siginfo siginfo;
+typedef struct siginfo_t siginfo_t;
 struct sigaction{
-void(*sa_sigaction)(int,struct siginfo*,void*);
+void(*sa_sigaction)(int,siginfo_t*,void*);
 sigset_t sa_mask;
 int sa_flags;
 void*sa_handler;

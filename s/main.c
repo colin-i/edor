@@ -106,7 +106,7 @@ static void CaptureBacktraceUsingLibUnwind(void*ucontext) {
 		address_count++;
 	}
 }
-static void __attribute__((noreturn)) signalHandler(int sig,struct siginfo *info,void* ucontext){
+static void __attribute__((noreturn)) signalHandler(int sig,siginfo_t *info,void* ucontext){
 (void)sig;(void)info;
 	CaptureBacktraceUsingLibUnwind(ucontext);
 	exit(EXIT_FAILURE);
