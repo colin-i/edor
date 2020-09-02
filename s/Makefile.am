@@ -9,7 +9,7 @@ edor_CPPFLAGS = -x c++ -Wno-old-style-cast -Wno-c++98-compat @UNW@
 endif
 
 setinfofilecommand:
-	if [ ! -e "`cat ../shell_home`/.@PROJ@info" ]; then cp "../.@PROJ@info" "`cat ../shell_home`/"; fi
+	if [ ! -e "`cat ../shell_home`/.@PROJ@info" ]; then cp "../.@PROJ@info" "`cat ../shell_home`/" --preserve=ownership; fi
 
 install: install-am setinfofilecommand
 
