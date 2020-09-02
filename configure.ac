@@ -22,13 +22,16 @@ AC_PROG_CC
 
 AC_CHECK_HEADERS(dirent.h errno.h fcntl.h stdio.h stdlib.h string.h unistd.h)
 AC_CHECK_HEADERS(curses.h, [AC_SUBST(CSS, "")], [AC_SUBST(CSS, "-Wno-padded")])
+AC_SUBST(UNW, "")
+AC_SUBST(LDL, "")
 
 #arm32 unwind
 AS_IF([test "$(uname -m)" = "armv7l"],
   [AC_DEFINE(ARM7L, 1, [armv7l])
 #  AC_CHECK_HEADERS(stdlib.h stdio.h)
   AC_CHECK_HEADERS(dlfcn.h signal.h)
-  AC_CHECK_HEADERS(libunwind.h, [AC_SUBST(UNW, "")], [AC_SUBST(UNW, "-Wno-c++98-compat-pedantic")])
+  AC_CHECK_HEADERS(libunwind.h, [], [AC_SUBST(UNW, "-Wno-c++98-compat-pedantic")])
+  AC_SUBST(LDL, "-ldl")
   ]
 )
 
