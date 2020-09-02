@@ -413,7 +413,7 @@ static bool replace_text(WINDOW*w,int yb,int xb,int rstart,int rstop){
 			visual(' ');
 			return false;
 		}
-		else if(c==Char_Backspace){
+		else if(is_KEY_BACKSPACE(c)){
 			if(cursorr!=0){
 				int x=getcurx(w);int y=getcury(w);
 				if(x==0){
@@ -943,7 +943,7 @@ int command(char*comnrp){
 			}
 			break;
 		}
-		else if(a==Char_Backspace){
+		else if(is_KEY_BACKSPACE(a)){
 			cursor=bcdl(y,&pos,input,cursor);
 		}
 		else if(a==KEY_LEFT){

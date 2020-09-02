@@ -21,3 +21,9 @@ typedef struct{
 	unsigned int spc;
 	unsigned int sz;
 }row;
+
+#define Char_Return 0xd
+#define row_pad 0xF
+#define tab_sz 6
+//can be 127 or 263, note: Ctrl+h generates 263
+#define is_KEY_BACKSPACE(a) a==0407||a==0x7f

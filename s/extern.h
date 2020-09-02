@@ -40,11 +40,6 @@ bool bar_clear(void);
 bool is_dir(int);
 void err_set(WINDOW*);
 
-#define Char_Return 0xd
-#define Char_Backspace 0x7f
-#define row_pad 0xF
-#define tab_sz 6
-
 extern char ln_term[3];
 extern size_t ln_term_sz;
 extern char*textfile;
