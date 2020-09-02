@@ -27,11 +27,11 @@ AC_SUBST(UNW, "")
 #arm32 unwind
 AS_IF([test "$(uname -m)" = "armv7l"],
   [AC_DEFINE(ARM7L, 1, [armv7l])
-#  AC_CHECK_HEADERS(stdlib.h stdio.h)
   AC_CHECK_HEADERS(dlfcn.h signal.h)
   AC_CHECK_HEADERS(libunwind.h, [], [AC_SUBST(UNW, "-Wno-c++98-compat-pedantic")])
+#not all platforms need these
   AC_SEARCH_LIBS([dladdr],[dl])
-  AC_SEARCH_LIBS([unw_getcontext],[unwind-arm])
+  AC_SEARCH_LIBS([_Uarm_init_local],[unwind-arm])
   ]
 )
 
