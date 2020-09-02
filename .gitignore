@@ -9,3 +9,4 @@ config.status
 Makefile
 .dirstamp
 edor*
+shell_home

@@ -85,3 +85,5 @@ AM_INIT_AUTOMAKE
 AC_CONFIG_FILES([Makefile s/Makefile])
 
 AC_OUTPUT
+
+echo ~>./shell_home
