@@ -35,6 +35,18 @@ AS_IF([test "$(uname -m)" = "armv7l"],
 # Checks for libraries.
 
 # Checks for typedefs, structures, and compiler characteristics.
+
+start_cflgs="$CFLAGS"
+CFLAGS="-Werror=unknown-warning-option -Weverything"
+AC_MSG_CHECKING([-Weverything])
+AC_COMPILE_IFELSE(
+   [AC_LANG_SOURCE([])],
+   [AC_MSG_RESULT([yes])
+	start_cflgs="$start_cflgs -Weverything -Werror"],
+   [AC_MSG_RESULT([no])]
+)
+CFLAGS="$start_cflgs"
+
 AS_IF([test x"$cpp" = x"true"],[
 AC_LANG([C++])
 AC_MSG_CHECKING([for std::filesystem::preferred_separator])
@@ -64,17 +76,6 @@ char a=std::filesystem::path::preferred_separator;
 ],[
 AC_CHECK_HEADERS(stdbool.h stddef.h)
 ])
-
-start_cflgs="$CFLAGS"
-CFLAGS="-Werror=unknown-warning-option -Weverything"
-AC_MSG_CHECKING([-Weverything])
-AC_COMPILE_IFELSE(
-   [AC_LANG_SOURCE([])],
-   [AC_MSG_RESULT([yes])
-	start_cflgs="$start_cflgs -Weverything -Werror"],
-   [AC_MSG_RESULT([no])]
-)
-CFLAGS="$start_cflgs"
 
 # Checks for library functions.
 
