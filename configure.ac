@@ -7,9 +7,6 @@ AC_SUBST([PROJ], 'edor')
 
 AC_CONFIG_SRCDIR([s/main.c])
 
-echo >"./.${PROJ}info"
-echo ~>./bash_home
-
 AC_CONFIG_AUX_DIR([build-aux])
 # compile with -x c++
 AC_ARG_ENABLE(cpp,
@@ -88,3 +85,6 @@ AM_INIT_AUTOMAKE
 AC_CONFIG_FILES([Makefile s/Makefile])
 
 AC_OUTPUT
+
+echo >"./.${PROJ}info"
+echo ~>./bash_home
