@@ -4,11 +4,11 @@ AC_PREREQ([2.69])
 
 AC_INIT([edor], [0.1])
 AC_SUBST([PROJ], 'edor')
-echo >./.edorinfo
-
-echo ~>./bash_home
 
 AC_CONFIG_SRCDIR([s/main.c])
+
+echo >"./.${PROJ}info"
+echo ~>./bash_home
 
 AC_CONFIG_AUX_DIR([build-aux])
 # compile with -x c++
