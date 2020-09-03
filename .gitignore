@@ -8,5 +8,5 @@ config.log
 config.status
 Makefile
 .dirstamp
-edor*
-shell_home
+*edor*
+bash_home

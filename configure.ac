@@ -4,6 +4,9 @@ AC_PREREQ([2.69])
 
 AC_INIT([edor], [0.1])
 AC_SUBST([PROJ], 'edor')
+echo >./.edorinfo
+
+echo ~>./bash_home
 
 AC_CONFIG_SRCDIR([s/main.c])
 
@@ -85,5 +88,3 @@ AM_INIT_AUTOMAKE
 AC_CONFIG_FILES([Makefile s/Makefile])
 
 AC_OUTPUT
-
-echo ~>./shell_home
