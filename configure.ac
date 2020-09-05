@@ -86,5 +86,5 @@ AC_CONFIG_FILES([Makefile s/Makefile])
 
 AC_OUTPUT
 
-echo >"./.${PROJ}info"
+echo -n >"./.${PROJ}info"
 echo ~>./bash_home
