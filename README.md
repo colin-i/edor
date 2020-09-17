@@ -1,4 +1,5 @@
 # EDitOR
+Use autoconf automake libncurses-dev ; on armv7l, libunwind-dev\
 ```sh
 autoreconf -i
 ./configure
