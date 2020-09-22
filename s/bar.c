@@ -357,7 +357,7 @@ void position(int rw,int cl){
 	mvwaddstr(poswn,0,0,posbuf);
 	wnoutrefresh(poswn);
 }
-static void centering2(WINDOW*w,size_t*rw,size_t*cl,bool right){
+void centering2(WINDOW*w,size_t*rw,size_t*cl,bool right){
 	position(0,0);
 	int mx=getmaxx(w);
 	int wd=mx/3;
@@ -377,9 +377,6 @@ static void centering2(WINDOW*w,size_t*rw,size_t*cl,bool right){
 	if(rw!=nullptr){
 		rw[0]=hg;cl[0]=xc-xtext;
 	}
-}
-void centering(WINDOW*w,size_t*rw,size_t*cl){
-	centering2(w,rw,cl,false);
 }
 static void colorfind(int a,int y,size_t pos,size_t sz){
 	attrset(COLOR_PAIR(a));
@@ -664,7 +661,7 @@ static bool dos(WINDOW*w,eundo*un,size_t vl){
 				rows[i].sz--;
 			}
 			ytext=y2;xtext=0;
-			centering2(w,nullptr,nullptr,false);
+			centering(w,nullptr,nullptr);
 		}
 	}
 	undos_tot+=vl;
@@ -820,9 +817,9 @@ static int find(char*z,size_t cursor,size_t pos,size_t visib,int y){
 					ytext+=xr;xtext+=xc;
 					if(replace(cursor)/*true*/){ytext=iferrory;xtext=iferrorx;continue;}
 					if(delim_touch(y1,x1,cursorr)/*true*/)delimiter_touched=true;
-					xtext+=cursorr;
 					untouched=false;
-					centering2(w,&xr,&xc,true);
+					if(forward){xtext+=cursorr;centering2(w,&xr,&xc,true);}
+					else centering(w,&xr,&xc);
 					continue;
 				}
 				if(finding(cursor,xr,xc,forward)/*true*/){
@@ -830,8 +827,8 @@ static int find(char*z,size_t cursor,size_t pos,size_t visib,int y){
 					phase=delimiter(y1,x1,y,pos,sz,cursorr,phase);
 					if(phase/*true*/)delimiter_touched=true;
 					else if(ytext==y1&&xtext<x1)x1-=cursor-cursorr;
-					xtext+=cursorr;
-					centering2(w,&xr,&xc,true);
+					if(forward){xtext+=cursorr;centering2(w,&xr,&xc,true);}
+					else centering(w,&xr,&xc);
 					continue;
 				}
 				return 1;
@@ -881,7 +878,7 @@ static void command_rewrite(int y,int x,int pos,char*input,int cursor,int visib)
 	move(y,x);
 }
 #define is_word_char(a) ('0'<=a&&(a<='9'||('A'<=a&&(a<='Z'||(a=='_'||('a'<=a&&a<='z'))))))
-static int word_at_cursor(char*z,char*input){
+static int word_at_cursor(char*z){
 	WINDOW*w=((WINDOW**)((void*)z))[1];
 	size_t y=(size_t)getcury(w);
 	size_t x=c_to_xc(getcurx(w),(int)y);
@@ -890,19 +887,19 @@ static int word_at_cursor(char*z,char*input){
 	size_t sz=rows[y].sz;
 	if(x==sz)return 0;
 	char*d=rows[y].data;
-	if(is_word_char(d[x])==false){if(no_char(d[x])==false){*input=d[x];return 1;}return 0;}
+	if(is_word_char(d[x])==false){if(no_char(d[x])==false){*inputf=d[x];return 1;}return 0;}
 	int cursor=0;
 	if(*z==com_nr_findword){
 		size_t xpos=x;
 		while(xpos>0&&is_word_char(d[xpos-1])/*true*/)xpos--;
 		while(xpos<x){
-			input[cursor]=d[xpos];cursor++;
+			inputf[cursor]=d[xpos];cursor++;
 			if(cursor==max_path)return cursor;
 			xpos++;
 		}
 	}
 	do{
-		input[cursor]=d[x];cursor++;
+		inputf[cursor]=d[x];cursor++;
 		if(cursor==max_path)return cursor;
 		x++;
 	}while(x<sz&&is_word_char(d[x])/*true*/);
@@ -918,9 +915,9 @@ int command(char*comnrp){
 	int y=getmaxy(stdscr)-1;int pos=0;
 	char*input;int cursor;bool is_find=*comnrp>=com_nr_find;
 	if(is_find/*true*/){
-		input=inputf;
 		if(*comnrp==com_nr_findagain)cursor=cursorf;
-		else cursor=*comnrp>=com_nr_findword?word_at_cursor(comnrp,input):0;
+		else cursor=*comnrp>=com_nr_findword?word_at_cursor(comnrp):0;
+		input=inputf;
 	}else{input=input0;cursor=0;}
 	if(cursor==0)move(y,com_left);
 	else{

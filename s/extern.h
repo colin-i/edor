@@ -20,7 +20,7 @@ const char*bar_init(void);
 int save(void);
 int question(const char*);
 int command(char*);
-void centering(WINDOW*,size_t*,size_t*);
+void centering2(WINDOW*,size_t*,size_t*,bool);
 WINDOW*position_init(void);
 void position(int,int);
 void position_reset(void);
@@ -49,3 +49,5 @@ extern size_t rows_tot;
 extern size_t ytext;
 extern size_t xtext;
 extern bool mod_flag;
+
+#define centering(w,rw,cl) centering2(w,rw,cl,false)
