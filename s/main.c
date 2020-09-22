@@ -151,7 +151,7 @@ static char*helptext;
 \ncommand mode: left/right,ctrl+q\
 \nCtrl+s = save file; Alt+s = save file as...\
 \nCtrl+g = go to row[,column]\
-\nCtrl+f = find text; Alt+f = refind text\
+\nCtrl+f = find text; Alt+f = refind text; Ctrl+c = word at cursor (alphanumerics and _); Alt+c = word from cursor\
 \n    if found\
 \n      Enter       = next\
 \n      Space       = previous\
@@ -160,10 +160,9 @@ static char*helptext;
 \n      R           = modify replace text\
 \n    c = cancel\
 \n    other key to return\
-\nCtrl+u = undo\
+\nCtrl+u = undo; Alt+u = undo mode: left=undo,right=redo,other key to return\
 \nCtrl+r = redo\
-\nAlt +u = undo mode: left=undo,right=redo,other key to return\
-\nCtrl+q = quit"//28
+\nCtrl+q = quit"//27
 static bool visual_bool=false;
 static char*cutbuf=nullptr;
 static size_t cutbuf_sz=0;
@@ -525,7 +524,7 @@ static int movment(int c,WINDOW*w){
 	}
 	return -1;
 }
-static void fixmembuf(size_t*y,size_t*x){
+void fixmembuf(size_t*y,size_t*x){
 	if(y[0]>=rows_tot){
 		y[0]=rows_tot-1;
 		x[0]=rows[y[0]].sz;
@@ -1491,7 +1490,7 @@ static bool savetofile(WINDOW*w,bool has_file){
 	int ret;
 	if(has_file){
 		ret=save();
-	}else{char aa=0;ret=command(&aa);}
+	}else{char aa=com_nr_save;ret=command(&aa);}
 	if(ret!=0){
 		if(ret==1){
 			if(d!=textfile)text_file=textfile;
@@ -1525,7 +1524,8 @@ static bool loopin(WINDOW*w){
 				if(xtext!=0){xtext=0;refreshpage(w);}
 				wmove(w,y,0);past(w);
 			}
-			else if(z=='f'){if(find_mode(3,w)/*true*/)return true;}
+			else if(z=='f'){if(find_mode(com_nr_findagain,w)/*true*/)return true;}
+			else if(z=='c'){if(find_mode(5,w)/*true*/)return true;}
 			else if(z=='u'){vis('U',w);undo_loop(w);vis(' ',w);}
 			else if(z=='s'){bool b=savetofile(w,false);if(b/*true*/)return true;}
 		}else{
@@ -1539,7 +1539,7 @@ static bool loopin(WINDOW*w){
 				if(b/*true*/)return true;
 			}
 			else if(strcmp(s,"^G")==0){
-				char aa=1;
+				char aa=com_nr_goto;
 				int r=command(&aa);
 				if(r==1){
 					centering(w,nullptr,nullptr);
@@ -1548,7 +1548,9 @@ static bool loopin(WINDOW*w){
 				else return true;
 			}
 			else if(strcmp(s,"^F")==0){
-				if(find_mode(2,w)/*true*/)return true;
+				if(find_mode(com_nr_find,w)/*true*/)return true;
+			}else if(strcmp(s,"^C")==0){
+				if(find_mode(com_nr_findword,w)/*true*/)return true;
 			}else if(strcmp(s,"^U")==0){
 				undo(w);
 			}else if(strcmp(s,"^R")==0){

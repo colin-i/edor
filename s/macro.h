@@ -27,3 +27,12 @@ typedef struct{
 #define tab_sz 6
 //can be 127 or 263, note: Ctrl+h generates 263
 #define is_KEY_BACKSPACE(a) a==0407||a==0x7f
+
+#define com_nr_save 0
+#define com_nr_goto 1
+#define com_nr_find 2
+#define com_nr_findagain 3
+#define com_nr_findword 4
+//#define com_nr_findwordfrom 5
+//#define com_nr_is_find(a) *a>=com_nr_find
+//#define com_nr_is_find_word(a) *a>=com_nr_findword

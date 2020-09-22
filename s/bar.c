@@ -880,6 +880,34 @@ static void command_rewrite(int y,int x,int pos,char*input,int cursor,int visib)
 	if(rt/*true*/)addch('>');
 	move(y,x);
 }
+#define is_word_char(a) ('0'<=a&&(a<='9'||('A'<=a&&(a<='Z'||(a=='_'||('a'<=a&&a<='z'))))))
+static int word_at_cursor(char*z,char*input){
+	WINDOW*w=((WINDOW**)((void*)z))[1];
+	size_t y=(size_t)getcury(w);
+	size_t x=c_to_xc(getcurx(w),(int)y);
+	y+=ytext;x+=xtext;
+	fixmembuf(&y,&x);
+	size_t sz=rows[y].sz;
+	if(x==sz)return 0;
+	char*d=rows[y].data;
+	if(is_word_char(d[x])==false){if(no_char(d[x])==false){*input=d[x];return 1;}return 0;}
+	int cursor=0;
+	if(*z==com_nr_findword){
+		size_t xpos=x;
+		while(xpos>0&&is_word_char(d[xpos-1])/*true*/)xpos--;
+		while(xpos<x){
+			input[cursor]=d[xpos];cursor++;
+			if(cursor==max_path)return cursor;
+			xpos++;
+		}
+	}
+	do{
+		input[cursor]=d[x];cursor++;
+		if(cursor==max_path)return cursor;
+		x++;
+	}while(x<sz&&is_word_char(d[x])/*true*/);
+	return cursor;
+}
 //-2resize,-1no/quit,0er/fals,1ok
 int command(char*comnrp){
 	int rightexcl=get_right;
@@ -888,11 +916,11 @@ int command(char*comnrp){
 	if(visib<2)return 0;//phisical visib is 1
 	bar_clear();
 	int y=getmaxy(stdscr)-1;int pos=0;
-	char*input;int cursor;bool is_find=comnrp[0]>1;
+	char*input;int cursor;bool is_find=*comnrp>=com_nr_find;
 	if(is_find/*true*/){
 		input=inputf;
-		if(comnrp[0]==3)cursor=cursorf;
-		else cursor=0;
+		if(*comnrp==com_nr_findagain)cursor=cursorf;
+		else cursor=*comnrp>=com_nr_findword?word_at_cursor(comnrp,input):0;
 	}else{input=input0;cursor=0;}
 	if(cursor==0)move(y,com_left);
 	else{
@@ -902,7 +930,7 @@ int command(char*comnrp){
 		int a=getch();
 		if(a==Char_Return){
 			char comnr=comnrp[0];
-			if(comnr==0){
+			if(comnr==com_nr_save){
 				input[cursor]='\0';
 				r=saves();
 				if(r==-1){
@@ -919,7 +947,7 @@ int command(char*comnrp){
 					wnoutrefresh(stdscr);
 					return r;
 				}
-			}else if(comnr==1){
+			}else if(comnr==com_nr_goto){
 				input[cursor]='\0';
 				r=go_to(cursor);
 			}else{//if is_find

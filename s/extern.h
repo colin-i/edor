@@ -14,6 +14,7 @@ void cpymembuf(size_t,size_t,size_t,size_t,char*);
 bool paste(size_t,size_t,size_t*,char*,size_t,size_t,bool);
 void vis(char,WINDOW*);
 void visual(char);
+void fixmembuf(size_t*y,size_t*x);
 
 const char*bar_init(void);
 int save(void);
