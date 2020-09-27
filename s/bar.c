@@ -968,9 +968,6 @@ int command(char*comnrp){
 			}
 			break;
 		}
-		else if(is_KEY_BACKSPACE(a)){
-			cursor=bcdl(y,&pos,input,cursor);
-		}
 		else if(a==KEY_LEFT){
 			int x=getcurx(stdscr);
 			if(x>com_left)
@@ -1001,6 +998,28 @@ int command(char*comnrp){
 				}
 				move(y,x);
 			}
+		}
+		else if(a==KEY_HOME){
+			if(pos>0){
+				mvaddch(y,com_left-1,' ');
+				addnstr(input,visib);
+				if(visib<cursor)addch('>');
+				pos=0;
+			}
+			move(y,com_left);
+		}
+		else if(a==KEY_END){
+			if(pos+visib<=cursor){
+				if(pos==0)mvaddch(y,com_left-1,'<');
+				else move(y,com_left);
+				pos=cursor-visib+1;
+				addnstr(input+pos,visib-1);
+				const chtype t[]={' ',' '};
+				addchnstr(t,2);
+			}else move(y,com_left+cursor-pos);
+		}
+		else if(is_KEY_BACKSPACE(a)){
+			cursor=bcdl(y,&pos,input,cursor);
 		}
 		else if(a==KEY_DC){
 			int x=getcurx(stdscr);

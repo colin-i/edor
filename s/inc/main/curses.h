@@ -20,12 +20,10 @@ MEVENT;
 #define BUTTON5_PRESSED 0x200000
 #define KEY_UP 0403
 #define KEY_DOWN 0402
-#define KEY_HOME 0406
 #define KEY_SF 0520
 #define KEY_SR 0521
 #define KEY_NPAGE 0522
 #define KEY_PPAGE 0523
-#define KEY_END 0550
 #define KEY_SLEFT 0611
 #define KEY_SRIGHT 0622
 #define KEY_MOUSE 0631

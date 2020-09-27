@@ -4,7 +4,9 @@ extern WINDOW*stdscr;
 typedef unsigned int chtype;
 #define KEY_LEFT 0404
 #define KEY_RIGHT 0405
+#define KEY_HOME 0406
 #define KEY_DC 0512
+#define KEY_END 0550
 #define KEY_RESIZE 0632
 
 #ifdef __cplusplus
