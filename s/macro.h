@@ -25,8 +25,8 @@ typedef struct{
 #define Char_Return 0xd
 #define row_pad 0xF
 #define tab_sz 6
-//can be 127 or 263, note: Ctrl+h generates 263
-#define is_KEY_BACKSPACE(a) a==0407||a==0x7f
+//can be 127(ascii Delete) or 263, note: Ctrl+h generates 263
+#define is_KEY_BACKSPACE(a) a==KEY_BACKSPACE||a==0x7f
 
 #define com_nr_save 0
 #define com_nr_goto 1
