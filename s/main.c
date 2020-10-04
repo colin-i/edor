@@ -10,6 +10,11 @@
 #else
 #include"inc/main/fcntl.h"
 #endif
+#ifdef HAVE_POLL_H
+#include<poll.h>
+#else
+#include"inc/main/poll.h"
+#endif
 #ifdef HAVE_STDLIB_H
 #include<stdlib.h>
 #else
@@ -173,6 +178,7 @@ static char*text_init_e;
 static int _rb;static int _cb;
 static int _re;static int _ce;
 #define view_margin 8
+#define known_stdin 0
 
 bool no_char(char z){return z<32||z>=127;}
 static void tab_grow(WINDOW*w,int r,char*a,size_t sz,int*ptr){
@@ -1594,7 +1600,7 @@ static int normalize(char**c,size_t*size,size_t*r){
 	int ok=0;
 	char*text_w=c[0];
 	size_t sz=size[0];
-	char*norm=(char*)malloc(2*sz+1);//-1 ok but,when sz=0,not ok
+	char*norm=(char*)malloc(2*sz+1);
 	if(norm!=nullptr){
 		size_t j=0;ok=1;
 		for(size_t i=0;i<sz;i++){
@@ -1640,8 +1646,8 @@ static void rows_init(size_t size){
 	z->sz=(size_t)(b-a);z->spc=0;
 	rows_spc=rows_tot;
 }
-static int startfile(char*f,size_t*text_sz){
-	int ok=0;
+static bool grab_file(char*f,size_t*text_sz){
+	bool fake=true;
 	int fd=open(f,O_RDONLY);
 	if(fd!=-1){
 		if(is_dir(fd)/*true*/){
@@ -1659,30 +1665,57 @@ static int startfile(char*f,size_t*text_sz){
 			if(text_init_b!=nullptr){
 				lseek(fd,0,SEEK_SET);
 				read(fd,text_init_b,size);
-				//
-				size_t i=size;
-				while(i>0){
-					i--;
-					if(text_init_b[i]=='\n'){
-						if(i!=0&&text_init_b[i-1]=='\r'){
-							ln_term[0]='\r';
-							ln_term[1]='\n';
-							ln_term[2]='\0';
-							ln_term_sz=2;
-						}
-						break;
-					}else if(text_init_b[i]=='\r'){
-						ln_term[0]='\r';
-						break;
-					}
-				}
 				text_sz[0]=size;
-				ok=normalize(&text_init_b,text_sz,&rows_tot);
+				fake=false;
 			}
 		}
 		close(fd);
 	}
-	return ok;
+	return fake;
+}
+static bool grab_input(size_t*text_sz){
+	size_t s=512;size_t d;
+	do{
+		void*v=realloc(text_init_b,*text_sz+s);
+		if(v==nullptr)return true;
+		text_init_b=(char*)v;
+		char*c=text_init_b+*text_sz;
+		d=(size_t)read(known_stdin,c,s);//zero indicates end of file
+		//char*b=fgets(c,s,stdin);
+		//if(b==nullptr)break;
+		//d=strlen(c);
+		*text_sz+=d;
+	}while(d==s);
+	freopen("/dev/tty","r",stdin);
+	return false;
+}
+static int startfile(char*f,size_t*text_sz,bool no_file,bool no_input){
+	if(no_file==false){if(grab_file(f,text_sz)/*true*/)return 0;}
+	if(no_input==false){
+		if(no_file){
+			text_init_b=(char*)malloc(0);
+			if(text_init_b==nullptr)return 0;
+			*text_sz=0;
+		}
+		if(grab_input(text_sz)/*true*/)return 0;
+	}
+	size_t i=*text_sz;
+	while(i>0){
+		i--;
+		if(text_init_b[i]=='\n'){
+			if(i!=0&&text_init_b[i-1]=='\r'){
+				ln_term[0]='\r';
+				ln_term[1]='\n';
+				ln_term[2]='\0';
+				ln_term_sz=2;
+			}
+			break;
+		}else if(text_init_b[i]=='\r'){
+			ln_term[0]='\r';
+			break;
+		}
+	}
+	return normalize(&text_init_b,text_sz,&rows_tot);
 }
 static void getfilebuf(char*cutbuf_file){//,size_t off){
 	int f=open(cutbuf_file,O_RDONLY);
@@ -1834,8 +1867,15 @@ int main(int argc,char**argv){
 	if(w1!=nullptr){
 		raw();//stty,cooked;relevant for getchar at me
 		size_t text_sz;
+		bool no_file=argc!=2||new_visual(argv[1])/*true*/;
+		struct pollfd fds[1];
+		//typedef struct __sFILE FILE;
+		//FILE* stdin __attribute__((annotate("introduced_in=" "23")));
+		fds[0].fd = known_stdin;
+		fds[0].events = POLLIN;
+		bool no_input=poll(fds, 1, 0)<1;
 		int ok=0;
-		if(argc!=2||new_visual(argv[1])/*true*/){
+		if(no_file/*true*/&&no_input/*true*/){
 			text_init_b=(char*)malloc(1);
 			if(text_init_b!=nullptr){
 				rows=(row*)malloc(sizeof(row));
@@ -1849,7 +1889,7 @@ int main(int argc,char**argv){
 				}
 			}
 		}else{
-			ok=startfile(argv[1],&text_sz);
+			ok=startfile(argv[1],&text_sz,no_file,no_input);
 			if(ok!=0){
 				if(ok<1){
 					char txt[]={'N','o','r','m','a','l','i','z','e',' ','l','i','n','e',' ','e','n','d','i','n','g','s',' ','t','o',' ','\\','r',' ',' ','?',' ','n','=','n','o',',',' ','d','e','f','a','u','l','t','=','y','e','s','\r','\0'};

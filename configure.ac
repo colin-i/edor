@@ -20,7 +20,7 @@ AC_PROG_CC
 
 # Checks for header files. Checks for libraries.
 
-AC_CHECK_HEADERS(dirent.h errno.h fcntl.h stdio.h stdlib.h string.h unistd.h)
+AC_CHECK_HEADERS(dirent.h errno.h fcntl.h poll.h stdio.h stdlib.h string.h unistd.h)
 AC_CHECK_HEADERS(curses.h, [AC_SUBST(CSS, "")], [AC_SUBST(CSS, "-Wno-padded")])
 AC_SUBST(UNW, "")
 
