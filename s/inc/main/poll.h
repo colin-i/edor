@@ -3,9 +3,9 @@
 
 typedef unsigned int nfds_t;
 struct pollfd{
-	int     fd;//       The following descriptor being polled. 
-	short  events;//   The input event flags (see below). 
-	short  revents;//  The output event flags (see below). 
+	int    fd;//       The following descriptor being polled.
+	short  events;//   The input event flags (see below).
+	short  revents;//  The output event flags (see below).
 };
 
 #ifdef __cplusplus
