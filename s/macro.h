@@ -30,9 +30,10 @@ typedef struct{
 
 #define com_nr_save 0
 #define com_nr_goto 1
-#define com_nr_find 2
-#define com_nr_findagain 3
-#define com_nr_findword 4
-//#define com_nr_findwordfrom 5
+#define com_nr_goto_alt 2
+#define com_nr_find 3
+#define com_nr_findagain 4
+#define com_nr_findword 5
+//#define com_nr_findwordfrom 6
 //#define com_nr_is_find(a) *a>=com_nr_find
 //#define com_nr_is_find_word(a) *a>=com_nr_findword

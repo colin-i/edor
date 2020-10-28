@@ -780,6 +780,7 @@ static bool delimiter(size_t y1,size_t x1,int y,size_t pos,size_t sz,size_t c,bo
 	}
 	return false;
 }
+#define quick_get(z) ((WINDOW**)((void*)z))[1]
 //1,0,-2resz
 static int find(char*z,size_t cursor,size_t pos,size_t visib,int y){
 	/*warning: cast from
@@ -789,7 +790,7 @@ static int find(char*z,size_t cursor,size_t pos,size_t visib,int y){
 	/*warning: arithmetic on
       a pointer to void is a GNU extension*/
 	//z+=sizeof(void*);
-	WINDOW*w=((WINDOW**)((void*)z))[1];
+	WINDOW*w=quick_get(z);
 	size_t xr=(size_t)getcury(w);
 	size_t xc=c_to_xc(getcurx(w),(int)xr);
 	//
@@ -879,7 +880,7 @@ static void command_rewrite(int y,int x,int pos,char*input,int cursor,int visib)
 }
 #define is_word_char(a) ('0'<=a&&(a<='9'||('A'<=a&&(a<='Z'||(a=='_'||('a'<=a&&a<='z'))))))
 static int word_at_cursor(char*z){
-	WINDOW*w=((WINDOW**)((void*)z))[1];
+	WINDOW*w=quick_get(z);
 	size_t y=(size_t)getcury(w);
 	size_t x=c_to_xc(getcurx(w),(int)y);
 	y+=ytext;x+=xtext;
@@ -918,10 +919,15 @@ int command(char*comnrp){
 		if(*comnrp==com_nr_findagain)cursor=cursorf;
 		else cursor=*comnrp>=com_nr_findword?word_at_cursor(comnrp):0;
 		input=inputf;
-	}else{input=input0;cursor=0;}
+	}else{
+		input=input0;
+		if(*comnrp==com_nr_goto_alt)cursor=sprintf(input,"%u,",1+ytext
+			+(size_t)getcury(quick_get(comnrp)));
+		else cursor=0;
+	}
 	if(cursor==0)move(y,com_left);
 	else{
-		command_rewrite(y,com_left,0,input,cursor,visib);
+		command_rewrite(y,com_left+(cursor<visib?cursor:0),0,input,cursor,visib);
 	}
 	int r;for(;;){
 		int a=getch();
@@ -944,7 +950,7 @@ int command(char*comnrp){
 					wnoutrefresh(stdscr);
 					return r;
 				}
-			}else if(comnr==com_nr_goto){
+			}else if(comnr==com_nr_goto||comnr==com_nr_goto_alt){
 				input[cursor]='\0';
 				r=go_to(cursor);
 			}else{//if is_find

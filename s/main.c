@@ -155,7 +155,7 @@ static char*helptext;
 \nCtrl+p = paste; Alt+p = paste at the beginning of the row\
 \ncommand mode: left/right,ctrl+q\
 \nCtrl+s = save file; Alt+s = save file as...\
-\nCtrl+g = go to row[,column]\
+\nCtrl+g = go to row[,column]; Alt+g = \"current_row,\" is entered\
 \nCtrl+f = find text; Alt+f = refind text; Ctrl+c = word at cursor (alphanumerics and _); Alt+c = word from cursor\
 \n    if found\
 \n      Enter       = next\
@@ -1480,15 +1480,23 @@ static bool visual_mode(WINDOW*w,bool v_l){
 	}while(z!=0);
 	return false;
 }
+#define quick_pack(nr,w) char*args[2];args[0]=(char*)nr;args[1]=(char*)w;
 static bool find_mode(int nr,WINDOW*w){
-	char*args[2];
-	args[0]=(char*)nr;
-	args[1]=(char*)w;
+	quick_pack(nr,w)
 	int r=command((char*)args);
 	if(r==-2)return true;
 	else if(r!=0){
 		wmove(w,getcury(w),getcurx(w));
 	}
+	return false;
+}
+static bool goto_mode(char*args,WINDOW*w){
+	int r=command(args);
+	if(r==1){
+		centering(w,nullptr,nullptr);
+	}
+	else if(r>-2)wmove(w,getcury(w),getcurx(w));
+	else return true;
 	return false;
 }
 static bool savetofile(WINDOW*w,bool has_file){
@@ -1530,8 +1538,12 @@ static bool loopin(WINDOW*w){
 				if(xtext!=0){xtext=0;refreshpage(w);}
 				wmove(w,y,0);past(w);
 			}
+			else if(z=='g'){
+				quick_pack(com_nr_goto_alt,w)			
+				if(goto_mode((char*)args,w)/*true*/)return true;
+			}
 			else if(z=='f'){if(find_mode(com_nr_findagain,w)/*true*/)return true;}
-			else if(z=='c'){if(find_mode(5,w)/*true*/)return true;}
+			else if(z=='c'){if(find_mode(6,w)/*true*/)return true;}
 			else if(z=='u'){vis('U',w);undo_loop(w);vis(' ',w);}
 			else if(z=='s'){bool b=savetofile(w,false);if(b/*true*/)return true;}
 		}else{
@@ -1546,14 +1558,8 @@ static bool loopin(WINDOW*w){
 			}
 			else if(strcmp(s,"^G")==0){
 				char aa=com_nr_goto;
-				int r=command(&aa);
-				if(r==1){
-					centering(w,nullptr,nullptr);
-				}
-				else if(r>-2)wmove(w,getcury(w),getcurx(w));
-				else return true;
-			}
-			else if(strcmp(s,"^F")==0){
+				if(goto_mode(&aa,w)/*true*/)return true;
+			}else if(strcmp(s,"^F")==0){
 				if(find_mode(com_nr_find,w)/*true*/)return true;
 			}else if(strcmp(s,"^C")==0){
 				if(find_mode(com_nr_findword,w)/*true*/)return true;
