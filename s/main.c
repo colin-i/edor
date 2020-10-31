@@ -1825,7 +1825,8 @@ static void proced(char*comline){
 				refreshpage(w);
 				wmove(w,cy,cx);
 				printhelp();
-				if(r<old_r)clrtoeol();//resize to up,is over text
+				if(r<=old_r)clrtoeol();//resize to up,is over text
+				//or =, clear bar,visual and saves
 				old_r=r;
 				if(mod_flag==false)mod_set(false);
 				else wnoutrefresh(stdscr);
