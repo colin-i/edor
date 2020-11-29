@@ -145,7 +145,7 @@ static char*helptext;
 #define hel2 " [filepath]\
 \nINPUT\
 \nhelp: q(uit),up/down,mouse/touch v.scroll\
-\narrows(Shift),home/end (Ctrl,Alt),page up/down;mouse/touch click and v.scroll\
+\narrows[+Shift],home/end [+ Ctrl,Alt],page up/down;mouse/touch click and v.scroll\
 \nCtrl+v = visual mode; Alt+v = visual line mode\
 \n    c = copy\
 \n    d = delete\
