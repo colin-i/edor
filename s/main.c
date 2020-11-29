@@ -145,7 +145,7 @@ static char*helptext;
 #define hel2 " [filepath]\
 \nINPUT\
 \nhelp: q(uit),up/down,mouse/touch v.scroll\
-\narrows(Shift),home(Ctrl,Alt)/end(Ctrl),page up/down;mouse/touch click or v.scroll\
+\narrows(Shift),home/end(Ctrl,Alt),page up/down;mouse/touch click or v.scroll\
 \nCtrl+v = visual mode; Alt+v = visual line mode\
 \n    c = copy\
 \n    d = delete\
@@ -415,8 +415,9 @@ static void srmove(WINDOW*w,int x,bool back){
 		}
 	}
 }
-static int end(WINDOW*w,size_t r){
+static int endmv(WINDOW*w,size_t r,bool minusone){
 	size_t sz=rows[r].sz;
+	if(minusone/*true*/&&sz>0)sz--;
 	if(xtext>=sz){xtext=sz;return 0;}
 	char*b=rows[r].data;
 	char*s=b+sz;
@@ -430,6 +431,15 @@ static int end(WINDOW*w,size_t r){
 	}
 	xtext=(size_t)(s-b);
 	return m;
+}
+#define end(w,r) endmv(w,r,false)
+static void endmov(WINDOW*w,bool minusone){
+	int y=getcury(w);
+	size_t r=ytext+(size_t)y;
+	int x;if(r<rows_tot)x=endmv(w,r,minusone);
+	else{xtext=0;x=0;}
+	refreshpage(w);
+	wmove(w,y,x);
 }
 static int home(WINDOW*w,size_t r){
 	char*d=rows[r].data;
@@ -477,14 +487,8 @@ static int movment(int c,WINDOW*w){
 		xtext=0;int y=getcury(w);
 		refreshpage(w);
 		wmove(w,y,0);
-	}else if(c==KEY_END){
-		int y=getcury(w);
-		size_t r=ytext+(size_t)y;
-		int x;if(r<rows_tot)x=end(w,r);
-		else{xtext=0;x=0;}
-		refreshpage(w);
-		wmove(w,y,x);
-	}else if(c==KEY_PPAGE){
+	}else if(c==KEY_END)endmov(w,false);
+	else if(c==KEY_PPAGE){
 		int y=getcury(w);int x=getcurx(w);
 		size_t my=(size_t)getmaxy(w);
 		ytext=my>ytext?0:ytext-my;
@@ -526,7 +530,8 @@ static int movment(int c,WINDOW*w){
 			else{xtext=0;x=0;}
 			refreshpage(w);
 			wmove(w,y,x);
-		}else return 0;
+		}else if(strcmp(s,"kEND3")==0)endmov(w,true);
+		else return 0;
 	}
 	return -1;
 }
