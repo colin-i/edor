@@ -229,7 +229,7 @@ void refreshrowsbot(WINDOW*w,int i,int maxy){
 		i++;
 	}while(i<maxy);
 }
-static bool bmove(WINDOW*w,int r,int c,bool back){
+static void bmove(WINDOW*w,int r,int c,bool back){
 	wmove(w,r,c);
 	char chr=(char)winch(w);
 	if(chr==' '){
@@ -256,14 +256,14 @@ static bool bmove(WINDOW*w,int r,int c,bool back){
 						}
 						refreshpage(w);
 						wmove(w,r,c);
-						return false;
+				//		return false;
 					}
 				}
-				return true;
+				//return true;
 			}
 		}
 	}
-	return true;
+	//return true;
 }
 static void amove(WINDOW*w,int r,int c){
 	bmove(w,r,c,true);
@@ -436,9 +436,10 @@ static int endmv(WINDOW*w,size_t r,bool minusone){
 static void endmov(WINDOW*w,bool minusone){
 	int y=getcury(w);
 	size_t r=ytext+(size_t)y;
+	size_t xcare=xtext;
 	int x;if(r<rows_tot)x=endmv(w,r,minusone);
 	else{xtext=0;x=0;}
-	refreshpage(w);
+	if(xtext!=xcare)refreshpage(w);
 	wmove(w,y,x);
 }
 static int home(WINDOW*w,size_t r){
@@ -459,47 +460,54 @@ static int home(WINDOW*w,size_t r){
 	}
 	return c;
 }
-//1resize,0diff key,-,1refreshed,2no refresh
+//1resize,0diff key,-1processed
 static int movment(int c,WINDOW*w){
 	if(c==KEY_MOUSE){
 		MEVENT e;
 		getmouse(&e);//==OK is when mousemask is 0, but then nothint at getch
 		if((e.bstate&BUTTON4_PRESSED)!=0)tmove(w,getcury(w),false);
 		else if((e.bstate&BUTTON5_PRESSED)!=0)tmove(w,getcury(w),true);
-		else if((e.bstate&BUTTON1_CLICKED)!=0){amove(w,e.y-1,e.x-1);return -2;}
+		else if((e.bstate&BUTTON1_CLICKED)!=0)amove(w,e.y-1,e.x-1);//return -2;}
 	}else if(c==KEY_UP){
 		int y=getcury(w);
-		if(y>0){amove(w,y-1,getcurx(w));return -2;}
+		if(y>0)amove(w,y-1,getcurx(w));//return -2;}
 		else sumove(w,y);
 	}else if(c==KEY_DOWN){
 		int y=getcury(w);
-		if(y+1<getmaxy(w)){amove(w,y+1,getcurx(w));return -2;}
+		if(y+1<getmaxy(w))amove(w,y+1,getcurx(w));//return -2;}
 		else sdmove(w,y);
 	}else if(c==KEY_LEFT){
 		int x=getcurx(w);
-		if(x>0){amove(w,getcury(w),x-1);return -2;}
+		if(x>0)amove(w,getcury(w),x-1);//return -2;}
 		else slmove(w,x,true);
 	}else if(c==KEY_RIGHT){
 		int x=getcurx(w);
-		if(x+1<getmaxx(w)){if(bmove(w,getcury(w),x+1,false)/*true*/)return -2;}
+		if(x+1<getmaxx(w))bmove(w,getcury(w),x+1,false);//)return -2;}
 		else srmove(w,x,false);
 	}else if(c==KEY_HOME){
-		xtext=0;int y=getcury(w);
-		refreshpage(w);
+		int y=getcury(w);
+		if(xtext!=0){
+			xtext=0;
+			refreshpage(w);
+		}
 		wmove(w,y,0);
 	}else if(c==KEY_END)endmov(w,false);
 	else if(c==KEY_PPAGE){
-		int y=getcury(w);int x=getcurx(w);
-		size_t my=(size_t)getmaxy(w);
-		ytext=my>ytext?0:ytext-my;
-		refreshpage(w);
-		amove(w,y,x);
+		if(ytext!=0){
+			int y=getcury(w);int x=getcurx(w);
+			size_t my=(size_t)getmaxy(w);
+			ytext=my>ytext?0:ytext-my;
+			refreshpage(w);
+			amove(w,y,x);
+		}
 	}else if(c==KEY_NPAGE){
-		int y=getcury(w);int x=getcurx(w);
-		ytext+=(size_t)getmaxy(w);
-		if(ytext+1>rows_tot)ytext=rows_tot-1;
-		refreshpage(w);
-		amove(w,y,x);
+		if(ytext<rows_tot-1){
+			int y=getcury(w);int x=getcurx(w);
+			ytext+=(size_t)getmaxy(w);
+			if(ytext>rows_tot-1)ytext=rows_tot-1;
+			refreshpage(w);
+			amove(w,y,x);
+		}
 	}else if(c==KEY_SLEFT)slmove(w,getcurx(w),false);
 	else if(c==KEY_SRIGHT)srmove(w,getcurx(w),true);
 	else if(c==KEY_SF)sdmove(w,getcury(w));
@@ -510,25 +518,29 @@ static int movment(int c,WINDOW*w){
 	else{
 		const char*s=keyname(c);
 		if(strcmp(s,"kHOM5")==0){
-			ytext=0;xtext=0;
-			refreshpage(w);
+			if(ytext!=0||xtext!=0){
+				ytext=0;xtext=0;
+				refreshpage(w);
+			}
 			wmove(w,0,0);
 		}else if(strcmp(s,"kEND5")==0){
-			size_t max=(size_t)getmaxy(w);
-			size_t y_test=rows_tot<=max?0:rows_tot-max;
-			if(ytext<y_test)ytext=y_test;
+			bool ycare;size_t xcare=xtext;
+			int val=(int)rows_tot-getmaxy(w);
+			if((int)ytext<val){ytext=(size_t)val;ycare=true;}
+			else ycare=false;
 			size_t a=rows_tot-1;
 			int y=(int)(a-ytext);
 			int x=end(w,a);
-			refreshpage(w);
+			if(ycare||xtext!=xcare)refreshpage(w);
 			//moved by curses, but no add str for line breaks
 			wmove(w,y,x);
 		}else if(strcmp(s,"kHOM3")==0){
 			int y=getcury(w);
 			size_t r=ytext+(size_t)y;
+			size_t xcare=xtext;
 			int x;if(r<rows_tot)x=home(w,r);
 			else{xtext=0;x=0;}
-			refreshpage(w);
+			if(xcare!=xtext)refreshpage(w);
 			wmove(w,y,x);
 		}else if(strcmp(s,"kEND3")==0)endmov(w,true);
 		else return 0;
@@ -756,7 +768,7 @@ static void difsel(WINDOW*w,int rb,int cb,int re,int ce){
 	if(a/*true*/)unsel(w);
 	if(b/*true*/)sel(w,1,2,rb,cb,re,ce);
 }
-static void printsel(WINDOW*w,size_t ybsel,size_t xbsel,size_t yesel,size_t xesel,int z){
+static void printsel(WINDOW*w,size_t ybsel,size_t xbsel,size_t yesel,size_t xesel,bool care){
 	int wd=getmaxx(w);
 	int cright=wd-1;
 	int rb;int cb;
@@ -790,7 +802,7 @@ static void printsel(WINDOW*w,size_t ybsel,size_t xbsel,size_t yesel,size_t xese
 		}
 	}
 	ce++;
-	if(z!=-2)sel(w,1,2,rb,cb,re,ce);
+	if(care/*true*/)sel(w,1,2,rb,cb,re,ce);
 	else difsel(w,rb,cb,re,ce);
 	wattrset(w,0);
 	_rb=rb;_cb=cb;
@@ -1396,7 +1408,7 @@ static void indent(bool b,size_t ybsel,size_t*xbsel,size_t yesel,size_t*xesel,WI
 			}else{
 				xbsel[0]=0;xesel[0]=v_l_x(yesel,xesel[0],rows_tot-1,w);
 				refreshrowsbot(w,rb,re);
-				printsel(w,ybsel,0,yesel,xesel[0],-1);
+				printsel(w,ybsel,0,yesel,xesel[0],true);
 			}
 		}else refreshrowsbot(w,rb,re);
 	}
@@ -1430,11 +1442,12 @@ static bool visual_mode(WINDOW*w,bool v_l){
 			xesel=xtext+(size_t)getmaxx(w)-1;
 		}
 	}
-	printsel(w,ybsel,xbsel,yesel,xesel,-1);
+	printsel(w,ybsel,xbsel,yesel,xesel,true);
 	wmove(w,rw,cl);
 	int z;
 	do{
 		int b=wgetch(w);
+		size_t ycare=ytext;size_t xcare=xtext;
 		z=movment(b,w);
 		if(z==1)return true;
 		else{
@@ -1478,7 +1491,7 @@ static bool visual_mode(WINDOW*w,bool v_l){
 				position(getcury(w),getcurx(w));
 				size_t y=ytext+(size_t)r;size_t x=xtext+c_to_xc(col,r);
 				setmembuf(y,x,&orig,&ybsel,&xbsel,&yesel,&xesel,w,v_l);
-				printsel(w,ybsel,xbsel,yesel,xesel,z);
+				printsel(w,ybsel,xbsel,yesel,xesel,ytext!=ycare||xtext!=xcare);
 			}
 			wmove(w,r,col);
 		}
