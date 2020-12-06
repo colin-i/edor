@@ -468,14 +468,6 @@ static int movment(int c,WINDOW*w){
 		if((e.bstate&BUTTON4_PRESSED)!=0)tmove(w,getcury(w),false);
 		else if((e.bstate&BUTTON5_PRESSED)!=0)tmove(w,getcury(w),true);
 		else if((e.bstate&BUTTON1_CLICKED)!=0)amove(w,e.y-1,e.x-1);//return -2;}
-	}else if(c==KEY_UP){
-		int y=getcury(w);
-		if(y>0)amove(w,y-1,getcurx(w));//return -2;}
-		else sumove(w,y);
-	}else if(c==KEY_DOWN){
-		int y=getcury(w);
-		if(y+1<getmaxy(w))amove(w,y+1,getcurx(w));//return -2;}
-		else sdmove(w,y);
 	}else if(c==KEY_LEFT){
 		int x=getcurx(w);
 		if(x>0)amove(w,getcury(w),x-1);//return -2;}
@@ -484,6 +476,14 @@ static int movment(int c,WINDOW*w){
 		int x=getcurx(w);
 		if(x+1<getmaxx(w))bmove(w,getcury(w),x+1,false);//)return -2;}
 		else srmove(w,x,false);
+	}else if(c==KEY_UP){
+		int y=getcury(w);
+		if(y>0)amove(w,y-1,getcurx(w));//return -2;}
+		else sumove(w,y);
+	}else if(c==KEY_DOWN){
+		int y=getcury(w);
+		if(y+1<getmaxy(w))amove(w,y+1,getcurx(w));//return -2;}
+		else sdmove(w,y);
 	}else if(c==KEY_HOME){
 		int y=getcury(w);
 		if(xtext!=0){
@@ -496,7 +496,7 @@ static int movment(int c,WINDOW*w){
 		if(ytext!=0){
 			int y=getcury(w);int x=getcurx(w);
 			size_t my=(size_t)getmaxy(w);
-			ytext=my>ytext?0:ytext-my;
+			ytext=my>=ytext?0:ytext-my;
 			refreshpage(w);
 			amove(w,y,x);
 		}
