@@ -1,4 +1,4 @@
-#include "macro.h"
+#include "top.h"
 
 #ifdef HAVE_CURSES_H
 #include<curses.h>
@@ -119,7 +119,7 @@ static void __attribute__((noreturn)) signalHandler(int sig,siginfo_t *info,void
 //static void baz(int argc){int *foo = (int*)-1;if(argc==1)sprintf((char*)24,"%d\n", *foo);else free((void*)10);}
 #endif
 
-#include"extern.h"
+#include"base.h"
 
 char ln_term[3]="\n";
 size_t ln_term_sz=1;
@@ -145,7 +145,7 @@ static char*helptext;
 #define hel2 " [filepath]\
 \nINPUT\
 \nhelp: q(uit),up/down,mouse/touch v.scroll\
-\n[Shift+]arrows,[Ctrl,Alt +] home/end,page up/down;mouse/touch click and v.scroll\
+\n[Shift+]arrows,[Alt+]left/right,[Ctrl/Alt +]home/end,page up/down;mouse/touch click and v.scroll\
 \nCtrl+v = visual mode; Alt+v = visual line mode\
 \n    c = copy\
 \n    d = delete\
@@ -460,6 +460,91 @@ static int home(WINDOW*w,size_t r){
 	}
 	return c;
 }
+static int xc_to_c(size_t col,int r){
+	int*p=&tabs[tabs_rsz*r];
+	int n=p[0];
+	for(int i=0;i<n;i++){
+		p++;
+		if((size_t)p[0]<col)col+=tab_sz-1;
+		else break;
+	}
+	return(int)col;
+}
+size_t c_to_xc(int c,int r){
+	int*p=&tabs[tabs_rsz*r];
+	int n=p[0];int x=c;
+	for(int i=0;i<n;i++){
+		p++;
+		//cright can be in tab
+		if((p[0]+(tab_sz-1))<c)x-=tab_sz-1;
+		else break;
+	}
+	return (size_t)x;
+}
+void fixmembuf(size_t*y,size_t*x){
+	if(y[0]>=rows_tot){
+		y[0]=rows_tot-1;
+		x[0]=rows[y[0]].sz;
+		return;
+	}
+	size_t sz=rows[y[0]].sz;
+	if(x[0]>sz)x[0]=sz;
+}
+static void left(WINDOW*w,int c){
+	if(c>0)amove(w,getcury(w),c-1);
+	else slmove(w,c,true);
+}
+static void left_wordmove(WINDOW*w){
+	int r=getcury(w);
+	int c=getcurx(w);
+	size_t y=ytext+(size_t)r;
+	size_t x=xtext+c_to_xc(c,r);
+	fixmembuf(&y,&x);
+	size_t sz=rows[y].sz;
+	char*d=rows[y].data;
+	if(x==sz||is_word_char(d[x])==false||x==0||is_word_char(d[x-1])==false){left(w,c);return;}
+	size_t prevx=x;
+	x--;
+	for(;;){
+		if(x==0)break;
+		x--;
+		if(is_word_char(d[x])==false){x++;break;}
+	}
+	if(x<xtext){xtext=x;refreshpage(w);c=0;}
+	else c-=prevx-x;
+	wmove(w,r,c);
+}
+static void right(WINDOW*w,int c){
+	if(c+1<getmaxx(w))bmove(w,getcury(w),c+1,false);
+	else srmove(w,c,false);
+}
+static void right_wordmove(WINDOW*w){
+	int r=getcury(w);
+	int c=getcurx(w);
+	size_t y=ytext+(size_t)r;
+	size_t x=xtext+c_to_xc(c,r);
+	fixmembuf(&y,&x);
+	size_t sz=rows[y].sz;
+	char*d=rows[y].data;
+	if(x==sz||is_word_char(d[x])==false||x+1==sz||is_word_char(d[x+1])==false){right(w,c);return;}
+	size_t prevx=x;
+	x++;
+	for(;;){
+		if(x+1==sz)break;
+		x++;
+		if(is_word_char(d[x])==false){x--;break;}
+	}
+	c+=x-prevx;
+	int max=getmaxx(w);
+	if(c>=max){
+		do{
+			size_t val=d[xtext]=='\t'?tab_sz:1;
+			xtext+=val;c-=val;
+		}while(c>=max);
+		refreshpage(w);
+	}
+	wmove(w,r,c);
+}
 //1resize,0diff key,-1processed
 static int movment(int c,WINDOW*w){
 	if(c==KEY_MOUSE){
@@ -468,15 +553,9 @@ static int movment(int c,WINDOW*w){
 		if((e.bstate&BUTTON4_PRESSED)!=0)tmove(w,getcury(w),false);
 		else if((e.bstate&BUTTON5_PRESSED)!=0)tmove(w,getcury(w),true);
 		else if((e.bstate&BUTTON1_CLICKED)!=0)amove(w,e.y-1,e.x-1);//return -2;}
-	}else if(c==KEY_LEFT){
-		int x=getcurx(w);
-		if(x>0)amove(w,getcury(w),x-1);//return -2;}
-		else slmove(w,x,true);
-	}else if(c==KEY_RIGHT){
-		int x=getcurx(w);
-		if(x+1<getmaxx(w))bmove(w,getcury(w),x+1,false);//)return -2;}
-		else srmove(w,x,false);
-	}else if(c==KEY_UP){
+	}else if(c==KEY_LEFT)left(w,getcurx(w));
+	else if(c==KEY_RIGHT)right(w,getcurx(w));
+	else if(c==KEY_UP){
 		int y=getcury(w);
 		if(y>0)amove(w,y-1,getcurx(w));//return -2;}
 		else sumove(w,y);
@@ -534,7 +613,9 @@ static int movment(int c,WINDOW*w){
 			if(ycare||xtext!=xcare)refreshpage(w);
 			//moved by curses, but no add str for line breaks
 			wmove(w,y,x);
-		}else if(strcmp(s,"kHOM3")==0){
+		}else if(strcmp(s,"kLFT3")==0)left_wordmove(w);
+		else if(strcmp(s,"kRIT3")==0)right_wordmove(w);
+		else if(strcmp(s,"kHOM3")==0){
 			int y=getcury(w);
 			size_t r=ytext+(size_t)y;
 			size_t xcare=xtext;
@@ -546,15 +627,6 @@ static int movment(int c,WINDOW*w){
 		else return 0;
 	}
 	return -1;
-}
-void fixmembuf(size_t*y,size_t*x){
-	if(y[0]>=rows_tot){
-		y[0]=rows_tot-1;
-		x[0]=rows[y[0]].sz;
-		return;
-	}
-	size_t sz=rows[y[0]].sz;
-	if(x[0]>sz)x[0]=sz;
 }
 size_t sizemembuf(size_t ybsel,size_t xbsel,size_t yesel,size_t xesel){
 	if(ybsel==yesel)return xesel-xbsel;
@@ -721,27 +793,6 @@ static void setmembuf(size_t y,size_t x,bool*orig,size_t*yb,size_t*xb,size_t*ye,
 			yb[0]=y;xb[0]=x;
 		}
 	}
-}
-static int xc_to_c(size_t col,int r){
-	int*p=&tabs[tabs_rsz*r];
-	int n=p[0];
-	for(int i=0;i<n;i++){
-		p++;
-		if((size_t)p[0]<col)col+=tab_sz-1;
-		else break;
-	}
-	return(int)col;
-}
-size_t c_to_xc(int c,int r){
-	int*p=&tabs[tabs_rsz*r];
-	int n=p[0];int x=c;
-	for(int i=0;i<n;i++){
-		p++;
-		//cright can be in tab
-		if((p[0]+(tab_sz-1))<c)x-=tab_sz-1;
-		else break;
-	}
-	return (size_t)x;
 }
 static void unsel(WINDOW*w){
 	sel(w,0,0,_rb,_cb,_re,_ce);

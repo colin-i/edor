@@ -37,3 +37,5 @@ typedef struct{
 //#define com_nr_findwordfrom 6
 //#define com_nr_is_find(a) *a>=com_nr_find
 //#define com_nr_is_find_word(a) *a>=com_nr_findword
+
+#define is_word_char(a) ('0'<=a&&(a<='9'||('A'<=a&&(a<='Z'||(a=='_'||('a'<=a&&a<='z'))))))

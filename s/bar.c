@@ -1,4 +1,4 @@
-#include "macro.h"
+#include "top.h"
 
 #ifdef HAVE_CURSES_H
 #include<curses.h>
@@ -41,7 +41,7 @@
 #include"inc/bar/unistd.h"
 #endif
 
-#include"extern.h"
+#include"base.h"
 
 static int err_l=0;
 static char*err_s;
@@ -878,7 +878,6 @@ static void command_rewrite(int y,int x,int pos,char*input,int cursor,int visib)
 	if(rt/*true*/)addch('>');
 	move(y,x);
 }
-#define is_word_char(a) ('0'<=a&&(a<='9'||('A'<=a&&(a<='Z'||(a=='_'||('a'<=a&&a<='z'))))))
 static int word_at_cursor(char*z){
 	WINDOW*w=quick_get(z);
 	size_t y=(size_t)getcury(w);
