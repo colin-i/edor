@@ -145,7 +145,7 @@ static char*helptext;
 #define hel2 " [filepath]\
 \nINPUT\
 \nhelp: q(uit),up/down,mouse/touch v.scroll\
-\n[Shift+]arrows,[Alt+]left/right,[Ctrl/Alt +]home/end,page up/down;mouse/touch click and v.scroll\
+\n[Shift+]arrows,[Alt+]left/right,[Ctrl/Alt/Shift +]home/end,page up/down;mouse/touch click and v.scroll\
 \nCtrl+v = visual mode; Alt+v = visual line mode\
 \n    c = copy\
 \n    d = delete\
@@ -589,7 +589,24 @@ static int movment(int c,WINDOW*w){
 		}
 	}else if(c==KEY_SLEFT)slmove(w,getcurx(w),false);
 	else if(c==KEY_SRIGHT)srmove(w,getcurx(w),true);
-	else if(c==KEY_SF)sdmove(w,getcury(w));
+	else if(c==KEY_SHOME){
+		int y=getcury(w);
+		int x=getcurx(w);
+		if(xtext!=0){
+			xtext=0;
+			refreshpage(w);
+		}
+		amove(w,y,x);
+	}else if(c==KEY_SEND){
+		int y=getcury(w);
+		int x=getcurx(w);
+		size_t r=ytext+(size_t)y;
+		size_t xcare=xtext;
+		if(r<rows_tot)endmv(w,r,false);
+		else xtext=0;
+		if(xtext!=xcare)refreshpage(w);
+		amove(w,y,x);
+	}else if(c==KEY_SF)sdmove(w,getcury(w));
 	else if(c==KEY_SR)sumove(w,getcury(w));
 	else if(c==KEY_RESIZE){
 		return 1;

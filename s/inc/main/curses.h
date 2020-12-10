@@ -24,6 +24,8 @@ MEVENT;
 #define KEY_SR 0521
 #define KEY_NPAGE 0522
 #define KEY_PPAGE 0523
+#define KEY_SEND 0602
+#define KEY_SHOME 0607
 #define KEY_SLEFT 0611
 #define KEY_SRIGHT 0622
 #define KEY_MOUSE 0631
