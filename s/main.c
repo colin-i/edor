@@ -145,7 +145,7 @@ static char*helptext;
 #define hel2 " [filepath]\
 \nINPUT\
 \nhelp: q(uit),up/down,mouse/touch v.scroll\
-\n[Shift+]arrows,[Ctrl/Alt +]left/right,[Ctrl/Alt/Shift +]home/end,page up/down;mouse/touch click and v.scroll\
+\n[Ctrl/Alt/Shift +]arrows/home/end,page up/down;mouse/touch click and v.scroll\
 \np.s.: Ctrl+ left/right, text move, breaks at white-spaces and (),[]{}\
 \nCtrl+v = visual mode; Alt+v = visual line mode\
 \n    c = copy\
@@ -269,16 +269,37 @@ static void bmove(WINDOW*w,int r,int c,bool back){
 static void amove(WINDOW*w,int r,int c){
 	bmove(w,r,c,true);
 }
-static void tmove(WINDOW*w,int y,bool right){
-	int x=getcurx(w);
-	if(right/*true*/){
-		if(ytext+1<rows_tot){
-			ytext++;refreshpage(w);
-			amove(w,y,x);
-		}
-	}
+static void vumove(WINDOW*w,int len){
+	int y=getcury(w);
+	if(y>len-1)amove(w,y-len,getcurx(w));
 	else if(ytext!=0){
+		int x=getcurx(w);
+		ytext=(size_t)len>ytext?0:ytext-(size_t)len;
+		refreshpage(w);
+		amove(w,y,x);
+	}
+}
+static void vdmove(WINDOW*w,int len){
+	int y=getcury(w);
+	if(y+len<getmaxy(w))amove(w,y+len,getcurx(w));
+	else if(ytext+1<rows_tot){
+		int x=getcurx(w);
+		ytext=ytext+(size_t)len>=rows_tot?rows_tot-1:ytext+(size_t)len;
+		refreshpage(w);
+		amove(w,y,x);
+	}
+}
+static void vu1move(WINDOW*w,int y){
+	int x=getcurx(w);
+	if(ytext!=0){
 		ytext--;refreshpage(w);
+		amove(w,y,x);
+	}
+}
+static void vd1move(WINDOW*w,int y){
+	int x=getcurx(w);
+	if(ytext+1<rows_tot){
+		ytext++;refreshpage(w);
 		amove(w,y,x);
 	}
 }
@@ -386,8 +407,6 @@ static void printhelp(){
 	move(getmaxy(stdscr)-1,0);
 	printinverted(bar_init());
 }
-static void sumove(WINDOW*w,int y){tmove(w,y,false);}
-static void sdmove(WINDOW*w,int y){tmove(w,y,true);}
 static void slmove(WINDOW*w,int x,bool notabs){
 	int y=getcury(w);
 	if(xtext>0){
@@ -562,19 +581,19 @@ static int movment(int c,WINDOW*w){
 	if(c==KEY_MOUSE){
 		MEVENT e;
 		getmouse(&e);//==OK is when mousemask is 0, but then nothint at getch
-		if((e.bstate&BUTTON4_PRESSED)!=0)tmove(w,getcury(w),false);
-		else if((e.bstate&BUTTON5_PRESSED)!=0)tmove(w,getcury(w),true);
+		if((e.bstate&BUTTON4_PRESSED)!=0)vu1move(w,getcury(w));
+		else if((e.bstate&BUTTON5_PRESSED)!=0)vd1move(w,getcury(w));
 		else if((e.bstate&BUTTON1_CLICKED)!=0)amove(w,e.y-1,e.x-1);//return -2;}
 	}else if(c==KEY_LEFT)left(w,getcurx(w));
 	else if(c==KEY_RIGHT)right(w,getcurx(w));
 	else if(c==KEY_UP){
 		int y=getcury(w);
-		if(y>0)amove(w,y-1,getcurx(w));//return -2;}
-		else sumove(w,y);
+		if(y>0)amove(w,y-1,getcurx(w));
+		else vu1move(w,y);
 	}else if(c==KEY_DOWN){
 		int y=getcury(w);
-		if(y+1<getmaxy(w))amove(w,y+1,getcurx(w));//return -2;}
-		else sdmove(w,y);
+		if(y+1<getmaxy(w))amove(w,y+1,getcurx(w));
+		else vd1move(w,y);
 	}else if(c==KEY_HOME){
 		int y=getcury(w);
 		if(xtext!=0){
@@ -618,14 +637,31 @@ static int movment(int c,WINDOW*w){
 		else xtext=0;
 		if(xtext!=xcare)refreshpage(w);
 		amove(w,y,x);
-	}else if(c==KEY_SF)sdmove(w,getcury(w));
-	else if(c==KEY_SR)sumove(w,getcury(w));
+	}else if(c==KEY_SF)vd1move(w,getcury(w));
+	else if(c==KEY_SR)vu1move(w,getcury(w));
 	else if(c==KEY_RESIZE){
 		return 1;
 	}
 	else{
 		const char*s=keyname(c);
-		if(strcmp(s,"kHOM5")==0){
+		if(strcmp(s,"kLFT5")==0)left_textmove(w);
+		else if(strcmp(s,"kRIT5")==0)right_textmove(w);
+		else if(strcmp(s,"kLFT3")==0)left_wordmove(w);
+		else if(strcmp(s,"kRIT3")==0)right_wordmove(w);
+		else if(strcmp(s,"kHOM3")==0){
+			int y=getcury(w);
+			size_t r=ytext+(size_t)y;
+			size_t xcare=xtext;
+			int x;if(r<rows_tot)x=home(w,r);
+			else{xtext=0;x=0;}
+			if(xcare!=xtext)refreshpage(w);
+			wmove(w,y,x);
+		}else if(strcmp(s,"kEND3")==0)endmov(w,true);
+		else if(strcmp(s,"kUP3")==0)vumove(w,2);
+		else if(strcmp(s,"kDN3")==0)vdmove(w,2);
+		else if(strcmp(s,"kUP5")==0)vumove(w,3);
+		else if(strcmp(s,"kDN5")==0)vdmove(w,3);
+		else if(strcmp(s,"kHOM5")==0){
 			if(ytext!=0||xtext!=0){
 				ytext=0;xtext=0;
 				refreshpage(w);
@@ -642,20 +678,7 @@ static int movment(int c,WINDOW*w){
 			if(ycare||xtext!=xcare)refreshpage(w);
 			//moved by curses, but no add str for line breaks
 			wmove(w,y,x);
-		}else if(strcmp(s,"kLFT5")==0)left_textmove(w);
-		else if(strcmp(s,"kRIT5")==0)right_textmove(w);
-		else if(strcmp(s,"kLFT3")==0)left_wordmove(w);
-		else if(strcmp(s,"kRIT3")==0)right_wordmove(w);
-		else if(strcmp(s,"kHOM3")==0){
-			int y=getcury(w);
-			size_t r=ytext+(size_t)y;
-			size_t xcare=xtext;
-			int x;if(r<rows_tot)x=home(w,r);
-			else{xtext=0;x=0;}
-			if(xcare!=xtext)refreshpage(w);
-			wmove(w,y,x);
-		}else if(strcmp(s,"kEND3")==0)endmov(w,true);
-		else return 0;
+		}else return 0;
 	}
 	return -1;
 }
