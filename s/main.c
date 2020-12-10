@@ -145,7 +145,8 @@ static char*helptext;
 #define hel2 " [filepath]\
 \nINPUT\
 \nhelp: q(uit),up/down,mouse/touch v.scroll\
-\n[Shift+]arrows,[Alt+]left/right,[Ctrl/Alt/Shift +]home/end,page up/down;mouse/touch click and v.scroll\
+\n[Shift+]arrows,[Ctrl/Alt +]left/right,[Ctrl/Alt/Shift +]home/end,page up/down;mouse/touch click and v.scroll\
+\np.s.: Ctrl+ left/right, text move, breaks at white-spaces and (),[]{}\
 \nCtrl+v = visual mode; Alt+v = visual line mode\
 \n    c = copy\
 \n    d = delete\
@@ -167,7 +168,7 @@ static char*helptext;
 \n    other key to return\
 \nCtrl+u = undo; Alt+u = undo mode: left=undo,right=redo,other key to return\
 \nCtrl+r = redo\
-\nCtrl+q = quit"//27
+\nCtrl+q = quit"//28
 static bool visual_bool=false;
 static char*cutbuf=nullptr;
 static size_t cutbuf_sz=0;
@@ -490,11 +491,18 @@ void fixmembuf(size_t*y,size_t*x){
 	size_t sz=rows[y[0]].sz;
 	if(x[0]>sz)x[0]=sz;
 }
+static bool is_wordchar(char a){
+	return is_word_char(a);
+}
+static bool is_textchar(char a){
+	return a!='\t'&&a!=' '&&a!='('&&a!=')'&&a!=','&&a!='['&&a!=']'&&a!='{'
+	&&a!='}';
+}
 static void left(WINDOW*w,int c){
 	if(c>0)amove(w,getcury(w),c-1);
 	else slmove(w,c,true);
 }
-static void left_wordmove(WINDOW*w){
+static void left_move(WINDOW*w,bool(*f)(char)){
 	int r=getcury(w);
 	int c=getcurx(w);
 	size_t y=ytext+(size_t)r;
@@ -502,23 +510,25 @@ static void left_wordmove(WINDOW*w){
 	fixmembuf(&y,&x);
 	size_t sz=rows[y].sz;
 	char*d=rows[y].data;
-	if(x==sz||is_word_char(d[x])==false||x==0||is_word_char(d[x-1])==false){left(w,c);return;}
+	if(x==sz||f(d[x])==false||x==0||f(d[x-1])==false){left(w,c);return;}
 	size_t prevx=x;
 	x--;
 	for(;;){
 		if(x==0)break;
 		x--;
-		if(is_word_char(d[x])==false){x++;break;}
+		if(f(d[x])==false){x++;break;}
 	}
 	if(x<xtext){xtext=x;refreshpage(w);c=0;}
 	else c-=prevx-x;
 	wmove(w,r,c);
 }
+#define left_wordmove(w) left_move(w,is_wordchar)
+#define left_textmove(w) left_move(w,is_textchar)
 static void right(WINDOW*w,int c){
 	if(c+1<getmaxx(w))bmove(w,getcury(w),c+1,false);
 	else srmove(w,c,false);
 }
-static void right_wordmove(WINDOW*w){
+static void right_move(WINDOW*w,bool(*f)(char)){
 	int r=getcury(w);
 	int c=getcurx(w);
 	size_t y=ytext+(size_t)r;
@@ -526,13 +536,13 @@ static void right_wordmove(WINDOW*w){
 	fixmembuf(&y,&x);
 	size_t sz=rows[y].sz;
 	char*d=rows[y].data;
-	if(x==sz||is_word_char(d[x])==false||x+1==sz||is_word_char(d[x+1])==false){right(w,c);return;}
+	if(x==sz||f(d[x])==false||x+1==sz||f(d[x+1])==false){right(w,c);return;}
 	size_t prevx=x;
 	x++;
 	for(;;){
 		if(x+1==sz)break;
 		x++;
-		if(is_word_char(d[x])==false){x--;break;}
+		if(f(d[x])==false){x--;break;}
 	}
 	c+=x-prevx;
 	int max=getmaxx(w);
@@ -545,6 +555,8 @@ static void right_wordmove(WINDOW*w){
 	}
 	wmove(w,r,c);
 }
+#define right_wordmove(w) right_move(w,is_wordchar)
+#define right_textmove(w) right_move(w,is_textchar)
 //1resize,0diff key,-1processed
 static int movment(int c,WINDOW*w){
 	if(c==KEY_MOUSE){
@@ -630,7 +642,9 @@ static int movment(int c,WINDOW*w){
 			if(ycare||xtext!=xcare)refreshpage(w);
 			//moved by curses, but no add str for line breaks
 			wmove(w,y,x);
-		}else if(strcmp(s,"kLFT3")==0)left_wordmove(w);
+		}else if(strcmp(s,"kLFT5")==0)left_textmove(w);
+		else if(strcmp(s,"kRIT5")==0)right_textmove(w);
+		else if(strcmp(s,"kLFT3")==0)left_wordmove(w);
 		else if(strcmp(s,"kRIT3")==0)right_wordmove(w);
 		else if(strcmp(s,"kHOM3")==0){
 			int y=getcury(w);
