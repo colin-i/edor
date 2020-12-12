@@ -1928,7 +1928,8 @@ static void proced(char*comline){
 	if(setfilebuf(comline,cutbuf_file)/*true*/){
 		bool loops=false;
 		int cy=0;int cx=0;
-		int r=getmaxy(stdscr)-1;int old_r=r;
+		int r=getmaxy(stdscr)-1;
+		int old_r=r-1;//set -1 because at first compare is erasing new_visual
 		do{
 			void*a=realloc(x_right,(size_t)r);
 			if(a==nullptr)break;
