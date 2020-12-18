@@ -637,8 +637,8 @@ static int movment(int c,WINDOW*w){
 		else xtext=0;
 		if(xtext!=xcare)refreshpage(w);
 		amove(w,y,x);
-	}else if(c==KEY_SF)vd1move(w,getcury(w));
-	else if(c==KEY_SR)vu1move(w,getcury(w));
+	}else if(c==KEY_SR)vu1move(w,getcury(w));
+	else if(c==KEY_SF)vd1move(w,getcury(w));
 	else if(c==KEY_RESIZE){
 		return 1;
 	}
