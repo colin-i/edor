@@ -145,8 +145,9 @@ static char*helptext;
 #define hel2 " [filepath]\
 \nINPUT\
 \nhelp: q(uit),up/down,mouse/touch v.scroll\
-\n[Ctrl/Alt/Shift +]arrows/home/end,page up/down;mouse/touch click and v.scroll\
-\np.s.: Ctrl+ left/right, text move, breaks at white-spaces and (),[]{}\
+\n[Ctrl/Alt/Shift +]arrows/home/end,[Ctrl+]del,page up/down,backspace,enter\
+\np.s.: Ctrl+ left/right/del breaks at white-spaces and (),[]{}\
+\nmouse/touch click and v.scroll\
 \nCtrl+v = visual mode; Alt+v = visual line mode\
 \n    c = copy\
 \n    d = delete\
@@ -168,7 +169,7 @@ static char*helptext;
 \n    other key to return\
 \nCtrl+u = undo; Alt+u = undo mode: left=undo,right=redo,other key to return\
 \nCtrl+r = redo\
-\nCtrl+q = quit"//28
+\nCtrl+q = quit"//29
 static bool visual_bool=false;
 static char*cutbuf=nullptr;
 static size_t cutbuf_sz=0;
@@ -547,6 +548,16 @@ static void right(WINDOW*w,int c){
 	if(c+1<getmaxx(w))bmove(w,getcury(w),c+1,false);
 	else srmove(w,c,false);
 }
+#define right_short(f) x==sz||f(d[x])==false||x+1==sz||f(d[x+1])==false
+static size_t right_long(size_t x,char*d,size_t sz,bool(*f)(char)){
+	x++;
+	for(;;){
+		if(x+1==sz)break;
+		x++;
+		if(f(d[x])==false){x--;break;}
+	}
+	return x;
+}
 static void right_move(WINDOW*w,bool(*f)(char)){
 	int r=getcury(w);
 	int c=getcurx(w);
@@ -555,14 +566,10 @@ static void right_move(WINDOW*w,bool(*f)(char)){
 	fixmembuf(&y,&x);
 	size_t sz=rows[y].sz;
 	char*d=rows[y].data;
-	if(x==sz||f(d[x])==false||x+1==sz||f(d[x+1])==false){right(w,c);return;}
+	if(right_short(f)){
+		right(w,c);return;}
 	size_t prevx=x;
-	x++;
-	for(;;){
-		if(x+1==sz)break;
-		x++;
-		if(f(d[x])==false){x--;break;}
-	}
+	x=right_long(x,d,sz,f);
 	c+=x-prevx;
 	int max=getmaxx(w);
 	if(c>=max){
@@ -1060,6 +1067,18 @@ bool deleting_init(size_t ybsel,size_t xbsel,size_t yesel,size_t xesel){
 	}
 	return false;
 }
+static bool deleti(size_t ybsel,size_t xbsel,size_t yesel,size_t xesel,int*rw,int*cl,WINDOW*w,bool many){
+	if(deleting_init(ybsel,xbsel,yesel,xesel)==false){
+		if(undo_add_del(ybsel,xbsel,yesel,xesel)==false){
+			deleting(ybsel,xbsel,yesel,xesel);
+			size_t z1=ytext;size_t z2=xtext;
+			deleted(ybsel,xbsel,rw,cl,w);
+			refreshrowscond(w,z1,z2,ybsel-ytext,many);
+			return true;
+		}
+	}
+	return false;
+}
 static bool delet(size_t ybsel,size_t xbsel,size_t yesel,size_t xesel,int*rw,int*cl,WINDOW*w){
 	fixmembuf(&ybsel,&xbsel);
 	fixmembuf(&yesel,&xesel);
@@ -1067,15 +1086,9 @@ static bool delet(size_t ybsel,size_t xbsel,size_t yesel,size_t xesel,int*rw,int
 	else xesel++;
 	bool many=ybsel!=yesel;
 	if(many/*true*/||xbsel!=xesel){
-		if(deleting_init(ybsel,xbsel,yesel,xesel)==false){
-			if(undo_add_del(ybsel,xbsel,yesel,xesel)==false){
-				deleting(ybsel,xbsel,yesel,xesel);
-				size_t z1=ytext;size_t z2=xtext;
-				deleted(ybsel,xbsel,rw,cl,w);
-				refreshrowscond(w,z1,z2,ybsel-ytext,many);
-				if(mod_flag/*true*/)mod_set(false);
-				return true;
-			}
+		if(deleti(ybsel,xbsel,yesel,xesel,rw,cl,w,many)/*true*/){
+			if(mod_flag/*true*/)mod_set(false);
+			return true;
 		}
 	}
 	return false;
@@ -1407,52 +1420,59 @@ static void type(int cr,WINDOW*w){
 	}
 	else if(cr==KEY_DC){if(delete_key(y,x,rw,&cl,w)/*true*/)return;}
 	else{
-		char ch=cr&0xff;
-		if(row_alloc(r,x,1,r->sz-x)/*true*/)return;
-		if(undo_type(y,x,y,x+1)/*true*/)return;
-		row_set(r,x,1,r->sz-x,&ch);
-		bool is_tab=ch=='\t';
-		int s=is_tab/*true*/?tab_sz:1;
-		//
-		int colmn=cl;
-		cl+=s;
-		int max=getmaxx(w);
-		if(cl>=max){
-			char*d=r->data;
-			do{
-				cl-=d[xtext]=='\t'?tab_sz:1;
-				xtext++;
-			}while(cl>=max);
-			refreshpage(w);
+		const char*knm=keyname(cr);
+		if(strcmp(knm,"kDC5")==0){
+			char*d=r->data;size_t sz=r->sz;
+			if(right_short(is_textchar)){if(delete_key(y,x,rw,&cl,w)/*true*/)return;}
+			else if(deleti(y,x,y,right_long(x,d,sz,is_textchar)+1,&rw,&cl,w,false)==false)return;
 		}else{
-			wmove(w,rw,colmn);
-			int n=max-cl;
-			winnstr(w,mapsel,n);
-			int*t=&tabs[tabs_rsz*rw];
-			int a=t[0];
-			if(a!=0)if(t[a]+s>=max){t[0]--;a--;}
-			int i=1;
-			for(;i<=a;i++){
-				if(colmn<=t[i])break;
-			}
-			if(is_tab/*true*/){
-				for(int k=tab_sz;k>0;k--){
-					waddch(w,' ');
-				}
-				t[0]=a+1;
-				for(int j=a;i<=j;j--){t[j+1]=t[j]+tab_sz;}
-				t[i]=colmn;
+			char ch=cr&0xff;
+			if(row_alloc(r,x,1,r->sz-x)/*true*/)return;
+			if(undo_type(y,x,y,x+1)/*true*/)return;
+			row_set(r,x,1,r->sz-x,&ch);
+			bool is_tab=ch=='\t';
+			int s=is_tab/*true*/?tab_sz:1;
+			//
+			int colmn=cl;
+			cl+=s;
+			int max=getmaxx(w);
+			if(cl>=max){
+				char*d=r->data;
+				do{
+					cl-=d[xtext]=='\t'?tab_sz:1;
+					xtext++;
+				}while(cl>=max);
+				refreshpage(w);
 			}else{
-				waddch(w,no_char(ch)/*true*/?'?':ch);
-				int j=a;
-				while(i<=j){
-					t[j]=t[j]+1;j--;
+				wmove(w,rw,colmn);
+				int n=max-cl;
+				winnstr(w,mapsel,n);
+				int*t=&tabs[tabs_rsz*rw];
+				int a=t[0];
+				if(a!=0)if(t[a]+s>=max){t[0]--;a--;}
+				int i=1;
+				for(;i<=a;i++){
+					if(colmn<=t[i])break;
 				}
+				if(is_tab/*true*/){
+					for(int k=tab_sz;k>0;k--){
+						waddch(w,' ');
+					}
+					t[0]=a+1;
+					for(int j=a;i<=j;j--){t[j+1]=t[j]+tab_sz;}
+					t[i]=colmn;
+				}else{
+					waddch(w,no_char(ch)/*true*/?'?':ch);
+					int j=a;
+					while(i<=j){
+						t[j]=t[j]+1;j--;
+					}
+				}
+				waddstr(w,mapsel);
+				x_right[rw]=true;
 			}
-			waddstr(w,mapsel);
-			x_right[rw]=true;
+			position(rw,cl);
 		}
-		position(rw,cl);
 	}
 	wmove(w,rw,cl);
 	if(mod_flag/*true*/)mod_set(false);
@@ -1556,14 +1576,14 @@ static bool visual_mode(WINDOW*w,bool v_l){
 		z=movment(b,w);
 		if(z==1)return true;
 		else{
-			int r=getcury(w);int col=getcurx(w);
+			int r=getcury(w);int c=getcurx(w);
 			if(z==0){
 				if(b=='I'){z=-1;indent(true,ybsel,&xbsel,yesel,&xesel,w);}
 				else if(b=='U'){
 					z=-1;
 					bool edge=xtext==0;
 					indent(false,ybsel,&xbsel,yesel,&xesel,w);
-					if(edge/*true*/){amove(w,r,col);continue;}
+					if(edge/*true*/){amove(w,r,c);continue;}
 				}
 				else{
 					char v=' ';
@@ -1571,22 +1591,22 @@ static bool visual_mode(WINDOW*w,bool v_l){
 					if(visual_bool/*true*/){
 						if(writemembuf(ybsel,xbsel,yesel,xesel)/*true*/){v='C';unsel(w);}
 					}else if(b=='d'){
-						if(delet(ybsel,xbsel,yesel,xesel,&r,&col,w)/*true*/)
-							if(orig/*true*/)position(r,col);
+						if(delet(ybsel,xbsel,yesel,xesel,&r,&c,w)/*true*/)
+							if(orig/*true*/)position(r,c);
 					}else if(b=='x'){
 						if(writemembuf(ybsel,xbsel,yesel,xesel)/*true*/){
-							if(delet(ybsel,xbsel,yesel,xesel,&r,&col,w)/*true*/)
-								if(orig/*true*/)position(r,col);
+							if(delet(ybsel,xbsel,yesel,xesel,&r,&c,w)/*true*/)
+								if(orig/*true*/)position(r,c);
 						}
 					}else{
 						if(b=='i'){
 							indent(true,ybsel,nullptr,yesel,nullptr,w);
-							amove(w,r,col);
-							col=getcurx(w);
+							amove(w,r,c);
+							c=getcurx(w);
 						}else if(b=='u'){
 							indent(false,ybsel,nullptr,yesel,nullptr,w);
-							amove(w,r,col);
-							col=getcurx(w);
+							amove(w,r,c);
+							c=getcurx(w);
 						}
 						unsel(w);
 					}
@@ -1594,11 +1614,11 @@ static bool visual_mode(WINDOW*w,bool v_l){
 				}
 			}else{
 				position(getcury(w),getcurx(w));
-				size_t y=ytext+(size_t)r;size_t x=xtext+c_to_xc(col,r);
+				size_t y=ytext+(size_t)r;size_t x=xtext+c_to_xc(c,r);
 				setmembuf(y,x,&orig,&ybsel,&xbsel,&yesel,&xesel,w,v_l);
 				printsel(w,ybsel,xbsel,yesel,xesel,ytext!=ycare||xtext!=xcare);
 			}
-			wmove(w,r,col);
+			wmove(w,r,c);
 		}
 	}while(z!=0);
 	return false;
