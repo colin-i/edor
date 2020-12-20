@@ -145,7 +145,7 @@ static char*helptext;
 #define hel2 " [filepath]\
 \nINPUT\
 \nhelp: q(uit),up/down,mouse/touch v.scroll\
-\n[Ctrl/Alt/Shift +]arrows/home/end,[Ctrl+]del,page up/down,backspace,enter\
+\n[Ctrl/Alt/Shift +]arrows/home/end,[Ctrl/Shift+]del,page up/down,backspace,enter\
 \np.s.: Ctrl+ left/right/del breaks at white-spaces and (),[]{}\
 \nmouse/touch click and v.scroll\
 \nCtrl+v = visual mode; Alt+v = visual line mode\
@@ -1243,9 +1243,10 @@ static void rowfixdel(WINDOW*w,int r,int c,row*rw,size_t i){
 	}
 	x_right[r]=mx!=0;
 }
-static bool delete_key(size_t y,size_t x,int r,int*cc,WINDOW*w){
+static bool del_key(size_t y,size_t x,int r,int*cc,WINDOW*w,bool reverse){
 	row*r1=&rows[y];int maxx=getmaxx(w);int c=*cc;
-	bool margin=c+view_margin>maxx;
+	int margin_val=c+view_margin;
+	bool margin=margin_val>maxx;
 	if(margin/*true*/){while(c+view_margin>maxx){
 			c-=r1->data[xtext]=='\t'?tab_sz:1;
 			xtext++;
@@ -1269,17 +1270,22 @@ static bool delete_key(size_t y,size_t x,int r,int*cc,WINDOW*w){
 		return true;
 	}
 	if(undo_delk(y,x,y,x+1)==false){
-		if(margin/*true*/)wmove(w,r,c);
 		char*data=r1->data;
 		for(size_t i=x+1;i<sz;i++){
 			data[i-1]=data[i];
 		}
 		r1->sz--;
+		if(margin/*true*/)wmove(w,r,c);
+		else if(reverse/*true*/&&xtext>0&&margin_val<maxx){
+			xtext--;refreshpage(w);*cc=c+1;
+			return false;
+		}
 		delete_fast(w,r,c,data,x,r1->sz);
 		return false;
 	}
 	return true;
 }
+#define delete_key(y,x,r,cc,w) del_key(y,x,r,cc,w,false)
 static bool bcsp(size_t y,size_t x,int*rw,int*cl,WINDOW*w){
 	int c=cl[0];
 	if(xtext==0&&c==0){
@@ -1419,6 +1425,7 @@ static void type(int cr,WINDOW*w){
 		position(rw,cl);
 	}
 	else if(cr==KEY_DC){if(delete_key(y,x,rw,&cl,w)/*true*/)return;}
+	else if(cr==KEY_SDC){if(del_key(y,x,rw,&cl,w,true)/*true*/)return;}
 	else{
 		const char*knm=keyname(cr);
 		if(strcmp(knm,"kDC5")==0){
