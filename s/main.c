@@ -145,7 +145,7 @@ static char*helptext;
 #define hel2 " [filepath]\
 \nINPUT\
 \nhelp: q(uit),up/down,mouse/touch v.scroll\
-\n[Ctrl/Alt/Shift +]arrows/home/end,[Ctrl/Shift+]del,page up/down,backspace,enter\
+\n[Ctrl/Alt/Shift +]arrows/home/end/del,page up/down,backspace,enter\
 \np.s.: Ctrl+ left/right/del breaks at white-spaces and (),[]{}\
 \nmouse/touch click and v.scroll\
 \nCtrl+v = visual mode; Alt+v = visual line mode\
@@ -548,7 +548,7 @@ static void right(WINDOW*w,int c){
 	if(c+1<getmaxx(w))bmove(w,getcury(w),c+1,false);
 	else srmove(w,c,false);
 }
-#define right_short(f) x==sz||f(d[x])==false||x+1==sz||f(d[x+1])==false
+#define right_short(f,x,d,sz) x==sz||f(d[x])==false||x+1==sz||f(d[x+1])==false
 static size_t right_long(size_t x,char*d,size_t sz,bool(*f)(char)){
 	x++;
 	for(;;){
@@ -566,7 +566,7 @@ static void right_move(WINDOW*w,bool(*f)(char)){
 	fixmembuf(&y,&x);
 	size_t sz=rows[y].sz;
 	char*d=rows[y].data;
-	if(right_short(f)){
+	if(right_short(f,x,d,sz)){
 		right(w,c);return;}
 	size_t prevx=x;
 	x=right_long(x,d,sz,f);
@@ -1395,6 +1395,10 @@ static bool enter(size_t y,size_t x,int*r,int*c,WINDOW*w){
 	}
 	return true;
 }
+#define multidel(fn,r,x,y,cl,rw,w)\
+	char*d=r->data;size_t sz=r->sz;\
+	if(right_short(fn,x,d,sz)){if(delete_key(y,x,rw,&cl,w)/*true*/)return;}\
+	else if(deleti(y,x,y,right_long(x,d,sz,fn)+1,&rw,&cl,w,false)==false)return;
 static void type(int cr,WINDOW*w){
 	int cl=getcurx(w);
 	int rwnr=getcury(w);
@@ -1428,11 +1432,9 @@ static void type(int cr,WINDOW*w){
 	else if(cr==KEY_SDC){if(del_key(y,x,rw,&cl,w,true)/*true*/)return;}
 	else{
 		const char*knm=keyname(cr);
-		if(strcmp(knm,"kDC5")==0){
-			char*d=r->data;size_t sz=r->sz;
-			if(right_short(is_textchar)){if(delete_key(y,x,rw,&cl,w)/*true*/)return;}
-			else if(deleti(y,x,y,right_long(x,d,sz,is_textchar)+1,&rw,&cl,w,false)==false)return;
-		}else{
+		if(strcmp(knm,"kDC5")==0){multidel(is_textchar,r,x,y,cl,rw,w)}
+		else if(strcmp(knm,"kDC3")==0){multidel(is_wordchar,r,x,y,cl,rw,w)}
+		else{
 			char ch=cr&0xff;
 			if(row_alloc(r,x,1,r->sz-x)/*true*/)return;
 			if(undo_type(y,x,y,x+1)/*true*/)return;
