@@ -575,7 +575,7 @@ static void right_move(WINDOW*w,bool(*f)(char)){
 	if(c>=max){
 		do{
 			size_t val=d[xtext]=='\t'?tab_sz:1;
-			xtext+=val;c-=val;
+			xtext++;c-=val;
 		}while(c>=max);
 		refreshpage(w);
 	}
