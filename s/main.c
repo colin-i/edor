@@ -1067,7 +1067,7 @@ bool deleting_init(size_t ybsel,size_t xbsel,size_t yesel,size_t xesel){
 	}
 	return false;
 }
-static bool deleti(size_t ybsel,size_t xbsel,size_t yesel,size_t xesel,int*rw,int*cl,WINDOW*w,bool many){
+static bool deletin(size_t ybsel,size_t xbsel,size_t yesel,size_t xesel,int*rw,int*cl,WINDOW*w,bool many){
 	if(deleting_init(ybsel,xbsel,yesel,xesel)==false){
 		if(undo_add_del(ybsel,xbsel,yesel,xesel)==false){
 			deleting(ybsel,xbsel,yesel,xesel);
@@ -1079,19 +1079,39 @@ static bool deleti(size_t ybsel,size_t xbsel,size_t yesel,size_t xesel,int*rw,in
 	}
 	return false;
 }
-static bool delet(size_t ybsel,size_t xbsel,size_t yesel,size_t xesel,int*rw,int*cl,WINDOW*w){
+static bool deleti(size_t ybsel,size_t xbsel,size_t yesel,size_t xesel,int*rw,int*cl,WINDOW*w){
 	fixmembuf(&ybsel,&xbsel);
 	fixmembuf(&yesel,&xesel);
 	if(xesel==rows[yesel].sz){if(yesel<rows_tot-1){yesel++;xesel=0;}}
 	else xesel++;
 	bool many=ybsel!=yesel;
 	if(many/*true*/||xbsel!=xesel){
-		if(deleti(ybsel,xbsel,yesel,xesel,rw,cl,w,many)/*true*/){
+		if(deletin(ybsel,xbsel,yesel,xesel,rw,cl,w,many)/*true*/){
 			if(mod_flag/*true*/)mod_set(false);
 			return true;
 		}
 	}
 	return false;
+}
+static bool delet(size_t ybsel,size_t xbsel,size_t yesel,size_t xesel,int*rw,int*cl,WINDOW*w){
+	size_t yend=yesel;
+	size_t rend=rows_tot;
+	size_t wasy=ytext;
+	size_t wasx=xtext;
+	bool b=deleti(ybsel,xbsel,yesel,xesel,rw,cl,w);
+	//unselect all
+	if(yend>=rend&&wasy==ytext&&wasx==xtext){
+		rend-=ytext;
+		size_t ymax=(size_t)getmaxy(w);
+		if(rend<ymax){
+			yend-=ytext;
+			size_t to=yend<ymax?yend:ymax-1;
+			while(rend<=to){
+				wmove(w,(int)rend,0);wclrtoeol(w);rend++;
+			}
+		}
+	}
+	return b;
 }
 static char*memtrm(char*a){
 	while(a[0]!=ln_term[0])a++;
@@ -1398,7 +1418,7 @@ static bool enter(size_t y,size_t x,int*r,int*c,WINDOW*w){
 #define multidel(fn,r,x,y,cl,rw,w)\
 	char*d=r->data;size_t sz=r->sz;\
 	if(right_short(fn,x,d,sz)){if(delete_key(y,x,rw,&cl,w)/*true*/)return;}\
-	else if(deleti(y,x,y,right_long(x,d,sz,fn)+1,&rw,&cl,w,false)==false)return;
+	else if(deletin(y,x,y,right_long(x,d,sz,fn)+1,&rw,&cl,w,false)==false)return;
 static void type(int cr,WINDOW*w){
 	int cl=getcurx(w);
 	int rwnr=getcury(w);
