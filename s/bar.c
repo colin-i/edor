@@ -822,7 +822,7 @@ static int find(char*z,size_t cursor,size_t pos,size_t visib,int y){
 					else centering(w,&xr,&xc);
 				}
 				if(finding(cursor,xr,xc,forward)/*true*/){
-					if(untouched)untouched=false;
+					if(untouched/*true*/)untouched=false;
 					else{
 						if(replace(cursor)/*true*/){ytext=iferrory;xtext=iferrorx;continue;}
 						phase=delimiter(y1,x1,y,pos,sz,cursorr,phase);
