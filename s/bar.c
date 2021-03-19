@@ -820,12 +820,8 @@ static int find(char*z,size_t cursor,size_t pos,size_t visib,int y){
 					if(delim_touch(y1,x1,cursorr)/*true*/)delimiter_touched=true;
 					if(forward){xtext+=cursorr;centering2(w,&xr,&xc,true);}
 					else centering(w,&xr,&xc);
-					//in case is next
-					size_t backy=ytext;size_t backx=xtext;
-					if(finding(cursor,xr,xc,forward)/*true*/){
-						untouched=false;ytext=backy;xtext=backx;
-						continue;}
-					return 1;
+					untouched=false;
+					continue;
 				}
 				if(finding(cursor,xr,xc,forward)/*true*/){
 					if(replace(cursor)/*true*/){ytext=iferrory;xtext=iferrorx;continue;}
@@ -856,7 +852,10 @@ static int find(char*z,size_t cursor,size_t pos,size_t visib,int y){
 			}else{
 				return a==KEY_RESIZE?-2:1;
 			}
-			finding(cursor,xr,xc,forward);
+			if(finding(cursor,xr,xc,forward)==false){
+				//was last replace
+				return 1;
+			}
 			phase=delimiter(y1,x1,y,pos,sz,cursor,phase);
 			if(delimiter_touched/*true*/){
 				y1=ytext;x1=xtext;
