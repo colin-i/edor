@@ -820,17 +820,20 @@ static int find(char*z,size_t cursor,size_t pos,size_t visib,int y){
 					if(delim_touch(y1,x1,cursorr)/*true*/)delimiter_touched=true;
 					if(forward){xtext+=cursorr;centering2(w,&xr,&xc,true);}
 					else centering(w,&xr,&xc);
+					//in case is next
+					size_t backy=ytext;size_t backx=xtext;
+					if(finding(cursor,xr,xc,forward)/*true*/){
+						untouched=false;ytext=backy;xtext=backx;
+						continue;}
+					return 1;
 				}
 				if(finding(cursor,xr,xc,forward)/*true*/){
-					if(untouched/*true*/)untouched=false;
-					else{
-						if(replace(cursor)/*true*/){ytext=iferrory;xtext=iferrorx;continue;}
-						phase=delimiter(y1,x1,y,pos,sz,cursorr,phase);
-						if(phase/*true*/)delimiter_touched=true;
-						else if(ytext==y1&&xtext<x1)x1-=cursor-cursorr;
-						if(forward){xtext+=cursorr;centering2(w,&xr,&xc,true);}
-						else centering(w,&xr,&xc);
-					}
+					if(replace(cursor)/*true*/){ytext=iferrory;xtext=iferrorx;continue;}
+					phase=delimiter(y1,x1,y,pos,sz,cursorr,phase);
+					if(phase/*true*/)delimiter_touched=true;
+					else if(ytext==y1&&xtext<x1)x1-=cursor-cursorr;
+					if(forward){xtext+=cursorr;centering2(w,&xr,&xc,true);}
+					else centering(w,&xr,&xc);
 					continue;
 				}
 				return 1;
