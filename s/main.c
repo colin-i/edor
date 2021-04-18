@@ -2043,6 +2043,7 @@ int main(int argc,char**argv){
 	sigaction(SIGSEGV, &signalhandlerDescriptor, nullptr);
 	//baz(argc);
 	#endif
+	if(argc>2){puts("Too many arguments.");return EXIT_FAILURE;}
 	WINDOW*w1=initscr();
 	if(w1!=nullptr){
 		raw();//stty,cooked;relevant for getchar at me
