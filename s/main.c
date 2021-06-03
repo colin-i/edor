@@ -590,7 +590,7 @@ static int movment(int c,WINDOW*w){
 		getmouse(&e);//==OK is when mousemask is 0, but then nothint at getch
 		if((e.bstate&BUTTON4_PRESSED)!=0)vu1move(w,getcury(w));
 		else if((e.bstate&BUTTON5_PRESSED)!=0)vd1move(w,getcury(w));
-		else if((e.bstate&BUTTON1_CLICKED)!=0)amove(w,e.y-1,e.x-1);//return -2;}
+		else if((e.bstate&BUTTON1_CLICKED)!=0)amove(w,e.y,e.x);//return -2;}
 	}else if(c==KEY_LEFT)left(w,getcurx(w));
 	else if(c==KEY_RIGHT)right(w,getcurx(w));
 	else if(c==KEY_UP){
