@@ -290,20 +290,22 @@ static void vdmove(WINDOW*w,int len){
 		amove(w,y,x);
 	}
 }
-static void vu1move(WINDOW*w,int y){
+static void vuNmove(WINDOW*w,int y,size_t n){
+	if(ytext<n)ytext=0;
+	else ytext-=n;
 	int x=getcurx(w);
-	if(ytext!=0){
-		ytext--;refreshpage(w);
-		amove(w,y,x);
-	}
+	refreshpage(w);
+	amove(w,y,x);
 }
-static void vd1move(WINDOW*w,int y){
+#define vu1move(w,y) vuNmove(w,y,1)
+static void vdNmove(WINDOW*w,int y,size_t n){
+	if(ytext+n>=rows_tot)ytext=rows_tot-1;
+	else ytext+=n;
 	int x=getcurx(w);
-	if(ytext+1<rows_tot){
-		ytext++;refreshpage(w);
-		amove(w,y,x);
-	}
+	refreshpage(w);
+	amove(w,y,x);
 }
+#define vd1move(w,y) vdNmove(w,y,1)
 static void printinverted(const char*s){
 	attrset(COLOR_PAIR(1));
 	addstr(s);
@@ -583,6 +585,8 @@ static void right_move(WINDOW*w,bool(*f)(char)){
 }
 #define right_wordmove(w) right_move(w,is_wordchar)
 #define right_textmove(w) right_move(w,is_textchar)
+#define alt_jump 2
+#define ctrl_jump 3
 //1resize,0diff key,-1processed
 static int movment(int c,WINDOW*w){
 	if(c==KEY_MOUSE){
@@ -664,10 +668,10 @@ static int movment(int c,WINDOW*w){
 			if(xcare!=xtext)refreshpage(w);
 			wmove(w,y,x);
 		}else if(strcmp(s,"kEND3")==0)endmov(w,true);
-		else if(strcmp(s,"kUP3")==0)vumove(w,2);
-		else if(strcmp(s,"kDN3")==0)vdmove(w,2);
-		else if(strcmp(s,"kUP5")==0)vumove(w,3);
-		else if(strcmp(s,"kDN5")==0)vdmove(w,3);
+		else if(strcmp(s,"kUP5")==0)vumove(w,ctrl_jump);
+		else if(strcmp(s,"kDN5")==0)vdmove(w,ctrl_jump);
+		else if(strcmp(s,"kUP3")==0)vumove(w,alt_jump);
+		else if(strcmp(s,"kDN3")==0)vdmove(w,alt_jump);
 		else if(strcmp(s,"kHOM5")==0){
 			if(ytext!=0||xtext!=0){
 				ytext=0;xtext=0;
@@ -685,7 +689,11 @@ static int movment(int c,WINDOW*w){
 			if(ycare||xtext!=xcare)refreshpage(w);
 			//moved by curses, but no add str for line breaks
 			wmove(w,y,x);
-		}else return 0;
+		}else if(strcmp(s,"kUP6")==0)vuNmove(w,getcury(w),ctrl_jump);
+		else if(strcmp(s,"kDN6")==0)vdNmove(w,getcury(w),ctrl_jump);
+		else if(strcmp(s,"kUP4")==0)vuNmove(w,getcury(w),alt_jump);
+		else if(strcmp(s,"kDN4")==0)vdNmove(w,getcury(w),alt_jump);
+		else return 0;
 	}
 	return -1;
 }
