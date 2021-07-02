@@ -291,19 +291,23 @@ static void vdmove(WINDOW*w,int len){
 	}
 }
 static void vuNmove(WINDOW*w,int y,size_t n){
-	if(ytext<n)ytext=0;
-	else ytext-=n;
-	int x=getcurx(w);
-	refreshpage(w);
-	amove(w,y,x);
+	if(ytext!=0){
+		if(ytext<n)ytext=0;
+		else ytext-=n;
+		int x=getcurx(w);
+		refreshpage(w);
+		amove(w,y,x);
+	}
 }
 #define vu1move(w,y) vuNmove(w,y,1)
 static void vdNmove(WINDOW*w,int y,size_t n){
-	if(ytext+n>=rows_tot)ytext=rows_tot-1;
-	else ytext+=n;
-	int x=getcurx(w);
-	refreshpage(w);
-	amove(w,y,x);
+	if(rows_tot-1!=ytext){
+		if(ytext+n>=rows_tot)ytext=rows_tot-1;
+		else ytext+=n;
+		int x=getcurx(w);
+		refreshpage(w);
+		amove(w,y,x);
+	}
 }
 #define vd1move(w,y) vdNmove(w,y,1)
 static void printinverted(const char*s){
