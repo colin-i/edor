@@ -43,6 +43,12 @@
 
 #include"base.h"
 
+#ifdef PLATFORM64
+#define protocol "%lu"
+#else
+#define protocol "%u"
+#endif
+
 static int err_l=0;
 static char*err_s;
 #define b_inf_s "F1 for help"
@@ -342,7 +348,7 @@ void position(int rw,int cl){
 		if(x>rows[y].sz)x=rows[y].sz;
 	}
 	char posbuf[10+1+10+1];
-	int n=sprintf(posbuf,"%u,%u",y+1,x+1);
+	int n=sprintf(posbuf,protocol "," protocol,y+1,x+1);
 	int dif=getmaxx(poswn)-n;
 	if(dif!=0){
 		if(dif>0){
@@ -671,7 +677,7 @@ static bool dos(WINDOW*w,eundo*un,size_t vl){
 }
 static void undo_show(size_t n){
 	char nr[11];
-	int a=sprintf(nr,"%u",n);
+	int a=sprintf(nr,protocol,n);
 	mvaddstr(getmaxy(stdscr)-1,com_left,nr);
 	undo_erase(a);
 	wnoutrefresh(stdscr);
@@ -923,7 +929,7 @@ int command(char*comnrp){
 		input=inputf;
 	}else{
 		input=input0;
-		if(*comnrp==com_nr_goto_alt)cursor=sprintf(input,"%u,",1+ytext
+		if(*comnrp==com_nr_goto_alt)cursor=sprintf(input,protocol ",",1+ytext
 			+(size_t)getcury(quick_get(comnrp)));
 		else cursor=0;
 	}

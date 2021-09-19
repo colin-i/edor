@@ -78,6 +78,12 @@ char a=std::filesystem::path::preferred_separator;
 AC_CHECK_HEADERS(stdbool.h stddef.h)
 ])
 
+AC_PREPROC_IFELSE([AC_LANG_SOURCE([
+#if SIZEOF_VOIDP != 8
+#error
+#endif
+])], [AC_DEFINE(PLATFORM64, 1, "64")], [])
+
 # Checks for library functions.
 
 AM_INIT_AUTOMAKE

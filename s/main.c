@@ -60,6 +60,7 @@
 #else
 #include"inc/main/armv7/signal.h"
 #endif
+// This method can only be used on 32-bit ARM
 static void AddAddress(unsigned long ip,int address_count) {
 	Dl_info info;
 	dladdr((void*)ip, &info);
