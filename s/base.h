@@ -40,6 +40,7 @@ bool new_visual(char*);
 bool bar_clear(void);
 bool is_dir(int);
 void err_set(WINDOW*);
+int open_new(char*);
 
 extern char ln_term[3];
 extern size_t ln_term_sz;

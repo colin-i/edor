@@ -1910,6 +1910,7 @@ static int startfile(char*f,size_t*text_sz,bool no_file,bool no_input){
 }
 static void getfilebuf(char*cutbuf_file){//,size_t off){
 	int f=open(cutbuf_file,O_RDONLY);
+	if(f==-1)f=open_new(cutbuf_file);
 	/*if(f==-1){
 		char store=cutbuf_file[off];
 		cutbuf_file[off]='.';

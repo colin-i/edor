@@ -156,11 +156,14 @@ void err_set(WINDOW*w){
 		wmove(w,getcury(w),getcurx(w));//newpath+save
 	}
 }
+int open_new(char*path){
+	return open(path,O_CREAT|O_WRONLY|O_TRUNC,S_IRUSR|S_IWUSR);
+}
 //command return
 static int saving(){
 	int f;int r;
 	if(new_f/*true*/){
-		f=open(textfile,O_CREAT|O_WRONLY|O_TRUNC,S_IRUSR|S_IWUSR);
+		f=open_new(textfile);
 		new_f=f==-1;
 		if(new_f/*true*/){
 			bar_clear();//is troubleing with the bool,and more

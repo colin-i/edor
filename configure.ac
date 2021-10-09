@@ -3,7 +3,7 @@
 AC_PREREQ([2.69])
 
 AC_INIT([edor], [0.1])
-AC_SUBST([PROJ], 'edor')
+#AC_SUBST([PROJ], 'edor')
 
 AC_CONFIG_SRCDIR([s/main.c])
 
@@ -92,5 +92,5 @@ AC_CONFIG_FILES([Makefile s/Makefile])
 
 AC_OUTPUT
 
-echo -n >"./.${PROJ}info"
-echo ~>./bash_home
+#echo -n >"./.${PROJ}info"
+#echo ~>./bash_home
