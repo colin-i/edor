@@ -1,4 +1,15 @@
 # EDitOR
+
+## Install
+On Ubuntu, but other distros may have the same tree and dependencies.\
+Architecture: amd64 arm64
+```sh
+sudo add-apt-repository ppa:colin-i/ppa
+sudo apt-get update
+sudo apt-get install edor
+```
+
+## From source
 Use autoconf automake libncurses-dev ; on armv7l, libunwind-dev
 ```sh
 autoreconf -i
@@ -12,7 +23,8 @@ make -f Makefile.old
 Use *\-\-prefix=your_path* at *./configure* if needed (example: at Termux in Android).\
 Uninstall command is *make uninstall*.\
 *\-\-disable\-cpp* to set c rules.
-###### Donations
+
+## Donations
 | Name      | Address                                    |
 |-----------|--------------------------------------------|
 | Bitcoin   | 1DcXWYXpmopfgg3oZYWVBTLbDTmQ6nWG7s         |
