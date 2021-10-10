@@ -5,6 +5,10 @@ autoreconf -i
 ./configure
 make install
 ```
+Or, for some 64-bit platforms:
+```sh
+make -f Makefile.old
+```
 Use *\-\-prefix=your_path* at *./configure* if needed (example: at Termux in Android).\
 Uninstall command is *make uninstall*.\
 *\-\-disable\-cpp* to set c rules.

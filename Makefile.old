@@ -1,0 +1,38 @@
+prefix = /usr
+
+DEFS =  -DUSE_FS=1 -DPLATFORM64=1\
+	 -DHAVE_CURSES_H=1 -DHAVE_DIRENT_H=1 -DHAVE_ERRNO_H=1 -DHAVE_FCNTL_H=1 -DHAVE_POLL_H=1 -DHAVE_STDLIB_H=1 -DHAVE_STDIO_H=1 -DHAVE_STRING_H=1 -DHAVE_UNISTD_H=1\
+	 -DHAVE_STDBOOL_H=1 -DHAVE_STDDEF_H=1
+# -DHAVE_DLFCN_H=1
+# -DHAVE_SIGNAL_H=1
+#
+# -DUSE__FS=1
+
+all: s/edor
+
+OBJ = s/main.o s/bar.o s/sep.o
+
+%.o: %.c
+	$(CC) -x c++ -c -o $@ $< $(DEFS) $(CPPFLAGS) $(CFLAGS)
+
+s/edor: $(OBJ)
+	$(CC) $(CPPFLAGS) $(CFLAGS) $(LDFLAGS) -o $@ $^ -lcurses
+
+install: s/edor
+	install -D s/edor \
+		$(DESTDIR)$(prefix)/bin/edor
+
+clean-compile:
+	-rm -f $(OBJ)
+
+clean-link:
+	-rm -f s/edor
+
+clean: clean-compile clean-link
+
+distclean: clean
+
+uninstall:
+	-rm -f $(DESTDIR)$(prefix)/bin/edor
+
+.PHONY: all install clean distclean uninstall
