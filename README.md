@@ -2,7 +2,7 @@
 
 ## Install
 On Ubuntu, but other distros may have the same tree and dependencies.\
-Architecture: amd64 arm64
+Architecture: amd64 arm64 armhf
 ```sh
 sudo add-apt-repository ppa:colin-i/ppa
 sudo apt-get update
@@ -10,7 +10,7 @@ sudo apt-get install edor
 ```
 
 ## From source
-Use autoconf automake libncurses-dev ; on armv7l, libunwind-dev
+Use autoconf automake libncurses-dev ; on armv7l cpu, libunwind-dev
 ```sh
 autoreconf -i
 ./configure
