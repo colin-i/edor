@@ -24,9 +24,10 @@ AC_CHECK_HEADERS(dirent.h errno.h fcntl.h poll.h stdio.h stdlib.h string.h unist
 AC_CHECK_HEADERS(curses.h, [AC_SUBST(CSS, "")], [AC_SUBST(CSS, "-Wno-padded")])
 AC_SUBST(UNW, "")
 
-AC_MSG_CHECKING([armv7l])
-#arm32 unwind
-AS_IF([test "$(uname -m)" = "armv7l"],
+AC_CANONICAL_BUILD
+AC_MSG_CHECKING([armhf])
+#arm32 unwind, $(uname -m)
+AS_IF([test "`echo ${build_cpu} | head -c 6`" = "armv7l"],
   [
   AC_MSG_RESULT([yes])
   AC_DEFINE(ARM7L, 1, [armv7l])
