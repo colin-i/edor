@@ -10,7 +10,7 @@ sudo apt-get install edor
 ```
 
 ## From source
-Use autoconf automake libncurses-dev ; on armv7l cpu, libunwind-dev
+Use autoconf automake libncurses-dev ; on armv7l(alias arm) cpu, libunwind-dev
 ```sh
 autoreconf -i
 ./configure

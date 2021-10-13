@@ -29,8 +29,7 @@ AC_CANONICAL_BUILD
 AC_MSG_CHECKING([build_cpu])
 AC_MSG_RESULT([$build_cpu])
 AC_MSG_CHECKING([armhf])
-# || [[ "$build_cpu" = "arm" ]]
-AS_IF([ [[ "$build_cpu" = "armv7l" ]] ],
+AS_IF([ [[ "$build_cpu" = "arm" ]] || [[ "$build_cpu" = "armv7l" ]] ],
   [
   AC_MSG_RESULT([yes])
   AC_DEFINE(ARM7L, 1, [armv7l])
