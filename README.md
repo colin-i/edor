@@ -5,17 +5,17 @@ On Ubuntu, but other distros may have the same tree and dependencies.\
 Architecture: amd64 arm64 armhf
 ```sh
 sudo add-apt-repository ppa:colin-i/ppa
-sudo apt-get update
-sudo apt-get install edor
 ```
-Or add the following two lines in the source (ex: /etc/apt/sources.list) :
-```sh
-deb http://ppa.launchpad.net/colin-i/ppa/ubuntu impish main
-deb-src http://ppa.launchpad.net/colin-i/ppa/ubuntu impish main
-```
-And add the gpg key:
+Or add the following two lines in the source (ex: /etc/apt/sources.list); and add the gpg key:
+*deb http://ppa.launchpad.net/colin-i/ppa/ubuntu impish main*
+*deb-src http://ppa.launchpad.net/colin-i/ppa/ubuntu impish main*
 ```sh
 sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys AF865B4744B5DC5D
+```
+Update and install:
+```sh
+sudo apt-get update
+sudo apt-get install edor
 ```
 
 ## From source
