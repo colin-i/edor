@@ -6,8 +6,8 @@ Architecture: amd64 arm64 armhf
 ```sh
 sudo add-apt-repository ppa:colin-i/ppa
 ```
-Or add the following two lines in the source (ex: /etc/apt/sources.list); and add the gpg key:
-*deb http://ppa.launchpad.net/colin-i/ppa/ubuntu impish main*
+Or add the following two lines in the source (ex: /etc/apt/sources.list); and add the gpg key:\
+*deb http://ppa.launchpad.net/colin-i/ppa/ubuntu impish main*\
 *deb-src http://ppa.launchpad.net/colin-i/ppa/ubuntu impish main*
 ```sh
 sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys AF865B4744B5DC5D
