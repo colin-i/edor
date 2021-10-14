@@ -8,6 +8,15 @@ sudo add-apt-repository ppa:colin-i/ppa
 sudo apt-get update
 sudo apt-get install edor
 ```
+Or add the following two lines in the source (ex: /etc/apt/sources.list) :
+```sh
+deb http://ppa.launchpad.net/colin-i/ppa/ubuntu impish main
+deb-src http://ppa.launchpad.net/colin-i/ppa/ubuntu impish main
+```
+And add the gpg key:
+```sh
+sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys AF865B4744B5DC5D
+```
 
 ## From source
 Use autoconf automake libncurses-dev ; on armv7l(alias arm) cpu, libunwind-dev
