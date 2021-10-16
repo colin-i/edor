@@ -6,12 +6,8 @@ Architecture: amd64 arm64 armhf
 ```sh
 sudo add-apt-repository ppa:colin-i/ppa
 ```
-Or add the following two lines in the source (ex: /etc/apt/sources.list); and add the gpg key:\
-*deb http://ppa.launchpad.net/colin-i/ppa/ubuntu impish main*\
-*deb-src http://ppa.launchpad.net/colin-i/ppa/ubuntu impish main*
-```sh
-sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys AF865B4744B5DC5D
-```
+Or see the *manual installation step* here
+*https://gist.github.com/colin-i/e324e85e0438ed71219673fbcc661da6*\
 Update and install:
 ```sh
 sudo apt-get update
@@ -34,11 +30,5 @@ make -f Makefile.old
 Uninstall command is *make uninstall*.
 
 ## Donations
-| Name      | Address                                    |
-|-----------|--------------------------------------------|
-| Bitcoin   | 1DcXWYXpmopfgg3oZYWVBTLbDTmQ6nWG7s         |
-| Ethereum  | 0xd8ea69f877b93fa663652bc2d944e71a338cd5f9 |
-| Dogecoin  | DP28QjzNcWCF4XqdUoDcZ7DeWKhjTmZqY9         |
-| Decred    | DsSdAMyVkKbX18fXK5pYJbNgXhfisc4onT9        |
-| Digibyte  | DPK6t296EMSHNMzuoMyP2zbxRjtisaaCRu         |
-| Ravencoin | RECqJbqzqNiGQeodcRSBqkAZjh2fbroUHL         |
+See the *donations* section here
+*https://gist.github.com/colin-i/e324e85e0438ed71219673fbcc661da6*
