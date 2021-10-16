@@ -6,7 +6,7 @@ Architecture: amd64 arm64 armhf
 ```sh
 sudo add-apt-repository ppa:colin-i/ppa
 ```
-Or see the *manual installation step* here *https://gist.github.com/colin-i/e324e85e0438ed71219673fbcc661da6*.\
+Or the *manual installation step* from this link *https://gist.github.com/colin-i/e324e85e0438ed71219673fbcc661da6* \
 Update and install:
 ```sh
 sudo apt-get update
@@ -29,5 +29,5 @@ make -f Makefile.old
 Uninstall command is *make uninstall*.
 
 ## Donations
-See the *donations* section here
+The *donations* section is here
 *https://gist.github.com/colin-i/e324e85e0438ed71219673fbcc661da6*
