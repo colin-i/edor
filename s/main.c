@@ -1811,8 +1811,8 @@ static int normalize(char**c,size_t*size,size_t*r){
 					else{norm[j]=a;j++;a='\n';ok=-1;}
 				}
 				else if(ln_term[0]=='\n'){
-					if(((i+1)<sz)&&text_w[i+1]=='\n'){i++;a='\n';}
-					else{a='\n';ok=-1;}
+					if(((i+1)<sz)&&text_w[i+1]=='\n')i++;
+					a='\n';ok=-1;
 				}
 			}
 			norm[j]=a;j++;
