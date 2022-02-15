@@ -413,7 +413,7 @@ static bool replace_text(WINDOW*w,int yb,int xb,int rstart,int rstop){
 	for(;;){
 		int c=wgetch(w);
 		if(c==Char_Return){
-			wattrset(w,COLOR_PAIR(0));
+			wattrset(w,0);
 			refreshrowsbot(w,rstart,rstop);
 			wmove(w,yb,xb);
 			visual(' ');

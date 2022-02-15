@@ -2059,6 +2059,7 @@ int main(int argc,char**argv){
 	#endif
 	if(argc>2){puts("Too many arguments.");return EXIT_FAILURE;}
 	WINDOW*w1=initscr();
+	use_default_colors();//assume_default_colors(-1,-1);//it's ok without this for color pair 0 (when attrset(0))
 	if(w1!=nullptr){
 		raw();//stty,cooked;relevant for getchar at me
 		size_t text_sz;
