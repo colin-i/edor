@@ -49,6 +49,7 @@ int waddstr(WINDOW*,const char*);
 int waddnstr(WINDOW*,const char*,int);
 int clrtoeol(void);
 int wclrtoeol(WINDOW*);
+int use_default_colors(void);
 int start_color(void);
 int init_pair(short,short,short);
 int keypad(WINDOW*,bool);
