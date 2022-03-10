@@ -1,7 +1,7 @@
 # EDitOR
 
 ## Install
-On Ubuntu, but other distros may have the same tree and dependencies.\
+On Ubuntu from PPA.\
 Architecture: amd64 arm64 armhf
 ```sh
 sudo add-apt-repository ppa:colin-i/ppa
