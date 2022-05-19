@@ -1,0 +1,13 @@
+Source: edor
+Section: utils
+Priority: optional
+Maintainer: Botescu Costin <costin.botescu@gmail.com>
+Build-Depends: libncurses-dev, libunwind-dev [armhf], debhelper-compat (= 12), dh-autoreconf
+Standards-Version: 4.5.0
+Homepage: https://github.com/colin-i/edor
+
+Package: edor
+Architecture: amd64 arm64 armhf
+Multi-Arch: foreign
+Depends: libncurses6, libunwind8 [armhf], ${misc:Depends}, ${shlibs:Depends}
+Description: Command line text editor
