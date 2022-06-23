@@ -9,5 +9,6 @@ Homepage: https://github.com/colin-i/edor
 Package: edor
 Architecture: amd64 arm64 armhf
 Multi-Arch: foreign
-Depends: libncurses6, libunwind8 [armhf], ${misc:Depends}, ${shlibs:Depends}
+Depends: ${misc:Depends}, ${shlibs:Depends}
+#, libncurses6, libunwind8 [armhf]
 Description: Command line text editor

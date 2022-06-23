@@ -1,4 +1,10 @@
-edor (1-x2) impish; urgency=medium
+edor (1-x3) focal; urgency=medium
+
+  * fedora ncurses is in may 2021, for focal can be a fast solution
+
+ -- bc <bc@bc-HP-Pavilion-x360-Convertible>  Thu, 23 Jun 2022 11:41:17 +0300
+
+edor (1-x2) focal; urgency=medium
 
   * yml backup
 
