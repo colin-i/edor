@@ -37,7 +37,7 @@ jobs:
         wget -q https://raw.githubusercontent.com/colin-i/test/master/lp2.py
         sudo apt install python3-launchpadlib
        fi
-       OUTPUT=$(python3 lp.py ppa${{ github.event.inputs.ppa }} ${name} ${version} ${arh})
+       OUTPUT=$(python3 lp2.py ppa${{ github.event.inputs.ppa }} ${name} ${version} ${arh})
        wget ${OUTPUT}/+files/${name}_${version}_${arh}.deb -O ${name}.deb
        dpkg -x ${name}.deb AppDir
       fi
