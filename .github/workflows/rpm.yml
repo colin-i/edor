@@ -28,8 +28,9 @@ jobs:
       sudo apt install alien
       sudo alien -rk ../${name}.deb
       fname=`ls`
-      mv ${fname} ../
-      echo "file=${fname}" >> $GITHUB_ENV
+      fname2=${name}-${version}.${arh}.rpm
+      mv ${fname} ../${fname2} #alien says x86_64 but we coded elsewhere with amd64
+      echo "file=${fname2}" >> $GITHUB_ENV
    - name: artifact
      uses: actions/upload-artifact@v3
      with:
