@@ -12,7 +12,7 @@ jobs:
    - name: Run a multi-line script
      run: |
       #get deb
-      arh=`cat control | grep ^Architecture | cut -d ' ' -f2`
+      arh=`cat debian/control | grep ^Architecture | cut -d ' ' -f2`
       name=`cat debian/changelog | head -1 | grep -o ^[^\ ]*`
       version=`cat debian/changelog | head -1 | grep -Poe "[^\(]*(?=\))"`
       #dist=`cat debian/changelog | head -1 | grep -Poe "[^ ]*(?=;)"`
