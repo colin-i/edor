@@ -110,7 +110,7 @@ jobs:
       fi
       glibc=`readelf -V ${apd}/usr/bin/edor | grep -Po "(?<= GLIBC_)[^ ]*" | sort -Vr | head -1`
       glibc=${glibc//./-}
-      ehco -n ${glibc} > ${glibc}
+      echo -n ${glibc} > ${glibc}
    - name: artifact
      uses: actions/upload-artifact@v3
      with:
