@@ -26,7 +26,7 @@ jobs:
       unzip ./a.zip
       glibc=`cat version`
       echo "file=${name}.AppImage" >> $GITHUB_ENV
-      echo "fullfile=${name}.${glibc}.amd64.AppImage" >> $GITHUB_ENV
+      echo "fullfile=${name}.glibc${glibc}.amd64.AppImage" >> $GITHUB_ENV
      env:
       #for gh
       GITHUB_TOKEN: ${{ secrets.PAT }}
