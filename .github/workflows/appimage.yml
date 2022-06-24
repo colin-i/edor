@@ -110,11 +110,12 @@ jobs:
       fi
       glibc=`readelf -V ${apd}/usr/bin/edor | grep -Po "(?<= GLIBC_)[^ ]*" | sort -Vr | head -1`
       glibc=${glibc//./-}
-      echo -n ${glibc} > ${glibc}
+      echo -n ${glibc} > version
+      ls -l
    - name: artifact
      uses: actions/upload-artifact@v3
      with:
       name: appimage
       path: |
        ./*.AppImage
-       ./glibc
+       ./version
