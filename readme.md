@@ -12,6 +12,8 @@ Install:
 sudo apt-get install edor
 ```
 \
+On linux distributions, <i>.AppImage</i> file from [releases](https://github.com/colin-i/edor/releases).\
+\
 On Fedora, <i>.rpm</i> file from [releases](https://github.com/colin-i/edor/releases).
 ```sh
 yum install edor-*.rpm
