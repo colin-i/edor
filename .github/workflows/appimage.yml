@@ -110,8 +110,7 @@ jobs:
       fi
       glibc=`readelf -V ${apd}/usr/bin/edor | grep -Po "(?<= GLIBC_)[^ ]*" | sort -Vr | head -1`
       glibc=${glibc//./-}
-      echo -n ${glibc} > version
-      ls -l
+      echo -n ${glibc} > version #"glibc" will not be ok for upload-artifact
    - name: artifact
      uses: actions/upload-artifact@v3
      with:

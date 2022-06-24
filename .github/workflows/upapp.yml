@@ -24,7 +24,7 @@ jobs:
       curl -L -H "Authorization: token ${{ secrets.PAT }}" ${url} --output a.zip
       #to env
       unzip ./a.zip
-      glibc=`cat glibc`
+      glibc=`cat version`
       echo "file=${name}.AppImage" >> $GITHUB_ENV
       echo "fullfile=${name}.${glibc}.amd64.AppImage" >> $GITHUB_ENV
      env:
