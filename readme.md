@@ -12,12 +12,12 @@ Install:
 sudo apt-get install edor
 ```
 \
-On Fedora, <i>.rpm</i> file from [releases](https://github.com/colin-i/edor/releases).
+On Fedora, <i>.rpm</i> file from [releases](https://github.com/colin-i/edor/releases). \
 ```sh
 yum install edor-*.rpm
 ```
 \
-On linux distributions, <i>.AppImage</i> file from [releases](https://github.com/colin-i/edor/releases).\
+On linux distributions, <i>.AppImage</i> file from [releases](https://github.com/colin-i/edor/releases).
 
 ## From source
 Use autoconf automake libncurses-dev ; on armv7l(alias arm) cpu, libunwind-dev
