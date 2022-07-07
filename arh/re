@@ -1,2 +1,8 @@
 
-echo remove at requires the second ncurses and tinfo entries, that with so version name
+#echo remove at requires the second ncurses and tinfo entries, that with so version name
+
+#sudo sed is still permission
+
+sed '/^Requires.*NCURSES6.*$/d' text > text2
+
+sudo mv text2 text
