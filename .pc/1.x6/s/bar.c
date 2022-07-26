@@ -815,16 +815,15 @@ static int find(char*z,size_t cursor,size_t pos,size_t visib,int y){
 		centering(w,&xr,&xc);
 		bool untouched=true;bool delimiter_touched=false;
 		char prev_key=' ';
-		int is_for_forward=Char_Return;//last key only at next/prev/replace
+		int last_key=Char_Return;int a;//last key only at next/prev/replace
 		for(;;){
-			int a=wgetch(w);
+			a=wgetch(w);
 			if(a==Char_Return){
-				if(is_for_forward==Char_Return||is_for_forward==prev_key)
+				if(last_key==Char_Return||last_key==prev_key)
 					xc+=cursor;//add only when last was simple find
-				else is_for_forward=a;//modify only if was replace
-				forward=true;
+				forward=true;last_key=a;
 			}else if(a==prev_key){
-				forward=false;is_for_forward=a;
+				forward=false;last_key=a;
 			}else if(a==KEY_LEFT){
 				size_t iferrory=ytext;size_t iferrorx=xtext;
 				if(untouched/*true*/){
@@ -834,7 +833,7 @@ static int find(char*z,size_t cursor,size_t pos,size_t visib,int y){
 					if(forward){xtext+=cursorr;centering2(w,&xr,&xc,true);}
 					else centering(w,&xr,&xc);
 					untouched=false;
-					is_for_forward=a;continue;
+					last_key=a;continue;
 				}
 				if(finding(cursor,xr,xc,forward)/*true*/){
 					if(replace(cursor)/*true*/){ytext=iferrory;xtext=iferrorx;continue;}
@@ -843,7 +842,7 @@ static int find(char*z,size_t cursor,size_t pos,size_t visib,int y){
 					else if(ytext==y1&&xtext<x1)x1-=cursor-cursorr;
 					if(forward){xtext+=cursorr;centering2(w,&xr,&xc,true);}
 					else centering(w,&xr,&xc);
-					is_for_forward=a;continue;
+					last_key=a;continue;
 				}
 				return 1;
 			}else if(a=='r'){
