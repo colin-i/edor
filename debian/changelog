@@ -1,3 +1,9 @@
+edor (1-x4) focal; urgency=medium
+
+  * fix for replace and find next
+
+ -- bc <bc@bc-HP-Pavilion-x360-Convertible>  Tue, 26 Jul 2022 14:38:37 +0300
+
 edor (1-x3) focal; urgency=medium
 
   * fedora ncurses is in may 2021, for focal can be a fast solution

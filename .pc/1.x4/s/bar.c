@@ -814,15 +814,12 @@ static int find(char*z,size_t cursor,size_t pos,size_t visib,int y){
 		wnoutrefresh(stdscr);
 		centering(w,&xr,&xc);
 		bool untouched=true;bool delimiter_touched=false;
-		char prev_key=' ';
-		int last_key=Char_Return;int a;
-		for(;;last_key=a){
-			a=wgetch(w);
+		for(;;){
+			int a=wgetch(w);
 			if(a==Char_Return){
-				if(last_key==Char_Return||last_key==prev_key)
-					xc+=cursor;//add only when last was simple find
+				xc+=cursor;
 				forward=true;
-			}else if(a==prev_key){
+			}else if(a==' '){
 				forward=false;
 			}else if(a==KEY_LEFT){
 				size_t iferrory=ytext;size_t iferrorx=xtext;
