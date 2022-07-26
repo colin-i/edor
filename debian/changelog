@@ -1,3 +1,9 @@
+edor (1-x5) focal; urgency=medium
+
+  * last key excluding Rs
+
+ -- bc <bc@bc-HP-Pavilion-x360-Convertible>  Tue, 26 Jul 2022 19:42:49 +0300
+
 edor (1-x4) focal; urgency=medium
 
   * fix for replace and find next
