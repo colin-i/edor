@@ -6,7 +6,7 @@ on:
     description: "project version"
 
 jobs:
- del:
+ delrel:
    runs-on: ubuntu-latest
    steps:
     - uses: cb80/delrel@latest
