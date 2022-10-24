@@ -1289,7 +1289,11 @@ static bool del_key(size_t y,size_t x,int r,int*cc,WINDOW*w,bool reverse){
 	size_t sz=r1->sz;
 	if(x==sz){
 		size_t yy=y+1;
-		if(yy==rows_tot)return false;
+		if(yy==rows_tot){
+			//to not continue
+			if(margin/*true*/)wmove(w,r,c);//this is after refreshpage, the pointer is at the last row
+			return true;
+		}
 		row*r2=&rows[yy];
 		if(row_alloc(r1,x,r2->sz,0)==false){
 			if(undo_add_del(y,x,yy,0)==false){
@@ -1322,7 +1326,7 @@ static bool del_key(size_t y,size_t x,int r,int*cc,WINDOW*w,bool reverse){
 static bool bcsp(size_t y,size_t x,int*rw,int*cl,WINDOW*w){
 	int c=cl[0];
 	if(xtext==0&&c==0){
-		if(y==0)return false;
+		if(y==0)return true;//to not continue
 		size_t yy=y-1;
 		row*r0=&rows[yy];
 		row*r1=&rows[y];
