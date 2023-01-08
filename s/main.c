@@ -38,6 +38,23 @@
 
 #include"sep.h"
 
+
+/*
+mod_set_off(bool)
+if bool mod_set(fals recovered=false
+else if recovered visual* recovered=false
+
+mod_set_on
+mod_set(true recovered=true
+
+all getch to sleep 100 for second thread flagdone
+
+if recovered==false recoveredfile write visual& recovered=true
+
+if recoveredfile delete
+*/
+
+
 #ifdef ARM7L
 #ifdef HAVE_DLFCN_H
 #include<dlfcn.h>
@@ -1049,11 +1066,14 @@ static void row_del(size_t a,size_t b){
 	}
 	rows_tot-=c-a;
 }
+static void mod_visual(chtype ch){
+	mvaddch(getmaxy(stdscr)-1,getmaxx(stdscr)-1,ch);
+	wnoutrefresh(stdscr);
+}
 void mod_set(bool flag){
 	mod_flag=flag;
 	chtype ch=mod_flag/*true*/?' ':'*';
-	mvaddch(getmaxy(stdscr)-1,getmaxx(stdscr)-1,ch);
-	wnoutrefresh(stdscr);
+	mod_visual(ch);
 }
 void deleting(size_t ybsel,size_t xbsel,size_t yesel,size_t xesel){
 	row*r1=&rows[ybsel];

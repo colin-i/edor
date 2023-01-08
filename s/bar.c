@@ -77,7 +77,7 @@ static size_t undos_spc=0;
 static size_t undos_save=0;
 static size_t undos_max=0;
 static int undo_v=0;
-static bool new_f=false;
+//static bool new_f=false;
 #define new_s "New Path"
 static int new_v=0;
 
@@ -162,10 +162,13 @@ int open_new(char*path){
 //command return
 static int saving(){
 	int f;int r;
-	if(new_f/*true*/){
+	//this 'if' can be the second time in some places, but it is not a must to write once
+	if(access(textfile,F_OK)==-1){
+	//if(new_f/*true*/){
 		f=open_new(textfile);
-		new_f=f==-1;
-		if(new_f/*true*/){
+		//new_f=f==-1;
+		//if(new_f/*true*/){
+		if(f==-1){
 			bar_clear();//is troubleing with the bool,and more
 			err_s=strerror(errno);
 			err_l=(int)strlen(err_s)+2;
@@ -190,7 +193,8 @@ static void inputpath(){
 static int saves(){
 	if(access(input0,F_OK)==-1){
 		inputpath();
-		new_f=true;return saving();
+		//new_f=true;
+		return saving();
 	}
 	return -1;
 }
@@ -674,8 +678,10 @@ static bool dos(WINDOW*w,eundo*un,size_t vl){
 		}
 	}
 	undos_tot+=vl;
-	if(undos_tot==undos_save)mod_set(true);
-	else if(undos_tot==undos_save+vl)mod_set(false);
+	if(undos_tot==undos_save)
+		mod_set(true);
+	else if(undos_tot==undos_save+vl)
+		mod_set(false);
 	return true;
 }
 static void undo_show(size_t n){
@@ -958,7 +964,8 @@ int command(char*comnrp){
 					r=question("Overwrite");
 					if(r==1){
 						inputpath();
-						new_f=false;r=saving();
+						//new_f=false;
+						r=saving();
 					}else if(r==0){
 						command_rewrite(y,x,pos,input0,cursor,visib);
 						continue;
@@ -1092,7 +1099,9 @@ int command(char*comnrp){
 }
 bool new_visual(char*f){
 	if(access(f,F_OK)==-1){
-		new_v=sizeof(new_s);new_f=true;textfile=f;
+		new_v=sizeof(new_s);
+		//new_f=true;
+		textfile=f;
 		mvaddstr(getmaxy(stdscr)-1,com_left,new_s);
 		return true;
 	}

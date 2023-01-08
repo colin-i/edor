@@ -24,7 +24,8 @@ Use autoconf automake libncurses-dev ; on armv7l(alias arm) cpu, libunwind-dev
 ```sh
 autoreconf -i
 ./configure
-make install
+make
+sudo make install
 ```
 Use *\-\-prefix=your_path* at *./configure* if needed (example: at Termux in Android).\
 *\-\-disable\-cpp* to set c rules.\
