@@ -49,6 +49,8 @@
 #define protocol "%u"
 #endif
 
+#define err_len_min 2
+
 static int err_l=0;
 static char*err_s;
 #define b_inf_s "F1 for help"
@@ -130,7 +132,7 @@ static bool bar_clear_mini(){
 		move(getmaxy(stdscr)-1,com_left);
 		while(new_v!=0){addch(' ');new_v--;}
 		return true;
-	}else if(err_l>3){
+	}else if(err_l>err_len_min){
 		move(getmaxy(stdscr)-1,com_left);
 		while(err_l!=0){addch(' ');err_l--;}
 		return true;
@@ -146,10 +148,10 @@ bool bar_clear(){
 	return bar_clear_mini();
 }
 void err_set(WINDOW*w){
-	if(err_l>3){//waiting for normal clear_com
+	if(err_l>err_len_min){//waiting for normal clear_com
 		int y=getmaxy(stdscr)-1;
 		mvaddch(y,com_left,'\"');
-		addnstr(err_s,err_l-2);
+		addnstr(err_s,err_l-err_len_min);
 		addch('\"');
 		wnoutrefresh(stdscr);
 		wmove(w,getcury(w),getcurx(w));//newpath+save
@@ -170,7 +172,7 @@ int saving_base(char*dest){
 		if(f==-1){
 			bar_clear();//is troubleing with the bool,and more
 			err_s=strerror(errno);
-			err_l=(int)strlen(err_s)+2;
+			err_l=(int)strlen(err_s)+err_len_min;
 			int rg=get_right-com_left;
 			if(err_l>rg)err_l=rg;
 		}
