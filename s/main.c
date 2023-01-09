@@ -57,9 +57,9 @@
 #ifndef HAVE_STDLIB_H
 #include"inc/main/armv7/stdlib.h"
 #endif
-#ifndef HAVE_STDIO_H
-#include"inc/main/armv7/stdio.h"
-#endif
+//#ifndef HAVE_STDIO_H
+//was snprintf #include"inc/main/armv7/stdio.h"
+//#endif
 #ifdef HAVE_SIGNAL_H
 #include<signal.h>
 #else
@@ -148,6 +148,9 @@ static bool helpend;
 static int phelp;
 static char*helptext;
 static time_t hardtime=0;
+static char*restorefile=nullptr;
+static char restorefile_buf[max_path_0];
+
 #define hel1 "USAGE\n"
 #define hel2 " [filepath]\
 \nINPUT\
@@ -1082,13 +1085,32 @@ void mod_set_off_wrap(){
 		mod_set_off();//with wrap
 	}
 }
+static void hardtime_resolve_returner(WINDOW*w){//argument for errors
+	if(textfile!=nullptr){
+		if(restorefile==nullptr){
+			//set restore file path
+			size_t ln=strlen(textfile);
+			if(ln==max_path)return;//the path is too long
+			snprintf(restorefile_buf,max_path_0,"%s.%li",textfile,hardtime);
+			restorefile=restorefile_buf;
+		}
+		//in case there is a restore file but at another path (restore, save as, type, restore!=oldrestore)
+		//	must set path every time and compare and i don't change the file name so this is a "to do"
+		//if(strcmp(newrestorefile,restorefile)!=0)remove(restorefile);
+
+		//save at path
+		if(saving_base(restorefile)==command_return_ok)
+			mod_visual('&');
+		else err_set(w);
+	}
+}
 #define one_minute 60
-static void hardtime_resolve(){
+//#define one_minute 1
+static void hardtime_resolve(WINDOW*w){//argument for errors
 	if(hardtime!=0){
 		if((time((time_t)nullptr)-hardtime)>one_minute){//>1
-			//write
+			hardtime_resolve_returner(w);
 			easytime();
-			mod_visual('&');
 		}
 	}
 }
@@ -1750,7 +1772,7 @@ static bool loopin(WINDOW*w){
 		//wtimeout(w,1000);
 		wtimeout(w,one_minute*1000);//it counts where wgetch is (example at visual)
 		c=wgetch(w);
-		hardtime_resolve();
+		hardtime_resolve(w);
 		if(c==ERR){
 			//this was ok at hardtime_resolve but will be too often there, here will be wrong sometimes but still less trouble
 			doupdate();//noone will show virtual screen if without this
@@ -1835,6 +1857,7 @@ static bool loopin(WINDOW*w){
 						continue;
 					}
 				}
+				if(restorefile!=nullptr)remove(restorefile);//here restorefile is deleted
 				return false;
 			}
 			else type(c,w);

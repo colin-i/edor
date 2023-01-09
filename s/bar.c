@@ -54,15 +54,14 @@ static char*err_s;
 #define b_inf_s "F1 for help"
 #define quest_ex_s "? y/C/n"
 static int com_left=sizeof(b_inf_s);
-#define max_path 0xff
-static char input1[max_path+1];
-static char input2[max_path+1];
+static char input1[max_path_0];
+static char input2[max_path_0];
 static char*input0=input1;
 static WINDOW*poswn;
-static char inputr[max_path+1];
+static char inputr[max_path_0];
 static size_t cursorr=0;
 #define get_right getbegx(poswn)-1
-static char inputf[max_path+1];
+static char inputf[max_path_0];
 static int cursorf=0;
 
 typedef struct{
@@ -89,10 +88,10 @@ static int wrt(int f){
 	size_t n=rows_tot-1;
 	for(size_t i=0;i<n;i++){
 		row*r=&rows[i];
-		if((size_t)write(f,r->data,r->sz)!=r->sz)return false;
-		if((size_t)write(f,ln_term,ln_term_sz)!=ln_term_sz)return false;
+		if((size_t)write(f,r->data,r->sz)!=r->sz)return 0;
+		if((size_t)write(f,ln_term,ln_term_sz)!=ln_term_sz)return 0;
 	}
-	if((size_t)write(f,rows[n].data,rows[n].sz)==rows[n].sz)return 1;
+	if((size_t)write(f,rows[n].data,rows[n].sz)==rows[n].sz)return command_return_ok;
 	return 0;
 }
 static int bcdl(int y,int*p,char*input,int cursor){
@@ -160,12 +159,12 @@ int open_new(char*path){
 	return open(path,O_CREAT|O_WRONLY|O_TRUNC,S_IRUSR|S_IWUSR);
 }
 //command return
-static int saving(){
+int saving_base(char*dest){
 	int f;int r;
 	//this 'if' can be the second time in some places, but it is not a must to write once
-	if(access(textfile,F_OK)==-1){
+	if(access(dest,F_OK)==-1){
 	//if(new_f/*true*/){
-		f=open_new(textfile);
+		f=open_new(dest);
 		//new_f=f==-1;
 		//if(new_f/*true*/){
 		if(f==-1){
@@ -176,12 +175,16 @@ static int saving(){
 			if(err_l>rg)err_l=rg;
 		}
 	}
-	else f=open(textfile,O_WRONLY|O_TRUNC);
+	else f=open(dest,O_WRONLY|O_TRUNC);
 	if(f!=-1){
 		r=wrt(f);
 		close(f);
 	}else r=0;
 	return r;
+}
+//command return
+static int saving(){
+	return saving_base(textfile);
 }
 static void inputpath(){
 	textfile=input0;

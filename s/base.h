@@ -20,6 +20,7 @@ void fixmembuf(size_t*y,size_t*x);
 
 const char*bar_init(void);
 int save(void);
+int saving_base(char*);
 int question(const char*);
 int command(char*);
 void centering2(WINDOW*,size_t*,size_t*,bool);
