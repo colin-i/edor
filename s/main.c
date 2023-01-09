@@ -35,25 +35,13 @@
 #else
 #include"inc/main/unistd.h"
 #endif
+#ifdef HAVE_TIME_H
+#include<time.h>
+#else
+#include"inc/main/time.h"
+#endif
 
 #include"sep.h"
-
-
-/*
-mod_set_off(bool)
-if bool mod_set(fals recovered=false
-else if recovered visual* recovered=false
-
-mod_set_on
-mod_set(true recovered=true
-
-all getch to sleep 100 for second thread flagdone
-
-if recovered==false recoveredfile write visual& recovered=true
-
-if recoveredfile delete
-*/
-
 
 #ifdef ARM7L
 #ifdef HAVE_DLFCN_H
@@ -159,6 +147,7 @@ static int yhelp;
 static bool helpend;
 static int phelp;
 static char*helptext;
+static time_t hardtime=0;
 #define hel1 "USAGE\n"
 #define hel2 " [filepath]\
 \nINPUT\
@@ -1066,15 +1055,44 @@ static void row_del(size_t a,size_t b){
 	}
 	rows_tot-=c-a;
 }
+
+static void easytime(){
+	hardtime=0;
+}
 static void mod_visual(chtype ch){
 	mvaddch(getmaxy(stdscr)-1,getmaxx(stdscr)-1,ch);
 	wnoutrefresh(stdscr);
 }
-void mod_set(bool flag){
+static void mod_set(bool flag,chtype ch){
 	mod_flag=flag;
-	chtype ch=mod_flag/*true*/?' ':'*';
 	mod_visual(ch);
 }
+void mod_set_off(){
+	hardtime=time((time_t)nullptr);//cast only at non-header
+	//cannot delete mod_flag, it has meanings at undo type/bk/del sum and quit without save
+	mod_set(false,'*');
+}
+void mod_set_on(){
+	easytime();
+	mod_set(true,' ');
+}
+void mod_set_off_wrap(){
+	//if(mod_flag/*true*/){
+	if(hardtime==0){
+		mod_set_off();//with wrap
+	}
+}
+#define one_minute 60
+static void hardtime_resolve(){
+	if(hardtime!=0){
+		if((time((time_t)nullptr)-hardtime)>one_minute){//>1
+			//write
+			easytime();
+			mod_visual('&');
+		}
+	}
+}
+
 void deleting(size_t ybsel,size_t xbsel,size_t yesel,size_t xesel){
 	row*r1=&rows[ybsel];
 	if(ybsel==yesel){
@@ -1120,7 +1138,7 @@ static bool deleti(size_t ybsel,size_t xbsel,size_t yesel,size_t xesel,int*rw,in
 	bool many=ybsel!=yesel;
 	if(many/*true*/||xbsel!=xesel){
 		if(deletin(ybsel,xbsel,yesel,xesel,rw,cl,w,many)/*true*/){
-			if(mod_flag/*true*/)mod_set(false);
+			mod_set_off_wrap();
 			return true;
 		}
 	}
@@ -1235,7 +1253,7 @@ static void past(WINDOW*w){
 		size_t xe;
 		if(paste(y,x,&xe,cutbuf,cutbuf_sz,cutbuf_r,true)/*true*/){
 			pasted(y-ytext,xe,w);
-			if(mod_flag/*true*/)mod_set(false);
+			mod_set_off_wrap();
 			position(getcury(w),getcurx(w));
 		}
 	}
@@ -1541,7 +1559,7 @@ static void type(int cr,WINDOW*w){
 		}
 	}
 	wmove(w,rw,cl);
-	if(mod_flag/*true*/)mod_set(false);
+	mod_set_off_wrap();
 }
 static void indent(bool b,size_t ybsel,size_t*xbsel,size_t yesel,size_t*xesel,WINDOW*w){
 	if(ybsel>=rows_tot)return;
@@ -1558,7 +1576,7 @@ static void indent(bool b,size_t ybsel,size_t*xbsel,size_t yesel,size_t*xesel,WI
 			row*r=&rows[i];
 			row_set(r,0,1,r->sz,"\t");
 		}
-		if(mod_flag/*true*/)mod_set(false);
+		mod_set_off_wrap();
 	}else{
 		bool something=false;
 		for(size_t i=ybsel;i<=ye;i++){
@@ -1574,7 +1592,7 @@ static void indent(bool b,size_t ybsel,size_t*xbsel,size_t yesel,size_t*xesel,WI
 					r->sz=sz-1;
 				}
 			}
-			if(mod_flag/*true*/)mod_set(false);
+			mod_set_off_wrap();
 		}
 	}
 	int rb;if(ybsel<ytext)rb=0;
@@ -1717,7 +1735,7 @@ static bool savetofile(WINDOW*w,bool has_file){
 	if(ret!=0){
 		if(ret==1){
 			if(d!=textfile)text_file=textfile;
-			mod_set(true);
+			mod_set_on();
 			undo_save();
 		}
 		else if(ret==-2)return true;
@@ -1728,7 +1746,20 @@ static bool savetofile(WINDOW*w,bool has_file){
 static bool loopin(WINDOW*w){
 	int c;
 	for(;;){
+		//printf("\nteste1234\n");
+		//wtimeout(w,1000);
+		wtimeout(w,one_minute*1000);//it counts where wgetch is (example at visual)
 		c=wgetch(w);
+		hardtime_resolve();
+		if(c==ERR){
+			//this was ok at hardtime_resolve but will be too often there, here will be wrong sometimes but still less trouble
+			doupdate();//noone will show virtual screen if without this
+			//and the cursor is getting away, not right but ok
+
+			continue;//timeout
+		}
+		wtimeout(w,-1);
+
 		int a=movment(c,w);
 		if(a==1)return true;
 		if(a!=0){
@@ -2039,7 +2070,7 @@ static void proced(char*comline){
 				if(r<=old_r)clrtoeol();//resize to up,is over text
 				//or =, clear bar,visual and saves
 				old_r=r;
-				if(mod_flag==false)mod_set(false);
+				if(mod_flag==false)mod_set_off();
 				else wnoutrefresh(stdscr);
 				position_reset();
 				position(cy,cx);

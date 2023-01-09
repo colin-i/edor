@@ -55,6 +55,8 @@ int init_pair(short,short,short);
 int keypad(WINDOW*,bool);
 int getmouse(MEVENT*);
 int nodelay(WINDOW*,bool);
+void wtimeout(WINDOW*,int);
+int doupdate(void);
 
 #ifdef __cplusplus
 }

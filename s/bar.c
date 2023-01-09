@@ -679,9 +679,9 @@ static bool dos(WINDOW*w,eundo*un,size_t vl){
 	}
 	undos_tot+=vl;
 	if(undos_tot==undos_save)
-		mod_set(true);
+		mod_set_on();
 	else if(undos_tot==undos_save+vl)
-		mod_set(false);
+		mod_set_off();
 	return true;
 }
 static void undo_show(size_t n){
@@ -777,7 +777,7 @@ static bool replace(size_t cursor){
 			memcpy(&r->data[xtext],inputr,cursorr);
 			row_set(r,xtext+cursorr,r->sz-xtext-cursor,0,&r->data[xtext+cursor]);
 		}
-		if(mod_flag/*true*/)mod_set(false);
+		mod_set_off_wrap();
 		return false;
 	}
 	return true;
