@@ -57,9 +57,9 @@
 #ifndef HAVE_STDLIB_H
 #include"inc/main/armv7/stdlib.h"
 #endif
-//#ifndef HAVE_STDIO_H
-//was snprintf #include"inc/main/armv7/stdio.h"
-//#endif
+#ifndef HAVE_STDIO_H
+#include"inc/main/armv7/stdio.h"
+#endif
 #ifdef HAVE_SIGNAL_H
 #include<signal.h>
 #else
@@ -1085,14 +1085,19 @@ void mod_set_off_wrap(){
 		mod_set_off();//with wrap
 	}
 }
+#define restore_marker ".edorrestorefile"
+static bool restorefile_path(char*p){
+	size_t ln=strlen(p)+sizeof(restore_marker);
+	if(ln>max_path_0)return false;//the path is too long
+	sprintf(restorefile_buf,"%s%s",p,restore_marker);
+	return true;
+}
 static void hardtime_resolve_returner(WINDOW*w){//argument for errors
 	if(textfile!=nullptr){
 		if(restorefile==nullptr){
 			//set restore file path
-			size_t ln=strlen(textfile);
-			if(ln==max_path)return;//the path is too long
-			snprintf(restorefile_buf,max_path_0,"%s.%li",textfile,hardtime);
-			restorefile=restorefile_buf;
+			if(restorefile_path(textfile)/*true*/)restorefile=restorefile_buf;
+			else return;
 		}
 		//in case there is a restore file but at another path (restore, save as, type, restore!=oldrestore)
 		//	must set path every time and compare and i don't change the file name so this is a "to do"
@@ -1775,8 +1780,11 @@ static bool loopin(WINDOW*w){
 		hardtime_resolve(w);
 		if(c==ERR){
 			//this was ok at hardtime_resolve but will be too often there, here will be wrong sometimes but still less trouble
-			doupdate();//noone will show virtual screen if without this
+			//doupdate();//noone will show virtual screen if without this
+
 			//and the cursor is getting away, not right but ok
+			wmove(w,getcury(w),getcurx(w));
+			//same as doupdate+not moving the cursor
 
 			continue;//timeout
 		}
@@ -2126,6 +2134,87 @@ static void proced(char*comline){
 	}
 	if(cutbuf!=nullptr)free(cutbuf);
 }
+static void action(int argc,char**argv,WINDOW*w1){
+	size_t text_sz;
+	bool no_file=argc==1;
+	if(no_file==false){
+		no_file=new_visual(argv[1])/*true*/;
+		if(no_file==false){
+			if(restorefile_path(argv[1])/*true*/){
+				if(access(restorefile_buf,F_OK)==0){
+					if(argc==2){
+						puts("There is an unrestored file, (c)ontinue?\r");
+						int c=getchar();
+						if(c!='c')return;
+					}
+				}
+			}
+		}
+	}
+	struct pollfd fds[1];
+	//typedef struct __sFILE FILE;
+	//FILE* stdin __attribute__((annotate("introduced_in=" "23")));
+	fds[0].fd = known_stdin;
+	fds[0].events = POLLIN;
+	bool no_input=poll(fds, 1, 0)<1;
+	int ok=0;
+	if(no_file/*true*/&&no_input/*true*/){
+		text_init_b=(char*)malloc(1);
+		if(text_init_b!=nullptr){
+			rows=(row*)malloc(sizeof(row));
+			if(rows!=nullptr){
+				text_init_b[0]='\0';
+				text_sz=0;
+				rows[0].data=text_init_b;
+				rows[0].sz=0;rows[0].spc=0;
+				ok=1;
+				text_init_e=text_init_b+1;
+			}
+		}
+	}else{
+		ok=startfile(argv[1],&text_sz,no_file,no_input);
+		if(ok!=0){
+			if(ok<1){
+				char txt[]={'N','o','r','m','a','l','i','z','e',' ','l','i','n','e',' ','e','n','d','i','n','g','s',' ','t','o',' ','\\','r',' ',' ','?',' ','n','=','n','o',',',' ','d','e','f','a','u','l','t','=','y','e','s','\r','\0'};
+				//           0   1   2   3   4   5   6   7   8   9   10  11  12  13  14  15  16  17  18  19  20  21  22  23  24  25  26   27  28  29  30  31  32  33  34  35  36  37  38  39  40  41  42  43  44  45  46  47  48  49   50
+				if(ln_term_sz==2){txt[28]='\\';txt[29]='n';}
+				else if(ln_term[0]=='\n')txt[27]='n';
+				puts(txt);
+				int c=getchar();
+				if(c=='n')ok=0;
+			}
+			if(ok!=0){
+				rows=(row*)malloc(rows_tot*sizeof(row));
+				if(rows!=nullptr){
+					rows_init(text_sz);
+					textfile=argv[1];
+					text_init_e=text_init_b+text_sz+1;
+				}
+				else ok=0;
+			}
+		}
+	}
+	if(ok!=0){
+		color();
+		WINDOW*pw=position_init();
+		if(pw!=nullptr){
+			keypad(w1,true);
+			noecho();
+			nonl();//no translation,faster
+			mousemask(ALL_MOUSE_EVENTS,nullptr);//for error, export TERM=vt100
+			proced(argv[0]);
+			delwin(pw);
+		}
+	}
+	if(text_init_b!=nullptr){
+		if(rows!=nullptr){
+			text_free(0,rows_tot);
+			free(rows);
+			//puts(text_file
+		}
+		free(text_init_b);
+	}
+}
 int main(int argc,char**argv){
 	#ifdef ARM7L
 	struct sigaction signalhandlerDescriptor;
@@ -2135,76 +2224,12 @@ int main(int argc,char**argv){
 	sigaction(SIGSEGV, &signalhandlerDescriptor, nullptr);
 	//baz(argc);
 	#endif
-	if(argc>2){puts("Too many arguments.");return EXIT_FAILURE;}
+	if(argc>3){puts("Too many arguments.");return EXIT_FAILURE;}
 	WINDOW*w1=initscr();
 	use_default_colors();//assume_default_colors(-1,-1);//it's ok without this for color pair 0 (when attrset(0))
 	if(w1!=nullptr){
 		raw();//stty,cooked;relevant for getchar at me
-		size_t text_sz;
-		bool no_file=argc!=2||new_visual(argv[1])/*true*/;
-		struct pollfd fds[1];
-		//typedef struct __sFILE FILE;
-		//FILE* stdin __attribute__((annotate("introduced_in=" "23")));
-		fds[0].fd = known_stdin;
-		fds[0].events = POLLIN;
-		bool no_input=poll(fds, 1, 0)<1;
-		int ok=0;
-		if(no_file/*true*/&&no_input/*true*/){
-			text_init_b=(char*)malloc(1);
-			if(text_init_b!=nullptr){
-				rows=(row*)malloc(sizeof(row));
-				if(rows!=nullptr){
-					text_init_b[0]='\0';
-					text_sz=0;
-					rows[0].data=text_init_b;
-					rows[0].sz=0;rows[0].spc=0;
-					ok=1;
-					text_init_e=text_init_b+1;
-				}
-			}
-		}else{
-			ok=startfile(argv[1],&text_sz,no_file,no_input);
-			if(ok!=0){
-				if(ok<1){
-					char txt[]={'N','o','r','m','a','l','i','z','e',' ','l','i','n','e',' ','e','n','d','i','n','g','s',' ','t','o',' ','\\','r',' ',' ','?',' ','n','=','n','o',',',' ','d','e','f','a','u','l','t','=','y','e','s','\r','\0'};
-					//           0   1   2   3   4   5   6   7   8   9   10  11  12  13  14  15  16  17  18  19  20  21  22  23  24  25  26   27  28  29  30  31  32  33  34  35  36  37  38  39  40  41  42  43  44  45  46  47  48  49   50
-					if(ln_term_sz==2){txt[28]='\\';txt[29]='n';}
-					else if(ln_term[0]=='\n')txt[27]='n';
-					puts(txt);
-					int c=getchar();
-					if(c=='n')ok=0;
-				}
-				if(ok!=0){
-					rows=(row*)malloc(rows_tot*sizeof(row));
-					if(rows!=nullptr){
-						rows_init(text_sz);
-						textfile=argv[1];
-						text_init_e=text_init_b+text_sz+1;
-					}
-					else ok=0;
-				}
-			}
-		}
-		if(ok!=0){
-			color();
-			WINDOW*pw=position_init();
-			if(pw!=nullptr){
-				keypad(w1,true);
-				noecho();
-				nonl();//no translation,faster
-				mousemask(ALL_MOUSE_EVENTS,nullptr);//for error, export TERM=vt100
-				proced(argv[0]);
-				delwin(pw);
-			}
-		}
-		if(text_init_b!=nullptr){
-			if(rows!=nullptr){
-				text_free(0,rows_tot);
-				free(rows);
-				//puts(text_file
-			}
-			free(text_init_b);
-		}
+		action(argc,argv,w1);
 		endwin();
 		if(text_file!=nullptr)puts(text_file);
 	}
