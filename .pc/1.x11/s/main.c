@@ -151,7 +151,6 @@ static time_t hardtime=0;
 static char*restorefile=nullptr;
 static char restorefile_buf[max_path_0];
 static mmask_t stored_mouse_mask;
-static bool indent_flag=true;
 
 #define hel1 "USAGE\n"
 #define hel2 " [filepath] skip_unrestoredfilecheck_flag\
@@ -182,8 +181,7 @@ static bool indent_flag=true;
 \nCtrl+u = undo; Alt+u = undo mode: left=undo,right=redo,other key to return\
 \nCtrl+r = redo\
 \nCtrl+e = disable/enable internal mouse/touch\
-\nCtrl+n = disable/enable indentation\
-\nCtrl+q = quit"//31
+\nCtrl+q = quit"//29
 static bool visual_bool=false;
 static char*cutbuf=nullptr;
 static size_t cutbuf_sz=0;
@@ -1457,10 +1455,8 @@ static bool enter(size_t y,size_t x,int*r,int*c,WINDOW*w){
 	if(rows_expand(1)/*true*/)return true;
 	char*b=rows[y].data;
 	char*d=b;
-	if(indent_flag){
-		char*e=b+x;
-		while(d<e&&d[0]=='\t')d++;
-	}
+	char*e=b+x;
+	while(d<e&&d[0]=='\t')d++;
 	size_t tb=(size_t)(d-b);
 	size_t s=rows[y].sz-x;
 	size_t sze=tb+s;
@@ -1877,9 +1873,6 @@ static bool loopin(WINDOW*w){
 			else if(strcmp(s,"^E")==0){
 				if(stored_mouse_mask!=0)stored_mouse_mask=mousemask(0,nullptr);
 				else stored_mouse_mask=mousemask(ALL_MOUSE_EVENTS,nullptr);
-			}
-			else if(strcmp(s,"^N")==0){
-				if(indent_flag/*true*/)indent_flag=false;else indent_flag=true;
 			}
 			else type(c,w);
 			//continue;
