@@ -152,10 +152,6 @@ static char*restorefile=nullptr;
 static char restorefile_buf[max_path_0];
 static mmask_t stored_mouse_mask;
 static bool indent_flag=true;
-#define mask_size 1
-#define mask_mouse 1
-#define mask_indent 2
-static char prefs_file[max_path_0]={'\0'};//only the first byte is set
 
 #define hel1 "USAGE\n"
 #define hel2 " [filepath] skip_unrestoredfilecheck_flag\
@@ -1780,28 +1776,6 @@ static bool savetofile(WINDOW*w,bool has_file){
 	wmove(w,getcury(w),getcurx(w));
 	return false;
 }
-static void setprefs(int flag,bool set){
-	if(prefs_file[0]!='\0'){
-		//can use O_RDWR and lseek SEEK_SET
-		int f=open(prefs_file,O_RDONLY);
-		if(f!=-1){
-			char mask;
-			if(read(f,&mask,mask_size)==mask_size){
-				close(f);
-				if(set)mask|=flag;
-				else mask&=~flag;
-				f=open(prefs_file,O_WRONLY);
-				if(f!=-1){
-					#pragma GCC diagnostic push
-					#pragma GCC diagnostic ignored "-Wunused-result"
-					write(f,&mask,mask_size);
-					close(f);
-					#pragma GCC diagnostic pop
-				}
-			}
-		}
-	}
-}
 static bool loopin(WINDOW*w){
 	int c;
 	for(;;){
@@ -1901,12 +1875,11 @@ static bool loopin(WINDOW*w){
 				return false;
 			}
 			else if(strcmp(s,"^E")==0){
-				if(stored_mouse_mask!=0){stored_mouse_mask=mousemask(0,nullptr);setprefs(mask_mouse,false);}
-				else{stored_mouse_mask=mousemask(ALL_MOUSE_EVENTS,nullptr);setprefs(mask_mouse,true);}
+				if(stored_mouse_mask!=0)stored_mouse_mask=mousemask(0,nullptr);
+				else stored_mouse_mask=mousemask(ALL_MOUSE_EVENTS,nullptr);
 			}
 			else if(strcmp(s,"^N")==0){
 				if(indent_flag/*true*/)indent_flag=false;else indent_flag=true;
-				setprefs(mask_indent,indent_flag);
 			}
 			else type(c,w);
 			//continue;
@@ -2034,19 +2007,6 @@ static int startfile(char*f,size_t*text_sz,bool no_file,bool no_input){
 	}
 	return normalize(&text_init_b,text_sz,&rows_tot);
 }
-static bool help_init(char*f,size_t szf){
-	size_t sz1=sizeof(hel1)-1;
-	size_t sz2=sizeof(hel2);
-	char*a=(char*)malloc(sz1+szf+sz2);
-	if(a!=nullptr){
-		helptext=a;
-		memcpy(a,hel1,sz1);
-		a+=sz1;memcpy(a,f,szf);
-		memcpy(a+szf,hel2,sz2);
-		return true;
-	}
-	return false;
-}
 static void getfilebuf(char*cutbuf_file){//,size_t off){
 	int f=open(cutbuf_file,O_RDONLY);
 	if(f==-1)f=open_new(cutbuf_file);
@@ -2071,25 +2031,18 @@ static void getfilebuf(char*cutbuf_file){//,size_t off){
 		close(f);
 	}
 }
-static void getprefs(){
-	char mask;
-	int f=open(prefs_file,O_RDONLY);
-	if(f!=-1){
-		if(read(f,&mask,mask_size)==mask_size){
-			if((mask&mask_mouse)==0)stored_mouse_mask=mousemask(0,nullptr);
-			if((mask&mask_indent)==0)indent_flag=false;
-		}
-		close(f);
-		return;
+static bool help_init(char*f,size_t szf){
+	size_t sz1=sizeof(hel1)-1;
+	size_t sz2=sizeof(hel2);
+	char*a=(char*)malloc(sz1+szf+sz2);
+	if(a!=nullptr){
+		helptext=a;
+		memcpy(a,hel1,sz1);
+		a+=sz1;memcpy(a,f,szf);
+		memcpy(a+szf,hel2,sz2);
+		return true;
 	}
-	f=open_new(prefs_file);
-	if(f!=-1){
-		mask=mask_mouse|mask_indent;
-		#pragma GCC diagnostic push
-		#pragma GCC diagnostic ignored "-Wunused-result"
-		write(f,&mask,mask_size);
-		#pragma GCC diagnostic pop
-	}
+	return false;
 }
 static bool setfilebuf(char*s,char*cutbuf_file){
 #if ((!defined(USE_FS)) && (!defined(USE__FS)))
@@ -2101,23 +2054,14 @@ static bool setfilebuf(char*s,char*cutbuf_file){
 		char a=s[i];
 		if(a==path_separator){i++;break;}
 	}while(i!=0);
-	size_t exenamesize=sz-i;
-	bool b=help_init(&s[i],exenamesize);
+	bool b=help_init(&s[i],sz-i);
 	char*h=getenv("HOME");
 	if(h!=nullptr){
 		size_t l=strlen(h);
 		if(l!=0){
-			size_t info_sz=l+exenamesize+7;//plus separator dot info and null
-			if(info_sz<=max_path_0){
+			if(l+(sz-i)+7<=128){
 				sprintf(cutbuf_file,"%s%c.%sinfo",h,path_separator,&s[i]);
 				getfilebuf(cutbuf_file);//l-1
-
-				const char*conf=".config";
-				size_t csz=strlen(conf)+1;//plus separator
-				if(info_sz+csz<=max_path_0){
-					sprintf(prefs_file,"%s%c%s%c.%sinfo",h,path_separator,conf,path_separator,&s[i]);
-					getprefs();
-				}
 			}
 		}
 	}
@@ -2127,10 +2071,7 @@ static void writefilebuf(char*cutbuf_file){
 	if(cutbuf_file[0]!=0){
 		int f=open(cutbuf_file,O_WRONLY|O_TRUNC);
 		if(f!=-1){
-			#pragma GCC diagnostic push
-			#pragma GCC diagnostic ignored "-Wunused-result"
 			write(f,cutbuf,cutbuf_sz);
-			#pragma GCC diagnostic pop
 			close(f);
 		}
 	}
@@ -2144,7 +2085,7 @@ static void color(){
 }
 
 static void proced(char*comline){
-	char cutbuf_file[max_path_0];
+	char cutbuf_file[128];
 	cutbuf_file[0]='\0';
 	if(setfilebuf(comline,cutbuf_file)/*true*/){
 		bool loops=false;
