@@ -2274,7 +2274,7 @@ static void action(int argc,char**argv,WINDOW*w1){
 			noecho();
 			nonl();//no translation,faster
 
-			//if set 1press_and_4,5 will disable 2press (for copy menu) anyway
+			//if set 1press_and_4,5 will disable right press (for copy menu) anyway
 			//on android longpress to select and copy is a gesture and is different from mouse events
 			//the only difference with ALL_..EVENTS is that we want to speed up and process all events here (if there is a curses implementation like that)
 			stored_mouse_mask=mousemask(ALL_MOUSE_EVENTS,nullptr);//for error, export TERM=vt100
