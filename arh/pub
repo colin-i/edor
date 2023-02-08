@@ -21,4 +21,4 @@ last=$(curl https://api.github.com/repos/colin-i/$(cat debian/changelog | head -
 ~/test/lp x && \
 ~/test/keyring && \
 ~/test/del x ${last} x && \
-~/test/arh2 ${last} && \
+~/test/arh2 ${last}
