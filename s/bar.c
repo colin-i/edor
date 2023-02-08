@@ -687,6 +687,7 @@ static bool dos(WINDOW*w,eundo*un,size_t vl){
 		mod_set_on();
 	else if(undos_tot==undos_save+vl)
 		mod_set_off();
+	else mod_set_off_wrap();//only if not
 	return true;
 }
 static void undo_show(size_t n){
