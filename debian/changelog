@@ -1,3 +1,9 @@
+edor (1-x13) focal; urgency=medium
+
+  * minor fix undo/redo and restore file
+
+ -- bc <bc@bc-HP-Pavilion-x360-Convertible>  Wed, 08 Feb 2023 16:38:57 +0200
+
 edor (1-x12) focal; urgency=medium
 
   * remember flags(mouse and indent) in a file in ~/.config/
