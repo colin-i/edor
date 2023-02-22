@@ -51,6 +51,8 @@
 
 #define err_len_min 2
 
+bool insensitive=false;
+
 static int err_l=0;
 static char*err_s;
 #define b_inf_s "F1 for help"
@@ -255,15 +257,30 @@ static int del(int x,char*input,int cursor,int dif){
 	}else if(f==cursor)addch(' ');
 	return cursor;
 }
+
+#define AZ_to_az 'a'-'A'
+static bool charcompare(char a,char b){
+	if(a!=b){
+		if(insensitive==true){
+			if((a<='Z')&&(b>='a')){
+				if((a+AZ_to_az)==b)return true;
+			}else if((b<='Z')&&(a>='a')){
+				if((b+AZ_to_az)==a)return true;
+			}
+		}
+	}else return true;
+	return false;
+}
+
 static int inputcmp(char*S1,size_t L1,size_t l2){
 	if(l2>L1)return -1;
 	size_t n=L1-l2;
 	size_t i=0;
 	while(i<=n){
-		if(S1[i]==inputf[0]){
+		if(charcompare(S1[i],inputf[0])/*true*/){
 			size_t j=1;
 			for(;j<l2;j++){
-				if(S1[i+j]!=inputf[j])break;
+				if(charcompare(S1[i+j],inputf[j])==false)break;
 			}
 			if(j==l2)return(int)i;
 			i+=j;
@@ -305,12 +322,12 @@ static int inputrcmp(char*S1,size_t L1,size_t l2){
 	size_t i=L1;
 	while(l2<=i){
 		i--;
-		if(S1[i]==inputf[m]){
+		if(charcompare(S1[i],inputf[m])/*true*/){
 			size_t j=m;
 			size_t p=i-j;
 			while(j>0){
 				j--;
-				if(S1[p+j]!=inputf[j]){
+				if(charcompare(S1[p+j],inputf[j])==false){
 					j++;
 					break;
 				}

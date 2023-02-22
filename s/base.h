@@ -53,5 +53,6 @@ extern size_t rows_tot;
 extern size_t ytext;
 extern size_t xtext;
 extern bool mod_flag;
+extern bool insensitive;
 
 #define centering(w,rw,cl) centering2(w,rw,cl,false)

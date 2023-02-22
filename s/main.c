@@ -187,7 +187,8 @@ static char prefs_file[max_path_0]={'\0'};//only the first byte is set
 \nCtrl+r = redo\
 \nCtrl+e = disable/enable internal mouse/touch\
 \nCtrl+n = disable/enable indentation\
-\nCtrl+q = quit"//31
+\nCtrl+t = enable/disable insensitive search\
+\nCtrl+q = quit"//32
 static bool visual_bool=false;
 static char*cutbuf=nullptr;
 static size_t cutbuf_sz=0;
@@ -1907,6 +1908,18 @@ static bool loopin(WINDOW*w){
 			else if(strcmp(s,"^N")==0){
 				if(indent_flag/*true*/)indent_flag=false;else indent_flag=true;
 				setprefs(mask_indent,indent_flag);
+			}
+			else if(strcmp(s,"^T")==0){
+				if(insensitive/*true*/){
+					insensitive=false;
+					visual('t');
+				}else{
+					insensitive=true;
+					visual('T');
+				}
+				//doupdate();will change cursor
+				wmove(w,getcury(w),getcurx(w));
+				//setprefs(mask_insensitive,insensitive);
 			}
 			else type(c,w);
 			//continue;
