@@ -155,6 +155,7 @@ static bool indent_flag=true;
 #define mask_size 1
 #define mask_mouse 1
 #define mask_indent 2
+#define mask_insensitive 4
 static char prefs_file[max_path_0]={'\0'};//only the first byte is set
 
 #define hel1 "USAGE\n"
@@ -1789,7 +1790,7 @@ static void setprefs(int flag,bool set){
 			char mask;
 			if(read(f,&mask,mask_size)==mask_size){
 				close(f);
-				if(set)mask|=flag;
+				if(set/*true*/)mask|=flag;
 				else mask&=~flag;
 				f=open(prefs_file,O_WRONLY);
 				if(f!=-1){
@@ -1919,7 +1920,7 @@ static bool loopin(WINDOW*w){
 				}
 				//doupdate();will change cursor
 				wmove(w,getcury(w),getcurx(w));
-				//setprefs(mask_insensitive,insensitive);
+				setprefs(mask_insensitive,insensitive);
 			}
 			else type(c,w);
 			//continue;
@@ -2091,13 +2092,14 @@ static void getprefs(){
 		if(read(f,&mask,mask_size)==mask_size){
 			if((mask&mask_mouse)==0)stored_mouse_mask=mousemask(0,nullptr);
 			if((mask&mask_indent)==0)indent_flag=false;
+			if((mask&mask_insensitive)!=0)insensitive=true;
 		}
 		close(f);
 		return;
 	}
 	f=open_new(prefs_file);
 	if(f!=-1){
-		mask=mask_mouse|mask_indent;
+		mask=mask_mouse|mask_indent/*|mask_insensitive*/;
 		#pragma GCC diagnostic push
 		#pragma GCC diagnostic ignored "-Wunused-result"
 		write(f,&mask,mask_size);
