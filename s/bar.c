@@ -607,7 +607,8 @@ static bool undo_add_replace(size_t cursor){
 			un->ye=un->yb;un->xe=cursorr;
 			un->data=d;
 			d[0]=ln_term[0];((size_t*)((void*)&d[1]))[0]=cursor;
-			memcpy(&d[1]+sizeof(cursor),inputf,cursor);
+			//memcpy(&d[1]+sizeof(cursor),inputf,cursor);inputf can be insensitive
+			memcpy(&d[1]+sizeof(cursor),&rows[ytext].data[xtext],cursor);
 			undo_ok();return false;}}
 	return true;
 }
