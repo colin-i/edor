@@ -422,9 +422,6 @@ static void topspace_clear(){
 static void write_title(){
 	write_the_title(textfile);
 }
-static void write_title_if(){
-	if(textfile!=nullptr)write_title();
-}
 static bool helpin(WINDOW*w){
 	int c;
 	do{
@@ -442,7 +439,7 @@ static bool helpin(WINDOW*w){
 
 	//need to clear first line anyway
 	topspace_clear();
-	write_title_if();
+	if(textfile!=nullptr)write_title();
 	wnoutrefresh(stdscr);//doupdate is not enough
 
 	refreshpage(w);
@@ -2203,8 +2200,10 @@ static void proced(char*comline){
 			if(a==nullptr)break;
 			mapsel=(char*)a;
 
-			move(0,0);//no clear, only overwrite, can resize left to right then back right to left
-			write_title_if();//this is also the first write
+			if(textfile!=nullptr){
+				move(0,0);//no clear, only overwrite, can resize left to right then back right to left
+				write_title();//this is also the first write
+			}
 
 			WINDOW*w=newwin(r-topspace,c,topspace,0);
 			if(w!=nullptr){
