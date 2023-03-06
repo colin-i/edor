@@ -422,6 +422,9 @@ static void topspace_clear(){
 static void write_title(){
 	write_the_title(textfile);
 }
+static void write_title_if(){
+	if(textfile!=nullptr)write_title();
+}
 static bool helpin(WINDOW*w){
 	int c;
 	do{
@@ -439,7 +442,7 @@ static bool helpin(WINDOW*w){
 
 	//need to clear first line anyway
 	topspace_clear();
-	if(textfile!=nullptr)write_title();
+	write_title_if();
 	wnoutrefresh(stdscr);//doupdate is not enough
 
 	refreshpage(w);
@@ -2184,7 +2187,7 @@ static void proced(char*comline){
 		bool loops=false;
 		int cy=0;int cx=0;
 		int topspace=1;
-		int r=getmaxy(stdscr)-1-topspace;
+		int r=getmaxy(stdscr)-1;
 		int old_r=r-1;//set -1 because at first compare is erasing new_visual
 		do{
 			void*a=realloc(x_right,(size_t)r);
@@ -2199,7 +2202,11 @@ static void proced(char*comline){
 			a=realloc(mapsel,(size_t)c+1);
 			if(a==nullptr)break;
 			mapsel=(char*)a;
-			WINDOW*w=newwin(r,c,topspace,0);
+
+			move(0,0);//no clear, only overwrite, can resize left to right then back right to left
+			write_title_if();//this is also the first write
+
+			WINDOW*w=newwin(r-topspace,c,topspace,0);
 			if(w!=nullptr){
 				keypad(w,true);
 				refreshpage(w);
@@ -2245,7 +2252,6 @@ static void action(int argc,char**argv,WINDOW*w1){
 	size_t text_sz;
 	bool no_file=argc==1;
 	if(no_file==false){
-		write_the_title(argv[1]);
 		no_file=new_visual(argv[1])/*true*/;
 		if(no_file==false){
 			if(restorefile_path(argv[1])/*true*/){
