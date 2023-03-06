@@ -138,7 +138,7 @@ bool mod_flag=true;
 
 #define Char_Escape 27
 static char*mapsel=nullptr;
-static char*text_file=nullptr;
+//static char*text_file=nullptr;
 static size_t rows_spc=1;
 static bool*x_right=nullptr;
 static int*tabs=nullptr;
@@ -413,6 +413,15 @@ static void hmove(int n){
 	phelp=helpmanag(n);
 	helpshow(n);
 }
+static void topspace_clear(){
+	//first write is not here
+	move(0,0);//is not here
+	clrtoeol();//if name is shorter will let text
+}
+#define write_the_title(a) addstr(a)
+static void write_title(){
+	write_the_title(textfile);
+}
 static bool helpin(WINDOW*w){
 	int c;
 	do{
@@ -427,6 +436,12 @@ static bool helpin(WINDOW*w){
 		else if(c==KEY_RESIZE)return true;
 	}while(c!='q');
 	//helpclear();wnoutrefresh(stdscr);
+
+	//need to clear first line anyway
+	topspace_clear();
+	if(textfile!=nullptr)write_title();
+	wnoutrefresh(stdscr);//doupdate is not enough
+
 	refreshpage(w);
 	return false;
 }
@@ -615,7 +630,7 @@ static void right_move(WINDOW*w,bool(*f)(char)){
 static int movment(int c,WINDOW*w){
 	if(c==KEY_MOUSE){
 		MEVENT e;
-		getmouse(&e);//==OK is when mousemask is 0, but then nothint at getch
+		getmouse(&e);//==OK is when mousemask is 0, but then nothing at getch
 		if((e.bstate&BUTTON4_PRESSED)!=0)vu1move(w,getcury(w));
 		else if((e.bstate&BUTTON5_PRESSED)!=0)vd1move(w,getcury(w));
 		else if((e.bstate&BUTTON1_CLICKED)!=0)amove(w,e.y,e.x);//return -2;}
@@ -1773,7 +1788,11 @@ static bool savetofile(WINDOW*w,bool has_file){
 	}else{char aa=com_nr_save;ret=command(&aa);}
 	if(ret!=0){
 		if(ret==1){
-			if(d!=textfile)text_file=textfile;
+			if(d!=textfile){
+				//text_file=textfile;//now is a title
+				topspace_clear();
+				write_title();
+			}
 			mod_set_on();
 			undo_save();
 		}
@@ -2164,7 +2183,8 @@ static void proced(char*comline){
 	if(setfilebuf(comline,cutbuf_file)/*true*/){
 		bool loops=false;
 		int cy=0;int cx=0;
-		int r=getmaxy(stdscr)-1;
+		int topspace=1;
+		int r=getmaxy(stdscr)-1-topspace;
 		int old_r=r-1;//set -1 because at first compare is erasing new_visual
 		do{
 			void*a=realloc(x_right,(size_t)r);
@@ -2179,7 +2199,7 @@ static void proced(char*comline){
 			a=realloc(mapsel,(size_t)c+1);
 			if(a==nullptr)break;
 			mapsel=(char*)a;
-			WINDOW*w=newwin(r,c,0,0);
+			WINDOW*w=newwin(r,c,topspace,0);
 			if(w!=nullptr){
 				keypad(w,true);
 				refreshpage(w);
@@ -2225,15 +2245,16 @@ static void action(int argc,char**argv,WINDOW*w1){
 	size_t text_sz;
 	bool no_file=argc==1;
 	if(no_file==false){
+		write_the_title(argv[1]);
 		no_file=new_visual(argv[1])/*true*/;
 		if(no_file==false){
 			if(restorefile_path(argv[1])/*true*/){
 				if(access(restorefile_buf,F_OK)==0){
-					if(argc==2){
-						puts("There is an unrestored file, (c)ontinue?\r");
-						int c=getchar();
-						if(c!='c')return;
-					}
+					//if(argc==2){
+					puts("There is an unrestored file, (c)ontinue?\r");
+					int c=getchar();
+					if(c!='c')return;
+					//}
 				}
 			}
 		}
@@ -2316,14 +2337,14 @@ int main(int argc,char**argv){
 	sigaction(SIGSEGV, &signalhandlerDescriptor, nullptr);
 	//baz(argc);
 	#endif
-	if(argc>3){puts("Too many arguments.");return EXIT_FAILURE;}
+	if(argc>2){puts("Too many arguments.");return EXIT_FAILURE;}
 	WINDOW*w1=initscr();
 	use_default_colors();//assume_default_colors(-1,-1);//it's ok without this for color pair 0 (when attrset(0))
 	if(w1!=nullptr){
 		raw();//stty,cooked;relevant for getchar at me
 		action(argc,argv,w1);
 		endwin();
-		if(text_file!=nullptr)puts(text_file);
+		//if(text_file!=nullptr)puts(text_file);
 	}
 	return EXIT_SUCCESS;
 }
