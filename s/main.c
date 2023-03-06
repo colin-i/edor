@@ -1,3 +1,4 @@
+
 #include "top.h"
 
 #ifdef HAVE_CURSES_H
@@ -159,7 +160,8 @@ static bool indent_flag=true;
 static char prefs_file[max_path_0]={'\0'};//only the first byte is set
 
 #define hel1 "USAGE\n"
-#define hel2 " [filepath] skip_unrestoredfilecheck_flag\
+// skip_unrestoredfilecheck_flag
+#define hel2 " [filepath]\
 \nINPUT\
 \nhelp: q(uit),up/down,mouse/touch v.scroll\
 \n[Ctrl/Alt/Shift +]arrows/home/end/del,page up,page down,backspace,enter\
