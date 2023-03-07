@@ -420,7 +420,7 @@ static void topspace_clear(){
 	move(0,0);//is not here
 	clrtoeol();//if name is shorter will let text
 }
-#define write_the_title(a) addstr(a)
+#define write_the_title(a) printinverted(a)
 static void write_title(){
 	write_the_title(textfile);
 }
