@@ -1097,10 +1097,11 @@ static void mod_set(bool flag,chtype ch){
 	mod_flag=flag;
 	mod_visual(ch);
 }
+#define modif_visual '*'
 void mod_set_off(){
 	hardtime=time((time_t)nullptr);//cast only at non-header
 	//cannot delete mod_flag, it has meanings at undo type/bk/del sum and quit without save
-	mod_set(false,'*');
+	mod_set(false,modif_visual);
 }
 void mod_set_on(){
 	easytime();
@@ -1119,6 +1120,9 @@ static bool restorefile_path(char*p){
 	sprintf(restorefile_buf,"%s%s",p,restore_marker);
 	return true;
 }
+static void restore_visual(){
+	mod_visual('&');
+}
 static void hardtime_resolve_returner(WINDOW*w){//argument for errors
 	if(textfile!=nullptr){
 		if(restorefile==nullptr){
@@ -1132,7 +1136,7 @@ static void hardtime_resolve_returner(WINDOW*w){//argument for errors
 
 		//save at path
 		if(saving_base(restorefile)==command_return_ok)
-			mod_visual('&');
+			restore_visual();
 		else err_set(w);
 	}
 }
@@ -2216,7 +2220,10 @@ static void proced(char*comline){
 				if(r<=old_r)clrtoeol();//resize to up,is over text
 				//or =, clear bar,visual and saves
 				old_r=r;
-				if(mod_flag==false)mod_set_off();
+				if(mod_flag==false){
+					if(hardtime==0)restore_visual();
+					else mod_visual(modif_visual);
+				}
 				else wnoutrefresh(stdscr);
 				position_reset();
 				position(cy,cx);
