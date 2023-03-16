@@ -151,6 +151,8 @@ static char*helptext;
 static time_t hardtime=0;
 static char*restorefile=nullptr;
 static char restorefile_buf[max_path_0];
+static char*editingfile=nullptr;
+static char editingfile_buf[max_path_0];
 static mmask_t stored_mouse_mask;
 static bool indent_flag=true;
 #define mask_size 1
@@ -1113,6 +1115,7 @@ void mod_set_off_wrap(){
 		mod_set_off();//with wrap
 	}
 }
+
 #define restore_marker ".edorrestorefile"
 static bool restorefile_path(char*p){
 	size_t ln=strlen(p)+sizeof(restore_marker);
@@ -1120,6 +1123,29 @@ static bool restorefile_path(char*p){
 	sprintf(restorefile_buf,"%s%s",p,restore_marker);
 	return true;
 }
+#define editing_marker ".edoreditingfile"
+static bool editingfile_path(char*p){
+	size_t ln=strlen(p)+sizeof(editing_marker);
+	if(ln>max_path_0)return false;//the path is too long
+	sprintf(editingfile_buf,"%s%s",p,editing_marker);
+	return true;
+}
+void editing_done(){
+	if(editingfile!=nullptr){
+		unlink(editingfile);
+	}
+}
+static void editing_new_with_path(){
+	int f=open_new(editingfile_buf);
+	if(f!=-1){
+		close(f);
+		editingfile=editingfile_buf;
+	}
+}
+void editing_new(){
+	if(editingfile_path(textfile)/*true*/)editing_new_with_path();
+}
+
 static void restore_visual(){
 	mod_visual('&');
 }
@@ -1132,7 +1158,7 @@ static void hardtime_resolve_returner(WINDOW*w){//argument for errors
 		}
 		//in case there is a restore file but at another path (restore, save as, type, restore!=oldrestore)
 		//	must set path every time and compare and i don't change the file name so this is a "to do"
-		//if(strcmp(newrestorefile,restorefile)!=0)remove(restorefile);
+		//if(strcmp(newrestorefile,restorefile)!=0)unlink(restorefile);
 
 		//save at path
 		if(saving_base(restorefile)==command_return_ok)
@@ -1924,7 +1950,7 @@ static bool loopin(WINDOW*w){
 						continue;
 					}
 				}
-				if(restorefile!=nullptr)remove(restorefile);//here restorefile is deleted
+				if(restorefile!=nullptr)unlink(restorefile);//here restorefile is deleted
 				return false;
 			}
 			else if(strcmp(s,"^E")==0){
@@ -2271,6 +2297,12 @@ static void action(int argc,char**argv,WINDOW*w1){
 					//}
 				}
 			}
+			if(editingfile_path(argv[1])/*true*/&&access(editingfile_buf,F_OK)==0){
+				puts("The file is already opened in another instance, (c)ontinue?\r");
+				int c=getchar();
+				if(c!='c')return;
+				editing_new_with_path();
+			}
 		}
 	}
 	struct pollfd fds[1];
@@ -2309,7 +2341,9 @@ static void action(int argc,char**argv,WINDOW*w1){
 				rows=(row*)malloc(rows_tot*sizeof(row));
 				if(rows!=nullptr){
 					rows_init(text_sz);
+
 					textfile=argv[1];
+
 					text_init_e=text_init_b+text_sz+1;
 				}
 				else ok=0;
@@ -2341,6 +2375,7 @@ static void action(int argc,char**argv,WINDOW*w1){
 		}
 		free(text_init_b);
 	}
+	editing_done();//this can be before and after text_init_b
 }
 int main(int argc,char**argv){
 	#ifdef ARM7L

@@ -192,6 +192,7 @@ static int saving(){
 }
 static void inputpath(){
 	textfile=input0;
+	editing_done();editing_new();
 	if(input0==input1)input0=input2;
 	else input0=input1;
 	//good for other commands that are not storing the result
@@ -1125,7 +1126,10 @@ bool new_visual(char*f){
 	if(access(f,F_OK)==-1){
 		new_v=sizeof(new_s);
 		//new_f=true;
+
 		textfile=f;
+		editing_new();
+
 		mvaddstr(getmaxy(stdscr)-1,com_left,new_s);
 		return true;
 	}
