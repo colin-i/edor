@@ -38,7 +38,7 @@
 #ifdef HAVE_UNISTD_H
 #include<unistd.h>
 #else
-#include"inc/bar/unistd.h"
+#include"inc/unistd.h"
 #endif
 
 #include"base.h"
@@ -191,8 +191,12 @@ static int saving(){
 	return saving_base(textfile);
 }
 static void inputpath(){
+	//this comes for save(not having file) and save as(ok or overwrite)
 	textfile=input0;
-	editing_done();editing_new();
+
+	restore_rebase();
+	editing_rebase();
+
 	if(input0==input1)input0=input2;
 	else input0=input1;
 	//good for other commands that are not storing the result
@@ -1128,7 +1132,6 @@ bool new_visual(char*f){
 		//new_f=true;
 
 		textfile=f;
-		editing_new();
 
 		mvaddstr(getmaxy(stdscr)-1,com_left,new_s);
 		return true;

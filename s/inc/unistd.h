@@ -1,12 +1,15 @@
 
 #include "inc/stddef.h"
 
-typedef int ssize_t;
+#define F_OK 0
+
+typedef long int ssize_t;
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
+int access(const char*,int);
 int close(int);
 ssize_t write(int,const void*,size_t);
 

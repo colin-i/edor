@@ -17,8 +17,8 @@ bool paste(size_t,size_t,size_t*,char*,size_t,size_t,bool);
 void vis(char,WINDOW*);
 void visual(char);
 void fixmembuf(size_t*y,size_t*x);
-void editing_done();
-void editing_new();
+void editing_rebase();
+void restore_rebase();
 
 const char*bar_init(void);
 int save(void);

@@ -151,6 +151,7 @@ static char*helptext;
 static time_t hardtime=0;
 static char*restorefile=nullptr;
 static char restorefile_buf[max_path_0];
+static char restorefile_buf2[max_path_0];
 static char*editingfile=nullptr;
 static char editingfile_buf[max_path_0];
 static mmask_t stored_mouse_mask;
@@ -1130,20 +1131,17 @@ static bool editingfile_path(char*p){
 	sprintf(editingfile_buf,"%s%s",p,editing_marker);
 	return true;
 }
-void editing_done(){
+static void editing_done(){
 	if(editingfile!=nullptr){
 		unlink(editingfile);
 	}
 }
-static void editing_new_with_path(){
+static void editing_new(){
 	int f=open_new(editingfile_buf);
 	if(f!=-1){
 		close(f);
 		editingfile=editingfile_buf;
 	}
-}
-void editing_new(){
-	if(editingfile_path(textfile)/*true*/)editing_new_with_path();
 }
 
 static void restore_visual(){
@@ -1153,17 +1151,17 @@ static void hardtime_resolve_returner(WINDOW*w){//argument for errors
 	if(textfile!=nullptr){
 		if(restorefile==nullptr){
 			//set restore file path
-			if(restorefile_path(textfile)/*true*/)restorefile=restorefile_buf;
-			else return;
+			if(restorefile_path(textfile)/*true*/){
+				//save at path
+				if(saving_base(restorefile_buf)==command_return_ok){
+					restorefile=restorefile_buf;
+					restore_visual();
+				}else err_set(w);
+			}
+		}else{
+			if(saving_base(restorefile)==command_return_ok)restore_visual();
+			else err_set(w);
 		}
-		//in case there is a restore file but at another path (restore, save as, type, restore!=oldrestore)
-		//	must set path every time and compare and i don't change the file name so this is a "to do"
-		//if(strcmp(newrestorefile,restorefile)!=0)unlink(restorefile);
-
-		//save at path
-		if(saving_base(restorefile)==command_return_ok)
-			restore_visual();
-		else err_set(w);
 	}
 }
 #define one_minute 60
@@ -1175,6 +1173,18 @@ static void hardtime_resolve(WINDOW*w){//argument for errors
 			easytime();
 		}
 	}
+}
+void restore_rebase(){
+	if(restorefile!=nullptr){
+		sprintf(restorefile_buf2,"%s",restorefile_buf);
+		if(restorefile_path(textfile)/*true*/){
+			if(rename(restorefile_buf2,restorefile_buf)==0)restorefile=restorefile_buf;
+		}
+	}
+}
+void editing_rebase(){
+	editing_done();
+	if(editingfile_path(textfile)/*true*/)editing_new();
 }
 
 void deleting(size_t ybsel,size_t xbsel,size_t yesel,size_t xesel){
@@ -2287,22 +2297,21 @@ static void action(int argc,char**argv,WINDOW*w1){
 	bool no_file=argc==1;
 	if(no_file==false){
 		no_file=new_visual(argv[1])/*true*/;
-		if(no_file==false){
-			if(restorefile_path(argv[1])/*true*/){
-				if(access(restorefile_buf,F_OK)==0){
-					//if(argc==2){
-					puts("There is an unrestored file, (c)ontinue?\r");
-					int c=getchar();
-					if(c!='c')return;
-					//}
-				}
+		if(restorefile_path(argv[1])/*true*/){
+			if(access(restorefile_buf,F_OK)==0){
+				//if(argc==2){
+				puts("There is an unrestored file, (c)ontinue?\r");
+				int c=getchar();
+				if(c!='c')return;
+				//}
 			}
-			if(editingfile_path(argv[1])/*true*/&&access(editingfile_buf,F_OK)==0){
+		}
+		if(editingfile_path(argv[1])/*true*/){
+			if(access(editingfile_buf,F_OK)==0){
 				puts("The file is already opened in another instance, (c)ontinue?\r");
 				int c=getchar();
 				if(c!='c')return;
-				editing_new_with_path();
-			}
+			}else editing_new();
 		}
 	}
 	struct pollfd fds[1];
