@@ -154,6 +154,7 @@ static char restorefile_buf[max_path_0];
 static char restorefile_buf2[max_path_0];
 static char*editingfile=nullptr;
 static char editingfile_buf[max_path_0];
+static char editingfile_buf2[max_path_0];
 static mmask_t stored_mouse_mask;
 static bool indent_flag=true;
 #define mask_size 1
@@ -1131,11 +1132,6 @@ static bool editingfile_path(char*p){
 	sprintf(editingfile_buf,"%s%s",p,editing_marker);
 	return true;
 }
-static void editing_done(){
-	if(editingfile!=nullptr){
-		unlink(editingfile);
-	}
-}
 static void editing_new(){
 	int f=open_new(editingfile_buf);
 	if(f!=-1){
@@ -1180,14 +1176,16 @@ void restore_rebase(){
 		if(restorefile_path(textfile)/*true*/){
 			if(rename(restorefile_buf2,restorefile_buf)==0)restorefile=restorefile_buf;
 		}
-	}else{//in case was a readonly and now can write
-		if(restorefile_path(textfile)/*true*/)restorefile=restorefile_buf;
 	}
 }
 void editing_rebase(){
-	editing_done();
-	if(editingfile_path(textfile)/*true*/)
-		editing_new();
+	if(editingfile!=nullptr){
+		//rename is better than delete, create new disk cycles?
+		sprintf(editingfile_buf2,"%s",editingfile_buf);
+		if(editingfile_path(textfile)/*true*/){
+			if(rename(editingfile_buf2,editingfile_buf)==0)editingfile=editingfile_buf;
+		}
+	}else if(editingfile_path(textfile)/*true*/)editing_new();
 }
 
 void deleting(size_t ybsel,size_t xbsel,size_t yesel,size_t xesel){
@@ -2387,7 +2385,7 @@ static void action(int argc,char**argv,WINDOW*w1){
 		}
 		free(text_init_b);
 	}
-	editing_done();//this can be before and after text_init_b
+	if(editingfile!=nullptr)unlink(editingfile);//this can be before and after text_init_b
 }
 int main(int argc,char**argv){
 	#ifdef ARM7L
