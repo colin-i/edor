@@ -1180,11 +1180,14 @@ void restore_rebase(){
 		if(restorefile_path(textfile)/*true*/){
 			if(rename(restorefile_buf2,restorefile_buf)==0)restorefile=restorefile_buf;
 		}
+	}else{//in case was a readonly and now can write
+		if(restorefile_path(textfile)/*true*/)restorefile=restorefile_buf;
 	}
 }
 void editing_rebase(){
 	editing_done();
-	if(editingfile_path(textfile)/*true*/)editing_new();
+	if(editingfile_path(textfile)/*true*/)
+		editing_new();
 }
 
 void deleting(size_t ybsel,size_t xbsel,size_t yesel,size_t xesel){
