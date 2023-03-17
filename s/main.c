@@ -1119,17 +1119,19 @@ void mod_set_off_wrap(){
 }
 
 #define restore_marker ".edorrestorefile"
-static bool restorefile_path(char*p){
+#define restorefile_path(a) restorefile_path_base(a,restorefile_buf)
+static bool restorefile_path_base(char*p,char*dest){
 	size_t ln=strlen(p)+sizeof(restore_marker);
 	if(ln>max_path_0)return false;//the path is too long
-	sprintf(restorefile_buf,"%s%s",p,restore_marker);
+	sprintf(dest,"%s%s",p,restore_marker);
 	return true;
 }
 #define editing_marker ".edoreditingfile"
-static bool editingfile_path(char*p){
+#define editingfile_path(a) editingfile_path_base(a,editingfile_buf)
+static bool editingfile_path_base(char*p,char*dest){
 	size_t ln=strlen(p)+sizeof(editing_marker);
 	if(ln>max_path_0)return false;//the path is too long
-	sprintf(editingfile_buf,"%s%s",p,editing_marker);
+	sprintf(dest,"%s%s",p,editing_marker);
 	return true;
 }
 static void editing_new(){
@@ -1170,21 +1172,25 @@ static void hardtime_resolve(WINDOW*w){//argument for errors
 		}
 	}
 }
+//rename is better than delete+create, new disk cycles?
+#define file_rebase(file,s,d,call)\
+	char*src;char*dest;\
+	if(file==s){\
+		src=s;dest=d;\
+	}else{\
+		src=d;dest=s;\
+	}\
+	if(call(textfile,dest)/*true*/){\
+		if(rename(src,dest)==0)file=dest;\
+	}
 void restore_rebase(){
 	if(restorefile!=nullptr){
-		sprintf(restorefile_buf2,"%s",restorefile_buf);
-		if(restorefile_path(textfile)/*true*/){
-			if(rename(restorefile_buf2,restorefile_buf)==0)restorefile=restorefile_buf;
-		}
+		file_rebase(restorefile,restorefile_buf,restorefile_buf2,restorefile_path_base)
 	}
 }
 void editing_rebase(){
 	if(editingfile!=nullptr){
-		//rename is better than delete, create new disk cycles?
-		sprintf(editingfile_buf2,"%s",editingfile_buf);
-		if(editingfile_path(textfile)/*true*/){
-			if(rename(editingfile_buf2,editingfile_buf)==0)editingfile=editingfile_buf;
-		}
+		file_rebase(editingfile,editingfile_buf,editingfile_buf2,editingfile_path_base)
 	}else if(editingfile_path(textfile)/*true*/)editing_new();
 }
 
