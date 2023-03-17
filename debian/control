@@ -11,4 +11,4 @@ Architecture: amd64 arm64 armhf
 Multi-Arch: foreign
 Depends: ${misc:Depends}, ${shlibs:Depends}
 #, libncurses6, libunwind8 [armhf]
-Description: Command line text editor
+Description: CUI text editor
