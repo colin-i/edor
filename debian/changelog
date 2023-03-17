@@ -1,3 +1,9 @@
+edor (1-x18) focal; urgency=medium
+
+  * small correction, was useless equal
+
+ -- bc <bc@bc-HP-Pavilion-x360-Convertible>  Fri, 17 Mar 2023 13:42:38 +0200
+
 edor (1-x17) focal; urgency=medium
 
   * already opened detector
