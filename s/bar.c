@@ -231,6 +231,15 @@ static void clear_com(int y,int sz,int pos,int cursor){
 		//memset(mapsel,' ',(size_t)len);mapsel[len]='\0';addstr(mapsel);
 	}
 }
+
+static void texter(const char*t){
+	mvaddstr(getmaxy(stdscr)-1,com_left,t);
+}
+void texter_macro(const char*t){
+	new_v=strlen(t);
+	texter(t);
+}
+
 //1/0/-1 -2
 int question(const char*q){
 	//if(com_left+sz>getmaxx(stdscr))return 1;
@@ -716,7 +725,7 @@ static bool dos(WINDOW*w,eundo*un,size_t vl){
 static void undo_show(size_t n){
 	char nr[11];
 	int a=sprintf(nr,protocol,n);
-	mvaddstr(getmaxy(stdscr)-1,com_left,nr);
+	texter(nr);
 	undo_erase(a);
 	wnoutrefresh(stdscr);
 }
@@ -1128,12 +1137,10 @@ int command(char*comnrp){
 }
 bool new_visual(char*f){
 	if(access(f,F_OK)==-1){
-		new_v=sizeof(new_s);
-		//new_f=true;
-
 		textfile=f;
 
-		mvaddstr(getmaxy(stdscr)-1,com_left,new_s);
+		//new_f=true;
+		texter_macro(new_s);
 		return true;
 	}
 	return false;

@@ -165,7 +165,7 @@ static char prefs_file[max_path_0]={'\0'};//only the first byte is set
 
 #define hel1 "USAGE\n"
 // skip_unrestoredfilecheck_flag
-#define hel2 " [filepath]\
+#define hel2 " [filepath [line_termination: rn/r/n]]\
 \nINPUT\
 \nhelp: q(uit),up/down,mouse/touch v.scroll\
 \n[Ctrl/Alt/Shift +]arrows/home/end/del,page up,page down,backspace,enter\
@@ -1842,6 +1842,14 @@ static bool savetofile(WINDOW*w,bool has_file){
 				topspace_clear();
 				write_title();
 			}
+
+			if(mod_flag/*true*/){bar_clear();texter_macro("Saved");}
+			//there are some cases here:
+			//	open with forced new line and save
+			//	open with std input and save
+			//	save a blank New Path
+			//	just save in case the file was erased
+
 			mod_set_on();
 			undo_save();
 		}
@@ -1995,6 +2003,7 @@ static bool loopin(WINDOW*w){
 		}
 	}
 }
+//-1 to normalize, 0 errors, 1 ok
 static int normalize(char**c,size_t*size,size_t*r){
 	int ok=0;
 	char*text_w=c[0];
@@ -2018,9 +2027,14 @@ static int normalize(char**c,size_t*size,size_t*r){
 						a='\n';}
 					else{norm[j]=a;j++;a='\n';ok=-1;}
 				}
-				else if(ln_term[0]=='\n'){
-					if(((i+1)<sz)&&text_w[i+1]=='\n')i++;
-					a='\n';ok=-1;
+				else{
+					if(((i+1)<sz)&&text_w[i+1]=='\n'){
+						i++;
+						if(ln_term[0]=='\n')a='\n';
+						ok=-1;
+					}else if(ln_term[0]=='\n'){
+						a='\n';ok=-1;
+					}
 				}
 			}
 			norm[j]=a;j++;
@@ -2088,33 +2102,58 @@ static bool grab_input(size_t*text_sz){
 	freopen("/dev/tty","r",stdin);
 	return false;
 }
-static int startfile(char*f,size_t*text_sz,bool no_file,bool no_input){
-	if(no_file==false){if(grab_file(f,text_sz)/*true*/)return 0;}
+
+static bool valid_ln_term(char*input_term,bool*not_forced){
+	if(strcmp(input_term,"rn")==0){ln_term[0]='\r';ln_term[1]='\n';ln_term[2]='\0';ln_term_sz=2;}
+	else if(strcmp(input_term,"r")==0)ln_term[0]='\r';
+	else if(strcmp(input_term,"n")==0){}
+	else{
+		puts("Line termination argument must be: \"rn\", \"r\" or \"n\".");
+		return true;
+	}
+	*not_forced=false;
+	return false;
+}
+//same as normalize
+static int startfile(int argc,char**argv,size_t*text_sz,bool no_file,bool no_input){
+	bool not_forced=true;
+	if(no_file==false){
+		char*f=argv[1];
+		if(grab_file(f,text_sz)/*true*/)return 0;
+		if(argc==3){
+			if(valid_ln_term(argv[2],&not_forced)/*true*/)return 0;
+		}
+	}
 	if(no_input==false){
-		if(no_file){
+		if(no_file/*true*/){
 			text_init_b=(char*)malloc(0);
 			if(text_init_b==nullptr)return 0;
 			*text_sz=0;
 		}
+		//else will be appended to existing file
 		if(grab_input(text_sz)/*true*/)return 0;
 	}
-	size_t i=*text_sz;
-	while(i>0){
-		i--;
-		if(text_init_b[i]=='\n'){
-			if(i!=0&&text_init_b[i-1]=='\r'){
+	if(not_forced/*true*/){
+		size_t i=*text_sz;
+		while(i>0){
+			i--;
+			if(text_init_b[i]=='\n'){
+				if(i!=0&&text_init_b[i-1]=='\r'){
+					ln_term[0]='\r';
+					ln_term[1]='\n';
+					ln_term[2]='\0';
+					ln_term_sz=2;
+				}
+				break;
+			}else if(text_init_b[i]=='\r'){
 				ln_term[0]='\r';
-				ln_term[1]='\n';
-				ln_term[2]='\0';
-				ln_term_sz=2;
+				break;
 			}
-			break;
-		}else if(text_init_b[i]=='\r'){
-			ln_term[0]='\r';
-			break;
 		}
+		return normalize(&text_init_b,text_sz,&rows_tot);
 	}
-	return normalize(&text_init_b,text_sz,&rows_tot);
+	if(normalize(&text_init_b,text_sz,&rows_tot)==0)return 0;
+	return 1;
 }
 static bool help_init(char*f,size_t szf){
 	size_t sz1=sizeof(hel1)-1;
@@ -2342,7 +2381,7 @@ static void action(int argc,char**argv,WINDOW*w1){
 			}
 		}
 	}else{
-		ok=startfile(argv[1],&text_sz,no_file,no_input);
+		ok=startfile(argc,argv,&text_sz,no_file,no_input);
 		if(ok!=0){
 			if(ok<1){
 				char txt[]={'N','o','r','m','a','l','i','z','e',' ','l','i','n','e',' ','e','n','d','i','n','g','s',' ','t','o',' ','\\','r',' ',' ','?',' ','n','=','n','o',',',' ','d','e','f','a','u','l','t','=','y','e','s','\r','\0'};
@@ -2402,7 +2441,7 @@ int main(int argc,char**argv){
 	sigaction(SIGSEGV, &signalhandlerDescriptor, nullptr);
 	//baz(argc);
 	#endif
-	if(argc>2){puts("Too many arguments.");return EXIT_FAILURE;}
+	if(argc>3){puts("Too many arguments.");return EXIT_FAILURE;}
 	WINDOW*w1=initscr();
 	use_default_colors();//assume_default_colors(-1,-1);//it's ok without this for color pair 0 (when attrset(0))
 	if(w1!=nullptr){
