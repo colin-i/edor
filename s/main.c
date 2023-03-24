@@ -1880,15 +1880,19 @@ static void setprefs(int flag,bool set){
 		}
 	}
 }
+static time_t guardian=0;
 static bool loopin(WINDOW*w){
 	int c;
 	for(;;){
-		//printf("\nteste1234\n");
 		//wtimeout(w,1000);
 		wtimeout(w,one_minute*1000);//it counts where wgetch is (example at visual)
 		c=wgetch(w);
 		hardtime_resolve(w);
 		if(c==ERR){
+			time_t test=time(nullptr);
+			if(test==guardian)return false;//example: cc nothing.c | edor , will have errno 0, will loop
+			guardian=test;
+
 			//this was ok at hardtime_resolve but will be too often there, here will be wrong sometimes but still less trouble
 			//doupdate();//noone will show virtual screen if without this
 
