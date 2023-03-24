@@ -1892,6 +1892,7 @@ static bool loopin(WINDOW*w){
 			time_t test=time(nullptr);
 			if(test==guardian)return false;//example: cc nothing.c | edor , will have errno 0, will loop.
 				//reproducible? fprintf to stderr+something else, see cc source for answer
+				//fprintf was tested and is separate from this, then why? at that cc is showing same time with edor
 			guardian=test;
 
 			//this was ok at hardtime_resolve but will be too often there, here will be wrong sometimes but still less trouble
