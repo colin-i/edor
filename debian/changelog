@@ -1,3 +1,9 @@
+edor (1-x20) focal; urgency=medium
+
+  * avoid undocumented crashes
+
+ -- bc <bc@bc-HP-Pavilion-x360-Convertible>  Fri, 24 Mar 2023 15:17:24 +0200
+
 edor (1-x19) focal; urgency=medium
 
   * fix r normalization, add line termination argument, Saved to inform in some cases that are not having mod_flag

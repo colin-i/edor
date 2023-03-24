@@ -1890,7 +1890,8 @@ static bool loopin(WINDOW*w){
 		hardtime_resolve(w);
 		if(c==ERR){
 			time_t test=time(nullptr);
-			if(test==guardian)return false;//example: cc nothing.c | edor , will have errno 0, will loop
+			if(test==guardian)return false;//example: cc nothing.c | edor , will have errno 0, will loop.
+				//reproducible? fprintf to stderr+something else, see cc source for answer
 			guardian=test;
 
 			//this was ok at hardtime_resolve but will be too often there, here will be wrong sometimes but still less trouble
