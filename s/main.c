@@ -1925,7 +1925,7 @@ static bool loopin(WINDOW*w){
 				wmove(w,y,0);past(w);
 			}
 			else if(z=='g'){
-				quick_pack(com_nr_goto_alt,w)			
+				quick_pack(com_nr_goto_alt,w)
 				if(goto_mode((char*)args,w)/*true*/)return true;
 			}
 			else if(z=='f'){if(find_mode(com_nr_findagain,w)/*true*/)return true;}
