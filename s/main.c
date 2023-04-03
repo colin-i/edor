@@ -436,7 +436,12 @@ static bool helpin(WINDOW*w){
 			MEVENT e;
 			getmouse(&e);
 			if((e.bstate&BUTTON4_PRESSED)!=0)hmove(-1);
-			else if((e.bstate&BUTTON5_PRESSED)!=0)hmove(1);
+			else
+		#ifdef BUTTON5_PRESSED
+			if((e.bstate&BUTTON5_PRESSED)!=0)
+			//else e.bstate is 0 at wheel down
+		#endif
+			hmove(1);
 		}else if(c==KEY_DOWN)hmove(1);
 		else if(c==KEY_UP)hmove(-1);
 		else if(c==KEY_RESIZE)return true;
@@ -638,8 +643,13 @@ static int movment(int c,WINDOW*w){
 		MEVENT e;
 		getmouse(&e);//==OK is when mousemask is 0, but then nothing at getch
 		if((e.bstate&BUTTON4_PRESSED)!=0)vu1move(w,getcury(w));
-		else if((e.bstate&BUTTON5_PRESSED)!=0)vd1move(w,getcury(w));
 		else if((e.bstate&BUTTON1_CLICKED)!=0)amove(w,e.y,e.x);//return -2;}
+		else
+	#ifdef BUTTON5_PRESSED
+		if((e.bstate&BUTTON5_PRESSED)!=0)
+		//else e.bstate is 0 at wheel down
+	#endif
+		vd1move(w,getcury(w));
 	}else if(c==KEY_LEFT)left(w,getcurx(w));
 	else if(c==KEY_RIGHT)right(w,getcurx(w));
 	else if(c==KEY_UP){
