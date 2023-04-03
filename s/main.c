@@ -439,7 +439,7 @@ static bool helpin(WINDOW*w){
 			else
 		#ifdef BUTTON5_PRESSED
 			if((e.bstate&BUTTON5_PRESSED)!=0)
-			//else e.bstate is 0 at wheel down
+		//else e.bstate is 0 at wheel down (ncurses 6.1 at bionic)
 		#endif
 			hmove(1);
 		}else if(c==KEY_DOWN)hmove(1);
@@ -647,7 +647,7 @@ static int movment(int c,WINDOW*w){
 		else
 	#ifdef BUTTON5_PRESSED
 		if((e.bstate&BUTTON5_PRESSED)!=0)
-		//else e.bstate is 0 at wheel down
+	//else e.bstate is 0 at wheel down (ncurses 6.1 at bionic)
 	#endif
 		vd1move(w,getcury(w));
 	}else if(c==KEY_LEFT)left(w,getcurx(w));
