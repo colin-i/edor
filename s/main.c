@@ -205,6 +205,7 @@ static char*text_init_b=nullptr;
 static char*text_init_e;
 static int _rb;static int _cb;
 static int _re;static int _ce;
+static int topspace=1;
 #define view_margin 8
 #define known_stdin 0
 
@@ -428,6 +429,7 @@ static void topspace_clear(){
 static void write_title(){
 	write_the_title(textfile);
 }
+//Button 2 is the middle one
 static bool helpin(WINDOW*w){
 	int c;
 	do{
@@ -439,7 +441,8 @@ static bool helpin(WINDOW*w){
 			else
 		#ifdef BUTTON5_PRESSED
 			if((e.bstate&BUTTON5_PRESSED)!=0)
-		//else e.bstate is 0 at wheel down (ncurses 6.1 at bionic)
+		#else
+			if(e.bstate==0)     // at wheel down (ncurses 6.1 at bionic)
 		#endif
 			hmove(1);
 		}else if(c==KEY_DOWN)hmove(1);
@@ -633,23 +636,30 @@ static void right_move(WINDOW*w,bool(*f)(char)){
 	}
 	wmove(w,r,c);
 }
+
 #define right_wordmove(w) right_move(w,is_wordchar)
 #define right_textmove(w) right_move(w,is_textchar)
 #define alt_jump 2
 #define ctrl_jump 3
+
+#define click (BUTTON1_CLICKED|BUTTON1_PRESSED|BUTTON1_DOUBLE_CLICKED|BUTTON1_TRIPLE_CLICKED \
+|BUTTON2_CLICKED|BUTTON2_PRESSED|BUTTON2_DOUBLE_CLICKED|BUTTON2_TRIPLE_CLICKED \
+|BUTTON3_CLICKED|BUTTON3_PRESSED|BUTTON3_DOUBLE_CLICKED|BUTTON3_TRIPLE_CLICKED)
+
 //1resize,0diff key,-1processed
 static int movment(int c,WINDOW*w){
 	if(c==KEY_MOUSE){
 		MEVENT e;
 		getmouse(&e);//==OK is when mousemask is 0, but then nothing at getch
 		if((e.bstate&BUTTON4_PRESSED)!=0)vu1move(w,getcury(w));
-		else if((e.bstate&BUTTON1_CLICKED)!=0)amove(w,e.y,e.x);//return -2;}
 		else
 	#ifdef BUTTON5_PRESSED
 		if((e.bstate&BUTTON5_PRESSED)!=0)
-	//else e.bstate is 0 at wheel down (ncurses 6.1 at bionic)
+	#else
+		if(e.bstate==0)     // at wheel down (ncurses 6.1 at bionic)
 	#endif
 		vd1move(w,getcury(w));
+		else if((e.bstate&click)!=0)amove(w,e.y-topspace,e.x);//return -2;}
 	}else if(c==KEY_LEFT)left(w,getcurx(w));
 	else if(c==KEY_RIGHT)right(w,getcurx(w));
 	else if(c==KEY_UP){
@@ -2287,7 +2297,6 @@ static void proced(char*comline){
 	if(setfilebuf(comline,cutbuf_file)/*true*/){
 		bool loops=false;
 		int cy=0;int cx=0;
-		int topspace=1;
 		int r=getmaxy(stdscr)-1;
 		int old_r=r-1;//set -1 because at first compare is erasing new_visual
 		do{
