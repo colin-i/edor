@@ -1,3 +1,9 @@
+edor (1-x24) focal; urgency=medium
+
+  * mkdir for .config
+
+ -- bc <bc@bc-HP-Pavilion-x360-Convertible>  Wed, 05 Apr 2023 14:00:58 +0300
+
 edor (1-x23) focal; urgency=medium
 
   * mouse fixes
