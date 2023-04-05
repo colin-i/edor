@@ -41,6 +41,11 @@
 #else
 #include"inc/main/time.h"
 #endif
+#ifdef HAVE_SYS_STAT_H
+#include <sys/stat.h>
+#else
+#include"inc/main/sys_stat.h"
+#endif
 
 #include"sep.h"
 
@@ -2253,17 +2258,24 @@ static bool setfilebuf(char*s,char*cutbuf_file){
 	bool b=help_init(&s[i],exenamesize);
 	char*h=getenv("HOME");
 	if(h!=nullptr){
-		size_t l=strlen(h);
-		if(l!=0){
-			size_t info_sz=l+exenamesize+7;//plus separator dot info and null
+		size_t h_sz=strlen(h);
+		if(h_sz!=0){
+			size_t info_sz=h_sz+1+1+exenamesize+4+1; //+separator +dot +info +null
 			if(info_sz<=max_path_0){
-				sprintf(cutbuf_file,"%s%c.%sinfo",h,path_separator,&s[i]);
-				getfilebuf(cutbuf_file);//l-1
+			#define storeflname "%c.%sinfo"
+				sprintf(cutbuf_file,"%s" storeflname,h,path_separator,&s[i]);
+				getfilebuf(cutbuf_file);
 
 				const char*conf=".config";
 				size_t csz=strlen(conf)+1;//plus separator
 				if(info_sz+csz<=max_path_0){
-					sprintf(prefs_file,"%s%c%s%c.%sinfo",h,path_separator,conf,path_separator,&s[i]);
+					int dirsz=sprintf(prefs_file,"%s%c%s",h,path_separator,conf);
+					if(access(prefs_file,F_OK)==-1){
+						mkdir(prefs_file,0777);
+						//the mode of the created directory is (mode & ~umask & 0777)
+						//0 on success
+					}
+					sprintf(&prefs_file[dirsz],storeflname,path_separator,&s[i]);
 					getprefs();
 				}
 			}
