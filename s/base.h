@@ -1,4 +1,6 @@
 
+//main
+//bar
 bool no_char(char);
 void refreshrowsbot(WINDOW*,int,int);
 #define refreshrows(w,i) refreshrowsbot(w,i,getmaxy(w))
@@ -14,12 +16,16 @@ void mod_set_off_wrap();
 size_t sizemembuf(size_t,size_t,size_t,size_t);
 void cpymembuf(size_t,size_t,size_t,size_t,char*);
 bool paste(size_t,size_t,size_t*,char*,size_t,size_t,bool);
-void vis(char,WINDOW*);
-void visual(char);
 void fixmembuf(size_t*y,size_t*x);
 void editing_rebase();
 void restore_rebase();
+void vis(char,WINDOW*);
+//ww
+int movment(int,WINDOW*);
+//bar,ww
+void visual(char);
 
+//bar
 const char*bar_init(void);
 int save(void);
 int saving_base(char*);
@@ -47,6 +53,9 @@ bool is_dir(int);
 void err_set(WINDOW*);
 int open_new(char*);
 void texter_macro(const char*);
+
+//ww
+bool word_wrap(WINDOW*);
 
 extern char ln_term[3];
 extern size_t ln_term_sz;

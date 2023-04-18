@@ -14,10 +14,10 @@ typedef unsigned int chtype;
 extern "C" {
 #endif
 
+//main/bar
 int move(int,int);
 int wmove(WINDOW*,int,int);
 int getch(void);
-int wgetch(WINDOW*);
 int getmaxy(const WINDOW*);
 int getmaxx(const WINDOW*);
 int getcury(const WINDOW*);
@@ -32,6 +32,8 @@ int attrset(int);
 int wattrset(WINDOW*,int);
 int COLOR_PAIR(int);
 WINDOW*newwin(int,int,int,int);
+//main/bar/ww
+int wgetch(WINDOW*);
 
 #ifdef __cplusplus
 }

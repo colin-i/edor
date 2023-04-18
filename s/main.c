@@ -652,7 +652,7 @@ static void right_move(WINDOW*w,bool(*f)(char)){
 |BUTTON3_CLICKED|BUTTON3_PRESSED|BUTTON3_DOUBLE_CLICKED|BUTTON3_TRIPLE_CLICKED)
 
 //1resize,0diff key,-1processed
-static int movment(int c,WINDOW*w){
+int movment(int c,WINDOW*w){
 	if(c==KEY_MOUSE){
 		MEVENT e;
 		getmouse(&e);//==OK is when mousemask is 0, but then nothing at getch
@@ -1750,6 +1750,7 @@ static void indent(bool b,size_t ybsel,size_t*xbsel,size_t yesel,size_t*xesel,WI
 		}else refreshrowsbot(w,rb,re);
 	}
 }
+//true resize
 static bool visual_mode(WINDOW*w,bool v_l){
 	visual('V');
 	int rw=getcury(w);int cl=getcurx(w);
@@ -2029,6 +2030,7 @@ static bool loopin(WINDOW*w){
 				wmove(w,getcury(w),getcurx(w));
 				setprefs(mask_insensitive,insensitive);
 			}
+			else if(strcmp(s,"^W")==0){if(word_wrap(w)/*true*/)return true;}
 			else type(c,w);
 			//continue;
 		}
