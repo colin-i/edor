@@ -20,9 +20,9 @@ void fixmembuf(size_t*y,size_t*x);
 void editing_rebase();
 void restore_rebase();
 void vis(char,WINDOW*);
-//ww
+//tw
 int movment(int,WINDOW*);
-//bar,ww
+//bar,tw
 void visual(char);
 
 //bar
@@ -55,10 +55,12 @@ bool is_dir(int);
 void err_set(WINDOW*);
 int open_new(char*);
 void texter_macro(const char*);
-//main,ww
+//main,tw
 #define centering_simple(w) centering(w,nullptr,nullptr)
+//tw
+void position_core(int,int,size_t,size_t);
 
-//ww
+//tw
 bool word_wrap(WINDOW*);
 
 //main,bar
@@ -67,7 +69,7 @@ extern size_t ln_term_sz;
 extern char*textfile;
 extern bool mod_flag;
 extern bool insensitive;
-//main,bar,ww
+//main,bar,tw
 extern row*rows;
 extern size_t rows_tot;
 extern size_t ytext;

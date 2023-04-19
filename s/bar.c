@@ -383,7 +383,7 @@ static bool finding(size_t cursor,size_t r,size_t c,bool f){
 	if(f/*true*/)return findingf(cursor,r,c);
 	return findingb(cursor,r,c);
 }
-void position(int rw,int cl){
+void position_core(int rw,int cl,size_t real_y,size_t real_x){
 	size_t y=ytext+(size_t)rw;size_t x;
 	if(y>=rows_tot){y=rows_tot-1;x=rows[y].sz;}
 	else{
@@ -391,7 +391,7 @@ void position(int rw,int cl){
 		if(x>rows[y].sz)x=rows[y].sz;
 	}
 	char posbuf[10+1+10+1];
-	int n=sprintf(posbuf,protocol "," protocol,y+1,x+1);
+	int n=sprintf(posbuf,protocol "," protocol,real_y+y+1,real_x+x+1);
 	int dif=getmaxx(poswn)-n;
 	if(dif!=0){
 		if(dif>0){
@@ -405,6 +405,9 @@ void position(int rw,int cl){
 	}
 	mvwaddstr(poswn,0,0,posbuf);
 	wnoutrefresh(poswn);
+}
+void position(int rw,int cl){
+	position_core(rw,cl,0,0);
 }
 void centering2(WINDOW*w,size_t*rw,size_t*cl,bool right){
 	position(0,0);

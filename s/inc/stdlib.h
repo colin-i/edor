@@ -1,5 +1,5 @@
 
-#if defined(is_main_c)||defined(is_bar_c)||defined(is_ww_c)
+#if defined(is_main_c)||defined(is_bar_c)||defined(is_tw_c)
 #include "inc/stddef.h"
 #ifdef __cplusplus
 extern "C" {

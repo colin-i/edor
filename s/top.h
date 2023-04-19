@@ -21,6 +21,7 @@ typedef struct{
 	unsigned int spc;//at row_alloc(type,undo,...),pasting,enter
 	unsigned int sz;
 }row;
+//typedef struct {}rowwrap;
 
 #define Char_Return 0xd
 #define row_pad 0xF

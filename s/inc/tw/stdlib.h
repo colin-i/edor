@@ -1,3 +1,3 @@
 
-#define is_ww_c
+#define is_tw_c
 #include "inc/stdlib.h"

@@ -19,9 +19,6 @@ int move(int,int);
 int wmove(WINDOW*,int,int);
 int getch(void);
 int getmaxy(const WINDOW*);
-int getmaxx(const WINDOW*);
-int getcury(const WINDOW*);
-int getcurx(const WINDOW*);
 int addch(const chtype);
 int waddch(WINDOW*,const chtype);
 int mvaddch(int,int,const chtype);
@@ -32,7 +29,10 @@ int attrset(int);
 int wattrset(WINDOW*,int);
 int COLOR_PAIR(int);
 WINDOW*newwin(int,int,int,int);
-//main/bar/ww
+//main/bar/tw
+int getcurx(const WINDOW*);
+int getcury(const WINDOW*);
+int getmaxx(const WINDOW*);
 int wgetch(WINDOW*);
 
 #ifdef __cplusplus

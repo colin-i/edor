@@ -5,7 +5,7 @@
 #ifdef HAVE_STDLIB_H
 #include<stdlib.h>
 #else
-#include"inc/ww/stdlib.h"
+#include"inc/tw/stdlib.h"
 #endif
 #ifdef HAVE_CURSES_H
 #include<curses.h>
@@ -15,15 +15,20 @@
 
 #include "base.h"
 
+typedef struct{
+	unsigned int ytext;
+	unsigned int xtext;
+}rowwrap;//is used as an array allocated, to combine need to add this at row, memory waste
+
 static row*rowswrap;
 static row*store_rows;
 static size_t store_rows_tot;
 static size_t store_ytext;
 
-static void ww_free(){
+static void tw_free(){
 	free(rowswrap);
 }
-static void ww_unlock(){
+static void tw_unlock(){
 	//restore variables
 	rows=store_rows;
 	rows_tot=store_rows_tot;
@@ -55,12 +60,14 @@ bool word_wrap(WINDOW*w){
 		}
 	}
 
-	rowswrap=(row*)malloc(n*sizeof(row));
+	rowswrap=(row*)malloc((n*sizeof(row))+(n*sizeof(rowwrap)));//add it after rows, for easy free
 	if(rowswrap!=nullptr){
+		rowwrap*rowswrap_add=(rowwrap*)(&rowswrap[n]);
+
 		size_t j=0;
 		for(size_t i=0;i<rows_tot;i++){
 			if(i==ytext){
-				//ww overwrite some variables
+				//tw overwrite some variables
 				store_ytext=ytext;ytext=j;
 			}
 			row*r_in=&rows[i];
@@ -73,7 +80,11 @@ bool word_wrap(WINDOW*w){
 					row*r_out=&rowswrap[j];
 					r_out->data=&r_in->data[l];
 					r_out->sz=k-l;
-					//r_out->spc
+
+					//for position
+					rowswrap_add[j].ytext=i;
+					rowswrap_add[j].xtext=l;
+
 					l=k;delim+=max;j++;
 				}
 			}
@@ -81,11 +92,16 @@ bool word_wrap(WINDOW*w){
 				row*r_out=&rowswrap[j];
 				r_out->data=&r_in->data[l];
 				r_out->sz=k-l;
+
+				//for position
+				rowswrap_add[j].ytext=i;
+				rowswrap_add[j].xtext=l;
+
 				j++;
 			}
 		}
 
-		//ww overwrite some variables
+		//tw overwrite some variables
 		store_rows=rows;rows=rowswrap;
 		store_rows_tot=rows_tot;rows_tot=j;
 
@@ -93,7 +109,7 @@ bool word_wrap(WINDOW*w){
 		visual('W');//without stdscr refresh is not ok
 
 		//window
-		xtext=0;
+		xtext=0;//can be too far for wrapped rows
 		centering_simple(w);
 
 		//loop
@@ -101,12 +117,19 @@ bool word_wrap(WINDOW*w){
 		do{
 			int b=wgetch(w);
 			z=movment(b,w);
-			if(z==1){ww_unlock();ww_free();return true;}
+			if(z==1){tw_unlock();tw_free();return true;}
+
+			int y=getcury(w);size_t yref;
+			if(ytext+y>=n)yref=n-1;
+			else yref=y;
+			size_t ydif=rowswrap_add[yref].ytext-(ytext+yref);
+			position_core(y,getcurx(w),ydif,rowswrap_add[yref].xtext);
 		}while(z!=0);
 		visual(' ');
-		ww_unlock();
+		tw_unlock();
+		//xtext=0;//is not relevant to let xtext where it is now, but to modify xtext at wrapped rows is also not right
 		centering_simple(w);
+		tw_free();
 	}
-	ww_free();
 	return false;
 }
