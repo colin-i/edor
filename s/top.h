@@ -18,7 +18,7 @@ enum{false=0!=0,true=1==1};
 
 typedef struct{
 	char*data;
-	unsigned int spc;
+	unsigned int spc;//at row_alloc(type,undo,...),pasting,enter
 	unsigned int sz;
 }row;
 

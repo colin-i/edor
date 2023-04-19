@@ -26,12 +26,14 @@ int movment(int,WINDOW*);
 void visual(char);
 
 //bar
+//main
 const char*bar_init(void);
 int save(void);
 int saving_base(char*);
 int question(const char*);
 int command(char*);
 void centering2(WINDOW*,size_t*,size_t*,bool);
+#define centering(w,rw,cl) centering2(w,rw,cl,false)
 WINDOW*position_init(void);
 void position(int,int);
 void position_reset(void);
@@ -53,18 +55,20 @@ bool is_dir(int);
 void err_set(WINDOW*);
 int open_new(char*);
 void texter_macro(const char*);
+//main,ww
+#define centering_simple(w) centering(w,nullptr,nullptr)
 
 //ww
 bool word_wrap(WINDOW*);
 
+//main,bar
 extern char ln_term[3];
 extern size_t ln_term_sz;
 extern char*textfile;
+extern bool mod_flag;
+extern bool insensitive;
+//main,bar,ww
 extern row*rows;
 extern size_t rows_tot;
 extern size_t ytext;
 extern size_t xtext;
-extern bool mod_flag;
-extern bool insensitive;
-
-#define centering(w,rw,cl) centering2(w,rw,cl,false)

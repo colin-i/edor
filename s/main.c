@@ -145,7 +145,7 @@ bool mod_flag=true;
 #define Char_Escape 27
 static char*mapsel=nullptr;
 //static char*text_file=nullptr;
-static size_t rows_spc=1;
+static size_t rows_spc=1;//at rows_expand
 static bool*x_right=nullptr;
 static int*tabs=nullptr;
 static int tabs_rsz;
@@ -207,7 +207,7 @@ static size_t cutbuf_sz=0;
 static size_t cutbuf_spc=0;
 static size_t cutbuf_r=1;
 static char*text_init_b=nullptr;
-static char*text_init_e;
+static char*text_init_e;//is init? malloc to new : realloc. and to free or not to free.
 static int _rb;static int _cb;
 static int _re;static int _ce;
 static int topspace=1;
@@ -1849,7 +1849,7 @@ static bool find_mode(int nr,WINDOW*w){
 static bool goto_mode(char*args,WINDOW*w){
 	int r=command(args);
 	if(r==1){
-		centering(w,nullptr,nullptr);
+		centering_simple(w);
 	}
 	else if(r>-2)wmove(w,getcury(w),getcurx(w));
 	else return true;

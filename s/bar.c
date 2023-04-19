@@ -683,7 +683,7 @@ static bool dos(WINDOW*w,eundo*un,size_t vl){
 			if(undo_del_backward(un,y1,xb,y2,xe)/*true*/)return false;
 			deleting(y1,xb,y2,xe);
 			ytext=y1;xtext=xb;
-			centering(w,nullptr,nullptr);
+			centering_simple(w);
 		}
 	}else{
 		if(d!=nullptr){
@@ -701,7 +701,7 @@ static bool dos(WINDOW*w,eundo*un,size_t vl){
 			free(d);
 			ytext=y1;xtext=1;
 			centering2(w,nullptr,nullptr,true);
-	}else{
+		}else{
 			void*mem=malloc(y1-y2);
 			if(mem==nullptr)return false;
 			undo_ind_del(un,y2,y1,(char*)mem);
@@ -711,7 +711,7 @@ static bool dos(WINDOW*w,eundo*un,size_t vl){
 				rows[i].sz--;
 			}
 			ytext=y2;xtext=0;
-			centering(w,nullptr,nullptr);
+			centering_simple(w);
 		}
 	}
 	undos_tot+=vl;
