@@ -13,8 +13,16 @@ AC_ARG_ENABLE(cpp,
   AS_HELP_STRING([--enable-cpp],[enable cpp, default: yes]),
   [case "${enableval}" in yes) cpp=true ;; no) cpp=false ;; *) AC_MSG_ERROR([bad value ${enableval} for --enable-cpp]) ;; esac],
   [cpp=true])
-AM_CONDITIONAL(CPP, test x"$cpp" = x"true")
+AM_CONDITIONAL(CPP, test x"${cpp}" = x"true")
 
+# Check for CFLAGS
+AC_MSG_CHECKING([whether configure should try to set CFLAGS])
+if test "x${CFLAGS+set}" = xset; then
+enable_cflags_setting=no
+else
+enable_cflags_setting=yes
+fi
+AC_MSG_RESULT($enable_cflags_setting)
 # Checks for programs.
 AC_PROG_CC
 
@@ -55,7 +63,7 @@ AC_COMPILE_IFELSE(
 )
 CFLAGS="$start_cflgs"
 
-AS_IF([test x"$cpp" = x"true"],[
+AS_IF([test x"${cpp}" = x"true"],[
 AC_LANG([C++])
 AC_MSG_CHECKING([for std::filesystem::preferred_separator])
 AC_COMPILE_IFELSE([AC_LANG_SOURCE([[
@@ -90,6 +98,10 @@ int main(){
 return sizeof(long)==sizeof(int);//0 is true for ac_run
 }
 ])], [AC_DEFINE(PLATFORM64, 1, "64")], [])
+
+#back at CFLAGS
+test "x${enable_cflags_setting}" = xyes && CFLAGS="-O3 -s"
+#O3 is not removing symbols
 
 # Checks for library functions.
 

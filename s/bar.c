@@ -383,15 +383,9 @@ static bool finding(size_t cursor,size_t r,size_t c,bool f){
 	if(f/*true*/)return findingf(cursor,r,c);
 	return findingb(cursor,r,c);
 }
-void position_core(int rw,int cl,size_t real_y,size_t real_x){
-	size_t y=ytext+(size_t)rw;size_t x;
-	if(y>=rows_tot){y=rows_tot-1;x=rows[y].sz;}
-	else{
-		x=xtext+c_to_xc(cl,rw);
-		if(x>rows[y].sz)x=rows[y].sz;
-	}
+void position_core(size_t y,size_t x){
 	char posbuf[10+1+10+1];
-	int n=sprintf(posbuf,protocol "," protocol,real_y+y+1,real_x+x+1);
+	int n=sprintf(posbuf,protocol "," protocol,y+1,x+1);
 	int dif=getmaxx(poswn)-n;
 	if(dif!=0){
 		if(dif>0){
@@ -407,10 +401,19 @@ void position_core(int rw,int cl,size_t real_y,size_t real_x){
 	wnoutrefresh(poswn);
 }
 void position(int rw,int cl){
-	position_core(rw,cl,0,0);
+	size_t y=ytext+(size_t)rw;size_t x;
+	if(y>=rows_tot){y=rows_tot-1;x=rows[y].sz;}
+	else{
+		x=xtext+c_to_xc(cl,rw);
+		if(x>rows[y].sz)x=rows[y].sz;
+	}
+	position_core(y,x);
 }
-void centering2(WINDOW*w,size_t*rw,size_t*cl,bool right){
+void centering2(WINDOW*w,size_t*prw,size_t*pxc,bool right){
 	position(0,0);
+	centering3(w,prw,pxc,right);
+}
+void centering3(WINDOW*w,size_t*prw,size_t*pxc,bool right){
 	int mx=getmaxx(w);
 	int wd=mx/3;
 	if(right/*true*/)wd=mx-wd;
@@ -426,8 +429,8 @@ void centering2(WINDOW*w,size_t*rw,size_t*cl,bool right){
 	else ytext=ytext-hg;
 	refreshpage(w);
 	wmove(w,(int)hg,c);
-	if(rw!=nullptr){
-		rw[0]=hg;cl[0]=xc-xtext;
+	if(prw!=nullptr){
+		prw[0]=hg;pxc[0]=xc-xtext;
 	}
 }
 static void colorfind(int a,int y,size_t pos,size_t sz){
@@ -944,10 +947,8 @@ static void command_rewrite(int y,int x,int pos,char*input,int cursor,int visib)
 }
 static int word_at_cursor(char*z){
 	WINDOW*w=quick_get(z);
-	size_t y=(size_t)getcury(w);
-	size_t x=c_to_xc(getcurx(w),(int)y);
-	y+=ytext;x+=xtext;
-	fixmembuf(&y,&x);
+	size_t y;size_t x;
+	fixed_yx(&y,&x,getcury(w),getcurx(w));
 	size_t sz=rows[y].sz;
 	if(x==sz)return 0;
 	char*d=rows[y].data;

@@ -5,7 +5,6 @@ bool no_char(char);
 void refreshrowsbot(WINDOW*,int,int);
 #define refreshrows(w,i) refreshrowsbot(w,i,getmaxy(w))
 #define refreshpage(w) refreshrows(w,0)
-size_t c_to_xc(int,int);
 bool row_alloc(row*,size_t,size_t,size_t);
 void row_set(row*,size_t,size_t,size_t,const char*);
 bool deleting_init(size_t,size_t,size_t,size_t);
@@ -16,14 +15,16 @@ void mod_set_off_wrap();
 size_t sizemembuf(size_t,size_t,size_t,size_t);
 void cpymembuf(size_t,size_t,size_t,size_t,char*);
 bool paste(size_t,size_t,size_t*,char*,size_t,size_t,bool);
-void fixmembuf(size_t*y,size_t*x);
 void editing_rebase();
 void restore_rebase();
 void vis(char,WINDOW*);
+size_t c_to_xc(int,int);
 //tw
 int movment(int,WINDOW*);
+int xc_to_c(size_t,int);
 //bar,tw
 void visual(char);
+void fixed_yx(size_t*,size_t*,int,int);
 
 //bar
 //main
@@ -34,6 +35,7 @@ int question(const char*);
 int command(char*);
 void centering2(WINDOW*,size_t*,size_t*,bool);
 #define centering(w,rw,cl) centering2(w,rw,cl,false)
+#define centering_simple(w) centering(w,nullptr,nullptr)
 WINDOW*position_init(void);
 void position(int,int);
 void position_reset(void);
@@ -55,10 +57,9 @@ bool is_dir(int);
 void err_set(WINDOW*);
 int open_new(char*);
 void texter_macro(const char*);
-//main,tw
-#define centering_simple(w) centering(w,nullptr,nullptr)
 //tw
-void position_core(int,int,size_t,size_t);
+void position_core(size_t,size_t);
+void centering3(WINDOW*,size_t*,size_t*,bool);
 
 //tw
 bool word_wrap(WINDOW*);

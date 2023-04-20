@@ -542,7 +542,7 @@ static int home(WINDOW*w,size_t r){
 	}
 	return c;
 }
-static int xc_to_c(size_t col,int r){
+int xc_to_c(size_t col,int r){
 	int*p=&tabs[tabs_rsz*r];
 	int n=p[0];
 	for(int i=0;i<n;i++){
@@ -563,7 +563,8 @@ size_t c_to_xc(int c,int r){
 	}
 	return (size_t)x;
 }
-void fixmembuf(size_t*y,size_t*x){
+
+static void fixmembuf(size_t*y,size_t*x){
 	if(y[0]>=rows_tot){
 		y[0]=rows_tot-1;
 		x[0]=rows[y[0]].sz;
@@ -572,6 +573,12 @@ void fixmembuf(size_t*y,size_t*x){
 	size_t sz=rows[y[0]].sz;
 	if(x[0]>sz)x[0]=sz;
 }
+void fixed_yx(size_t*y,size_t*x,int r,int c){
+	*y=ytext+(size_t)r;
+	*x=xtext+c_to_xc(c,r);
+	fixmembuf(y,x);
+}
+
 static bool is_wordchar(char a){
 	return is_word_char(a);
 }
@@ -586,9 +593,8 @@ static void left(WINDOW*w,int c){
 static void left_move(WINDOW*w,bool(*f)(char)){
 	int r=getcury(w);
 	int c=getcurx(w);
-	size_t y=ytext+(size_t)r;
-	size_t x=xtext+c_to_xc(c,r);
-	fixmembuf(&y,&x);
+	size_t y;size_t x;
+	fixed_yx(&y,&x,r,c);
 	size_t sz=rows[y].sz;
 	char*d=rows[y].data;
 	if(x==sz||f(d[x])==false||x==0||f(d[x-1])==false){left(w,c);return;}
@@ -622,9 +628,8 @@ static size_t right_long(size_t x,char*d,size_t sz,bool(*f)(char)){
 static void right_move(WINDOW*w,bool(*f)(char)){
 	int r=getcury(w);
 	int c=getcurx(w);
-	size_t y=ytext+(size_t)r;
-	size_t x=xtext+c_to_xc(c,r);
-	fixmembuf(&y,&x);
+	size_t y;size_t x;
+	fixed_yx(&y,&x,r,c);
 	size_t sz=rows[y].sz;
 	char*d=rows[y].data;
 	if(right_short(f,x,d,sz)){
@@ -1374,9 +1379,8 @@ bool paste(size_t y,size_t x,size_t*xe,char*buf,size_t buf_sz,size_t buf_r,bool 
 static void past(WINDOW*w){
 	if(cutbuf_sz!=0){
 		int r=getcury(w);
-		size_t y=ytext+(size_t)r;
-		size_t x=xtext+c_to_xc(getcurx(w),r);
-		fixmembuf(&y,&x);
+		size_t y;size_t x;
+		fixed_yx(&y,&x,r,getcurx(w));
 		size_t xe;
 		if(paste(y,x,&xe,cutbuf,cutbuf_sz,cutbuf_r,true)/*true*/){
 			pasted(y-ytext,xe,w);
