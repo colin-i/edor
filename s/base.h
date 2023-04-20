@@ -33,8 +33,8 @@ int save(void);
 int saving_base(char*);
 int question(const char*);
 int command(char*);
-void centering2(WINDOW*,size_t*,size_t*,bool);
-#define centering(w,rw,cl) centering2(w,rw,cl,false)
+#define centering2(w,prw,pxc,right) position(0,0);centering3(w,prw,pxc,right)
+#define centering(w,prw,pxc) centering2(w,prw,pxc,false)
 #define centering_simple(w) centering(w,nullptr,nullptr)
 WINDOW*position_init(void);
 void position(int,int);

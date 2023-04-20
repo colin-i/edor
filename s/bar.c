@@ -409,10 +409,6 @@ void position(int rw,int cl){
 	}
 	position_core(y,x);
 }
-void centering2(WINDOW*w,size_t*prw,size_t*pxc,bool right){
-	position(0,0);
-	centering3(w,prw,pxc,right);
-}
 void centering3(WINDOW*w,size_t*prw,size_t*pxc,bool right){
 	int mx=getmaxx(w);
 	int wd=mx/3;
