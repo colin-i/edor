@@ -60,6 +60,7 @@ void texter_macro(const char*);
 //tw
 void position_core(size_t,size_t);
 void centering3(WINDOW*,size_t*,size_t*,bool);
+size_t centeringy(WINDOW*);
 
 //tw
 bool word_wrap(WINDOW*);

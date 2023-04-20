@@ -420,14 +420,18 @@ void centering3(WINDOW*w,size_t*prw,size_t*pxc,bool right){
 		xtext--;
 		c+=d[xtext]=='\t'?tab_sz:1;
 	}while(c<wd);
-	size_t hg=(size_t)getmaxy(w)/2;
-	if((int)(ytext-hg)<0){hg=ytext;ytext=0;}
-	else ytext=ytext-hg;
-	refreshpage(w);
+	size_t hg=centeringy(w);
 	wmove(w,(int)hg,c);
 	if(prw!=nullptr){
 		prw[0]=hg;pxc[0]=xc-xtext;
 	}
+}
+size_t centeringy(WINDOW*w){
+	size_t hg=(size_t)getmaxy(w)/2;
+	if((int)(ytext-hg)<0){hg=ytext;ytext=0;}
+	else ytext=ytext-hg;
+	refreshpage(w);
+	return hg;
 }
 static void colorfind(int a,int y,size_t pos,size_t sz){
 	attrset(COLOR_PAIR(a));

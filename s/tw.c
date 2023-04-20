@@ -122,8 +122,7 @@ bool word_wrap(WINDOW*w){
 
 		//window
 		ytext=y;xtext=0;
-		centering3(w,nullptr,nullptr,false);
-		int r=getcury(w);
+		size_t r=centeringy(w);
 		wmove(w,r,xc_to_c(x,r));
 
 		//loop
