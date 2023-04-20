@@ -100,7 +100,7 @@ return sizeof(long)==sizeof(int);//0 is true for ac_run
 ])], [AC_DEFINE(PLATFORM64, 1, "64")], [])
 
 #back at CFLAGS
-test "x${enable_cflags_setting}" = xyes && CFLAGS="-O3 -s"
+test "x${enable_cflags_setting}" = xyes && CFLAGS="-O1 -s"
 #O3 is not removing symbols
 
 # Checks for library functions.
