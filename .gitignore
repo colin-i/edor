@@ -9,5 +9,3 @@ config.status
 Makefile
 .dirstamp
 edor*
-.pc/
-debian/patches/
