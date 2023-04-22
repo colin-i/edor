@@ -16,26 +16,25 @@
 #include "base.h"
 
 typedef struct{
-	unsigned int ytext;
-	unsigned int xtext;
+	size_t ytext;
+	size_t xtext;
 }rowwrap;//is used as an array allocated, to combine need to add this at row, memory waste
 
 static row*rowswrap;
 static row*store_rows;
 static size_t store_rows_tot;
 
-static void tw_free(){
-	free(rowswrap);
-}
-static void tw_unlock(size_t y,size_t x){
+static void tw_unlock(size_t y,size_t x,WINDOW*w){
 	//restore variables
 	rows=store_rows;
 	rows_tot=store_rows_tot;
 	ytext=y;
 	xtext=x;
+	centering3(w,nullptr,nullptr,false);
+	free(rowswrap);
 }
 
-bool word_wrap(WINDOW*w){
+bool text_wrap(WINDOW*w){
 	//calculate rows required
 	int max=getmaxx(w);
 	size_t n=0;
@@ -108,10 +107,10 @@ bool word_wrap(WINDOW*w){
 		}
 		//and set new x/y
 		x=realx;
-		for(size_t yy=y+1;yy<j&&rowswrap_add[yy].ytext==realy&&realx>=rowswrap_add[yy].xtext;yy++){
-			y++;//x is on a wrap part
-			x-=rowswrap_add[yy].xtext;
-		}
+		size_t yy;size_t tempy=y;
+		for(yy=y+1;yy<j&&rowswrap_add[yy].ytext==realy&&realx>=rowswrap_add[yy].xtext;yy++)
+			y=yy;//x is on a wrap part
+		if(tempy!=y)x-=rowswrap_add[y].xtext;
 
 		//visual
 		visual('W');//without stdscr refresh is not ok
@@ -130,16 +129,14 @@ bool word_wrap(WINDOW*w){
 		do{
 			int b=wgetch(w);
 			z=movment(b,w);
-			if(z==1){tw_unlock(rowswrap_add[y].ytext,rowswrap_add[y].xtext+x);tw_free();return true;}
+			if(z==1){tw_unlock(rowswrap_add[y].ytext,rowswrap_add[y].xtext+x,w);return true;}
 
 			fixed_yx(&y,&x,getcury(w),getcurx(w));
 			position_core(rowswrap_add[y].ytext,rowswrap_add[y].xtext+x);
 		}while(z!=0);
 
 		visual(' ');
-		tw_unlock(rowswrap_add[y].ytext,rowswrap_add[y].xtext+x);
-		centering3(w,nullptr,nullptr,false);
-		tw_free();
+		tw_unlock(rowswrap_add[y].ytext,rowswrap_add[y].xtext+x,w);
 	}
 	return false;
 }

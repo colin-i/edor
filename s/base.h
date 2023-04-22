@@ -63,7 +63,7 @@ void centering3(WINDOW*,size_t*,size_t*,bool);
 size_t centeringy(WINDOW*);
 
 //tw
-bool word_wrap(WINDOW*);
+bool text_wrap(WINDOW*);
 
 //main,bar
 extern char ln_term[3];

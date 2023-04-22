@@ -2035,7 +2035,7 @@ static bool loopin(WINDOW*w){
 				wmove(w,getcury(w),getcurx(w));
 				setprefs(mask_insensitive,insensitive);
 			}
-			else if(strcmp(s,"^W")==0){if(word_wrap(w)/*true*/)return true;}
+			else if(strcmp(s,"^W")==0){if(text_wrap(w)/*true*/)return true;}
 			else type(c,w);
 			//continue;
 		}
