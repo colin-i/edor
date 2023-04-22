@@ -107,10 +107,14 @@ bool text_wrap(WINDOW*w){
 		}
 		//and set new x/y
 		x=realx;
-		size_t yy;size_t tempy=y;
-		for(yy=y+1;yy<j&&rowswrap_add[yy].ytext==realy&&realx>=rowswrap_add[yy].xtext;yy++)
-			y=yy;//x is on a wrap part
-		if(tempy!=y)x-=rowswrap_add[y].xtext;
+		size_t yy=y;
+		do{yy++;}
+		while(yy<j&&rowswrap_add[yy].ytext==realy&&realx>=rowswrap_add[yy].xtext);
+		yy--;
+		if(y<yy){
+			y=yy;
+			x-=rowswrap_add[y].xtext;//x is on a wrap part
+		}
 
 		//visual
 		visual('W');//without stdscr refresh is not ok
