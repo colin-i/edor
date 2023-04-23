@@ -17,8 +17,8 @@ jobs:
    - name: Run a multi-line script
      run: |
       name=`cat in/debian/changelog | head -1 | grep -o ^[^\ ]*`
-      ln -s in2/debian/patches in/debian/patches
-      ln -s in2/.pc in/.pc
+      mv in2/debian/patches in/debian/patches
+      mv in2/.pc in/.pc
       if [ -z "`dpkg -s devscripts>/dev/null 2>&1 && echo x`" ]; then
        sudo apt install -y devscripts debhelper
       fi
