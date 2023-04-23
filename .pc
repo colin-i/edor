@@ -1,1 +1,1 @@
-/home/bc/test/sync/edor/.pc
+/home/bc/sync/edor/.pc
