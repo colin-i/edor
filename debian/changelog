@@ -1,3 +1,9 @@
+edor (1-x25) focal; urgency=medium
+
+  * text wrapping
+
+ -- bc <bc@bc-HP-Pavilion-x360-Convertible>  Sun, 23 Apr 2023 11:25:04 +0300
+
 edor (1-x24) focal; urgency=medium
 
   * mkdir for .config
