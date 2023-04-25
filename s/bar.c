@@ -881,7 +881,7 @@ static int find(char*z,size_t cursor,size_t pos,size_t visib,int y){
 					if(replace(cursor)/*true*/){ytext=iferrory;xtext=iferrorx;continue;}
 					if(delim_touch(y1,x1,cursorr)/*true*/)delimiter_touched=true;
 					if(forward){xtext+=cursorr;centering2(w,&xr,&xc,true);}
-					else centering(w,&xr,&xc);
+					else{centering(w,&xr,&xc);}
 					untouched=false;
 					is_for_forward=false;
 					continue;
@@ -892,7 +892,7 @@ static int find(char*z,size_t cursor,size_t pos,size_t visib,int y){
 					if(phase/*true*/)delimiter_touched=true;
 					else if(ytext==y1&&xtext<x1)x1-=cursor-cursorr;
 					if(forward){xtext+=cursorr;centering2(w,&xr,&xc,true);}
-					else centering(w,&xr,&xc);
+					else{centering(w,&xr,&xc);}
 					is_for_forward=false;
 					continue;
 				}
