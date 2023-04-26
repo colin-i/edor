@@ -1854,7 +1854,7 @@ static bool find_mode(int nr,WINDOW*w){
 static bool goto_mode(char*args,WINDOW*w){
 	int r=command(args);
 	if(r==1){
-		centering_simple(w);
+		centering_simple(w)
 	}
 	else if(r>-2)wmove(w,getcury(w),getcurx(w));
 	else return true;

@@ -675,12 +675,12 @@ static bool dos(WINDOW*w,eundo*un,size_t vl){
 		if(d!=nullptr){
 			if(y1==y2&&d[0]==ln_term[0]){
 				if(undo_replace(un,d,y1,xb,xe,vl!=1)/*true*/)return false;
-				centering2(w,nullptr,nullptr,true);
+				centering2(w,nullptr,nullptr,true)
 			}else{
 				if(paste(y1,xb,&xe,d,xe,y2-y1+1,false)==false)return false;
 				un->xe=xe;un->data=nullptr;
 				ytext=y2;xtext=xe;
-				centering2(w,nullptr,nullptr,true);
+				centering2(w,nullptr,nullptr,true)
 				free(d);
 			}
 		}
@@ -689,7 +689,7 @@ static bool dos(WINDOW*w,eundo*un,size_t vl){
 			if(undo_del_backward(un,y1,xb,y2,xe)/*true*/)return false;
 			deleting(y1,xb,y2,xe);
 			ytext=y1;xtext=xb;
-			centering_simple(w);
+			centering_simple(w)
 		}
 	}else{
 		if(d!=nullptr){
@@ -706,7 +706,7 @@ static bool dos(WINDOW*w,eundo*un,size_t vl){
 			}
 			free(d);
 			ytext=y1;xtext=1;
-			centering2(w,nullptr,nullptr,true);
+			centering2(w,nullptr,nullptr,true)
 		}else{
 			void*mem=malloc(y1-y2);
 			if(mem==nullptr)return false;
@@ -717,7 +717,7 @@ static bool dos(WINDOW*w,eundo*un,size_t vl){
 				rows[i].sz--;
 			}
 			ytext=y2;xtext=0;
-			centering_simple(w);
+			centering_simple(w)
 		}
 	}
 	undos_tot+=vl;
@@ -862,7 +862,7 @@ static int find(char*z,size_t cursor,size_t pos,size_t visib,int y){
 		size_t y1=ytext;size_t x1=xtext;
 		bool phase=false;
 		wnoutrefresh(stdscr);
-		centering(w,&xr,&xc);
+		centering(w,&xr,&xc)
 		bool untouched=true;bool delimiter_touched=false;
 		char prev_key=' ';
 		bool is_for_forward=true;//last key only at next/prev/replace
@@ -880,8 +880,8 @@ static int find(char*z,size_t cursor,size_t pos,size_t visib,int y){
 					ytext+=xr;xtext+=xc;
 					if(replace(cursor)/*true*/){ytext=iferrory;xtext=iferrorx;continue;}
 					if(delim_touch(y1,x1,cursorr)/*true*/)delimiter_touched=true;
-					if(forward){xtext+=cursorr;centering2(w,&xr,&xc,true);}
-					else{centering(w,&xr,&xc);}
+					if(forward){xtext+=cursorr;centering2(w,&xr,&xc,true)}
+					else{centering(w,&xr,&xc)}
 					untouched=false;
 					is_for_forward=false;
 					continue;
@@ -891,8 +891,8 @@ static int find(char*z,size_t cursor,size_t pos,size_t visib,int y){
 					phase=delimiter(y1,x1,y,pos,sz,cursorr,phase);
 					if(phase/*true*/)delimiter_touched=true;
 					else if(ytext==y1&&xtext<x1)x1-=cursor-cursorr;
-					if(forward){xtext+=cursorr;centering2(w,&xr,&xc,true);}
-					else{centering(w,&xr,&xc);}
+					if(forward){xtext+=cursorr;centering2(w,&xr,&xc,true)}
+					else{centering(w,&xr,&xc)}
 					is_for_forward=false;
 					continue;
 				}
@@ -926,7 +926,7 @@ static int find(char*z,size_t cursor,size_t pos,size_t visib,int y){
 				delimiter_touched=false;
 			}
 			untouched=true;
-			centering(w,&xr,&xc);
+			centering(w,&xr,&xc)
 		}
 	}
 	int a=getch();
