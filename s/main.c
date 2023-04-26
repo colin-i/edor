@@ -1557,7 +1557,7 @@ static bool enter(size_t y,size_t x,int*r,int*c,WINDOW*w){
 	if(rows_expand(1)/*true*/)return true;
 	char*b=rows[y].data;
 	char*d=b;
-	if(indent_flag){
+	if(indent_flag/*true*/){
 		char*e=b+x;
 		while(d<e&&d[0]=='\t')d++;
 	}
@@ -2016,23 +2016,30 @@ static bool loopin(WINDOW*w){
 				return false;
 			}
 			else if(strcmp(s,"^E")==0){
-				if(stored_mouse_mask!=0){stored_mouse_mask=mousemask(0,nullptr);setprefs(mask_mouse,false);}
-				else{stored_mouse_mask=mousemask(ALL_MOUSE_EVENTS,nullptr);setprefs(mask_mouse,true);}
+				bool b;char c;
+				if(stored_mouse_mask!=0){stored_mouse_mask=mousemask(0,nullptr);b=false;c='e';}
+				else{stored_mouse_mask=mousemask(ALL_MOUSE_EVENTS,nullptr);b=true;c='E';}
+				vis(c,w);
+				setprefs(mask_mouse,b);
 			}
 			else if(strcmp(s,"^N")==0){
-				if(indent_flag/*true*/)indent_flag=false;else indent_flag=true;
+				char c;
+				if(indent_flag/*true*/){indent_flag=false;c='n';}
+				else{indent_flag=true;c='N';}
+				vis(c,w);
 				setprefs(mask_indent,indent_flag);
 			}
 			else if(strcmp(s,"^T")==0){
+				char c;
 				if(insensitive/*true*/){
 					insensitive=false;
-					visual('t');
+					c='t';
 				}else{
 					insensitive=true;
-					visual('T');
+					c='T';
 				}
 				//doupdate();will change cursor
-				wmove(w,getcury(w),getcurx(w));
+				vis(c,w);
 				setprefs(mask_insensitive,insensitive);
 			}
 			else if(strcmp(s,"^W")==0){if(text_wrap(w)/*true*/)return true;}
