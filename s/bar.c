@@ -67,6 +67,7 @@ static size_t cursorr=0;
 #define get_right getbegx(poswn)-1
 static char inputf[max_path_0];
 static int cursorf=0;
+static int number;
 
 typedef struct{
 size_t yb;
@@ -728,8 +729,9 @@ static bool dos(WINDOW*w,eundo*un,size_t vl){
 	else mod_set_off_wrap();//only if not
 	return true;
 }
+#define maxint_nul 11
 static void undo_show(size_t n){
-	char nr[11];
+	char nr[maxint_nul];
 	int a=sprintf(nr,protocol,n);
 	texter(nr);
 	undo_erase(a);
@@ -826,10 +828,22 @@ static bool replace(size_t cursor){
 	}
 	return true;
 }
+
+static void finds(){
+	if(number!=0){//0, in case was forward, then backward
+		if(number<0)number*=-1;
+		char buf[maxint_nul];
+		int n=sprintf(buf,"%u",number);
+		mvaddstr(0,getmaxx(stdscr)-n,buf);
+		number=0;
+	}
+}
+
 static bool delim_touch(size_t y1,size_t x1,size_t c){return ytext==y1&&(xtext==x1||(xtext<x1&&xtext+c>x1));}
 static bool delimiter(size_t y1,size_t x1,int y,size_t pos,size_t sz,size_t c,bool phase){
 	if(delim_touch(y1,x1,c)/*true*/){
 		colorfind(2,y,pos,sz);
+		finds();
 		wnoutrefresh(stdscr);
 		return true;
 	}
@@ -839,6 +853,7 @@ static bool delimiter(size_t y1,size_t x1,int y,size_t pos,size_t sz,size_t c,bo
 	}
 	return false;
 }
+
 #define quick_get(z) ((WINDOW**)((void*)z))[1]
 //1,0,-2resz
 static int find(char*z,size_t cursor,size_t pos,size_t visib,int y){
@@ -866,14 +881,17 @@ static int find(char*z,size_t cursor,size_t pos,size_t visib,int y){
 		bool untouched=true;bool delimiter_touched=false;
 		char prev_key=' ';
 		bool is_for_forward=true;//last key only at next/prev/replace
+		number=0;
 		for(;;){
 			int a=wgetch(w);
 			if(a==Char_Return){
 				if(is_for_forward)xc+=cursor;//add only when last was simple find
 				else is_for_forward=true;//modify only if was replace
 				forward=true;
+				number++;
 			}else if(a==prev_key){
 				forward=false;is_for_forward=true;
+				number--;
 			}else if(a==KEY_LEFT){
 				size_t iferrory=ytext;size_t iferrorx=xtext;
 				if(untouched/*true*/){
