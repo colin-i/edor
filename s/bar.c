@@ -67,7 +67,8 @@ static size_t cursorr=0;
 #define get_right getbegx(poswn)-1
 static char inputf[max_path_0];
 static int cursorf=0;
-static int number;
+static int number2;//number is also negative
+static int number3;
 
 typedef struct{
 size_t yb;
@@ -829,21 +830,48 @@ static bool replace(size_t cursor){
 	return true;
 }
 
-static void finds(){
-	if(number!=0){//0, in case was forward, then backward
-		if(number<0)number*=-1;
-		char buf[maxint_nul];
-		int n=sprintf(buf,"%u",number);
-		mvaddstr(0,getmaxx(stdscr)-n,buf);
-		number=0;
+static void finds_clean(){
+	move(0,number3);//clear finds
+	clrtoeol();//even at resize
+}
+static void finds_big_clean(){
+	finds_clean();
+	wnoutrefresh(stdscr);
+	number3=getmaxx(stdscr);number2=0;
+}
+static int finds(bool phase,int number,bool*header_was){
+	if(*header_was==false){
+		if(phase/*true*/){
+			*header_was=true;
+		}
+		return 0;
 	}
+
+	char buf[1+maxint_nul];
+	if(number==0){
+		finds_big_clean();//can be 1
+		return 0;//0, in case was forward, then backward
+	}
+
+	int r=number;
+	if(number<0){
+		number*=-1;
+	}
+	if(phase/*true*/){
+		number2=sprintf(buf,"/%u",number);
+		mvaddstr(0,getmaxx(stdscr)-number2,buf);
+		r=0;
+	}
+	number3=getmaxx(stdscr)-number2-sprintf(buf,"%u",number);
+	mvaddstr(0,number3,buf);
+	wnoutrefresh(stdscr);
+	return r;
 }
 
 static bool delim_touch(size_t y1,size_t x1,size_t c){return ytext==y1&&(xtext==x1||(xtext<x1&&xtext+c>x1));}
 static bool delimiter(size_t y1,size_t x1,int y,size_t pos,size_t sz,size_t c,bool phase){
 	if(delim_touch(y1,x1,c)/*true*/){
 		colorfind(2,y,pos,sz);
-		finds();
 		wnoutrefresh(stdscr);
 		return true;
 	}
@@ -855,7 +883,96 @@ static bool delimiter(size_t y1,size_t x1,int y,size_t pos,size_t sz,size_t c,bo
 }
 
 #define quick_get(z) ((WINDOW**)((void*)z))[1]
-//1,0,-2resz
+
+//1,0cancel,-2resz
+static int find_core(WINDOW*w,size_t cursor,size_t xr,size_t xc,int y,size_t pos,size_t sz){
+	bool forward=true;
+	size_t y1=ytext;size_t x1=xtext;
+	bool phase=false;
+	wnoutrefresh(stdscr);
+	centering(w,&xr,&xc)
+	bool untouched=true;bool delimiter_touched=false;
+	char prev_key=' ';
+	bool is_for_forward=true;//last key only at next/prev/replace
+
+	int number=0;bool header_was=true;int at_number;
+	number2=0;
+	number3=getmaxx(stdscr);//in case is required at clean
+
+	for(;;){
+		int a=wgetch(w);
+		if(a==Char_Return){
+			if(is_for_forward)xc+=cursor;//add only when last was simple find
+			else is_for_forward=true;//modify only if was replace
+			forward=true;
+			at_number=1;
+		}else if(a==prev_key){
+			forward=false;is_for_forward=true;
+			at_number=-1;
+		}else if(a==KEY_LEFT){
+			size_t iferrory=ytext;size_t iferrorx=xtext;
+			if(untouched/*true*/){
+				if(number3!=getmaxx(stdscr)){
+					finds_big_clean();//wnoutrefresh when not on delimiter
+					if(number!=0)header_was=false;//is only at untouched at the moment
+				}
+
+				ytext+=xr;xtext+=xc;
+				if(replace(cursor)/*true*/){ytext=iferrory;xtext=iferrorx;continue;}
+				if(delim_touch(y1,x1,cursorr)/*true*/){
+					delimiter_touched=true;
+				}
+				if(forward){xtext+=cursorr;centering2(w,&xr,&xc,true)}
+				else{centering(w,&xr,&xc)}
+				untouched=false;
+				is_for_forward=false;
+				continue;
+			}
+			if(finding(cursor,xr,xc,forward)/*true*/){
+				if(replace(cursor)/*true*/){ytext=iferrory;xtext=iferrorx;continue;}
+				phase=delimiter(y1,x1,y,pos,sz,cursorr,phase);
+				if(phase/*true*/)delimiter_touched=true;
+				else if(ytext==y1&&xtext<x1)x1-=cursor-cursorr;
+				if(forward){xtext+=cursorr;centering2(w,&xr,&xc,true)}
+				else{centering(w,&xr,&xc)}
+				is_for_forward=false;
+				continue;
+			}
+			return 1;
+		}else if(a=='r'){
+			cursorr=0;wattrset(w,COLOR_PAIR(2));
+			int rstart=getcury(w);
+			if(replace_text(w,rstart,getcurx(w),rstart,rstart+1)/*true*/)return -2;
+			continue;
+		}else if(a=='R'){
+			wattrset(w,COLOR_PAIR(2));
+			int yb=getcury(w);int xb=getcurx(w);
+			int rstart=yb;int rstop=yb+1;
+			for(size_t i=0;i<cursorr;i++){
+				replace_text_add(w,inputr[i],&rstart,&rstop);
+			}
+			if(replace_text(w,yb,xb,rstart,rstop)/*true*/)return -2;
+			continue;
+		}else if(a=='c'){
+			return 0;
+		}else{
+			return a==KEY_RESIZE?-2:1;
+		}
+		if(finding(cursor,xr,xc,forward)==false){
+			//was last replace
+			return 1;
+		}
+		phase=delimiter(y1,x1,y,pos,sz,cursor,phase);
+
+		if(delimiter_touched/*true*/){
+			y1=ytext;x1=xtext;
+			delimiter_touched=false;
+		}else number=finds(phase,number+at_number,&header_was);
+		untouched=true;
+		centering(w,&xr,&xc)
+	}
+}
+//same
 static int find(char*z,size_t cursor,size_t pos,size_t visib,int y){
 	/*warning: cast from
       'char *' to 'size_t *' (aka
@@ -873,79 +990,9 @@ static int find(char*z,size_t cursor,size_t pos,size_t visib,int y){
 	colorfind(1,y,pos,sz);
 	//
 	if(finding(cursor,xr,xc,true)/*true*/){
-		bool forward=true;
-		size_t y1=ytext;size_t x1=xtext;
-		bool phase=false;
-		wnoutrefresh(stdscr);
-		centering(w,&xr,&xc)
-		bool untouched=true;bool delimiter_touched=false;
-		char prev_key=' ';
-		bool is_for_forward=true;//last key only at next/prev/replace
-		number=0;
-		for(;;){
-			int a=wgetch(w);
-			if(a==Char_Return){
-				if(is_for_forward)xc+=cursor;//add only when last was simple find
-				else is_for_forward=true;//modify only if was replace
-				forward=true;
-				number++;
-			}else if(a==prev_key){
-				forward=false;is_for_forward=true;
-				number--;
-			}else if(a==KEY_LEFT){
-				size_t iferrory=ytext;size_t iferrorx=xtext;
-				if(untouched/*true*/){
-					ytext+=xr;xtext+=xc;
-					if(replace(cursor)/*true*/){ytext=iferrory;xtext=iferrorx;continue;}
-					if(delim_touch(y1,x1,cursorr)/*true*/)delimiter_touched=true;
-					if(forward){xtext+=cursorr;centering2(w,&xr,&xc,true)}
-					else{centering(w,&xr,&xc)}
-					untouched=false;
-					is_for_forward=false;
-					continue;
-				}
-				if(finding(cursor,xr,xc,forward)/*true*/){
-					if(replace(cursor)/*true*/){ytext=iferrory;xtext=iferrorx;continue;}
-					phase=delimiter(y1,x1,y,pos,sz,cursorr,phase);
-					if(phase/*true*/)delimiter_touched=true;
-					else if(ytext==y1&&xtext<x1)x1-=cursor-cursorr;
-					if(forward){xtext+=cursorr;centering2(w,&xr,&xc,true)}
-					else{centering(w,&xr,&xc)}
-					is_for_forward=false;
-					continue;
-				}
-				return 1;
-			}else if(a=='r'){
-				cursorr=0;wattrset(w,COLOR_PAIR(2));
-				int rstart=getcury(w);
-				if(replace_text(w,rstart,getcurx(w),rstart,rstart+1)/*true*/)return -2;
-				continue;
-			}else if(a=='R'){
-				wattrset(w,COLOR_PAIR(2));
-				int yb=getcury(w);int xb=getcurx(w);
-				int rstart=yb;int rstop=yb+1;
-				for(size_t i=0;i<cursorr;i++){
-					replace_text_add(w,inputr[i],&rstart,&rstop);
-				}
-				if(replace_text(w,yb,xb,rstart,rstop)/*true*/)return -2;
-				continue;
-			}else if(a=='c'){
-				return 0;
-			}else{
-				return a==KEY_RESIZE?-2:1;
-			}
-			if(finding(cursor,xr,xc,forward)==false){
-				//was last replace
-				return 1;
-			}
-			phase=delimiter(y1,x1,y,pos,sz,cursor,phase);
-			if(delimiter_touched/*true*/){
-				y1=ytext;x1=xtext;
-				delimiter_touched=false;
-			}
-			untouched=true;
-			centering(w,&xr,&xc)
-		}
+		int r=find_core(w,cursor,xr,xc,y,pos,sz);
+		finds_clean();
+		return r;
 	}
 	int a=getch();
 	if(a=='c'){
