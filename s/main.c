@@ -1965,7 +1965,7 @@ static bool loopin(WINDOW*w){
 			else if(z=='s'){bool b=savetofile(w,false);if(b/*true*/)return true;}
 		}else{
 			//QWERTyUioP
-			//aSdFGhjkl 
+			//aSdFGhjkl
 			// zxcVbNm
 			const char*s=keyname(c);
 			if(strcmp(s,"^V")==0){
