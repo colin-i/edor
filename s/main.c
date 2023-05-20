@@ -1964,6 +1964,9 @@ static bool loopin(WINDOW*w){
 			else if(z=='u'){vis('U',w);undo_loop(w);vis(' ',w);}
 			else if(z=='s'){bool b=savetofile(w,false);if(b/*true*/)return true;}
 		}else{
+			//QWERTyUioP
+			//aSdFGhjkl 
+			// zxcVbNm
 			const char*s=keyname(c);
 			if(strcmp(s,"^V")==0){
 				if(visual_mode(w,false)/*true*/)return true;
