@@ -867,11 +867,13 @@ static int finds(bool phase,int number,bool*header_was){
 		number2=sprintf(buf,"/%u",number);
 		mvaddstr(0,getmaxx(stdscr)-number2,buf);
 		r=0;
-	}else if(positiveInt_length(fprevnumber)>positiveInt_length(number)){//fprevnumber
-		mvaddch(0,number3,' ');
+	}else{//fprevnumber
+		int dif=positiveInt_length(fprevnumber)-positiveInt_length(number);
+		move(0,number3);
+		while(dif>0){addch(' ');dif--;}
 	}
 	int nr=sprintf(buf,"%u",number);
-	fprevnumber=number;//for 10->9, 10/10->1/10, ...
+	fprevnumber=number;//for 10->9, 10/10->1/10, ... , 100/100->1/10, ...
 	number3=getmaxx(stdscr)-number2-nr;
 	mvaddstr(0,number3,buf);
 	wnoutrefresh(stdscr);
