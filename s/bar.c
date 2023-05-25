@@ -69,6 +69,7 @@ static char inputf[max_path_0];
 static int cursorf=0;
 static int number2;//number is also negative
 static int number3;
+static int fprevnumber;
 
 typedef struct{
 size_t yb;
@@ -839,6 +840,11 @@ static void finds_big_clean(){
 	wnoutrefresh(stdscr);
 	number3=getmaxx(stdscr);number2=0;
 }
+static int positiveInt_length(unsigned int nr){
+	int x=0;
+	while(nr>0){nr/=10;x++;}
+	return x;
+}
 static int finds(bool phase,int number,bool*header_was){
 	if(*header_was==false){
 		if(phase/*true*/){
@@ -861,8 +867,12 @@ static int finds(bool phase,int number,bool*header_was){
 		number2=sprintf(buf,"/%u",number);
 		mvaddstr(0,getmaxx(stdscr)-number2,buf);
 		r=0;
+	}else if(positiveInt_length(fprevnumber)>positiveInt_length(number)){//fprevnumber
+		mvaddch(0,number3,' ');
 	}
-	number3=getmaxx(stdscr)-number2-sprintf(buf,"%u",number);
+	int nr=sprintf(buf,"%u",number);
+	fprevnumber=number;//for 10->9, 10/10->1/10, ...
+	number3=getmaxx(stdscr)-number2-nr;
 	mvaddstr(0,number3,buf);
 	wnoutrefresh(stdscr);
 	return r;
