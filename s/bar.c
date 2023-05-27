@@ -835,7 +835,7 @@ static void finds_clean(){
 	move(0,number3);//clear finds
 
 	//clrtoeol();//even at resize
-	//this is not working, is also cleaning on last row, down below, the star and the position
+	//if number3==maxx, move fails and last line is clr. one more if? no
 
 	int max=getmaxx(stdscr);
 	while(number3<max){addch(' ');number3++;}
