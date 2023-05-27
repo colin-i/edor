@@ -29,7 +29,6 @@ int attrset(int);
 int wattrset(WINDOW*,int);
 int COLOR_PAIR(int);
 WINDOW*newwin(int,int,int,int);
-int clrtoeol(void);
 //main/bar/tw
 int getcurx(const WINDOW*);
 int getcury(const WINDOW*);

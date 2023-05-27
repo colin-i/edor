@@ -1,4 +1,6 @@
 
+typedef unsigned short mode_t;
+
 #ifdef __cplusplus
 extern "C" {
 #endif

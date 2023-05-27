@@ -833,7 +833,12 @@ static bool replace(size_t cursor){
 
 static void finds_clean(){
 	move(0,number3);//clear finds
-	clrtoeol();//even at resize
+
+	//clrtoeol();//even at resize
+	//this is not working, is also cleaning on last row, down below, the star and the position
+
+	int max=getmaxx(stdscr);
+	while(number3<max){addch(' ');number3++;}
 }
 static void finds_big_clean(){
 	finds_clean();

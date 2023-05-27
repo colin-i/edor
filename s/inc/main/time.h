@@ -5,7 +5,7 @@ typedef long int time_t;
 extern "C" {
 #endif
 
-time_t time(time_t);
+time_t time(time_t*);
 
 #ifdef __cplusplus
 }
