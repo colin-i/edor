@@ -1874,7 +1874,7 @@ static bool savetofile(WINDOW*w,bool has_file){
 				write_title();
 			}
 
-			if(mod_flag/*true*/){bar_clear();texter_macro("Saved");}
+			if(mod_flag/*true*/){bar_clear();texter_macro("Saved");}//it is not my fault that the position is gone, all that is done is write Saved and blind clean the visual flag, curses is cleaning in between
 			//there are some cases here:
 			//	open with forced new line and save
 			//	open with std input and save
