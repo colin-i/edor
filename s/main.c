@@ -216,9 +216,14 @@ static int topspace=1;
 #define known_stdin 0
 
 bool no_char(char z){return z<32||z>=127;}
-static void tab_grow(WINDOW*w,int r,char*a,size_t sz,int*ptr){
+static void tab_grow(WINDOW*w,int r,char*a,size_t sz,size_t all_sz,int*ptr){
+	//if(xtext>0)if(all_sz>0)//there is text at left
+
 	x_right[r]=xtext<sz;
-	if(x_right[r]==false)return;
+	if(x_right[r]==false){//the text is left of xtext, or is not
+		wclrtoeol(w);//clear here is all, another clear is below
+		return;
+	}
 	int c=0;int cr=0;
 	int max=getmaxx(w);
 	size_t i=xtext;size_t j=i;
@@ -232,7 +237,6 @@ static void tab_grow(WINDOW*w,int r,char*a,size_t sz,int*ptr){
 			ptr[ptr[0]+1]=c;ptr[0]++;
 			j=i+1;
 			cr+=tab_sz-1;
-			//wmove(w,r,c);
 			int k;if(cr>max)k=max;
 			else k=cr;
 			for(;c<k;c++){
@@ -244,10 +248,16 @@ static void tab_grow(WINDOW*w,int r,char*a,size_t sz,int*ptr){
 			c+=i-j+1;j=i+1;
 		}
 	}
-	if(c<max){
-		char aux=a[i];
-		a[i]='\0';waddstr(w,a+j);a[i]=aux;
+	if(c<max){//we are here because there is space to maxx (if was ended in a tab or no_char, it is not this case)
+		if(i!=j){//[j,i) is normal text
+			char aux=a[i];
+			a[i]='\0';waddstr(w,a+j);a[i]=aux;
+			c+=i-j;//to compare if still there is space to maxx
+		}
+		if(c<max)wclrtoeol(w);//blank space until maxx
 	}
+	//if(i<all_sz){//this is not related to previous comparison
+	//there is text at right
 }
 void refreshrowsbot(WINDOW*w,int i,int maxy){
 	size_t maxx=xtext+(size_t)getmaxx(w);
@@ -257,10 +267,16 @@ void refreshrowsbot(WINDOW*w,int i,int maxy){
 		wmove(w,i,0);
 		if(j<rows_tot){
 			size_t sz=rows[j].sz;
-			if(sz>maxx)sz=maxx;
-			tab_grow(w,i,rows[j].data,sz,ptr);
-			if(getcury(w)==i)wclrtoeol(w);
-		}else{x_right[i]=false;wclrtoeol(w);}
+			tab_grow(w,i,rows[j].data,sz>maxx?maxx:sz,sz,ptr);
+
+			//if(getcury(w)==i)wclrtoeol(w);
+			//this was the case when there was nothing on the row or xtext was big and nothing to print
+			//was moved inside tab_grow
+		}else{
+			x_right[i]=false;
+			wclrtoeol(w);
+			//<>
+		}
 		i++;
 	}while(i<maxy);
 }
