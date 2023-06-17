@@ -2328,11 +2328,12 @@ static void proced(char*comline){
 		int cy=0;int cx=0;
 		int r=getmaxy(stdscr)-1;
 		int old_r=r-1;//set -1 because at first compare is erasing new_visual
+		int lrsize=1;//left right space
 		do{
 			void*a=realloc(x_right,(size_t)r);
 			if(a==nullptr)break;
 			x_right=(bool*)a;
-			int c=getmaxx(stdscr);
+			int c=getmaxx(stdscr)-(2*lrsize);
 			tabs_rsz=1+(c/tab_sz);
 			if((c%tab_sz)!=0)tabs_rsz++;
 			void*b=realloc(tabs,sizeof(int)*(size_t)(r*tabs_rsz));
@@ -2347,7 +2348,7 @@ static void proced(char*comline){
 				write_title();//this is also the first write
 			}
 
-			WINDOW*w=newwin(r-topspace,c,topspace,0);
+			WINDOW*w=newwin(r-topspace,c,topspace,lrsize);
 			if(w!=nullptr){
 				keypad(w,true);
 				refreshpage(w);
