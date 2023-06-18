@@ -214,16 +214,11 @@ static int _re;static int _ce;
 static int topspace=1;
 #define view_margin 8
 #define known_stdin 0
+static WINDOW*leftcontent;
+static WINDOW*rightcontent;
 
 bool no_char(char z){return z<32||z>=127;}
-static void tab_grow(WINDOW*w,int r,char*a,size_t sz,size_t all_sz,int*ptr){
-	//if(xtext>0)if(all_sz>0)//there is text at left
-
-	x_right[r]=xtext<sz;
-	if(x_right[r]==false){//the text is left of xtext, or is not
-		wclrtoeol(w);//clear here is all, another clear is below
-		return;
-	}
+static size_t tab_grow(WINDOW*w,char*a,size_t sz,int*ptr){
 	int c=0;int cr=0;
 	int max=getmaxx(w);
 	size_t i=xtext;size_t j=i;
@@ -256,8 +251,7 @@ static void tab_grow(WINDOW*w,int r,char*a,size_t sz,size_t all_sz,int*ptr){
 		}
 		if(c<max)wclrtoeol(w);//blank space until maxx
 	}
-	//if(i<all_sz){//this is not related to previous comparison
-	//there is text at right
+	return i;
 }
 void refreshrowsbot(WINDOW*w,int i,int maxy){
 	size_t maxx=xtext+(size_t)getmaxx(w);
@@ -265,9 +259,19 @@ void refreshrowsbot(WINDOW*w,int i,int maxy){
 		size_t j=ytext+(size_t)i;
 		int*ptr=&tabs[tabs_rsz*i];ptr[0]=0;
 		wmove(w,i,0);
+		char at_left=' ';char at_right=' ';
 		if(j<rows_tot){
 			size_t sz=rows[j].sz;
-			tab_grow(w,i,rows[j].data,sz>maxx?maxx:sz,sz,ptr);
+			if(xtext>0)if(sz>0)at_left='<';//there is text at left
+
+			size_t maxsz=sz>maxx?maxx:sz;
+			x_right[i]=xtext<maxsz;
+			if(x_right[i]==false)//the text is left of xtext, or is not
+				wclrtoeol(w);//clear here is all, another clear is in tab_grow
+			else{
+				size_t x=tab_grow(w,rows[j].data,maxsz,ptr);
+				if(x<sz)at_right='>';//there is text at right
+			}
 
 			//if(getcury(w)==i)wclrtoeol(w);
 			//this was the case when there was nothing on the row or xtext was big and nothing to print
@@ -275,10 +279,13 @@ void refreshrowsbot(WINDOW*w,int i,int maxy){
 		}else{
 			x_right[i]=false;
 			wclrtoeol(w);
-			//<>
 		}
+		mvwaddch(leftcontent,i,0,at_left);
+		mvwaddch(rightcontent,i,0,at_right);
 		i++;
 	}while(i<maxy);
+	wnoutrefresh(leftcontent);
+	wnoutrefresh(rightcontent);
 }
 static void bmove(WINDOW*w,int r,int c,bool back){
 	wmove(w,r,c);
@@ -2349,7 +2356,8 @@ static void proced(char*comline){
 			void*a=realloc(x_right,(size_t)r);
 			if(a==nullptr)break;
 			x_right=(bool*)a;
-			int c=getmaxx(stdscr)-(2*lrsize);
+			int maxx=getmaxx(stdscr);
+			int c=maxx-(2*lrsize);
 			tabs_rsz=1+(c/tab_sz);
 			if((c%tab_sz)!=0)tabs_rsz++;
 			void*b=realloc(tabs,sizeof(int)*(size_t)(r*tabs_rsz));
@@ -2365,10 +2373,11 @@ static void proced(char*comline){
 			}
 
 			WINDOW*w=newwin(r-topspace,c,topspace,lrsize);
+			leftcontent=newwin(r-topspace,1,topspace,0);
+			rightcontent=newwin(r-topspace,1,topspace,maxx-1);
 			if(w!=nullptr){
 				keypad(w,true);
-				refreshpage(w);
-				wmove(w,cy,cx);
+
 				printhelp();
 				if(r<=old_r)clrtoeol();//resize to up,is over text
 				//or =, clear bar,visual and saves
@@ -2378,6 +2387,10 @@ static void proced(char*comline){
 					else mod_visual(modif_visual);
 				}
 				else wnoutrefresh(stdscr);
+
+				refreshpage(w);//this must be after refresh stdscr, else first > at rightcontent will not show
+				wmove(w,cy,cx);
+
 				position_reset();
 				position(cy,cx);
 				loops=loopin(w);
@@ -2391,7 +2404,7 @@ static void proced(char*comline){
 					cx=getcurx(w);
 					//c=getmaxx(w1);never if(cx>=c)
 				}
-				delwin(w);
+				delwin(w);delwin(leftcontent);delwin(rightcontent);
 			}else break;
 		}while(loops/*true*/);
 		if(x_right!=nullptr){

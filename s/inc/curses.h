@@ -22,6 +22,7 @@ int getmaxy(const WINDOW*);
 int addch(const chtype);
 int waddch(WINDOW*,const chtype);
 int mvaddch(int,int,const chtype);
+int mvwaddch(WINDOW*,int,int,const chtype);
 int addstr(const char*);
 const char*keyname(int);
 int wnoutrefresh(WINDOW*);

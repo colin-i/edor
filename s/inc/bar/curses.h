@@ -5,7 +5,6 @@
 extern "C"{
 #endif
 
-int mvwaddch(WINDOW*,int,int,const chtype);
 int addchnstr(const chtype *chstr, int n);
 int addnstr(const char*,int);
 int mvaddstr(int,int,const char*);
