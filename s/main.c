@@ -1684,12 +1684,22 @@ static void type(int cr,WINDOW*w){
 				}while(cl>=max);
 				refreshpage(w);
 			}else{
-				wmove(w,rw,colmn);
+				wmove(w,rw,colmn);//if cursor was adjusted and page was refreshed
 				int n=max-cl;
-				winnstr(w,mapsel,n);
+				int rightcl=cl+winnstr(w,mapsel,n)+s;
 				int*t=&tabs[tabs_rsz*rw];
 				int a=t[0];
-				if(a!=0)if(t[a]+s>=max){t[0]--;a--;}
+				if(a!=0){
+					int lasttabpos=t[a]+s;
+					if(lasttabpos>=max){
+						t[0]--;a--;
+						//tab fade at right
+					}else if(rightcl>max){
+						if((lasttabpos+tab_sz)!=rightcl){//last tab is still on the page
+							//text fade at right
+						}
+					}
+				}else if(rightcl>max){}//text fade at right
 				int i=1;
 				for(;i<=a;i++){
 					if(colmn<=t[i])break;
@@ -2355,17 +2365,17 @@ static void proced(char*comline){
 		do{
 			void*a=realloc(x_right,(size_t)r);
 			if(a==nullptr)break;
-			x_right=(bool*)a;
+			x_right=(bool*)a;//is text,[xtext+nothing
 			int maxx=getmaxx(stdscr);
 			int c=maxx-(2*lrsize);
 			tabs_rsz=1+(c/tab_sz);
 			if((c%tab_sz)!=0)tabs_rsz++;
 			void*b=realloc(tabs,sizeof(int)*(size_t)(r*tabs_rsz));
 			if(b==nullptr)break;
-			tabs=(int*)b;
+			tabs=(int*)b;//is nroftabs,col0,col1,...; and int if 256 tabs. not short? moving like curses with the ints
 			a=realloc(mapsel,(size_t)c+1);
 			if(a==nullptr)break;
-			mapsel=(char*)a;
+			mapsel=(char*)a;//cols+null
 
 			if(textfile!=nullptr){
 				move(0,0);//no clear, only overwrite, can resize left to right then back right to left
