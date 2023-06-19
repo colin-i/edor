@@ -216,6 +216,7 @@ static int topspace=1;
 #define known_stdin 0
 static WINDOW*leftcontent;
 static WINDOW*rightcontent;
+static char at_right_mark='>';
 
 bool no_char(char z){return z<32||z>=127;}
 static size_t tab_grow(WINDOW*w,char*a,size_t sz,int*ptr){
@@ -270,7 +271,7 @@ void refreshrowsbot(WINDOW*w,int i,int maxy){
 				wclrtoeol(w);//clear here is all, another clear is in tab_grow
 			else{
 				size_t x=tab_grow(w,rows[j].data,maxsz,ptr);
-				if(x<sz)at_right='>';//there is text at right
+				if(x<sz)at_right=at_right_mark;//there is text at right
 			}
 
 			//if(getcury(w)==i)wclrtoeol(w);
@@ -287,6 +288,11 @@ void refreshrowsbot(WINDOW*w,int i,int maxy){
 	wnoutrefresh(leftcontent);
 	wnoutrefresh(rightcontent);
 }
+static void content_at_right(int i){
+	mvwaddch(rightcontent,i,0,at_right_mark);
+	wnoutrefresh(rightcontent);
+}
+
 static void bmove(WINDOW*w,int r,int c,bool back){
 	wmove(w,r,c);
 	char chr=(char)winch(w);
@@ -1686,20 +1692,12 @@ static void type(int cr,WINDOW*w){
 			}else{
 				wmove(w,rw,colmn);//if cursor was adjusted and page was refreshed
 				int n=max-cl;
-				int rightcl=cl+winnstr(w,mapsel,n)+s;
+				winnstr(w,mapsel,n);
 				int*t=&tabs[tabs_rsz*rw];
 				int a=t[0];
-				if(a!=0){
-					int lasttabpos=t[a]+s;
-					if(lasttabpos>=max){
-						t[0]--;a--;
-						//tab fade at right
-					}else if(rightcl>max){
-						if((lasttabpos+tab_sz)!=rightcl){//last tab is still on the page
-							//text fade at right
-						}
-					}
-				}else if(rightcl>max){}//text fade at right
+
+				if(a!=0)if((t[a]+s)>=max){t[0]--;a--;}
+
 				int i=1;
 				for(;i<=a;i++){
 					if(colmn<=t[i])break;
@@ -1718,6 +1716,12 @@ static void type(int cr,WINDOW*w){
 						t[j]=t[j]+1;j--;
 					}
 				}
+				char marker=(char)mvwinch(rightcontent,rw,0);
+				if(marker!=at_right_mark){
+					int newright=xc_to_c(r->sz-xtext-1,rw);
+					if(newright>=max)content_at_right(rw);
+				}
+
 				waddstr(w,mapsel);
 				x_right[rw]=true;
 			}

@@ -62,6 +62,7 @@ WINDOW*initscr(void);
 int endwin(void);
 int ungetch(int);
 chtype winch(WINDOW*);
+chtype mvwinch(WINDOW*,int,int);
 int winnstr(WINDOW*,char*,int);
 mmask_t mousemask(mmask_t,mmask_t*);
 int noecho(void);
