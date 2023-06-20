@@ -1666,7 +1666,7 @@ static void type(int cr,WINDOW*w){
 		position(rw,cl);
 	}
 	else if(cr==KEY_DC){if(delete_key(y,x,rw,&cl,w)/*true*/)return;}
-	else if(cr==KEY_SDC){if(del_key(y,x,rw,&cl,w,true)/*true*/)return;}
+	else if(cr==KEY_SDC){if(del_key(y,x,rw,&cl,w,true)/*true*/)return;}//shift+delete example: xtext>0 and at center, will move the page not the right text
 	else{
 		const char*knm=keyname(cr);
 		if(strcmp(knm,"kDC5")==0){multidel(is_textchar,r,x,y,cl,rw,w)}
