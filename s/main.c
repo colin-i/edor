@@ -1449,7 +1449,6 @@ static void delete_fast(WINDOW*w,int r,int c,char*data,size_t x,size_t sz){
 					j++;
 					c++;
 					if(c==max){
-						if(x+1==sz)no_content_at_right(r);
 						break;
 					}
 				}
