@@ -292,6 +292,10 @@ static void content_at_right(int i){
 	mvwaddch(rightcontent,i,0,at_right_mark);
 	wnoutrefresh(rightcontent);
 }
+static void no_content_at_right(int i){
+	mvwaddch(rightcontent,i,0,' ');
+	wnoutrefresh(rightcontent);
+}
 
 static void bmove(WINDOW*w,int r,int c,bool back){
 	wmove(w,r,c);
@@ -1443,12 +1447,19 @@ static void delete_fast(WINDOW*w,int r,int c,char*data,size_t x,size_t sz){
 				while(j<tab_sz){
 					mapsel[k+j]=' ';
 					j++;
-					c++;if(c==max)break;
+					c++;
+					if(c==max){
+						if(x+1==sz)no_content_at_right(r);
+						break;
+					}
 				}
 				k+=j;
 			}
 			else{mapsel[k]=no_char(ch)/*true*/?'?':ch;c++;k++;}
-			if(c==max)break;
+			if(c==max){
+				if(x+1==sz)no_content_at_right(r);
+				break;
+			}
 			x++;
 		}
 		waddnstr(w,mapsel,k);
