@@ -217,6 +217,8 @@ static int topspace=1;
 static WINDOW*leftcontent;
 static WINDOW*rightcontent;
 static char at_right_mark='>';
+static char at_left_mark='<';
+static char at_content_nomark=' ';
 
 bool no_char(char z){return z<32||z>=127;}
 static size_t tab_grow(WINDOW*w,char*a,size_t sz,int*ptr){
@@ -260,10 +262,10 @@ void refreshrowsbot(WINDOW*w,int i,int maxy){
 		size_t j=ytext+(size_t)i;
 		int*ptr=&tabs[tabs_rsz*i];ptr[0]=0;
 		wmove(w,i,0);
-		char at_left=' ';char at_right=' ';
+		char at_left=at_content_nomark;char at_right=at_content_nomark;
 		if(j<rows_tot){
 			size_t sz=rows[j].sz;
-			if(xtext>0)if(sz>0)at_left='<';//there is text at left
+			if(xtext>0)if(sz>0)at_left=at_left_mark;//there is text at left
 
 			size_t maxsz=sz>maxx?maxx:sz;
 			x_right[i]=xtext<maxsz;
@@ -293,7 +295,7 @@ static void content_at_right(int i){
 	wnoutrefresh(rightcontent);
 }
 static void no_content_at_right(int i){
-	mvwaddch(rightcontent,i,0,' ');
+	mvwaddch(rightcontent,i,0,at_content_nomark);
 	wnoutrefresh(rightcontent);
 }
 #define no_content_at_right_if(i) if((char)mvwinch(rightcontent,i,0)==at_right_mark)no_content_at_right(i);
@@ -1791,6 +1793,10 @@ static void indent(bool b,size_t ybsel,size_t*xbsel,size_t yesel,size_t*xesel,WI
 	if(b/*true*/){
 		if(xbsel!=nullptr){
 			xbsel[0]++;xesel[0]++;
+			if(xtext==0){//add at left markers for content
+				for(int i=rb;i<re;i++)mvwaddch(leftcontent,i,0,at_left_mark);
+				wnoutrefresh(leftcontent);
+			}
 			xtext++;
 			if(rb!=0)refreshrowsbot(w,0,rb);
 			if(re<max)refreshrowsbot(w,re,max);
@@ -1800,6 +1806,12 @@ static void indent(bool b,size_t ybsel,size_t*xbsel,size_t yesel,size_t*xesel,WI
 			if(xtext!=0){
 				xbsel[0]--;xesel[0]--;
 				xtext--;
+				if(xtext==0){
+					if(xtext==0){//add at left markers for content
+						for(int i=rb;i<re;i++)mvwaddch(leftcontent,i,0,at_content_nomark);
+						wnoutrefresh(leftcontent);
+					}
+				}
 				if(rb!=0)refreshrowsbot(w,0,rb);
 				if(re<max)refreshrowsbot(w,re,max);
 			}else{
