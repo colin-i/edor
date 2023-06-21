@@ -296,6 +296,7 @@ static void no_content_at_right(int i){
 	mvwaddch(rightcontent,i,0,' ');
 	wnoutrefresh(rightcontent);
 }
+#define no_content_at_right_if(i) if((char)mvwinch(rightcontent,i,0)==at_right_mark)no_content_at_right(i);
 
 static void bmove(WINDOW*w,int r,int c,bool back){
 	wmove(w,r,c);
@@ -1472,7 +1473,7 @@ static void rowfixdel(WINDOW*w,int r,int c,row*rw,size_t i){
 	int*t=&tabs[tabs_rsz*r];
 	int a=t[0]+1;
 	size_t mx=rw->sz;
-	while(c<wd&&i<mx){
+	while(i<mx){
 		char ch=d[i];
 		if(ch!='\t'){
 			c++;waddch(w,no_char(ch)/*true*/?'?':ch);
@@ -1481,6 +1482,10 @@ static void rowfixdel(WINDOW*w,int r,int c,row*rw,size_t i){
 			c+=tab_sz;wmove(w,r,c);
 		}
 		i++;
+		if(c==wd){
+			if(i<mx)content_at_right(r);
+			break;
+		}
 	}
 	x_right[r]=mx!=0;
 }
@@ -1608,7 +1613,7 @@ static bool enter(size_t y,size_t x,int*r,int*c,WINDOW*w){
 	if(v==nullptr)return true;
 	if(undo_add(y,x,y+1,tb)==false){
 		row rw;
-		memset(v,'\t',tb);
+		memset(v,'\t',tb);//tb can be 0
 		memcpy(v+tb,b+x,s);
 		rows[y].sz-=s;
 		rw.data=v;rw.sz=sze;rw.spc=spc;
@@ -1629,8 +1634,11 @@ static bool enter(size_t y,size_t x,int*r,int*c,WINDOW*w){
 				}
 				t[0]-=z-p;
 				c[0]=(int)(tb-xtext)*tab_sz;
+
 				wclrtoeol(w);
+				no_content_at_right_if(row)
 				x_right[row]=xtext<rows[y].sz;
+
 				refreshrows(w,row+1);
 				return false;
 			}
@@ -1726,13 +1734,13 @@ static void type(int cr,WINDOW*w){
 						t[j]=t[j]+1;j--;
 					}
 				}
+
+				waddstr(w,mapsel);
 				char marker=(char)mvwinch(rightcontent,rw,0);
 				if(marker!=at_right_mark){
 					int newright=xc_to_c(r->sz-xtext-1,rw);
 					if(newright>=max)content_at_right(rw);
 				}
-
-				waddstr(w,mapsel);
 				x_right[rw]=true;
 			}
 			position(rw,cl);
