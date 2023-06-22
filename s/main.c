@@ -172,10 +172,11 @@ static char prefs_file[max_path_0]={'\0'};//only the first byte is set
 // skip_unrestoredfilecheck_flag
 #define hel2 " [filepath [line_termination: rn/r/n]]\
 \nINPUT\
-\nhelp: q(uit),up/down,mouse/touch v.scroll\
-\n[Ctrl/Alt/Shift +]arrows/home/end/del,page up,page down,backspace,enter\
-\np.s.: Ctrl+ left/right/del breaks at white-spaces and (),[]{}\
-\nmouse/touch click and v.scroll\
+\nthis help: q(uit),up/down,mouse/touch V.scroll\
+\nMovement:\
+\n    [Ctrl/Alt/Shift +]arrows/home/end/del,page up,page down,backspace,enter\
+\n    p.s.: Ctrl+ left/right/del breaks at white-spaces and (),[]{}\
+\n    mouse/touch Click and V.scroll\
 \nCtrl+v = visual mode; Alt+v = visual line mode\
 \n    c = copy\
 \n    d = delete\
@@ -200,8 +201,8 @@ static char prefs_file[max_path_0]={'\0'};//only the first byte is set
 \nCtrl+e = disable/enable internal mouse/touch\
 \nCtrl+n = disable/enable indentation\
 \nCtrl+t = enable/disable insensitive search\
-\nCtrl+w = text wrapping\
-\nCtrl+q = quit"//33
+\nCtrl+w = text wrapping (movement. another key to return)\
+\nCtrl+q = quit"//34
 static bool visual_bool=false;
 static char*cutbuf=nullptr;
 static size_t cutbuf_sz=0;
