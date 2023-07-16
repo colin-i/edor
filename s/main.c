@@ -2541,12 +2541,6 @@ static void action(int argc,char**argv,WINDOW*w1){
 			keypad(w1,true);
 			noecho();
 			nonl();//no translation,faster
-
-			//if set 1press_and_4,5 will disable right press (for copy menu) anyway
-			//on android longpress to select and copy is a gesture and is different from mouse events
-			//the only difference with ALL_..EVENTS is that we want to speed up and process all events here (if there is a curses implementation like that)
-			stored_mouse_mask=mousemask(ALL_MOUSE_EVENTS,nullptr);//for error, export TERM=vt100
-
 			proced(argv[0]);
 			delwin(pw);
 		}
@@ -2572,6 +2566,13 @@ int main(int argc,char**argv){
 	#endif
 	if(argc>3){puts("Too many arguments.");return EXIT_FAILURE;}
 	WINDOW*w1=initscr();
+
+	//if set 1press_and_4,5 will disable right press (for copy menu) anyway
+	//on android longpress to select and copy is a gesture and is different from mouse events
+	//the only difference with ALL_..EVENTS is that we want to speed up and process all events here (if there is a curses implementation like that)
+	//this was default for android, but nowadays on desktop it prints an 'L' that will go to getch, it is annoying
+	//stored_mouse_mask=mousemask(ALL_MOUSE_EVENTS,nullptr);//for error, export TERM=vt100
+
 	use_default_colors();//assume_default_colors(-1,-1);//it's ok without this for color pair 0 (when attrset(0))
 	if(w1!=nullptr){
 		raw();//stty,cooked;relevant for getchar at me
