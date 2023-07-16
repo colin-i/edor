@@ -160,7 +160,7 @@ static char restorefile_buf2[max_path_0];
 static char*editingfile=nullptr;
 static char editingfile_buf[max_path_0];
 static char editingfile_buf2[max_path_0];
-static mmask_t stored_mouse_mask;
+static mmask_t stored_mouse_mask=0;
 static bool indent_flag=true;
 #define mask_size 1
 #define mask_mouse 1
