@@ -1,3 +1,9 @@
+edor (1-x33) focal; urgency=medium
+
+  * fix focus
+
+ -- bc <bc@bc-HP-Pavilion-x360-Convertible>  Mon, 17 Jul 2023 15:26:48 +0300
+
 edor (1-x32) focal; urgency=medium
 
   * all mouse events is not well implemented everywhere
