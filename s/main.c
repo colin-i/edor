@@ -198,7 +198,7 @@ static char prefs_file[max_path_0]={'\0'};//only the first byte is set
 \n    other key to return\
 \nCtrl+u = undo; Alt+u = undo mode: left=undo,right=redo,other key to return\
 \nCtrl+r = redo\
-\nCtrl+e = disable/enable internal mouse/touch\
+\nCtrl+e = enable/disable internal mouse/touch\
 \nCtrl+n = disable/enable indentation\
 \nCtrl+t = enable/disable insensitive search\
 \nCtrl+w = text wrapping (movement. another key to return)\
@@ -2114,6 +2114,10 @@ static bool loopin(WINDOW*w){
 				setprefs(mask_insensitive,insensitive);
 			}
 			else if(strcmp(s,"^W")==0){if(text_wrap(w)/*true*/)return true;}
+
+			//i saw these only when mousemask is ALL_MOUSE_EVENTS : focus in, focus out
+			else if(strcmp(s,"kxIN")==0||strcmp(s,"kxOUT")==0){}
+
 			else type(c,w);
 			//continue;
 		}
@@ -2313,7 +2317,7 @@ static void getprefs(){
 	int f=open(prefs_file,O_RDONLY);
 	if(f!=-1){
 		if(read(f,&mask,mask_size)==mask_size){
-			if((mask&mask_mouse)==0)stored_mouse_mask=mousemask(0,nullptr);
+			if((mask&mask_mouse)!=0)stored_mouse_mask=mousemask(ALL_MOUSE_EVENTS,nullptr);
 			if((mask&mask_indent)==0)indent_flag=false;
 			if((mask&mask_insensitive)!=0)insensitive=true;
 		}
@@ -2570,7 +2574,7 @@ int main(int argc,char**argv){
 	//if set 1press_and_4,5 will disable right press (for copy menu) anyway
 	//on android longpress to select and copy is a gesture and is different from mouse events
 	//the only difference with ALL_..EVENTS is that we want to speed up and process all events here (if there is a curses implementation like that)
-	//this was default for android, but nowadays on desktop it prints an 'L' that will go to getch, it is annoying
+	//this was default for android, but nowadays on desktop is not a default
 	//stored_mouse_mask=mousemask(ALL_MOUSE_EVENTS,nullptr);//for error, export TERM=vt100
 
 	use_default_colors();//assume_default_colors(-1,-1);//it's ok without this for color pair 0 (when attrset(0))
