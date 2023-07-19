@@ -2235,11 +2235,10 @@ static bool valid_ln_term(char*input_term,bool*not_forced){
 	return false;
 }
 //same as normalize
-static int startfile(int argc,char**argv,size_t*text_sz,bool no_file,bool no_input){
+static int startfile(char*textfile,int argc,char**argv,size_t*text_sz,bool no_file,bool no_input){
 	bool not_forced=true;
 	if(no_file==false){
-		char*f=argv[1];
-		if(grab_file(f,text_sz)/*true*/)return 0;
+		if(grab_file(textfile,text_sz)/*true*/)return 0;
 		if(argc==3){
 			if(valid_ln_term(argv[2],&not_forced)/*true*/)return 0;
 		}
@@ -2333,7 +2332,7 @@ static void getprefs(){
 		#pragma GCC diagnostic pop
 	}
 }
-static bool setfilebuf(char*s,char*cutbuf_file){
+static bool help_cutbuffile_preffile(char*s,char*cutbuf_file){
 #if ((!defined(USE_FS)) && (!defined(USE__FS)))
 	set_path_separator(s);
 #endif
@@ -2392,91 +2391,105 @@ static void color(){
 	}
 }
 
-static void proced(char*comline){
-	char cutbuf_file[max_path_0];
-	cutbuf_file[0]='\0';
-	if(setfilebuf(comline,cutbuf_file)/*true*/){
-		bool loops=false;
-		int cy=0;int cx=0;
-		int r=getmaxy(stdscr)-1;
-		int old_r=r-1;//set -1 because at first compare is erasing new_visual
-		int lrsize=1;//left right space
-		do{
-			void*a=realloc(x_right,(size_t)r);
-			if(a==nullptr)break;
-			x_right=(bool*)a;//is text,[xtext+nothing
-			int maxx=getmaxx(stdscr);
-			int c=maxx-(2*lrsize);
-			tabs_rsz=1+(c/tab_sz);
-			if((c%tab_sz)!=0)tabs_rsz++;
-			void*b=realloc(tabs,sizeof(int)*(size_t)(r*tabs_rsz));
-			if(b==nullptr)break;
-			tabs=(int*)b;//is nroftabs,col0,col1,...; and int if 256 tabs. not short? moving like curses with the ints
-			a=realloc(mapsel,(size_t)c+1);
-			if(a==nullptr)break;
-			mapsel=(char*)a;//cols+null
+static void proced(char*cutbuf_file,WINDOW*w1){
+	bool loops=false;
+	int cy=0;int cx=0;
+	int r=getmaxy(stdscr)-1;
+	int old_r=r-1;//set -1 because at first compare is erasing new_visual
+	int lrsize=1;//left right space
+	do{
+		void*a=realloc(x_right,(size_t)r);
+		if(a==nullptr)break;
+		x_right=(bool*)a;//is text,[xtext+nothing
+		int maxx=getmaxx(stdscr);
+		int c=maxx-(2*lrsize);
+		tabs_rsz=1+(c/tab_sz);
+		if((c%tab_sz)!=0)tabs_rsz++;
+		void*b=realloc(tabs,sizeof(int)*(size_t)(r*tabs_rsz));
+		if(b==nullptr)break;
+		tabs=(int*)b;//is nroftabs,col0,col1,...; and int if 256 tabs. not short? moving like curses with the ints
+		a=realloc(mapsel,(size_t)c+1);
+		if(a==nullptr)break;
+		mapsel=(char*)a;//cols+null
 
-			if(textfile!=nullptr){
-				move(0,0);//no clear, only overwrite, can resize left to right then back right to left
-				write_title();//this is also the first write
+		if(textfile!=nullptr){
+			move(0,0);//no clear, only overwrite, can resize left to right then back right to left
+			write_title();//this is also the first write
+		}
+
+		WINDOW*w=newwin(r-topspace,c,topspace,lrsize);
+		leftcontent=newwin(r-topspace,1,topspace,0);
+		rightcontent=newwin(r-topspace,1,topspace,maxx-1);
+		if(w!=nullptr){
+			keypad(w,true);
+
+			printhelp();
+			if(r<=old_r)clrtoeol();//resize to up,is over text
+			//or =, clear bar,visual and saves
+			old_r=r;
+			if(mod_flag==false){
+				if(hardtime==0)restore_visual();
+				else mod_visual(modif_visual);
 			}
+			else wnoutrefresh(stdscr);
 
-			WINDOW*w=newwin(r-topspace,c,topspace,lrsize);
-			leftcontent=newwin(r-topspace,1,topspace,0);
-			rightcontent=newwin(r-topspace,1,topspace,maxx-1);
-			if(w!=nullptr){
-				keypad(w,true);
+			refreshpage(w);//this must be after refresh stdscr, else first > at rightcontent will not show
+			wmove(w,cy,cx);
 
-				printhelp();
-				if(r<=old_r)clrtoeol();//resize to up,is over text
-				//or =, clear bar,visual and saves
-				old_r=r;
-				if(mod_flag==false){
-					if(hardtime==0)restore_visual();
-					else mod_visual(modif_visual);
+			position_reset();
+			position(cy,cx);
+			loops=loopin(w);
+			if(loops/*true*/){//is already resized and the cursor fits in the screen, not in the new size
+				cy=getcury(w);
+				r=getmaxy(stdscr)-1;
+				if(cy==r){
+					cy=r-1;
+					if(ytext+1<rows_tot)ytext++;
 				}
-				else wnoutrefresh(stdscr);
-
-				refreshpage(w);//this must be after refresh stdscr, else first > at rightcontent will not show
-				wmove(w,cy,cx);
-
-				position_reset();
-				position(cy,cx);
-				loops=loopin(w);
-				if(loops/*true*/){//is already resized and the cursor fits in the screen, not in the new size
-					cy=getcury(w);
-					r=getmaxy(stdscr)-1;
-					if(cy==r){
-						cy=r-1;
-						if(ytext+1<rows_tot)ytext++;
-					}
-					cx=getcurx(w);
-					//c=getmaxx(w1);never if(cx>=c)
-				}
-				delwin(w);delwin(leftcontent);delwin(rightcontent);
-			}else break;
-		}while(loops/*true*/);
-		if(x_right!=nullptr){
-			free(x_right);
-			if(tabs!=nullptr){
-				free(tabs);
-				if(mapsel!=nullptr){
-					free(mapsel);
-					writefilebuf(cutbuf_file);
-					undo_free();
-				}
+				cx=getcurx(w);
+				//c=getmaxx(w1);never if(cx>=c)
+			}
+			delwin(w);delwin(leftcontent);delwin(rightcontent);
+		}else break;
+	}while(loops/*true*/);
+	if(x_right!=nullptr){
+		free(x_right);
+		if(tabs!=nullptr){
+			free(tabs);
+			if(mapsel!=nullptr){
+				free(mapsel);//from here it is the interaction
+				writefilebuf(cutbuf_file);//only here can be modified than the initial state
+				undo_free();//when using undo
 			}
 		}
-		free(helptext);
 	}
-	if(cutbuf!=nullptr)free(cutbuf);
 }
-static void action(int argc,char**argv,WINDOW*w1){
+static bool remove_config(char*pattern){
+	if(strcmp(pattern,"--remove-config")==0){
+		return true;
+	}
+	return false;
+}
+static void action_go(int argc,char**argv,char*cutbuf_file,WINDOW*w1){
 	size_t text_sz;
 	bool no_file=argc==1;
 	if(no_file==false){
-		no_file=new_visual(argv[1])/*true*/;
-		if(restorefile_path(argv[1])/*true*/){
+
+		char*src=argv[1];
+		if(remove_config(src)/*true*/)return;
+		size_t f_slen=strlen(src);
+		textfile=(char*)malloc(f_slen+1);
+		if(textfile==nullptr)return;
+		char*dest=textfile;char*end=src+f_slen;
+		while(src<end){
+			if(*src=='\\'){src++;
+				if(src==end)break;
+			}
+			*dest=*src;dest++;src++;
+		}*dest='\0';
+
+		no_file=new_visual(textfile)/*true*/;
+		if(restorefile_path(textfile)/*true*/){
 			if(access(restorefile_buf,F_OK)==0){
 				//if(argc==2){
 				puts("There is an unrestored file, (c)ontinue?\r");
@@ -2485,7 +2498,7 @@ static void action(int argc,char**argv,WINDOW*w1){
 				//}
 			}
 		}
-		if(editingfile_path(argv[1])/*true*/){
+		if(editingfile_path(textfile)/*true*/){
 			if(access(editingfile_buf,F_OK)==0){
 				puts("The file is already opened in another instance, (c)ontinue?\r");
 				int c=getchar();
@@ -2514,7 +2527,7 @@ static void action(int argc,char**argv,WINDOW*w1){
 			}
 		}
 	}else{
-		ok=startfile(argc,argv,&text_sz,no_file,no_input);
+		ok=startfile(textfile,argc,argv,&text_sz,no_file,no_input);
 		if(ok!=0){
 			if(ok<1){
 				char txt[]={'N','o','r','m','a','l','i','z','e',' ','l','i','n','e',' ','e','n','d','i','n','g','s',' ','t','o',' ','\\','r',' ',' ','?',' ','n','=','n','o',',',' ','d','e','f','a','u','l','t','=','y','e','s','\r','\0'};
@@ -2529,9 +2542,7 @@ static void action(int argc,char**argv,WINDOW*w1){
 				rows=(row*)malloc(rows_tot*sizeof(row));
 				if(rows!=nullptr){
 					rows_init(text_sz);
-
-					textfile=argv[1];
-
+					//textfile=argv[1];
 					text_init_e=text_init_b+text_sz+1;
 				}
 				else ok=0;
@@ -2542,10 +2553,10 @@ static void action(int argc,char**argv,WINDOW*w1){
 		color();
 		WINDOW*pw=position_init();
 		if(pw!=nullptr){
-			keypad(w1,true);
+			keypad(w1,true);//this here and not at start: Normalize... and other text will not be after clearscreen
 			noecho();
 			nonl();//no translation,faster
-			proced(argv[0]);
+			proced(cutbuf_file,w1);
 			delwin(pw);
 		}
 	}
@@ -2558,6 +2569,16 @@ static void action(int argc,char**argv,WINDOW*w1){
 		free(text_init_b);
 	}
 	if(editingfile!=nullptr)unlink(editingfile);//this can be before and after text_init_b
+	if(textfile!=nullptr)free(textfile);
+}
+static void action(int argc,char**argv,WINDOW*w1){
+	char cutbuf_file[max_path_0];
+	cutbuf_file[0]='\0';
+	if(help_cutbuffile_preffile(argv[0],cutbuf_file)/*true*/){//this is here, is convenient for remove_config
+		action_go(argc,argv,cutbuf_file,w1);
+		free(helptext);
+		if(cutbuf!=nullptr)free(cutbuf);//this is init at getfilebuf or if not there at writemembuf
+	}
 }
 int main(int argc,char**argv){
 	#ifdef ARM7L
@@ -2568,7 +2589,9 @@ int main(int argc,char**argv){
 	sigaction(SIGSEGV, &signalhandlerDescriptor, nullptr);
 	//baz(argc);
 	#endif
+
 	if(argc>3){puts("Too many arguments.");return EXIT_FAILURE;}
+
 	WINDOW*w1=initscr();
 
 	//if set 1press_and_4,5 will disable right press (for copy menu) anyway
