@@ -2235,10 +2235,10 @@ static bool valid_ln_term(char*input_term,bool*not_forced){
 	return false;
 }
 //same as normalize
-static int startfile(char*textfile,int argc,char**argv,size_t*text_sz,bool no_file,bool no_input){
+static int startfile(char*argfile,int argc,char**argv,size_t*text_sz,bool no_file,bool no_input){
 	bool not_forced=true;
 	if(no_file==false){
-		if(grab_file(textfile,text_sz)/*true*/)return 0;
+		if(grab_file(argfile,text_sz)/*true*/)return 0;
 		if(argc==3){
 			if(valid_ln_term(argv[2],&not_forced)/*true*/)return 0;
 		}
@@ -2472,15 +2472,16 @@ static bool remove_config(char*pattern){
 }
 static void action_go(int argc,char**argv,char*cutbuf_file,WINDOW*w1){
 	size_t text_sz;
+	char*argfile;
 	bool no_file=argc==1;
 	if(no_file==false){
 
 		char*src=argv[1];
 		if(remove_config(src)/*true*/)return;
 		size_t f_slen=strlen(src);
-		textfile=(char*)malloc(f_slen+1);
-		if(textfile==nullptr)return;
-		char*dest=textfile;char*end=src+f_slen;
+		argfile=(char*)malloc(f_slen+1);//textfile= is not ok, can be changed at =input. is also set at new visual, and below
+		if(argfile==nullptr)return;
+		char*dest=argfile;char*end=src+f_slen;
 		while(src<end){
 			if(*src=='\\'){src++;
 				if(src==end)break;
@@ -2488,8 +2489,8 @@ static void action_go(int argc,char**argv,char*cutbuf_file,WINDOW*w1){
 			*dest=*src;dest++;src++;
 		}*dest='\0';
 
-		no_file=new_visual(textfile)/*true*/;
-		if(restorefile_path(textfile)/*true*/){
+		no_file=new_visual(argfile)/*true*/;
+		if(restorefile_path(argfile)/*true*/){
 			if(access(restorefile_buf,F_OK)==0){
 				//if(argc==2){
 				puts("There is an unrestored file, (c)ontinue?\r");
@@ -2498,7 +2499,7 @@ static void action_go(int argc,char**argv,char*cutbuf_file,WINDOW*w1){
 				//}
 			}
 		}
-		if(editingfile_path(textfile)/*true*/){
+		if(editingfile_path(argfile)/*true*/){
 			if(access(editingfile_buf,F_OK)==0){
 				puts("The file is already opened in another instance, (c)ontinue?\r");
 				int c=getchar();
@@ -2527,7 +2528,7 @@ static void action_go(int argc,char**argv,char*cutbuf_file,WINDOW*w1){
 			}
 		}
 	}else{
-		ok=startfile(textfile,argc,argv,&text_sz,no_file,no_input);
+		ok=startfile(argfile,argc,argv,&text_sz,no_file,no_input);
 		if(ok!=0){
 			if(ok<1){
 				char txt[]={'N','o','r','m','a','l','i','z','e',' ','l','i','n','e',' ','e','n','d','i','n','g','s',' ','t','o',' ','\\','r',' ',' ','?',' ','n','=','n','o',',',' ','d','e','f','a','u','l','t','=','y','e','s','\r','\0'};
@@ -2542,7 +2543,7 @@ static void action_go(int argc,char**argv,char*cutbuf_file,WINDOW*w1){
 				rows=(row*)malloc(rows_tot*sizeof(row));
 				if(rows!=nullptr){
 					rows_init(text_sz);
-					//textfile=argv[1];
+					textfile=argfile;
 					text_init_e=text_init_b+text_sz+1;
 				}
 				else ok=0;
@@ -2569,7 +2570,7 @@ static void action_go(int argc,char**argv,char*cutbuf_file,WINDOW*w1){
 		free(text_init_b);
 	}
 	if(editingfile!=nullptr)unlink(editingfile);//this can be before and after text_init_b
-	if(textfile!=nullptr)free(textfile);
+	if(argfile!=nullptr)free(argfile);
 }
 static void action(int argc,char**argv,WINDOW*w1){
 	char cutbuf_file[max_path_0];
