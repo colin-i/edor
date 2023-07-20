@@ -1,3 +1,6 @@
+
+#make -f Makefile.old
+
 prefix = /usr
 
 DEFS =  -DUSE_FS=1 -DPLATFORM64=1\
