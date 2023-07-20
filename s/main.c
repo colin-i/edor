@@ -2464,21 +2464,61 @@ static void proced(char*cutbuf_file,WINDOW*w1){
 		}
 	}
 }
+static void remove_config_print(char*s){
+	printf("\n\r%s removed",s);//\n\r?same as below
+}
 static bool remove_config(char*pattern,char*cutbuf_file){
 	if(strcmp(pattern,"--remove-config")==0){
-		if(cutbuf_file[0]!='\0'){
-		}
+		int c=-1;int p=-1;int pf=-1;
+		char prefs_folder[max_path_0];
+		if(cutbuf_file[0]!='\0')c=access(cutbuf_file,F_OK);
 		if(prefs_file[0]!='\0'){
 			char*end=prefs_file+strlen(prefs_file);
 			do{end--;}while(*end!=path_separator);
+			*end='\0';sprintf(prefs_folder,"%s",prefs_file);*end=path_separator;
+			p=access(prefs_folder,F_OK);//is also working for folders
+			if(p==0)pf=access(prefs_file,F_OK);
+		}
+		if(c==0||p==0){
+			puts("Would remove:");//puts writes and a trailing new line, but without \r will indent, with \n will also indent
+			if(c==0){putchar('\r');puts(cutbuf_file);}
+			if(p==0){
+				if(pf==0){putchar('\r');puts(prefs_file);}
+				putchar('\r');puts(prefs_folder);
+			}
+			puts("\ryes ?");
+			putchar('\r');int e=getchar();
+			putchar(e);
+			if(e=='y'){
+				e=getchar();
+				putchar(e);
+				if(e=='e'){
+					e=getchar();
+					putchar(e);
+					if(e=='s'){
+						if(c==0)
+							if(unlink(cutbuf_file)==0)
+								remove_config_print(cutbuf_file);
+						if(p==0){
+							if(pf==0)if(unlink(prefs_file)==0)
+								remove_config_print(prefs_file);
+							if(rmdir(prefs_folder)==0)remove_config_print(prefs_folder);
+							else printf("\n\r%s ignored (maybe is not empty)",prefs_folder);
+						}
+						return true;
+					}
+				}
+			}
+			//after getchar, new line is expected, else \r there will do nothing
+			puts("\n\rexpecting \"yes\"");
 		}
 		return true;
 	}
 	return false;
 }
-static void action_go(int argc,char**argv,char*cutbuf_file,WINDOW*w1){
+static void action_go(int argc,char**argv,char*cutbuf_file){
 	size_t text_sz;
-	char*argfile;
+	char*argfile=nullptr;//example when launching with no args
 	bool no_file=argc==1;
 	if(no_file==false){
 
@@ -2557,14 +2597,28 @@ static void action_go(int argc,char**argv,char*cutbuf_file,WINDOW*w1){
 		}
 	}
 	if(ok!=0){
-		color();
-		WINDOW*pw=position_init();
-		if(pw!=nullptr){
-			keypad(w1,true);//this here and not at start: Normalize... and other text will not be after clearscreen
-			noecho();
-			nonl();//no translation,faster
-			proced(cutbuf_file,w1);
-			delwin(pw);
+		WINDOW*w1=initscr();
+
+		//if set 1press_and_4,5 will disable right press (for copy menu) anyway
+		//on android longpress to select and copy is a gesture and is different from mouse events
+		//the only difference with ALL_..EVENTS is that we want to speed up and process all events here (if there is a curses implementation like that)
+		//this was default for android, but nowadays on desktop is not a default
+		//stored_mouse_mask=mousemask(ALL_MOUSE_EVENTS,nullptr);//for error, export TERM=vt100
+
+		use_default_colors();//assume_default_colors(-1,-1);//it's ok without this for color pair 0 (when attrset(0))
+		if(w1!=nullptr){
+			raw();//stty,cooked; characters typed are immediately passed through to the user program. interrupt, quit, suspend, and flow control characters are all passed through uninterpreted, instead of generating a signal
+			color();
+			WINDOW*pw=position_init();
+			if(pw!=nullptr){
+				keypad(w1,true);//this here and not at start: Normalize... and other text will not be after clearscreen
+				noecho();
+				nonl();//no translation,faster
+				proced(cutbuf_file,w1);
+				delwin(pw);
+			}
+			endwin();
+			//if(text_file!=nullptr)puts(text_file);
 		}
 	}
 	if(text_init_b!=nullptr){
@@ -2578,11 +2632,11 @@ static void action_go(int argc,char**argv,char*cutbuf_file,WINDOW*w1){
 	if(editingfile!=nullptr)unlink(editingfile);//this can be before and after text_init_b
 	if(argfile!=nullptr)free(argfile);
 }
-static void action(int argc,char**argv,WINDOW*w1){
+static void action(int argc,char**argv){
 	char cutbuf_file[max_path_0];
 	cutbuf_file[0]='\0';
 	if(help_cutbuffile_preffile(argv[0],cutbuf_file)/*true*/){//this is here, is convenient for remove_config
-		action_go(argc,argv,cutbuf_file,w1);
+		action_go(argc,argv,cutbuf_file);
 		free(helptext);
 		if(cutbuf!=nullptr)free(cutbuf);//this is init at getfilebuf or if not there at writemembuf
 	}
@@ -2599,20 +2653,6 @@ int main(int argc,char**argv){
 
 	if(argc>3){puts("Too many arguments.");return EXIT_FAILURE;}
 
-	WINDOW*w1=initscr();
-
-	//if set 1press_and_4,5 will disable right press (for copy menu) anyway
-	//on android longpress to select and copy is a gesture and is different from mouse events
-	//the only difference with ALL_..EVENTS is that we want to speed up and process all events here (if there is a curses implementation like that)
-	//this was default for android, but nowadays on desktop is not a default
-	//stored_mouse_mask=mousemask(ALL_MOUSE_EVENTS,nullptr);//for error, export TERM=vt100
-
-	use_default_colors();//assume_default_colors(-1,-1);//it's ok without this for color pair 0 (when attrset(0))
-	if(w1!=nullptr){
-		raw();//stty,cooked;relevant for getchar at me
-		action(argc,argv,w1);
-		endwin();
-		//if(text_file!=nullptr)puts(text_file);
-	}
+	action(argc,argv);
 	return EXIT_SUCCESS;
 }

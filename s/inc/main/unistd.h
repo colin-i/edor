@@ -14,6 +14,7 @@ extern "C" {
 
 off_t lseek(int,off_t,int);
 ssize_t read(int,void*,size_t);
+int rmdir(const char *);
 int unlink(const char*);
 
 #ifdef __cplusplus
