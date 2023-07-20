@@ -20,7 +20,7 @@ yum install edor-*.*.rpm
 On linux distributions, <i>.AppImage</i> file from [releases](https://github.com/colin-i/edor/releases).
 
 ## From source
-Use autoconf automake libncurses-dev ; on armv7l(alias arm) cpu, libunwind-dev
+Use autoconf automake libncurses-dev ; on armv7l(alias armhf) cpu, libunwind-dev
 ```sh
 autoreconf -i
 ./configure
@@ -29,11 +29,8 @@ sudo make install
 ```
 Use *\-\-prefix=your_path* at *./configure* if needed (example: at Termux in Android).\
 *\-\-disable\-cpp* to set c rules.\
-Or, for some 64-bit platforms:
-```sh
-make -f Makefile.old
-```
-Uninstall command is *make uninstall*.
+Uninstall command is *make uninstall*.\
+To remove configuration launch ```edor --remove-config```.
 
 ## Donations
 The *donations* section is here

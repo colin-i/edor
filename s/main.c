@@ -2088,8 +2088,8 @@ static bool loopin(WINDOW*w){
 			}
 			else if(strcmp(s,"^E")==0){
 				bool b;char c;
-				if(stored_mouse_mask!=0){stored_mouse_mask=mousemask(0,nullptr);b=false;c='e';}
-				else{stored_mouse_mask=mousemask(ALL_MOUSE_EVENTS,nullptr);b=true;c='E';}
+				if(stored_mouse_mask==0){stored_mouse_mask=mousemask(ALL_MOUSE_EVENTS,nullptr);b=false;c='E';}
+				else{stored_mouse_mask=mousemask(0,nullptr);b=true;c='e';}
 				vis(c,w);
 				setprefs(mask_mouse,b);
 			}
@@ -2101,17 +2101,12 @@ static bool loopin(WINDOW*w){
 				setprefs(mask_indent,indent_flag);
 			}
 			else if(strcmp(s,"^T")==0){
-				char c;
-				if(insensitive/*true*/){
-					insensitive=false;
-					c='t';
-				}else{
-					insensitive=true;
-					c='T';
-				}
+				bool b;char c;
+				if(issensitive/*true*/){issensitive=false;c='T';}
+				else{issensitive=true;c='t';}
 				//doupdate();will change cursor
 				vis(c,w);
-				setprefs(mask_insensitive,insensitive);
+				setprefs(mask_insensitive,issensitive);
 			}
 			else if(strcmp(s,"^W")==0){if(text_wrap(w)/*true*/)return true;}
 
@@ -2316,16 +2311,16 @@ static void getprefs(){
 	int f=open(prefs_file,O_RDONLY);
 	if(f!=-1){
 		if(read(f,&mask,mask_size)==mask_size){
-			if((mask&mask_mouse)!=0)stored_mouse_mask=mousemask(ALL_MOUSE_EVENTS,nullptr);
+			if((mask&mask_mouse)==0)stored_mouse_mask=mousemask(ALL_MOUSE_EVENTS,nullptr);
 			if((mask&mask_indent)==0)indent_flag=false;
-			if((mask&mask_insensitive)!=0)insensitive=true;
+			if((mask&mask_insensitive)==0)issensitive=false;
 		}
 		close(f);
 		return;
 	}
 	f=open_new(prefs_file);
 	if(f!=-1){
-		mask=mask_mouse|mask_indent/*|mask_insensitive*/;
+		mask=mask_mouse|mask_indent|mask_insensitive;
 		#pragma GCC diagnostic push
 		#pragma GCC diagnostic ignored "-Wunused-result"
 		write(f,&mask,mask_size);
@@ -2364,7 +2359,6 @@ static bool help_cutbuffile_preffile(char*s,char*cutbuf_file){
 						//0 on success
 					}
 					sprintf(&prefs_file[dirsz],storeflname,path_separator,&s[i]);
-					getprefs();
 				}
 			}
 		}
@@ -2604,6 +2598,7 @@ static void action_go(int argc,char**argv,char*cutbuf_file){
 		//the only difference with ALL_..EVENTS is that we want to speed up and process all events here (if there is a curses implementation like that)
 		//this was default for android, but nowadays on desktop is not a default
 		//stored_mouse_mask=mousemask(ALL_MOUSE_EVENTS,nullptr);//for error, export TERM=vt100
+		if(prefs_file[0]!='\0')getprefs();
 
 		use_default_colors();//assume_default_colors(-1,-1);//it's ok without this for color pair 0 (when attrset(0))
 		if(w1!=nullptr){

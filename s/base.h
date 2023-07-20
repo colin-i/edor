@@ -70,7 +70,7 @@ extern char ln_term[3];
 extern size_t ln_term_sz;
 extern char*textfile;
 extern bool mod_flag;
-extern bool insensitive;
+extern bool issensitive;
 //main,bar,tw
 extern row*rows;
 extern size_t rows_tot;
