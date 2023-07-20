@@ -2464,8 +2464,14 @@ static void proced(char*cutbuf_file,WINDOW*w1){
 		}
 	}
 }
-static bool remove_config(char*pattern){
+static bool remove_config(char*pattern,char*cutbuf_file){
 	if(strcmp(pattern,"--remove-config")==0){
+		if(cutbuf_file[0]!='\0'){
+		}
+		if(prefs_file[0]!='\0'){
+			char*end=prefs_file+strlen(prefs_file);
+			do{end--;}while(*end!=path_separator);
+		}
 		return true;
 	}
 	return false;
@@ -2477,7 +2483,7 @@ static void action_go(int argc,char**argv,char*cutbuf_file,WINDOW*w1){
 	if(no_file==false){
 
 		char*src=argv[1];
-		if(remove_config(src)/*true*/)return;
+		if(remove_config(src,cutbuf_file)/*true*/)return;
 		size_t f_slen=strlen(src);
 		argfile=(char*)malloc(f_slen+1);//textfile= is not ok, can be changed at =input. is also set at new visual, and below
 		if(argfile==nullptr)return;
