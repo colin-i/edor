@@ -83,12 +83,14 @@ static size_t undos_spc=0;
 static size_t undos_save=0;
 static size_t undos_max=0;
 static int undo_v=0;
-//static bool new_f=false;
+static bool new_f=false;
 #define new_s "New Path"
 static int new_v=0;
 
-const char*bar_init(){
-	return b_inf_s;
+void bar_init(){
+	move(getmaxy(stdscr)-1,0);
+	printinverted(b_inf_s);
+	if(new_f/*true*/)texter_macro(new_s);
 }
 //command return
 static int wrt(int f){
@@ -1225,8 +1227,7 @@ bool new_visual(char*f){
 	if(access(f,F_OK)==-1){
 		textfile=f;
 
-		//new_f=true;
-		texter_macro(new_s);
+		new_f=true;
 		return true;
 	}
 	return false;

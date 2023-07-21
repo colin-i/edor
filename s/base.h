@@ -1,24 +1,25 @@
 
 //main
 //bar
+size_t c_to_xc(int,int);
+void cpymembuf(size_t,size_t,size_t,size_t,char*);
+void deleting(size_t,size_t,size_t,size_t);
+bool deleting_init(size_t,size_t,size_t,size_t);
+void editing_rebase();
+void mod_set_off();
+void mod_set_off_wrap();
+void mod_set_on();
 bool no_char(char);
+bool paste(size_t,size_t,size_t*,char*,size_t,size_t,bool);
+void printinverted(const char*s);
 void refreshrowsbot(WINDOW*,int,int);
 #define refreshrows(w,i) refreshrowsbot(w,i,getmaxy(w))
 #define refreshpage(w) refreshrows(w,0)
+void restore_rebase();
 bool row_alloc(row*,size_t,size_t,size_t);
 void row_set(row*,size_t,size_t,size_t,const char*);
-bool deleting_init(size_t,size_t,size_t,size_t);
-void deleting(size_t,size_t,size_t,size_t);
-void mod_set_on();
-void mod_set_off();
-void mod_set_off_wrap();
 size_t sizemembuf(size_t,size_t,size_t,size_t);
-void cpymembuf(size_t,size_t,size_t,size_t,char*);
-bool paste(size_t,size_t,size_t*,char*,size_t,size_t,bool);
-void editing_rebase();
-void restore_rebase();
 void vis(char,WINDOW*);
-size_t c_to_xc(int,int);
 //tw
 int movment(int,WINDOW*);
 int xc_to_c(size_t,int);
@@ -28,7 +29,7 @@ void fixed_yx(size_t*,size_t*,int,int);
 
 //bar
 //main
-const char*bar_init(void);
+void bar_init(void);
 int save(void);
 int saving_base(char*);
 int question(const char*);

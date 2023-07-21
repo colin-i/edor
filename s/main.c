@@ -380,7 +380,7 @@ static void vdNmove(WINDOW*w,int y,size_t n){
 	}
 }
 #define vd1move(w,y) vdNmove(w,y,1)
-static void printinverted(const char*s){
+void printinverted(const char*s){
 	attrset(COLOR_PAIR(1));
 	addstr(s);
 	//attr set here,cause,print"   "
@@ -501,10 +501,6 @@ static bool helpin(WINDOW*w){
 
 	refreshpage(w);
 	return false;
-}
-static void printhelp(){
-	move(getmaxy(stdscr)-1,0);
-	printinverted(bar_init());
 }
 static void slmove(WINDOW*w,int x,bool notabs){
 	int y=getcury(w);
@@ -2417,7 +2413,7 @@ static void proced(char*cutbuf_file,WINDOW*w1){
 		if(w!=nullptr){
 			keypad(w,true);
 
-			printhelp();
+			bar_init();
 			if(r<=old_r)clrtoeol();//resize to up,is over text
 			//or =, clear bar,visual and saves
 			old_r=r;
