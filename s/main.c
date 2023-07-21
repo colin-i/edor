@@ -2459,7 +2459,7 @@ static void proced(char*cutbuf_file,WINDOW*w1){
 	}
 }
 static void remove_config_print(char*s){
-	printf("\n\r%s removed",s);//\n\r?same as below
+	printf("%s removed\n",s);
 }
 static bool remove_config(char*pattern,char*cutbuf_file){
 	if(strcmp(pattern,"--remove-config")==0){
@@ -2474,22 +2474,20 @@ static bool remove_config(char*pattern,char*cutbuf_file){
 			if(p==0)pf=access(prefs_file,F_OK);
 		}
 		if(c==0||p==0){
-			puts("Would remove:");//puts writes and a trailing new line, but without \r will indent, with \n will also indent
-			if(c==0){putchar('\r');puts(cutbuf_file);}
+			puts("Would remove:");//puts writes and a trailing new line
+			if(c==0)puts(cutbuf_file);
 			if(p==0){
-				if(pf==0){putchar('\r');puts(prefs_file);}
-				putchar('\r');puts(prefs_folder);
+				if(pf==0)puts(prefs_file);
+				printf("\"%s\" if not empty\n",prefs_folder);
 			}
-			puts("\ryes ?");
-			putchar('\r');int e=getchar();
-			putchar(e);
+			puts("yes ?");
+			int e=getchar();
 			if(e=='y'){
 				e=getchar();
-				putchar(e);
 				if(e=='e'){
 					e=getchar();
-					putchar(e);
 					if(e=='s'){
+					//here can also verify for newline
 						if(c==0)
 							if(unlink(cutbuf_file)==0)
 								remove_config_print(cutbuf_file);
@@ -2497,14 +2495,13 @@ static bool remove_config(char*pattern,char*cutbuf_file){
 							if(pf==0)if(unlink(prefs_file)==0)
 								remove_config_print(prefs_file);
 							if(rmdir(prefs_folder)==0)remove_config_print(prefs_folder);
-							else printf("\n\r%s ignored (maybe is not empty)",prefs_folder);
+							else printf("%s ignored (maybe is not empty)\n",prefs_folder);
 						}
 						return true;
 					}
 				}
 			}
-			//after getchar, new line is expected, else \r there will do nothing
-			puts("\n\rexpecting \"yes\"");
+			puts("expecting \"yes\"");
 		}
 		return true;
 	}
@@ -2571,8 +2568,8 @@ static void action_go(int argc,char**argv,char*cutbuf_file){
 		ok=startfile(argfile,argc,argv,&text_sz,no_file,no_input);
 		if(ok!=0){
 			if(ok<1){
-				char txt[]={'N','o','r','m','a','l','i','z','e',' ','l','i','n','e',' ','e','n','d','i','n','g','s',' ','t','o',' ','\\','r',' ',' ','?',' ','n','=','n','o',',',' ','d','e','f','a','u','l','t','=','y','e','s','\r','\0'};
-				//           0   1   2   3   4   5   6   7   8   9   10  11  12  13  14  15  16  17  18  19  20  21  22  23  24  25  26   27  28  29  30  31  32  33  34  35  36  37  38  39  40  41  42  43  44  45  46  47  48  49   50
+				char txt[]={'N','o','r','m','a','l','i','z','e',' ','l','i','n','e',' ','e','n','d','i','n','g','s',' ','t','o',' ','\\','r',' ',' ','?',' ','n','=','n','o','\r','\0'};
+				//           0   1   2   3   4   5   6   7   8   9   10  11  12  13  14  15  16  17  18  19  20  21  22  23  24  25  26   27  28  29  30  31  32  33  34  35  36  37
 				if(ln_term_sz==2){txt[28]='\\';txt[29]='n';}
 				else if(ln_term[0]=='\n')txt[27]='n';
 				puts(txt);
