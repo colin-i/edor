@@ -2478,7 +2478,7 @@ static bool remove_config(char*pattern,char*cutbuf_file){
 			if(c==0)puts(cutbuf_file);
 			if(p==0){
 				if(pf==0)puts(prefs_file);
-				printf("\"%s\" if not empty\n",prefs_folder);
+				printf("\"%s\" if is empty\n",prefs_folder);
 			}
 			puts("yes ?");
 			int e=getchar();//can be fgets but at raw was not ok, and initscr is clearing screen and can't see printf on some systems, if can combine raw with initscr this is ok
