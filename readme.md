@@ -29,8 +29,7 @@ sudo make install
 ```
 Use *\-\-prefix=your_path* at *./configure* if needed (example: at Termux in Android).\
 *\-\-disable\-cpp* to set c rules.\
-Uninstall command is *make uninstall*.\
-To remove configuration launch ```edor --remove-config```.
+Uninstall command is *make uninstall*.
 
 ## Donations
 The *donations* section is here

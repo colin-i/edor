@@ -169,8 +169,9 @@ static bool indent_flag=true;
 static char prefs_file[max_path_0]={'\0'};//only the first byte is set
 
 #define hel1 "USAGE\n"
-// skip_unrestoredfilecheck_flag
-#define hel2 " [filepath [line_termination: rn/r/n]]\
+#define hel2 " [filepath/OPTION [line_termination: rn/r/n]]\
+\nOPTION\
+\n --remove-config     Remove configuration files.\
 \nINPUT\
 \nthis help: q(uit),up/down,mouse/touch V.scroll\
 \nMovement:\
@@ -202,7 +203,7 @@ static char prefs_file[max_path_0]={'\0'};//only the first byte is set
 \nCtrl+n = disable/enable indentation\
 \nCtrl+t = enable/disable insensitive search\
 \nCtrl+w = text wrapping (movement. another key to return)\
-\nCtrl+q = quit"//34
+\nCtrl+q = quit"//36
 static bool visual_bool=false;
 static char*cutbuf=nullptr;
 static size_t cutbuf_sz=0;
@@ -2138,15 +2139,7 @@ static int normalize(char**c,size_t*size,size_t*r){
 						a='\n';}
 					else{norm[j]=a;j++;a='\n';ok=-1;}
 				}
-				else{
-					if(((i+1)<sz)&&text_w[i+1]=='\n'){
-						i++;
-						if(ln_term[0]=='\n')a='\n';
-						ok=-1;
-					}else if(ln_term[0]=='\n'){
-						a='\n';ok=-1;
-					}
-				}
+				else if(ln_term[0]=='\n'){a='\n';ok=-1;}
 			}
 			norm[j]=a;j++;
 		}
@@ -2503,6 +2496,14 @@ static bool remove_config(char*pattern,char*cutbuf_file){
 	}
 	return false;
 }
+static bool get_answer(char switcher){
+	bool a=false;int c;
+	do{
+		c=getchar();
+		if(c==switcher)a=true;
+	}while(c!='\n');
+	return a;
+}
 static void action_go(int argc,char**argv,char*cutbuf_file){
 	size_t text_sz;
 	char*argfile=nullptr;//example when launching with no args
@@ -2526,17 +2527,15 @@ static void action_go(int argc,char**argv,char*cutbuf_file){
 		if(restorefile_path(argfile)/*true*/){
 			if(access(restorefile_buf,F_OK)==0){
 				//if(argc==2){
-				puts("There is an unrestored file, (c)ontinue?\r");
-				int c=getchar();
-				if(c!='c')return;
+				puts("There is an unrestored file, (c)ontinue?");
+				if(get_answer('c')==false)return;
 				//}
 			}
 		}
 		if(editingfile_path(argfile)/*true*/){
 			if(access(editingfile_buf,F_OK)==0){
-				puts("The file is already opened in another instance, (c)ontinue?\r");
-				int c=getchar();
-				if(c!='c')return;
+				puts("The file is already opened in another instance, (c)ontinue?");
+				if(get_answer('c')==false)return;
 			}else editing_new();
 		}
 	}
@@ -2564,13 +2563,14 @@ static void action_go(int argc,char**argv,char*cutbuf_file){
 		ok=startfile(argfile,argc,argv,&text_sz,no_file,no_input);
 		if(ok!=0){
 			if(ok<1){
-				char txt[]={'N','o','r','m','a','l','i','z','e',' ','l','i','n','e',' ','e','n','d','i','n','g','s',' ','t','o',' ','\\','r',' ',' ','?',' ','n','=','n','o','\r','\0'};
-				//           0   1   2   3   4   5   6   7   8   9   10  11  12  13  14  15  16  17  18  19  20  21  22  23  24  25  26   27  28  29  30  31  32  33  34  35  36  37
-				if(ln_term_sz==2){txt[28]='\\';txt[29]='n';}
-				else if(ln_term[0]=='\n')txt[27]='n';
-				puts(txt);
-				int c=getchar();
-				if(c=='n')ok=0;
+				//entering \r in printf at %s will return to the start
+				const char*a;const char*b;
+				if(ln_term[0]=='\r'){
+					a="r";
+					if(ln_term[1]=='\n')b="\\n";else b="";
+				}else{a="n";b="";}
+				printf("Normalize line endings to \\%s%s? Y/n\n",a,b);
+				if(get_answer('n')/*true*/)ok=0;
 			}
 			if(ok!=0){
 				rows=(row*)malloc(rows_tot*sizeof(row));
@@ -2585,22 +2585,21 @@ static void action_go(int argc,char**argv,char*cutbuf_file){
 	}
 	if(ok!=0){
 		WINDOW*w1=initscr();
-
-		//if set 1press_and_4,5 will disable right press (for copy menu) anyway
-		//on android longpress to select and copy is a gesture and is different from mouse events
-		//the only difference with ALL_..EVENTS is that we want to speed up and process all events here (if there is a curses implementation like that)
-		//this was default for android, but nowadays on desktop is not a default
-		//stored_mouse_mask=mousemask(ALL_MOUSE_EVENTS,nullptr);//for error, export TERM=vt100
-		if(prefs_file[0]!='\0')getprefs();
-
-		use_default_colors();//assume_default_colors(-1,-1);//it's ok without this for color pair 0 (when attrset(0))
 		if(w1!=nullptr){
+			//if set 1press_and_4,5 will disable right press (for copy menu) anyway
+			//on android longpress to select and copy is a gesture and is different from mouse events
+			//the only difference with ALL_..EVENTS is that we want to speed up and process all events here (if there is a curses implementation like that)
+			//this was default for android, but nowadays on desktop is not a default
+			//stored_mouse_mask=mousemask(ALL_MOUSE_EVENTS,nullptr);//for error, export TERM=vt100
+			if(prefs_file[0]!='\0')getprefs();
+
+			use_default_colors();//assume_default_colors(-1,-1);//it's ok without this for color pair 0 (when attrset(0))
 			raw();//stty,cooked; characters typed are immediately passed through to the user program. interrupt, quit, suspend, and flow control characters are all passed through uninterpreted, instead of generating a signal
 			color();
 			WINDOW*pw=position_init();
 			if(pw!=nullptr){
 				keypad(w1,true);//this here and not at start: Normalize... and other text will not be after clearscreen
-				noecho();
+				noecho();//characters typed are not echoed
 				nonl();//no translation,faster
 				proced(cutbuf_file,w1);
 				delwin(pw);
