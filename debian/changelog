@@ -1,3 +1,9 @@
+edor (1-x38) focal; urgency=medium
+
+  * fix get_answer
+
+ -- bc <bc@bc-HP-Pavilion-x360-Convertible>  Sat, 22 Jul 2023 18:39:04 +0300
+
 edor (1-x37) focal; urgency=medium
 
   * fixes, including normalize fix
