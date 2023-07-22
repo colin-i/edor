@@ -2497,11 +2497,9 @@ static bool remove_config(char*pattern,char*cutbuf_file){
 	return false;
 }
 static bool get_answer(char switcher){
-	bool a=false;int c;
-	do{
-		c=getchar();
-		if(c==switcher)a=true;
-	}while(c!='\n');
+	int c=getchar();
+	bool a=c==switcher;
+	while(c!='\n')c=getchar();
 	return a;
 }
 static void action_go(int argc,char**argv,char*cutbuf_file){
