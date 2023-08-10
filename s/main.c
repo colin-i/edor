@@ -2336,7 +2336,7 @@ static bool help_cutbuffile_preffile(char*s,char*cutbuf_file){
 			if(info_sz<=max_path_0){
 			#define storeflname "%c.%sinfo"
 				sprintf(cutbuf_file,"%s" storeflname,h,path_separator,&s[i]);
-				getfilebuf(cutbuf_file);
+				//this must be after line termination is observed: getfilebuf(cutbuf_file);
 
 				const char*conf=".config";
 				size_t csz=strlen(conf)+1;//plus separator
@@ -2375,6 +2375,8 @@ static void color(){
 }
 
 static void proced(char*cutbuf_file,WINDOW*w1){
+	if(cutbuf_file[0]!='\0')getfilebuf(cutbuf_file);//this is here,not after cutbuf_file path is set,but after line termination is final
+
 	bool loops=false;
 	int cy=0;int cx=0;
 	int r=getmaxy(stdscr)-1;
@@ -2507,7 +2509,6 @@ static void action_go(int argc,char**argv,char*cutbuf_file){
 	char*argfile=nullptr;//example when launching with no args
 	bool no_file=argc==1;
 	if(no_file==false){
-
 		char*src=argv[1];
 		if(remove_config(src,cutbuf_file)/*true*/)return;
 		size_t f_slen=strlen(src);
