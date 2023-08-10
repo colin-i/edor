@@ -1,3 +1,9 @@
+edor (1-x39) focal; urgency=medium
+
+  * fix cutbuf and line termination
+
+ -- bc <bc@bc-HP-Pavilion-x360-Convertible>  Thu, 10 Aug 2023 21:13:48 +0300
+
 edor (1-x38) focal; urgency=medium
 
   * fix get_answer
