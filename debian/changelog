@@ -1,3 +1,9 @@
+edor (1-x40) focal; urgency=medium
+
+  * fix mouse click and column (leftspace)
+
+ -- bc <bc@bc-HP-Pavilion-x360-Convertible>  Tue, 22 Aug 2023 07:33:48 +0300
+
 edor (1-x39) focal; urgency=medium
 
   * fix cutbuf and line termination
