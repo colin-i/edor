@@ -214,6 +214,7 @@ static char*text_init_e;//is init? malloc to new : realloc. and to free or not t
 static int _rb;static int _cb;
 static int _re;static int _ce;
 static int topspace=1;
+static int leftspace=1;
 #define view_margin 8
 #define known_stdin 0
 static WINDOW*leftcontent;
@@ -704,7 +705,7 @@ int movment(int c,WINDOW*w){
 		if(e.bstate==0)     // at wheel down (ncurses 6.1 at bionic)
 	#endif
 		vd1move(w,getcury(w));
-		else if((e.bstate&click)!=0)amove(w,e.y-topspace,e.x);//return -2;}
+		else if((e.bstate&click)!=0)amove(w,e.y-topspace,e.x-leftspace);//return -2;}
 	}else if(c==KEY_LEFT)left(w,getcurx(w));
 	else if(c==KEY_RIGHT)right(w,getcurx(w));
 	else if(c==KEY_UP){
@@ -2403,7 +2404,7 @@ static void proced(char*cutbuf_file,WINDOW*w1){
 		}
 
 		WINDOW*w=newwin(r-topspace,c,topspace,lrsize);
-		leftcontent=newwin(r-topspace,1,topspace,0);
+		leftcontent=newwin(r-topspace,leftspace,topspace,0);
 		rightcontent=newwin(r-topspace,1,topspace,maxx-1);
 		if(w!=nullptr){
 			keypad(w,true);
