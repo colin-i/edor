@@ -2208,26 +2208,24 @@ static bool grab_input(size_t*text_sz){
 	return false;
 }
 
-static bool valid_ln_term(char*input_term,bool*not_forced){
-	if(strcmp(input_term,"rn")==0){ln_term[0]='\r';ln_term[1]='\n';ln_term[2]='\0';ln_term_sz=2;}
-	else if(strcmp(input_term,"r")==0)ln_term[0]='\r';
-	else if(strcmp(input_term,"n")==0){}
-	else{
-		puts("Line termination argument must be: \"rn\", \"r\" or \"n\".");
-		return true;
+static bool valid_ln_term(int argc,char**argv,bool*not_forced){
+	if(argc==3){
+		char*input_term=argv[2];
+		if(strcmp(input_term,"rn")==0){ln_term[0]='\r';ln_term[1]='\n';ln_term[2]='\0';ln_term_sz=2;}
+		else if(strcmp(input_term,"r")==0)ln_term[0]='\r';
+		else if(strcmp(input_term,"n")==0){}
+		else{
+			puts("Line termination argument must be: \"rn\", \"r\" or \"n\".");
+			return true;
+		}
+		*not_forced=false;
 	}
-	*not_forced=false;
 	return false;
 }
 //same as normalize
-static int startfile(char*argfile,int argc,char**argv,size_t*text_sz,bool no_file,bool no_input){
-	bool not_forced=true;
-	if(no_file==false){
-		if(grab_file(argfile,text_sz)/*true*/)return 0;
-		if(argc==3){
-			if(valid_ln_term(argv[2],&not_forced)/*true*/)return 0;
-		}
-	}
+static int startfile(char*argfile,int argc,char**argv,size_t*text_sz,bool no_file,bool no_input,bool not_forced){
+	if(no_file==false)if(grab_file(argfile,text_sz)/*true*/)return 0;
+
 	if(no_input==false){
 		if(no_file/*true*/){
 			text_init_b=(char*)malloc(0);
@@ -2508,6 +2506,7 @@ static bool get_answer(char switcher){
 static void action_go(int argc,char**argv,char*cutbuf_file){
 	size_t text_sz;
 	char*argfile=nullptr;//example when launching with no args
+	bool not_forced=true;
 	bool no_file=argc==1;
 	if(no_file==false){
 		char*src=argv[1];
@@ -2538,6 +2537,7 @@ static void action_go(int argc,char**argv,char*cutbuf_file){
 				if(get_answer('c')==false)return;
 			}else editing_new();
 		}
+		if(valid_ln_term(argc,argv,&not_forced)/*true*/)return;
 	}
 	struct pollfd fds[1];
 	//typedef struct __sFILE FILE;
@@ -2560,7 +2560,7 @@ static void action_go(int argc,char**argv,char*cutbuf_file){
 			}
 		}
 	}else{
-		ok=startfile(argfile,argc,argv,&text_sz,no_file,no_input);
+		ok=startfile(argfile,argc,argv,&text_sz,no_file,no_input,not_forced);
 		if(ok!=0){
 			if(ok<1){
 				//entering \r in printf at %s will return to the start
