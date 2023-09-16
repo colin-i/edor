@@ -1,3 +1,38 @@
+#define hel1 "USAGE\n"
+#define hel2 " [filepath [line_termination: rn/r/n]]\
+\n      --remove-config      Remove configuration files.\
+\nINPUT\
+\nthis help: q(uit),up/down,mouse/touch V.scroll\
+\nMovement:\
+\n    [Ctrl/Alt/Shift +]arrows/home/end/del,page up,page down,backspace,enter\
+\n    p.s.: Ctrl+ left/right/del breaks at white-spaces and (),[]{}\
+\n    mouse/touch Click and V.scroll\
+\nCtrl+v = visual mode; Alt+v = visual line mode\
+\n    c = copy\
+\n    d = delete\
+\n    x = cut\
+\n    i = indent (I = flow indent)\
+\n    u = unindent (U = flow unindent)\
+\nCtrl+p = paste; Alt+p = paste at the beginning of the row\
+\ncommand mode: left,right,home,end,ctrl+q\
+\nCtrl+s = save file; Alt+s = save file as...\
+\nCtrl+g = go to row[,column]; Alt+g = \"current_row,\" is entered\
+\nCtrl+f = find text; Alt+f = refind text; Ctrl+c = word at cursor (alphanumerics and _); Alt+c = word from cursor\
+\n    if found\
+\n      Enter      = next\
+\n      Space      = previous\
+\n      Left Arrow = [(next/prev)&] replace\
+\n      r          = reset replace text\
+\n      R          = modify replace text\
+\n    c = cancel\
+\n    other key to return\
+\nCtrl+u = undo; Alt+u = undo mode: left=undo,right=redo,other key to return\
+\nCtrl+r = redo\
+\nCtrl+e = enable/disable internal mouse/touch\
+\nCtrl+n = disable/enable indentation\
+\nCtrl+t = enable/disable insensitive search\
+\nCtrl+w = text wrapping (movement. another key to return)\
+\nCtrl+q = quit"
 
 #include "top.h"
 
@@ -168,42 +203,6 @@ static bool indent_flag=true;
 #define mask_insensitive 4
 static char prefs_file[max_path_0]={'\0'};//only the first byte is set
 
-#define hel1 "USAGE\n"
-#define hel2 " [filepath/OPTION [line_termination: rn/r/n]]\
-\nOPTION\
-\n --remove-config     Remove configuration files.\
-\nINPUT\
-\nthis help: q(uit),up/down,mouse/touch V.scroll\
-\nMovement:\
-\n    [Ctrl/Alt/Shift +]arrows/home/end/del,page up,page down,backspace,enter\
-\n    p.s.: Ctrl+ left/right/del breaks at white-spaces and (),[]{}\
-\n    mouse/touch Click and V.scroll\
-\nCtrl+v = visual mode; Alt+v = visual line mode\
-\n    c = copy\
-\n    d = delete\
-\n    x = cut\
-\n    i = indent (I = flow indent)\
-\n    u = unindent (U = flow unindent)\
-\nCtrl+p = paste; Alt+p = paste at the beginning of the row\
-\ncommand mode: left,right,home,end,ctrl+q\
-\nCtrl+s = save file; Alt+s = save file as...\
-\nCtrl+g = go to row[,column]; Alt+g = \"current_row,\" is entered\
-\nCtrl+f = find text; Alt+f = refind text; Ctrl+c = word at cursor (alphanumerics and _); Alt+c = word from cursor\
-\n    if found\
-\n      Enter      = next\
-\n      Space      = previous\
-\n      Left Arrow = [(next/prev)&] replace\
-\n      r          = reset replace text\
-\n      R          = modify replace text\
-\n    c = cancel\
-\n    other key to return\
-\nCtrl+u = undo; Alt+u = undo mode: left=undo,right=redo,other key to return\
-\nCtrl+r = redo\
-\nCtrl+e = enable/disable internal mouse/touch\
-\nCtrl+n = disable/enable indentation\
-\nCtrl+t = enable/disable insensitive search\
-\nCtrl+w = text wrapping (movement. another key to return)\
-\nCtrl+q = quit"//36
 static bool visual_bool=false;
 static char*cutbuf=nullptr;
 static size_t cutbuf_sz=0;
