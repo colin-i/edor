@@ -2503,9 +2503,8 @@ static bool get_answer(char switcher){
 	while(c!='\n')c=getchar();
 	return a;
 }
-static void action_go(int argc,char**argv,char*cutbuf_file){
+static void action_go(int argc,char**argv,char*cutbuf_file,char*argfile){
 	size_t text_sz;
-	char*argfile=nullptr;//example when launching with no args
 	bool not_forced=true;
 	bool no_file=argc==1;
 	if(no_file==false){
@@ -2616,14 +2615,16 @@ static void action_go(int argc,char**argv,char*cutbuf_file){
 		}
 		free(text_init_b);
 	}
-	if(editingfile!=nullptr)unlink(editingfile);//this can be before and after text_init_b
-	if(argfile!=nullptr)free(argfile);
 }
 static void action(int argc,char**argv){
 	char cutbuf_file[max_path_0];
 	cutbuf_file[0]='\0';
 	if(help_cutbuffile_preffile(argv[0],cutbuf_file)/*true*/){//this is here, is convenient for remove_config
-		action_go(argc,argv,cutbuf_file);
+		char*argfile=nullptr;//example when launching with no args
+		action_go(argc,argv,cutbuf_file,argfile);
+		if(argfile!=nullptr)free(argfile);
+		if(editingfile!=nullptr)unlink(editingfile);//this can be before and after text_init_b, also, this can be if no argfile when rebase is on with a save as..
+
 		free(helptext);
 		if(cutbuf!=nullptr)free(cutbuf);//this is init at getfilebuf or if not there at writemembuf
 	}
