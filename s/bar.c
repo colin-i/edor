@@ -176,19 +176,21 @@ int saving_base(char*dest){
 		f=open_new(dest);
 		//new_f=f==-1;
 		//if(new_f/*true*/){
-		if(f==-1){
-			bar_clear();//is troubleing with the bool,and more
-			err_s=strerror(errno);
-			err_l=(int)strlen(err_s)+err_len_min;
-			int rg=get_right-com_left;
-			if(err_l>rg)err_l=rg;
-		}
 	}
 	else f=open(dest,O_WRONLY|O_TRUNC);
 	if(f!=-1){
 		r=wrt(f);
 		close(f);
-	}else r=0;
+	}else{
+		//this was for open_new, and is ok also when the file is already there
+		bar_clear();//is troubleing with the bool,and more
+		err_s=strerror(errno);
+		err_l=(int)strlen(err_s)+err_len_min;
+		int rg=get_right-com_left;
+		if(err_l>rg)err_l=rg;
+
+		r=0;
+	}
 	return r;
 }
 //command return
