@@ -1,3 +1,9 @@
+edor (1-x42) focal; urgency=medium
+
+  * to see errors at existing files
+
+ -- bc <bc@bc-Type1ProductConfigId>  Fri, 20 Oct 2023 09:57:09 +0300
+
 edor (1-x41) focal; urgency=medium
 
   * fix second arg
