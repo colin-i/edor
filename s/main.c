@@ -1456,12 +1456,13 @@ static void delete_fast(WINDOW*w,int r,int c,char*data,size_t x,size_t sz){
 				k+=j;
 			}
 			else{mapsel[k]=no_char(ch)/*true*/?'?':ch;c++;k++;}
+			x++;//before c==max for 'at right'
 			if(c==max){
-				if(x+1==sz)no_content_at_right(r);
+				//can test 'at right' here but when deleting a tab c can be less than max with tab - 1
 				break;
 			}
-			x++;
 		}
+		if(x==sz)no_content_at_right(r);
 		waddnstr(w,mapsel,k);
 	}
 	if(c<max)wclrtoeol(w);
