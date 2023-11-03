@@ -1,3 +1,9 @@
+edor (1-x43) focal; urgency=medium
+
+  * at right when deleting/bcsp a tab
+
+ -- bc <bc@bc-Type1ProductConfigId>  Fri, 03 Nov 2023 10:30:01 +0200
+
 edor (1-x42) focal; urgency=medium
 
   * to see errors at existing files
