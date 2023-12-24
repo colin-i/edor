@@ -78,3 +78,6 @@ extern row*rows;
 extern size_t rows_tot;
 extern size_t ytext;
 extern size_t xtext;
+//main,tw
+extern bool ocompiler_flag;
+extern size_t aftercall;

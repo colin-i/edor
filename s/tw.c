@@ -23,11 +23,15 @@ typedef struct{
 static row*rowswrap;
 static row*store_rows;
 static size_t store_rows_tot;
+static size_t store_aftercall;
 
 static void tw_unlock(size_t y,size_t x,WINDOW*w){
 	//restore variables
 	rows=store_rows;
 	rows_tot=store_rows_tot;
+	if(ocompiler_flag/**/){
+		aftercall=store_aftercall;
+	}
 	ytext=y;
 	xtext=x;
 	centering3(w,nullptr,nullptr,false);
@@ -36,9 +40,13 @@ static void tw_unlock(size_t y,size_t x,WINDOW*w){
 
 bool text_wrap(WINDOW*w){
 	//calculate rows required
+	size_t aftercall_aux;
 	int max=getmaxx(w);
 	size_t n=0;
 	for(size_t i=0;i<rows_tot;i++){
+		if(ocompiler_flag/**/){
+			if(i==aftercall)aftercall_aux=n;
+		}
 		row*r=&rows[i];
 		if(r->sz==0)n++;
 		else{
@@ -119,6 +127,9 @@ bool text_wrap(WINDOW*w){
 		//tw store some variables
 		store_rows=rows;rows=rowswrap;
 		store_rows_tot=rows_tot;rows_tot=j;
+		if(ocompiler_flag/**/){
+			store_aftercall=aftercall;aftercall=aftercall_aux;
+		}
 
 		//window
 		ytext=y;xtext=0;

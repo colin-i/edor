@@ -176,6 +176,8 @@ size_t rows_tot=1;
 size_t ytext=0;
 size_t xtext=0;
 bool mod_flag=true;
+bool ocompiler_flag=true;
+size_t aftercall;
 
 #define Char_Escape 27
 static char*mapsel=nullptr;
@@ -224,8 +226,6 @@ static char at_right_mark='>';
 static char at_left_mark='<';
 static char at_content_nomark=' ';
 static WINDOW*syntaxcontent=nullptr;
-static bool ocompiler_flag=true;
-static size_t aftercall;
 static bool must_reset_for_aftercall=false;
 
 bool no_char(char z){return z<32||z>=127;}
@@ -264,6 +264,10 @@ static size_t tab_grow(WINDOW*w,char*a,size_t sz,int*ptr){
 	}
 	return i;
 }
+static void printsyntax(int pair,int y){
+	wattrset(syntaxcontent,COLOR_PAIR(pair));
+	mvwaddch(syntaxcontent,y,0,' ');
+}
 void refreshrowsbot(WINDOW*w,int i,int maxy){
 	size_t maxx=xtext+(size_t)getmaxx(w);
 	do{
@@ -287,15 +291,22 @@ void refreshrowsbot(WINDOW*w,int i,int maxy){
 			//if(getcury(w)==i)wclrtoeol(w);
 			//this was the case when there was nothing on the row or xtext was big and nothing to print
 			//was moved inside tab_grow
+
+			if(ocompiler_flag/*true*/){
+				if(aftercall<=j)printsyntax(4,i);
+				else printsyntax(0,i);//when coming back
+			}else printsyntax(0,i);//when coming back
 		}else{
 			x_right[i]=false;
 			wclrtoeol(w);
+			printsyntax(3,i);
 		}
 		mvwaddch(leftcontent,i,0,at_left);
 		mvwaddch(rightcontent,i,0,at_right);
 		i++;
 	}while(i<maxy);
 	wnoutrefresh(leftcontent);
+	wnoutrefresh(syntaxcontent);
 	wnoutrefresh(rightcontent);
 }
 static void content_at_right(int i){
@@ -2387,7 +2398,11 @@ static void writefilebuf(char*cutbuf_file){
 static void color(){
 	if(start_color()!=ERR){
 		if(init_pair(1,COLOR_BLACK,COLOR_WHITE)!=ERR){//TERM vt100
-			init_pair(2,COLOR_BLACK,COLOR_CYAN);
+			if(init_pair(2,COLOR_BLACK,COLOR_CYAN)!=ERR){
+				if(init_pair(3,COLOR_BLACK,COLOR_GREEN)!=ERR){
+					init_pair(4,COLOR_BLACK,COLOR_YELLOW);
+				}
+			}
 		}
 	}
 }
