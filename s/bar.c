@@ -1239,3 +1239,19 @@ bool is_dir(int fd){
 	if(d!=nullptr){closedir(d);return true;}
 	return false;
 }
+
+#define acall      "aftercall"
+#define acall_size (1+2+2+2+2)
+#define acallu     "AFTERCALL"
+size_t aftercall_find(){
+	for(size_t i=0;i<rows_tot;i++){
+		row*r=&rows[i];
+		int j;
+		for(j=0;(acall[j]==r->data[j]||acallu[j]==r->data[j])&&j<acall_size;j++){}//readed text has a\n\b0
+		if(j==acall_size){
+			char ext=r->data[j];
+			if(ext=='i'||ext=='I'||ext==' '||ext=='\t')return i;
+		}
+	}
+	return rows_tot;
+}

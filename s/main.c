@@ -213,14 +213,20 @@ static char*text_init_e;//is init? malloc to new : realloc. and to free or not t
 static int _rb;static int _cb;
 static int _re;static int _ce;
 static int topspace=1;
-static int leftspace=1;
+//left,syntax,right individual size
+#define contentmarginsize 1
+static int leftspace=contentmarginsize+contentmarginsize;
 #define view_margin 8
 #define known_stdin 0
-static WINDOW*leftcontent;
-static WINDOW*rightcontent;
+static WINDOW*leftcontent=nullptr;
+static WINDOW*rightcontent=nullptr;
 static char at_right_mark='>';
 static char at_left_mark='<';
 static char at_content_nomark=' ';
+static WINDOW*syntaxcontent=nullptr;
+static bool ocompiler_flag=true;
+static size_t aftercall;
+static bool must_reset_for_aftercall=false;
 
 bool no_char(char z){return z<32||z>=127;}
 static size_t tab_grow(WINDOW*w,char*a,size_t sz,int*ptr){
@@ -1083,11 +1089,11 @@ static bool rows_expand(size_t n){
 static void text_free(size_t b,size_t e){
 	for(size_t i=b;i<e;i++){
 		char*d=rows[i].data;
-		if(d<text_init_b||text_init_e<=d)free(d);
+		if(d<text_init_b||text_init_e<=d)free(d);//the check is if the text was not modified from the start in this case will be free at exit(all initial lines)
 	}
 }
 static size_t row_pad_sz(size_t sz){
-	sz++;//[i]=0;addstr;=aux
+	sz++;//[i]=0;addstr;=aux;aftercall_find
 	size_t dif=sz&row_pad;
 	if(dif!=0)return sz+((dif^row_pad)+1);
 	return sz;
@@ -1152,7 +1158,13 @@ static void row_del(size_t a,size_t b){
 		memcpy(j,&rows[i],sizeof(row));
 		j++;
 	}
-	rows_tot-=c-a;
+	size_t diff=c-a;
+	rows_tot-=diff;
+	if(ocompiler_flag/*true*/){
+		if(aftercall<(a-1)){}//example deleting first new line aftercall=0 a=1 b=1
+		else if(b<=aftercall)aftercall-=diff;
+		else must_reset_for_aftercall=true;
+	}
 }
 
 static void easytime(){
@@ -1342,6 +1354,9 @@ static void rows_insert(row*d,size_t sz,size_t off){
 		a--;
 	}
 	memcpy(rows+off,d,sz*sizeof(row));
+	if(ocompiler_flag/*true*/){
+		if(aftercall>=(off-1))aftercall+=sz;  //example enter at 0,0 off will be 1
+	}
 }
 static size_t pasting(row*d,size_t y,size_t x,size_t*xe,char*buf,size_t buf_sz,size_t buf_r,bool fromcopy){
 	bool one=buf_r==1;
@@ -2114,6 +2129,10 @@ static bool loopin(WINDOW*w){
 			else type(c,w);
 			//continue;
 		}
+		if(must_reset_for_aftercall/*true*/){
+			must_reset_for_aftercall=false;
+			return true;
+		}
 	}
 }
 //-1 to normalize, 0 errors, 1 ok
@@ -2376,17 +2395,16 @@ static void color(){
 static void proced(char*cutbuf_file,WINDOW*w1){
 	if(cutbuf_file[0]!='\0')getfilebuf(cutbuf_file);//this is here,not after cutbuf_file path is set,but after line termination is final
 
-	bool loops=false;
+	bool loops;
 	int cy=0;int cx=0;
 	int r=getmaxy(stdscr)-1;
 	int old_r=r-1;//set -1 because at first compare is erasing new_visual
-	int lrsize=1;//left right space
 	do{
 		void*a=realloc(x_right,(size_t)r);
 		if(a==nullptr)break;
 		x_right=(bool*)a;//is text,[xtext+nothing
 		int maxx=getmaxx(stdscr);
-		int c=maxx-(2*lrsize);
+		int c=maxx-(leftspace+contentmarginsize);
 		tabs_rsz=1+(c/tab_sz);
 		if((c%tab_sz)!=0)tabs_rsz++;
 		void*b=realloc(tabs,sizeof(int)*(size_t)(r*tabs_rsz));
@@ -2401,41 +2419,53 @@ static void proced(char*cutbuf_file,WINDOW*w1){
 			write_title();//this is also the first write
 		}
 
-		WINDOW*w=newwin(r-topspace,c,topspace,lrsize);
-		leftcontent=newwin(r-topspace,leftspace,topspace,0);
-		rightcontent=newwin(r-topspace,1,topspace,maxx-1);
+		if(ocompiler_flag/*true*/){
+			aftercall=aftercall_find();
+		}
+
+		loops=false;
+		WINDOW*w=newwin(r-topspace,c,topspace,leftspace);//The functions which return a window pointer may also fail if there is insufficient memory for its data structures.
 		if(w!=nullptr){
-			keypad(w,true);
+			leftcontent=newwin(r-topspace,contentmarginsize,topspace,0);
+			if(leftcontent!=nullptr){
+				syntaxcontent=newwin(r-topspace,contentmarginsize,topspace,contentmarginsize);
+				if(syntaxcontent!=nullptr){
+					rightcontent=newwin(r-topspace,contentmarginsize,topspace,maxx-contentmarginsize);
+					if(rightcontent!=nullptr){
+						keypad(w,true);
 
-			bar_init();
-			if(r<=old_r)clrtoeol();//resize to up,is over text
-			//or =, clear bar,visual and saves
-			old_r=r;
-			if(mod_flag==false){
-				if(hardtime==0)restore_visual();
-				else mod_visual(modif_visual);
-			}
-			else wnoutrefresh(stdscr);
+						bar_init();
+						if(r<=old_r)clrtoeol();//resize to up,is over text
+						//or =, clear bar,visual and saves
+						old_r=r;
+						if(mod_flag==false){
+							if(hardtime==0)restore_visual();
+							else mod_visual(modif_visual);
+						}
+						else wnoutrefresh(stdscr);
 
-			refreshpage(w);//this must be after refresh stdscr, else first > at rightcontent will not show
-			wmove(w,cy,cx);
+						refreshpage(w);//this must be after refresh stdscr, else first > at rightcontent will not show
+						wmove(w,cy,cx);
 
-			position_reset();
-			position(cy,cx);
-			loops=loopin(w);
-			if(loops/*true*/){//is already resized and the cursor fits in the screen, not in the new size
-				cy=getcury(w);
-				r=getmaxy(stdscr)-1;
-				if(cy==r){
-					cy=r-1;
-					if(ytext+1<rows_tot)ytext++;
+						position_reset();
+						position(cy,cx);
+						loops=loopin(w);
+						if(loops/*true*/){//is already resized and the cursor fits in the screen, not in the new size
+							cy=getcury(w);
+							r=getmaxy(stdscr)-1;
+							if(cy==r){
+								cy=r-1;
+								if(ytext+1<rows_tot)ytext++;
+							}
+							cx=getcurx(w);
+							//c=getmaxx(w1);never if(cx>=c)
+						}
+					}
 				}
-				cx=getcurx(w);
-				//c=getmaxx(w1);never if(cx>=c)
 			}
-			delwin(w);delwin(leftcontent);delwin(rightcontent);
-		}else break;
-	}while(loops/*true*/);
+		}
+		delwin(w);delwin(leftcontent);delwin(syntaxcontent);delwin(rightcontent);//returns an error if the window pointer is null
+	}while(loops/*true*/);//this will reenter only if loopin() said
 	if(x_right!=nullptr){
 		free(x_right);
 		if(tabs!=nullptr){
