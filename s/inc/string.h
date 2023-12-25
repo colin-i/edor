@@ -20,3 +20,13 @@ void*memcpy(void*,const void*,size_t);
 }
 #endif
 #endif
+
+#if defined(is_bar_c)||defined(is_sep_c)
+#ifdef __cplusplus
+extern "C" {
+#endif
+char*strrchr(const char*,int);
+#ifdef __cplusplus
+}
+#endif
+#endif

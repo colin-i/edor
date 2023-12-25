@@ -198,6 +198,7 @@ static char restorefile_buf2[max_path_0];
 static char*editingfile=nullptr;
 static char editingfile_buf[max_path_0];
 static char editingfile_buf2[max_path_0];
+
 static mmask_t stored_mouse_mask=0;
 static bool indent_flag=true;
 #define mask_size 1
@@ -206,6 +207,8 @@ static bool indent_flag=true;
 #define mask_insensitive 4
 #define mask_ocompiler 8
 static char prefs_file[max_path_0]={'\0'};//only the first byte is set
+#define extlen_size 1
+static char*ocode_extension_new=nullptr;
 
 static bool visual_bool=false;
 static char*cutbuf=nullptr;
@@ -228,7 +231,6 @@ static char at_right_mark='>';
 static char at_left_mark='<';
 static char at_content_nomark=' ';
 static WINDOW*syntaxcontent=nullptr;
-static bool must_reset_for_aftercall=false;
 
 bool no_char(char z){return z<32||z>=127;}
 static size_t tab_grow(WINDOW*w,char*a,size_t sz,int*ptr){
@@ -1163,7 +1165,7 @@ static void deleted(size_t ybsel,size_t xbsel,int*r,int*c,WINDOW*w){
 	xtext=x;
 	c[0]=cl;
 }
-static void row_del(size_t a,size_t b){
+static void row_del(size_t a,size_t b,int r){
 	size_t c=b+1;
 	text_free(a,c);
 	row*j=&rows[a];
@@ -1175,8 +1177,17 @@ static void row_del(size_t a,size_t b){
 	rows_tot-=diff;
 	if(ocompiler_flag/*true*/){
 		if(aftercall<(a-1)){}//example deleting first new line aftercall=0 a=1 b=1
-		else if(b<=aftercall)aftercall-=diff;
-		else must_reset_for_aftercall=true;
+		else if(b<aftercall)aftercall-=diff;
+		else if(b==aftercall){
+			aftercall-=diff;
+			printsyntax(4,r);//at backspace when moving one row up
+		}
+		else{
+			aftercall=rows_tot;//will be redrawn in the next functions
+			//on select all will be ok
+			//on backspace,delete need to set the current row, anyway on select is not fast without r=-1
+			if(r!=-1)printsyntax(0,r);
+		}
 	}
 }
 
@@ -1296,7 +1307,7 @@ void deleting(size_t ybsel,size_t xbsel,size_t yesel,size_t xesel){
 		r1->sz-=dif;
 	}else{
 		row_set(r1,xbsel,rows[yesel].sz-xesel,0,rows[yesel].data+xesel);
-		row_del(ybsel+1,yesel);
+		row_del(ybsel+1,yesel,-1);
 	}
 }
 bool deleting_init(size_t ybsel,size_t xbsel,size_t yesel,size_t xesel){
@@ -1540,7 +1551,7 @@ static bool del_key(size_t y,size_t x,int r,int*cc,WINDOW*w,bool reverse){
 		if(row_alloc(r1,x,r2->sz,0)==false){
 			if(undo_add_del(y,x,yy,0)==false){
 				row_set(r1,x,r2->sz,0,r2->data);
-				row_del(yy,yy);
+				row_del(yy,yy,r);
 				rowfixdel(w,r,c,r1,x);
 				if(r+1<getmaxy(w))refreshrows(w,r+1);
 				return false;
@@ -1577,9 +1588,9 @@ static bool bcsp(size_t y,size_t x,int*rw,int*cl,WINDOW*w){
 		if(row_alloc(r0,sz0,r1->sz,0)==false){
 			if(undo_add_del(yy,sz0,y,0)==false){
 				row_set(r0,sz0,r1->sz,0,r1->data);
-				row_del(y,y);
-				cl[0]=c;
 				int r=rw[0];
+				row_del(y,y,r-1);
+				cl[0]=c;
 				if(r==0){
 					ytext--;refreshpage(w);
 				}
@@ -1983,26 +1994,34 @@ static bool savetofile(WINDOW*w,bool has_file){
 	wmove(w,getcury(w),getcurx(w));
 	return false;
 }
-static void setprefs(int flag,bool set){
+static void writeprefs(int f,char mask){
+	if(write(f,&mask,mask_size)==mask_size){
+		size_t sz=strlen(ocode_extension);
+		if(write(f,&sz,extlen_size)==extlen_size){
+			#pragma GCC diagnostic push
+			#pragma GCC diagnostic ignored "-Wunused-result"
+			write(f,ocode_extension,sz);
+			#pragma GCC diagnostic pop
+		}
+	}
+	close(f);
+}
+static void setprefs(int flag,bool set){//,char*ext
 	if(prefs_file[0]!='\0'){
 		//can use O_RDWR and lseek SEEK_SET
-		int f=open(prefs_file,O_RDONLY);
-		if(f!=-1){
-			char mask;
-			if(read(f,&mask,mask_size)==mask_size){
-				close(f);
-				if(set/*true*/)mask|=flag;
-				else mask&=~flag;
-				f=open(prefs_file,O_WRONLY);
-				if(f!=-1){
-					#pragma GCC diagnostic push
-					#pragma GCC diagnostic ignored "-Wunused-result"
-					write(f,&mask,mask_size);
+		//if(ext==nullptr){
+			int f=open(prefs_file,O_RDONLY);
+			if(f!=-1){
+				char mask;
+				if(read(f,&mask,mask_size)==mask_size){
 					close(f);
-					#pragma GCC diagnostic pop
+					if(set/*true*/)mask|=flag;
+					else mask&=~flag;
+					f=open(prefs_file,O_WRONLY);
+					if(f!=-1)writeprefs(f,mask);
 				}
 			}
-		}
+		//}
 	}
 }
 static time_t guardian=0;
@@ -2149,10 +2168,6 @@ static bool loopin(WINDOW*w){
 
 			else type(c,w);
 			//continue;
-		}
-		if(must_reset_for_aftercall/*true*/){
-			must_reset_for_aftercall=false;
-			return true;
 		}
 	}
 }
@@ -2343,6 +2358,16 @@ static void getprefs(){
 			if((mask&mask_indent)==0)indent_flag=false;
 			if((mask&mask_insensitive)==0)issensitive=false;
 			if((mask&mask_ocompiler)==0)ocompiler_flag=true;
+			char len;
+			if(read(f,&len,extlen_size)==extlen_size){
+				ocode_extension_new=(char*)malloc(len+1);
+				if(ocode_extension_new!=nullptr){
+					if(read(f,ocode_extension_new,len)==len){
+						ocode_extension=ocode_extension_new;
+						ocode_extension[len]='\0';
+					}
+				}
+			}
 		}
 		close(f);
 		return;
@@ -2350,10 +2375,7 @@ static void getprefs(){
 	f=open_new(prefs_file);
 	if(f!=-1){
 		mask=mask_mouse|mask_indent|mask_insensitive;
-		#pragma GCC diagnostic push
-		#pragma GCC diagnostic ignored "-Wunused-result"
-		write(f,&mask,mask_size);
-		#pragma GCC diagnostic pop
+		writeprefs(f,mask);
 	}
 }
 static bool help_cutbuffile_preffile(char*s,char*cutbuf_file){
@@ -2421,6 +2443,10 @@ static void color(){
 static void proced(char*cutbuf_file,WINDOW*w1){
 	if(cutbuf_file[0]!='\0')getfilebuf(cutbuf_file);//this is here,not after cutbuf_file path is set,but after line termination is final
 
+	if(ocompiler_flag/*true*/){//this is here, in loop can be set if wanted with enable/disable and rescan keys
+		aftercall=init_aftercall();
+	}
+
 	bool loops;
 	int cy=0;int cx=0;
 	int r=getmaxy(stdscr)-1;
@@ -2443,10 +2469,6 @@ static void proced(char*cutbuf_file,WINDOW*w1){
 		if(textfile!=nullptr){
 			move(0,0);//no clear, only overwrite, can resize left to right then back right to left
 			write_title();//this is also the first write
-		}
-
-		if(ocompiler_flag/*true*/){
-			aftercall=aftercall_find();
 		}
 
 		loops=false;
@@ -2660,7 +2682,8 @@ static void action_go(int argc,char**argv,char*cutbuf_file,char*argfile){
 				delwin(pw);
 			}
 			endwin();
-			//if(text_file!=nullptr)puts(text_file);
+
+			if(ocode_extension_new!=nullptr)free(ocode_extension_new);
 		}
 	}
 	if(text_init_b!=nullptr){

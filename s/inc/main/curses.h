@@ -3,6 +3,8 @@
 
 #define ALL_MOUSE_EVENTS 0xFffFFff
 #define COLOR_BLACK 0
+#define COLOR_GREEN 2
+#define COLOR_YELLOW 3
 #define COLOR_CYAN 6
 #define COLOR_WHITE 7
 #define ERR -1

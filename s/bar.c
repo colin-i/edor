@@ -1244,6 +1244,8 @@ bool is_dir(int fd){
 #define acall_size (1+2+2+2+2)
 #define acallu     "AFTERCALL"
 #define acall_size1 acall_size+1
+char*ocode_extension=(char*)"oc";// iso forbids
+
 size_t aftercall_find(){
 	for(size_t i=0;i<rows_tot;i++){
 		row*r=&rows[i];
@@ -1267,4 +1269,14 @@ void aftercall_draw(WINDOW*w){
 	int row=getcury(w);int col=getcurx(w);
 	refreshpage(w);
 	wmove(w,row,col);
+}
+size_t init_aftercall(){
+	if(textfile!=nullptr){
+		char*pos=strrchr(textfile,'.');
+		if(pos!=nullptr){
+			pos++;
+			if(strcmp(pos,ocode_extension)==0)return aftercall_find();
+		}
+	}
+	return rows_tot;//still need a value
 }

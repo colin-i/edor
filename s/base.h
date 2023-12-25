@@ -60,6 +60,7 @@ int open_new(char*);
 void texter_macro(const char*);
 size_t aftercall_find();
 void aftercall_draw(WINDOW*);
+size_t init_aftercall();
 //tw
 void position_core(size_t,size_t);
 void centering3(WINDOW*,size_t*,size_t*,bool);
@@ -74,6 +75,7 @@ extern size_t ln_term_sz;
 extern char*textfile;
 extern bool mod_flag;
 extern bool issensitive;
+extern char*ocode_extension;
 //main,bar,tw
 extern row*rows;
 extern size_t rows_tot;
