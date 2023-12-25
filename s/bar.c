@@ -1243,14 +1243,22 @@ bool is_dir(int fd){
 #define acall      "aftercall"
 #define acall_size (1+2+2+2+2)
 #define acallu     "AFTERCALL"
+#define acall_size1 acall_size+1
 size_t aftercall_find(){
 	for(size_t i=0;i<rows_tot;i++){
 		row*r=&rows[i];
-		int j;
-		for(j=0;(acall[j]==r->data[j]||acallu[j]==r->data[j])&&j<acall_size;j++){}//readed text has a\n\b0
-		if(j==acall_size){
-			char ext=r->data[j];
-			if(ext=='i'||ext=='I'||ext==' '||ext=='\t')return i;
+		if(r->sz>acall_size1){//if still '\0' end at new mem, that is undefined
+		//>= is enough if without # check, but is still a definition next, then without = is ok
+			char*data=r->data;
+			if(data[0]=='#'){//a fast solution is to comment in included .oc files to show them here
+				data++;
+			}
+			int j;
+			for(j=0;(acall[j]==data[j]||acallu[j]==data[j])&&j<acall_size;j++){}//readed text has a\n\b0
+			if(j==acall_size){
+				char ext=data[j];
+				if(ext=='i'||ext=='I'||ext==' '||ext=='\t')return i;
+			}
 		}
 	}
 	return rows_tot;
