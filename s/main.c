@@ -1108,7 +1108,7 @@ static void text_free(size_t b,size_t e){
 	}
 }
 static size_t row_pad_sz(size_t sz){
-	sz++;//[i]=0;addstr;=aux;aftercall_find
+	sz++;//[i]=0;addstr;=aux
 	size_t dif=sz&row_pad;
 	if(dif!=0)return sz+((dif^row_pad)+1);
 	return sz;
