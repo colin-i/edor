@@ -28,10 +28,11 @@
 \n    other key to return\
 \nCtrl+u = undo; Alt+u = undo mode: left=undo,right=redo,other key to return\
 \nCtrl+r = redo\
+\nCtrl+w = text wrapping (movement. another key to return)\
 \nCtrl+e = enable/disable internal mouse/touch\
 \nCtrl+n = disable/enable indentation\
 \nCtrl+t = enable/disable insensitive search\
-\nCtrl+w = text wrapping (movement. another key to return)\
+\nCtrl+a = enable/disable O language syntax; Alt+a = syntax rescan\
 \nCtrl+q = quit"
 
 #include "top.h"
@@ -176,7 +177,7 @@ size_t rows_tot=1;
 size_t ytext=0;
 size_t xtext=0;
 bool mod_flag=true;
-bool ocompiler_flag=true;
+bool ocompiler_flag=false;
 size_t aftercall;
 
 #define Char_Escape 27
@@ -203,6 +204,7 @@ static bool indent_flag=true;
 #define mask_mouse 1
 #define mask_indent 2
 #define mask_insensitive 4
+#define mask_ocompiler 8
 static char prefs_file[max_path_0]={'\0'};//only the first byte is set
 
 static bool visual_bool=false;
@@ -2055,6 +2057,7 @@ static bool loopin(WINDOW*w){
 			else if(z=='c'){if(find_mode(6,w)/*true*/)return true;}
 			else if(z=='u'){vis('U',w);undo_loop(w);vis(' ',w);}
 			else if(z=='s'){bool b=savetofile(w,false);if(b/*true*/)return true;}
+			else if(z=='a'){aftercall=aftercall_find();aftercall_draw(w);}
 		}else{
 			//QWERTyUioP
 			//aSdFGhjkl
@@ -2112,25 +2115,32 @@ static bool loopin(WINDOW*w){
 			}
 			else if(strcmp(s,"^E")==0){
 				bool b;char c;
-				if(stored_mouse_mask==0){stored_mouse_mask=mousemask(ALL_MOUSE_EVENTS,nullptr);b=false;c='E';}
-				else{stored_mouse_mask=mousemask(0,nullptr);b=true;c='e';}
+				if(stored_mouse_mask==0){stored_mouse_mask=mousemask(ALL_MOUSE_EVENTS,nullptr);c='E';}//;b=false
+				else{stored_mouse_mask=mousemask(0,nullptr);c='e';}//;b=true
+				setprefs(mask_mouse,!stored_mouse_mask);
 				vis(c,w);
-				setprefs(mask_mouse,b);
 			}
 			else if(strcmp(s,"^N")==0){
 				char c;
 				if(indent_flag/*true*/){indent_flag=false;c='n';}
 				else{indent_flag=true;c='N';}
-				vis(c,w);
 				setprefs(mask_indent,indent_flag);
+				vis(c,w);//is not showing on stdscr without wnoutrefresh(thisWindow)
 			}
 			else if(strcmp(s,"^T")==0){
 				bool b;char c;
 				if(issensitive/*true*/){issensitive=false;c='T';}
 				else{issensitive=true;c='t';}
-				//doupdate();will change cursor
-				vis(c,w);
 				setprefs(mask_insensitive,issensitive);
+				vis(c,w);//is not showing on stdscr without wnoutrefresh(thisWindow)
+			}
+			else if(strcmp(s,"^A")==0){
+				if(ocompiler_flag/*true*/){ocompiler_flag=false;c='a';}
+				else{ocompiler_flag=true;c='A';
+					aftercall=aftercall_find();}
+				setprefs(mask_ocompiler,!ocompiler_flag);
+				visual(c);//addch for more info, first to window, then wnoutrefresh to virtual, then doupdate to phisical
+				aftercall_draw(w);
 			}
 			else if(strcmp(s,"^W")==0){if(text_wrap(w)/*true*/)return true;}
 
@@ -2332,6 +2342,7 @@ static void getprefs(){
 			if((mask&mask_mouse)==0)stored_mouse_mask=mousemask(ALL_MOUSE_EVENTS,nullptr);
 			if((mask&mask_indent)==0)indent_flag=false;
 			if((mask&mask_insensitive)==0)issensitive=false;
+			if((mask&mask_ocompiler)==0)ocompiler_flag=true;
 		}
 		close(f);
 		return;

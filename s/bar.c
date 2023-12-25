@@ -1263,3 +1263,8 @@ size_t aftercall_find(){
 	}
 	return rows_tot;
 }
+void aftercall_draw(WINDOW*w){
+	int row=getcury(w);int col=getcurx(w);
+	refreshpage(w);
+	wmove(w,row,col);
+}

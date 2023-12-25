@@ -59,6 +59,7 @@ void err_set(WINDOW*);
 int open_new(char*);
 void texter_macro(const char*);
 size_t aftercall_find();
+void aftercall_draw(WINDOW*);
 //tw
 void position_core(size_t,size_t);
 void centering3(WINDOW*,size_t*,size_t*,bool);
