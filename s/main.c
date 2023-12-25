@@ -1180,7 +1180,8 @@ static void row_del(size_t a,size_t b,int r){
 		else if(b<aftercall)aftercall-=diff;
 		else if(b==aftercall){
 			aftercall-=diff;
-			printsyntax(4,r);//at backspace when moving one row up
+			if(r!=-1)printsyntax(4,r);//at backspace when moving one row up
+			//this r -1 is from backspacing first row on screen
 		}
 		else{
 			aftercall=rows_tot;//will be redrawn in the next functions
@@ -2079,7 +2080,7 @@ static bool loopin(WINDOW*w){
 			else if(z=='a'){aftercall=aftercall_find();aftercall_draw(w);}
 		}else{
 			//QWERTyUioP
-			//aSdFGhjkl
+			//ASdFGhjkl
 			// zxcVbNm
 			const char*s=keyname(c);
 			if(strcmp(s,"^V")==0){
