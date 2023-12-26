@@ -48,3 +48,5 @@ typedef struct{
 #define max_path_0 max_path+1
 
 #define command_return_ok 1
+
+#define comnrp_define char*

@@ -1950,7 +1950,7 @@ static bool visual_mode(WINDOW*w,bool v_l){
 	}while(z!=0);
 	return false;
 }
-#define quick_pack(nr,w) char*args[2];args[0]=(char*)nr;args[1]=(char*)w;
+#define quick_pack(nr,w) comnrp_define args[2];args[0]=(comnrp_define)nr;args[1]=(comnrp_define)w;
 static bool find_mode(int nr,WINDOW*w){
 	quick_pack((long)nr,w)
 	int r=command((char*)args);
@@ -2102,7 +2102,7 @@ static bool loopin(WINDOW*w){
 			else if(z=='s'){bool b=savetofile(w,false);if(b/*true*/)return true;}
 			else if(z=='a'){aftercall=aftercall_find();aftercall_draw(w);}
 			else if(z=='A'){
-				char*args[2]={(char*)com_nr_ext,(char*)ocode_extension_change};
+				quick_pack(com_nr_ext,ocode_extension_change)
 				int nr=command((char*)args);
 				if(nr>-2)wmove(w,getcury(w),getcurx(w));//ok/quit/err
 				else return true;

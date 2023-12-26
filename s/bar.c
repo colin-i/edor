@@ -1125,7 +1125,8 @@ int command(char*comnrp){
 					return r;
 				}
 			}else{//com_nr_ext
-				(*reinterpret_cast<void(*)(char*,unsigned long int)>(  ((char**)comnrp)[1]  ))(input,cursor);
+				//                                              will not call on 8bits char*, can call on long* but long is not a pointer on all platform, better to define
+				(*reinterpret_cast<void(*)(char*,unsigned long int)>(  ((comnrp_define*)comnrp)[1]  ))(input,cursor);
 				r=1;
 			}
 			break;
