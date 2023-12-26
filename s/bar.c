@@ -1254,9 +1254,14 @@ char*ocode_extension=(char*)"oc";// iso forbids
 size_t aftercall_find(){
 	for(size_t i=0;i<rows_tot;i++){
 		row*r=&rows[i];
-		if(r->sz>acall_size1){//if still '\0' end at new mem, that is undefined
+		size_t sz=r->sz;
+		char*data=r->data;
+
+		//first must skip spaces
+		for(;sz!=0&&(*data=='\t'||*data==' ');sz--)data++;
+
+		if(sz>acall_size1){//if still '\0' end at new mem, that is undefined
 		//>= is enough if without # check, but is still a definition next, then without = is ok
-			char*data=r->data;
 			if(data[0]=='#'){//a fast solution is to comment in included .oc files to show them here
 				data++;
 			}
