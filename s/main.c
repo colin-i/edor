@@ -2038,7 +2038,7 @@ static void ocode_extension_change(char*newinput,size_t cursor){
 			else return;
 		}
 	}else{
-		char*newmem=(char*)malloc(cursor+1);	
+		char*newmem=(char*)malloc(cursor+1);
 		if(newmem!=nullptr)ocode_extension_new=newmem;
 		else return;
 	}
