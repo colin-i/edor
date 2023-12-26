@@ -32,7 +32,7 @@
 \nCtrl+e = enable/disable internal mouse/touch\
 \nCtrl+n = disable/enable indentation\
 \nCtrl+t = enable/disable insensitive search\
-\nCtrl+a = enable/disable O language syntax; Alt+a = syntax rescan\
+\nCtrl+a = enable/disable O language syntax; Alt+a = syntax rescan; Alt+A = change extension test\
 \nCtrl+q = quit"
 
 #include "top.h"
@@ -169,6 +169,8 @@ static void __attribute__((noreturn)) signalHandler(int sig,siginfo_t *info,void
 
 #include"base.h"
 
+#define ignored 0
+
 char ln_term[3]="\n";
 size_t ln_term_sz=1;
 char*textfile=nullptr;
@@ -202,6 +204,7 @@ static char editingfile_buf2[max_path_0];
 static mmask_t stored_mouse_mask=0;
 static bool indent_flag=true;
 #define mask_size 1
+#define mask_nomask 0
 #define mask_mouse 1
 #define mask_indent 2
 #define mask_insensitive 4
@@ -1949,11 +1952,11 @@ static bool visual_mode(WINDOW*w,bool v_l){
 }
 #define quick_pack(nr,w) char*args[2];args[0]=(char*)nr;args[1]=(char*)w;
 static bool find_mode(int nr,WINDOW*w){
-	quick_pack(nr,w)
+	quick_pack((long)nr,w)
 	int r=command((char*)args);
 	if(r==-2)return true;
 	else if(r!=0){
-		wmove(w,getcury(w),getcurx(w));
+		wmove(w,getcury(w),getcurx(w));//at 0 (false not err) will remain on the bar
 	}
 	return false;
 }
@@ -1962,9 +1965,9 @@ static bool goto_mode(char*args,WINDOW*w){
 	if(r==1){
 		centering_simple(w)
 	}
-	else if(r>-2)wmove(w,getcury(w),getcurx(w));
-	else return true;
-	return false;
+	else if(r>-2)wmove(w,getcury(w),getcurx(w));//-1 quit and 0 err
+	return true;//-2
+	//return false;
 }
 static bool savetofile(WINDOW*w,bool has_file){
 	char*d=textfile;
@@ -2007,24 +2010,44 @@ static void writeprefs(int f,char mask){
 	}
 	close(f);
 }
-static void setprefs(int flag,bool set){//,char*ext
+static void setprefs(int flag,bool set){
 	if(prefs_file[0]!='\0'){
 		//can use O_RDWR and lseek SEEK_SET
-		//if(ext==nullptr){
-			int f=open(prefs_file,O_RDONLY);
-			if(f!=-1){
-				char mask;
-				if(read(f,&mask,mask_size)==mask_size){
-					close(f);
+		int f=open(prefs_file,O_RDONLY);
+		if(f!=-1){
+			char mask;
+			if(read(f,&mask,mask_size)==mask_size){
+				close(f);
+				if(flag!=(mask_nomask)){
 					if(set/*true*/)mask|=flag;
 					else mask&=~flag;
-					f=open(prefs_file,O_WRONLY);
-					if(f!=-1)writeprefs(f,mask);
 				}
+				f=open(prefs_file,O_WRONLY);
+				if(f!=-1)writeprefs(f,mask);
 			}
-		//}
+		}
 	}
 }
+
+static void ocode_extension_change(char*newinput,size_t cursor){
+	if(ocode_extension_new!=nullptr){
+		size_t len=strlen(ocode_extension_new);
+		if(len<cursor){
+			char*newmem=(char*)malloc(cursor+1);
+			if(newmem!=nullptr)ocode_extension_new=newmem;
+			else return;
+		}
+	}else{
+		char*newmem=(char*)malloc(cursor+1);	
+		if(newmem!=nullptr)ocode_extension_new=newmem;
+		else return;
+	}
+	memcpy(ocode_extension_new,newinput,cursor);
+	ocode_extension_new[cursor]='\0';
+	ocode_extension=ocode_extension_new;//at start extension_new is not 100%
+	setprefs(mask_nomask,ignored);
+}
+
 static time_t guardian=0;
 static bool loopin(WINDOW*w){
 	int c;
@@ -2078,6 +2101,12 @@ static bool loopin(WINDOW*w){
 			else if(z=='u'){vis('U',w);undo_loop(w);vis(' ',w);}
 			else if(z=='s'){bool b=savetofile(w,false);if(b/*true*/)return true;}
 			else if(z=='a'){aftercall=aftercall_find();aftercall_draw(w);}
+			else if(z=='A'){
+				char*args[2]={(char*)com_nr_ext,(char*)ocode_extension_change};
+				int nr=command((char*)args);
+				if(nr>-2)wmove(w,getcury(w),getcurx(w));//ok/quit/err
+				else return true;
+			}
 		}else{
 			//QWERTyUioP
 			//ASdFGhjkl
@@ -2359,7 +2388,7 @@ static void getprefs(){
 			if((mask&mask_indent)==0)indent_flag=false;
 			if((mask&mask_insensitive)==0)issensitive=false;
 			if((mask&mask_ocompiler)==0)ocompiler_flag=true;
-			char len;
+			unsigned char len;
 			if(read(f,&len,extlen_size)==extlen_size){
 				ocode_extension_new=(char*)malloc(len+1);
 				if(ocode_extension_new!=nullptr){
@@ -2442,12 +2471,6 @@ static void color(){
 }
 
 static void proced(char*cutbuf_file,WINDOW*w1){
-	if(cutbuf_file[0]!='\0')getfilebuf(cutbuf_file);//this is here,not after cutbuf_file path is set,but after line termination is final
-
-	if(ocompiler_flag/*true*/){//this is here, in loop can be set if wanted with enable/disable and rescan keys
-		aftercall=init_aftercall();
-	}
-
 	bool loops;
 	int cy=0;int cx=0;
 	int r=getmaxy(stdscr)-1;
@@ -2664,12 +2687,18 @@ static void action_go(int argc,char**argv,char*cutbuf_file,char*argfile){
 	if(ok!=0){
 		WINDOW*w1=initscr();
 		if(w1!=nullptr){
+			if(cutbuf_file[0]!='\0')getfilebuf(cutbuf_file);//this is here,not after cutbuf_file path is set,but after line termination is final
+
 			//if set 1press_and_4,5 will disable right press (for copy menu) anyway
 			//on android longpress to select and copy is a gesture and is different from mouse events
 			//the only difference with ALL_..EVENTS is that we want to speed up and process all events here (if there is a curses implementation like that)
 			//this was default for android, but nowadays on desktop is not a default
 			//stored_mouse_mask=mousemask(ALL_MOUSE_EVENTS,nullptr);//for error, export TERM=vt100
 			if(prefs_file[0]!='\0')getprefs();
+
+			if(ocompiler_flag/*true*/){//this is here, in loop can be set if wanted with enable/disable and rescan keys
+				aftercall=init_aftercall();
+			}
 
 			use_default_colors();//assume_default_colors(-1,-1);//it's ok without this for color pair 0 (when attrset(0))
 			raw();//stty,cooked; characters typed are immediately passed through to the user program. interrupt, quit, suspend, and flow control characters are all passed through uninterpreted, instead of generating a signal
@@ -2684,7 +2713,7 @@ static void action_go(int argc,char**argv,char*cutbuf_file,char*argfile){
 			}
 			endwin();
 
-			if(ocode_extension_new!=nullptr)free(ocode_extension_new);
+			if(ocode_extension_new!=nullptr)free(ocode_extension_new);//still need it at change for view what is was
 		}
 	}
 	if(text_init_b!=nullptr){

@@ -1056,6 +1056,7 @@ static int word_at_cursor(char*z){
 	}while(x<sz&&is_word_char(d[x])/*true*/);
 	return cursor;
 }
+
 //-2resize,-1no/quit,0er/fals,1ok
 int command(char*comnrp){
 	int rightexcl=get_right;
@@ -1064,7 +1065,7 @@ int command(char*comnrp){
 	if(visib<2)return 0;//phisical visib is 1
 	bar_clear();
 	int y=getmaxy(stdscr)-1;int pos=0;
-	char*input;int cursor;bool is_find=*comnrp>=com_nr_find;
+	char*input;int cursor;bool is_find=*comnrp<=com_nr_find_numbers;
 	if(is_find/*true*/){
 		if(*comnrp==com_nr_findagain)cursor=cursorf;
 		else cursor=*comnrp>=com_nr_findword?word_at_cursor(comnrp):0;
@@ -1073,6 +1074,7 @@ int command(char*comnrp){
 		input=input0;
 		if(*comnrp==com_nr_goto_alt)cursor=sprintf(input,protocol ",",1+ytext
 			+(size_t)getcury(quick_get(comnrp)));
+		else if(*comnrp==com_nr_ext)cursor=sprintf(input,"%s",ocode_extension);//on prefs is len<=0xff and max_path_0 is 0x100
 		else cursor=0;
 	}
 	if(cursor==0)move(y,com_left);
@@ -1083,28 +1085,7 @@ int command(char*comnrp){
 		int a=getch();
 		if(a==Char_Return){
 			char comnr=comnrp[0];
-			if(comnr==com_nr_save){
-				input[cursor]='\0';
-				r=saves();
-				if(r==-1){
-					int x=getcurx(stdscr);
-					clear_com(y,visib,pos,cursor);
-					r=question("Overwrite");
-					if(r==1){
-						inputpath();
-						//new_f=false;
-						r=saving();
-					}else if(r==0){
-						command_rewrite(y,x,pos,input0,cursor,visib);
-						continue;
-					}else if(r==-2)return -2;
-					wnoutrefresh(stdscr);
-					return r;
-				}
-			}else if(comnr==com_nr_goto||comnr==com_nr_goto_alt){
-				input[cursor]='\0';
-				r=go_to(cursor);
-			}else{//if is_find
+			if(is_find/*true*/){
 				int ifback=getcurx(stdscr);
 				r=find(comnrp,(size_t)cursor,(size_t)pos,(size_t)visib,y);
 				if(r==-2)break;
@@ -1122,6 +1103,30 @@ int command(char*comnrp){
 					command_rewrite(y,ifback>right?right:ifback,pos,inputf,cursor,visib);
 					continue;
 				}
+			}else if(comnr<=com_nr_goto_numbers){
+				input[cursor]='\0';
+				r=go_to(cursor);
+			}else if(comnr==com_nr_save){
+				input[cursor]='\0';
+				r=saves();
+				if(r==-1){
+					int x=getcurx(stdscr);
+					clear_com(y,visib,pos,cursor);
+					r=question("Overwrite");
+					if(r==1){
+						inputpath();
+						//new_f=false;
+						r=saving();
+					}else if(r==0){
+						command_rewrite(y,x,pos,input0,cursor,visib);
+						continue;
+					}else if(r==-2)return -2;
+					wnoutrefresh(stdscr);
+					return r;
+				}
+			}else{//com_nr_ext
+				(*reinterpret_cast<void(*)(char*,unsigned long int)>(  ((char**)comnrp)[1]  ))(input,cursor);
+				r=1;
 			}
 			break;
 		}

@@ -2,7 +2,8 @@
 #include "inc/stdio.h"
 
 typedef struct __sFILE FILE;
-extern FILE*stdin __attribute__((annotate("introduced_in=" "23")));
+//extern FILE*stdin __attribute__((annotate("introduced_in=" "23")));//warning on headless
+extern FILE *stdin;//this is amd def
 
 #ifdef __cplusplus
 extern "C" {

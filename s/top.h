@@ -29,13 +29,16 @@ typedef struct{
 //can be 127(ascii Delete) or 263, note: Ctrl+h generates 263
 #define is_KEY_BACKSPACE(a) a==KEY_BACKSPACE||a==0x7f
 
-#define com_nr_save 0
-#define com_nr_goto 1
-#define com_nr_goto_alt 2
-#define com_nr_find 3
-#define com_nr_findagain 4
-#define com_nr_findword 5
-//#define com_nr_findwordfrom 6
+#define com_nr_find 0
+#define com_nr_findagain 1
+#define com_nr_findword 2
+#define com_nr_findwordfrom 3
+	#define com_nr_find_numbers com_nr_findwordfrom
+#define com_nr_goto 4
+#define com_nr_goto_alt 5
+	#define com_nr_goto_numbers com_nr_goto_alt
+#define com_nr_save 6
+#define com_nr_ext 7
 //#define com_nr_is_find(a) *a>=com_nr_find
 //#define com_nr_is_find_word(a) *a>=com_nr_findword
 
