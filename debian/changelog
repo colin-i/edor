@@ -1,3 +1,9 @@
+edor (1-x46) focal; urgency=medium
+
+  * find word from fix
+
+ -- bc <bc@bc-Type1ProductConfigId>  Wed, 27 Dec 2023 19:55:04 +0200
+
 edor (1-x45) focal; urgency=medium
 
   * [spaces]aftercall
