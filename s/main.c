@@ -2097,7 +2097,7 @@ static bool loopin(WINDOW*w){
 				if(goto_mode((char*)args,w)/*true*/)return true;
 			}
 			else if(z=='f'){if(find_mode(com_nr_findagain,w)/*true*/)return true;}
-			else if(z=='c'){if(find_mode(6,w)/*true*/)return true;}
+			else if(z=='c'){if(find_mode(com_nr_findwordfrom,w)/*true*/)return true;}
 			else if(z=='u'){vis('U',w);undo_loop(w);vis(' ',w);}
 			else if(z=='s'){bool b=savetofile(w,false);if(b/*true*/)return true;}
 			else if(z=='a'){aftercall=aftercall_find();aftercall_draw(w);}
