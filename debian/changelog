@@ -1,3 +1,9 @@
+edor (1-x45) focal; urgency=medium
+
+  * [spaces]aftercall
+
+ -- bc <bc@bc-Type1ProductConfigId>  Wed, 27 Dec 2023 06:50:37 +0200
+
 edor (1-x44) focal; urgency=medium
 
   * aftercall and rows_tot
