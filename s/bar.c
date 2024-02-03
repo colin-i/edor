@@ -735,9 +735,9 @@ static bool dos(WINDOW*w,eundo*un,size_t vl){
 	else mod_set_off_wrap();//only if not
 	return true;
 }
-#define maxint_nul 11
+#define maxuint_nul 11
 static void undo_show(size_t n){
-	char nr[maxint_nul];
+	char nr[maxuint_nul];
 	int a=sprintf(nr,protocol,n);
 	texter(nr);
 	undo_erase(a);
@@ -862,7 +862,7 @@ static int finds(bool phase,int number,bool*header_was){
 		return 0;
 	}
 
-	char buf[1+maxint_nul];
+	char buf[1+maxuint_nul];
 	if(number==0){
 		finds_big_clean();//can be 1
 		return 0;//0, in case was forward, then backward
