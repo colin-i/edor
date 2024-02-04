@@ -930,7 +930,7 @@ static int find_core(WINDOW*w,size_t cursor,size_t xr,size_t xc,int y,size_t pos
 			forward=false;
 		}else if(a==KEY_RIGHT){
 			if(number2==0){//only when not knowing the total
-				if(delimiter_touched==false){//to omit last replace return if that can happen at this point ; is not on delimiter
+				if(delimiter_touched==false){//to omit last replace return if that can happen at this point
 					//set a limit
 					const size_t max=100;
 					//keep markers
@@ -944,6 +944,7 @@ static int find_core(WINDOW*w,size_t cursor,size_t xr,size_t xc,int y,size_t pos
 						n=1;
 						here_forward=true;
 					}else{
+						ytext+=xr;xr=0;//xtext+=xc;xc=0;
 						if(number>0){
 							here_sense=1;
 							if(untouched/*true*/){
@@ -962,7 +963,7 @@ static int find_core(WINDOW*w,size_t cursor,size_t xr,size_t xc,int y,size_t pos
 						if(ytext==y1&&xtext==x1)break;
 						n++;
 						if(n==max)break;
-						xr=0;//only first was with offset
+						//xr=0;//only first was with offset
 						xc=here_forward?cursor:0;//at backward must stay there
 					}
 					if(n!=max){
@@ -989,9 +990,7 @@ static int find_core(WINDOW*w,size_t cursor,size_t xr,size_t xc,int y,size_t pos
 					else number+=1;
 					fprevnumber=number;
 
-					//if(delim_touch(y1,x1,cursorr)/*true*/){
-					//	delimiter_touched=true;
-					//}else
+					//if(delim_touch(y1,x1,cursorr)/*true*/){delimiter_touched=true;}else
 					if(ytext==y1&&xtext<x1)x1-=cursor-cursorr;//this can be on delimiter but is observed outside
 				}else delimiter_touched=true;
 
