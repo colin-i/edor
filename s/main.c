@@ -19,11 +19,12 @@
 \nCtrl+g = go to row[,column]; Alt+g = \"current_row,\" is entered\
 \nCtrl+f = find text; Alt+f = refind text; Ctrl+c = word at cursor (alphanumerics and _); Alt+c = word from cursor\
 \n    if found\
-\n      Enter      = next\
-\n      Space      = previous\
-\n      Left Arrow = [(next/prev)&] replace\
-\n      r          = reset replace text\
-\n      R          = modify replace text\
+\n      Enter       = next\
+\n      Space       = previous\
+\n      Right Arrow = total\
+\n      Left Arrow  = [(next/prev)&] replace\
+\n      r           = reset replace text\
+\n      R           = modify replace text\
 \n    c = cancel\
 \n    other key to return\
 \nCtrl+u = undo; Alt+u = undo mode: left=undo,right=redo,other key to return\

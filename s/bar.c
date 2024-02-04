@@ -856,23 +856,16 @@ static int positiveInt_length(unsigned int nr){
 	while(nr>0){nr/=10;x++;}
 	return x;
 }
-static int finds(bool phase,int number,int number_fix){//,bool*header_was){
+static void finds(bool phase,int number,int number_fix){//,bool*header_was){
 	//if(*header_was==false){if(phase/*true*/){*header_was=true;}return 0;}
 
 	char buf[maxuint+1+maxuint_nul];
-	if(number==0){
-		finds_big_clean();//can be 1
-		return 0;//0, in case was forward, then backward
-	}
-
-	int r=number;
 	if(number<0){
 		number*=-1;
 	}
 	if(phase/*true*/){
 		number2=sprintf(buf,"/%u",number);
 		mvaddstr(0,getmaxx(stdscr)-number2,buf);
-		r=0;
 	}else{//fprevnumber
 		int dif=positiveInt_length(fprevnumber)-positiveInt_length(number);
 		move(0,number3);
@@ -883,7 +876,6 @@ static int finds(bool phase,int number,int number_fix){//,bool*header_was){
 	number3=getmaxx(stdscr)-number2-nr;
 	mvaddstr(0,number3,buf);
 	wnoutrefresh(stdscr);
-	return r;
 }
 
 static bool delim_touch(size_t y1,size_t x1,size_t c){return ytext==y1&&(xtext==x1||(xtext<x1&&xtext+c>x1));}
@@ -912,39 +904,72 @@ static int find_core(WINDOW*w,size_t cursor,size_t xr,size_t xc,int y,size_t pos
 	centering(w,&xr,&xc)
 	bool untouched=true;bool delimiter_touched=false;
 	char prev_key=' ';
-	bool is_for_forward=true;//last key only at next/prev/replace
+	//bool is_for_forward=true;//last key only at next/prev/replace
 
-	int number=0;int at_number; //bool header_was=true;
+	int at_number;
+	int number=0;
 	number2=0;
 	number3=getmaxx(stdscr);//in case is required at clean
 
 	for(;;){
 		int a=wgetch(w);
 		if(a==Char_Return){
-			if(is_for_forward)xc+=cursor;//add only when last was simple find
-			else is_for_forward=true;//modify only if was replace
+			if(untouched/*true*/){
+				xc+=cursor;//add only when last was simple find
+				number+=1;
+			}else{
+				if(forward/*true*/)number+=1;
+				//else if(number==0)finds_big_clean();//header switch
+			}
 			forward=true;
 			at_number=1;
 		}else if(a==prev_key){
-			forward=false;is_for_forward=true;
+			if(untouched/*true*/)number-=1;
+			else{
+				if(forward==false)number-=1;
+				//else if(number==0)finds_big_clean();//header switch
+			}
+			forward=false;
 			at_number=-1;
 		}else if(a==KEY_RIGHT){
 			if(number2==0){//only when not knowing the total
-				if(delimiter_touched==false){//to omit last replace return if that can happen at this point
+				if(delimiter_touched==false){//to omit last replace return if that can happen at this point ; is not on delimiter
 					//set a limit
-					size_t max=100;
+					const size_t max=100;
 					//keep markers
 					size_t ystart=ytext;size_t xstart=xtext;size_t xrstart=xr;size_t xcstart=xc;
-					size_t n=0;
+					size_t n;
+					//only depending on number not on forward
+					int here_sense;bool here_forward;
+					if(number==0){//on delimiter or after a replace at 1/-1
+						here_sense=1;
+						ytext=y1;xtext=x1;xr=0;xc=cursor;
+						n=1;
+						here_forward=true;
+					}else{
+						if(number>0){
+							here_sense=1;
+							if(untouched/*true*/){
+								xc+=cursor;
+								n=1;
+							}else n=0;
+							here_forward=true;
+						}else{
+							here_sense=-1;
+							n=1;
+							here_forward=false;
+						}
+					}
 					for(;;){
-						finding(cursor,xr,xc,forward);//is true
+						finding(cursor,xr,xc,here_forward);//is true
 						if(ytext==y1&&xtext==x1)break;
 						n++;
 						if(n==max)break;
-						xr=0;xc=cursor;//only first was with offset
+						xr=0;//only first was with offset
+						xc=here_forward?cursor:0;//at backward must stay there
 					}
 					if(n!=max){
-						finds(true,number+(n*at_number),-(n*at_number));
+						finds(true,number+(n*here_sense),-n);
 						wmove(w,getcury(w),getcurx(w));//print the result
 					}
 					//restore markers
@@ -962,18 +987,19 @@ static int find_core(WINDOW*w,size_t cursor,size_t xr,size_t xc,int y,size_t pos
 				if(number3!=getmaxx(stdscr)){
 					finds_big_clean();//wnoutrefresh when not on delimiter
 				}
-				if(number!=0){//if was 0 was on N/N and there must stay 0
+				if(number!=0){//0 is on delimiter
 					number-=at_number;fprevnumber=number;
 
-					if(delim_touch(y1,x1,cursorr)/*true*/){
-						delimiter_touched=true;
-					}else if(ytext==y1&&xtext<x1)x1-=cursor-cursorr;
+					//if(delim_touch(y1,x1,cursorr)/*true*/){
+					//	delimiter_touched=true;
+					//}else
+					if(ytext==y1&&xtext<x1)x1-=cursor-cursorr;//this can be on delimiter but is observed outside
 				}else delimiter_touched=true;
 
 				if(forward){xtext+=cursorr;centering2(w,&xr,&xc,true)}
 				else{centering(w,&xr,&xc)}
 				untouched=false;
-				is_for_forward=false;
+				//is_for_forward=false;
 				continue;
 			}
 			if(finding(cursor,xr,xc,forward)/*true*/){
@@ -985,7 +1011,7 @@ static int find_core(WINDOW*w,size_t cursor,size_t xr,size_t xc,int y,size_t pos
 
 				if(forward){xtext+=cursorr;centering2(w,&xr,&xc,true)}
 				else{centering(w,&xr,&xc)}
-				is_for_forward=false;
+				//is_for_forward=false;
 				continue;
 			}
 			return 1;
@@ -1017,7 +1043,12 @@ static int find_core(WINDOW*w,size_t cursor,size_t xr,size_t xc,int y,size_t pos
 		if(delimiter_touched/*true*/){
 			y1=ytext;x1=xtext;
 			delimiter_touched=false;
-		}else number=finds(phase,number+at_number,0);//,&header_was);
+		}else{
+			if(number!=0){
+				finds(phase,number,0);
+				if(phase/*true*/)number=0;
+			}else finds_big_clean();
+		}
 		untouched=true;
 		centering(w,&xr,&xc)
 	}
