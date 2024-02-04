@@ -906,7 +906,6 @@ static int find_core(WINDOW*w,size_t cursor,size_t xr,size_t xc,int y,size_t pos
 	char prev_key=' ';
 	//bool is_for_forward=true;//last key only at next/prev/replace
 
-	int at_number;
 	int number=0;
 	number2=0;
 	number3=getmaxx(stdscr);//in case is required at clean
@@ -922,7 +921,6 @@ static int find_core(WINDOW*w,size_t cursor,size_t xr,size_t xc,int y,size_t pos
 				//else if(number==0)finds_big_clean();//header switch
 			}
 			forward=true;
-			at_number=1;
 		}else if(a==prev_key){
 			if(untouched/*true*/)number-=1;
 			else{
@@ -930,7 +928,6 @@ static int find_core(WINDOW*w,size_t cursor,size_t xr,size_t xc,int y,size_t pos
 				//else if(number==0)finds_big_clean();//header switch
 			}
 			forward=false;
-			at_number=-1;
 		}else if(a==KEY_RIGHT){
 			if(number2==0){//only when not knowing the total
 				if(delimiter_touched==false){//to omit last replace return if that can happen at this point ; is not on delimiter
@@ -988,7 +985,9 @@ static int find_core(WINDOW*w,size_t cursor,size_t xr,size_t xc,int y,size_t pos
 					finds_big_clean();//wnoutrefresh when not on delimiter
 				}
 				if(number!=0){//0 is on delimiter
-					number-=at_number;fprevnumber=number;
+					if(forward/*true*/)number-=1;
+					else number+=1;
+					fprevnumber=number;
 
 					//if(delim_touch(y1,x1,cursorr)/*true*/){
 					//	delimiter_touched=true;
