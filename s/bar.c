@@ -976,10 +976,9 @@ static int find_core(WINDOW*w,size_t cursor,size_t xr,size_t xc,int y,size_t pos
 					}
 					//restore markers
 					ytext=ystart;xtext=xstart;xr=xrstart;xc=xcstart;
-					continue;
 				}
 			}
-			find_returner
+			continue;
 		}else if(a==KEY_LEFT){
 			size_t iferrory=ytext;size_t iferrorx=xtext;
 			if(untouched/*true*/){
