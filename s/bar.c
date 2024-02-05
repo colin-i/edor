@@ -1045,7 +1045,7 @@ static int find_core(WINDOW*w,size_t cursor,size_t xr,size_t xc,int y,size_t pos
 			if(number!=0){
 				finds(phase,number,0);
 				if(phase/*true*/)number=0;
-			}else finds_big_clean();
+			}else finds(false,0,0);
 		}
 		untouched=true;
 		centering(w,&xr,&xc)
