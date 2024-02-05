@@ -871,7 +871,8 @@ static void finds(bool phase,int number,int number_fix){//,bool*header_was){
 		move(0,number3);
 		while(dif>0){addch(' ');dif--;}
 	}
-	int nr=sprintf(buf,"%u",number+number_fix);
+	number+=number_fix;
+	int nr=sprintf(buf,"%u",number);
 	fprevnumber=number;//for 10->9, 10/10->1/10, ... , 100/100->1/100, ...
 	number3=getmaxx(stdscr)-number2-nr;
 	mvaddstr(0,number3,buf);
@@ -917,14 +918,16 @@ static int find_core(WINDOW*w,size_t cursor,size_t xr,size_t xc,int y,size_t pos
 				xc+=cursor;//add only when last was simple find
 				number+=1;
 			}else{
-				if(forward/*true*/)number+=1;
+				if(number<0)number+=1;
+			//	if(forward/*true*/)number+=1;
 				//else if(number==0)finds_big_clean();//header switch
 			}
 			forward=true;
 		}else if(a==prev_key){
 			if(untouched/*true*/)number-=1;
 			else{
-				if(forward==false)number-=1;
+				if(number>0)number-=1;
+			//	if(forward==false)number-=1;
 				//else if(number==0)finds_big_clean();//header switch
 			}
 			forward=false;
@@ -954,7 +957,8 @@ static int find_core(WINDOW*w,size_t cursor,size_t xr,size_t xc,int y,size_t pos
 							here_forward=true;
 						}else{
 							here_sense=-1;
-							n=1;
+							if(untouched/*true*/)n=1;
+							else n=0;
 							here_forward=false;
 						}
 					}
@@ -986,9 +990,9 @@ static int find_core(WINDOW*w,size_t cursor,size_t xr,size_t xc,int y,size_t pos
 					finds_big_clean();//wnoutrefresh when not on delimiter
 				}
 				if(number!=0){//0 is on delimiter
-					if(forward/*true*/)number-=1;
-					else number+=1;
-					fprevnumber=number;
+					//if(forward/*true*/)number-=1;
+					//else number+=1;
+					//fprevnumber=number;
 
 					//if(delim_touch(y1,x1,cursorr)/*true*/){delimiter_touched=true;}else
 					if(ytext==y1&&xtext<x1)x1-=cursor-cursorr;//this can be on delimiter but is observed outside
