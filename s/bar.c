@@ -857,8 +857,6 @@ static int positiveInt_length(unsigned int nr){
 	return x;
 }
 static void finds(bool phase,int number,int number_fix){//,bool*header_was){
-	//if(*header_was==false){if(phase/*true*/){*header_was=true;}return 0;}
-
 	char buf[maxuint+1+maxuint_nul];
 	if(number<0){
 		number*=-1;
@@ -919,16 +917,12 @@ static int find_core(WINDOW*w,size_t cursor,size_t xr,size_t xc,int y,size_t pos
 				number+=1;
 			}else{
 				if(number<0)number+=1;
-			//	if(forward/*true*/)number+=1;
-				//else if(number==0)finds_big_clean();//header switch
 			}
 			forward=true;
 		}else if(a==prev_key){
 			if(untouched/*true*/)number-=1;
 			else{
 				if(number>0)number-=1;
-			//	if(forward==false)number-=1;
-				//else if(number==0)finds_big_clean();//header switch
 			}
 			forward=false;
 		}else if(a==KEY_RIGHT){
@@ -989,18 +983,12 @@ static int find_core(WINDOW*w,size_t cursor,size_t xr,size_t xc,int y,size_t pos
 					finds_big_clean();//wnoutrefresh when not on delimiter
 				}
 				if(number!=0){//0 is on delimiter
-					//if(forward/*true*/)number-=1;
-					//else number+=1;
-					//fprevnumber=number;
-
-					//if(delim_touch(y1,x1,cursorr)/*true*/){delimiter_touched=true;}else
 					if(ytext==y1&&xtext<x1)x1-=cursor-cursorr;//this can be on delimiter but is observed outside
 				}else delimiter_touched=true;
 
 				if(forward){xtext+=cursorr;centering2(w,&xr,&xc,true)}
 				else{centering(w,&xr,&xc)}
 				untouched=false;
-				//is_for_forward=false;
 				continue;
 			}
 			if(finding(cursor,xr,xc,forward)/*true*/){
@@ -1008,11 +996,17 @@ static int find_core(WINDOW*w,size_t cursor,size_t xr,size_t xc,int y,size_t pos
 
 				phase=delimiter(y1,x1,y,pos,sz,cursorr,phase);
 				if(phase/*true*/)delimiter_touched=true;
-				else if(ytext==y1&&xtext<x1)x1-=cursor-cursorr;
+				else{
+					//if delimiter_touched is true these are not required
+					if(forward/*true*/){
+						if(number<0)number++;
+					}else if(number>0)number--;
+
+					if(ytext==y1&&xtext<x1)x1-=cursor-cursorr;
+				}
 
 				if(forward){xtext+=cursorr;centering2(w,&xr,&xc,true)}
 				else{centering(w,&xr,&xc)}
-				//is_for_forward=false;
 				continue;
 			}
 			return 1;
@@ -1044,6 +1038,7 @@ static int find_core(WINDOW*w,size_t cursor,size_t xr,size_t xc,int y,size_t pos
 		if(delimiter_touched/*true*/){
 			y1=ytext;x1=xtext;
 			delimiter_touched=false;
+			number=0;
 		}else{
 			if(number!=0){
 				finds(phase,number,0);
