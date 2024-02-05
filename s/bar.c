@@ -975,13 +975,13 @@ static int find_core(WINDOW*w,size_t cursor,size_t xr,size_t xc,int y,size_t pos
 			continue;
 		}else if(a==KEY_LEFT){
 			size_t iferrory=ytext;size_t iferrorx=xtext;
+			if(number3!=getmaxx(stdscr)){//in second case this can be if total is requested
+				finds_big_clean();//wnoutrefresh when not on delimiter
+			}
 			if(untouched/*true*/){
 				ytext+=xr;xtext+=xc;
 				if(replace(cursor)/*true*/){ytext=iferrory;xtext=iferrorx;continue;}
 
-				if(number3!=getmaxx(stdscr)){
-					finds_big_clean();//wnoutrefresh when not on delimiter
-				}
 				if(number!=0){//0 is on delimiter
 					if(ytext==y1&&xtext<x1)x1-=cursor-cursorr;//this can be on delimiter but is observed outside
 				}else delimiter_touched=true;
