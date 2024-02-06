@@ -1044,9 +1044,9 @@ static int find_core(WINDOW*w,size_t cursor,size_t xr,size_t xc,int y,size_t pos
 					if(number2!=0){// /100[+] is already here
 						mvaddch(0,number3,' ');// 111/100+ -> [1]111/111
 					}
-					finds(phase,number,0,0);
+					finds(true,number,0,0);
 					number=0;
-				}else finds(phase,number,0,0);
+				}else finds(false,number,0,0);
 			}else finds(false,0,0,0);
 		}
 		untouched=true;
