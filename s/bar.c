@@ -856,13 +856,14 @@ static int positiveInt_length(unsigned int nr){
 	while(nr>0){nr/=10;x++;}
 	return x;
 }
-static void finds(bool phase,int number,int number_fix){//,bool*header_was){
-	char buf[maxuint+1+maxuint_nul];
+static void finds(bool phase,int number,int number_fix,char extra){//,bool*header_was){
+	char buf[maxuint+1+maxuint+1+1];//plus another one in case of total and max case
 	if(number<0){
 		number*=-1;
 	}
 	if(phase/*true*/){
-		number2=sprintf(buf,"/%u",number);
+		if(extra==0)number2=sprintf(buf,"/%u",number);
+		else number2=sprintf(buf,"/%u%c",number,extra);
 		mvaddstr(0,getmaxx(stdscr)-number2,buf);
 	}else{//fprevnumber
 		int dif=positiveInt_length(fprevnumber)-positiveInt_length(number);
@@ -964,10 +965,8 @@ static int find_core(WINDOW*w,size_t cursor,size_t xr,size_t xc,int y,size_t pos
 						//xr=0;//only first was with offset
 						xc=here_forward?cursor:0;//at backward must stay there
 					}
-					if(n!=max){
-						finds(true,number+(n*here_sense),-n);
-						wmove(w,getcury(w),getcurx(w));//print the result
-					}
+					finds(true,number+(n*here_sense),-n,n!=max?0:'+');
+					wmove(w,getcury(w),getcurx(w));//print the result
 					//restore markers
 					ytext=ystart;xtext=xstart;xr=xrstart;xc=xcstart;
 				}
@@ -1041,9 +1040,14 @@ static int find_core(WINDOW*w,size_t cursor,size_t xr,size_t xc,int y,size_t pos
 			number=0;
 		}else{
 			if(number!=0){
-				finds(phase,number,0);
-				if(phase/*true*/)number=0;
-			}else finds(false,0,0);
+				if(phase/*true*/){
+					if(number2!=0){// /100[+] is already here
+						mvaddch(0,number3,' ');// 111/100+ -> [1]111/111
+					}
+					finds(phase,number,0,0);
+					number=0;
+				}else finds(phase,number,0,0);
+			}else finds(false,0,0,0);
 		}
 		untouched=true;
 		centering(w,&xr,&xc)
