@@ -1269,11 +1269,12 @@ static void hardtime_resolve_returner(WINDOW*w){//argument for errors
 	}
 }
 #define one_minute 60
+#define one_minute_less one_minute-1
 //#define one_minute 3
 static void hardtime_resolve(WINDOW*w){//argument for errors
 	if(hardtime!=0){
 		//if((time((time_t)nullptr)-hardtime)>=one_minute){//= here is easily tested(set to 3, will wait 6 seconds if not and equal
-		if((time((time_t)nullptr)-hardtime)>one_minute){//>1
+		if((time((time_t)nullptr)-hardtime)>one_minute_less){
 			hardtime_resolve_returner(w);
 			easytime();
 		}

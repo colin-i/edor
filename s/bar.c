@@ -922,23 +922,30 @@ static void finds_total(int number,size_t y1,size_t x1,size_t xr,size_t xc,bool 
 	}
 	for(;;){
 		finding(cursor,0,here_forward?cursor:0,here_forward);//is true
-		if(ytext==y1&&xtext==x1)break;
+		if(delim_touch(y1,x1,cursor)/*true*/){//ytext==y1&&xtext==x1 is not enough,example qqq and search last 2 q (qq), will loop wrong
+			finds(true,number+(n*here_sense),-n,0);
+			break;//only at number=0: if not delim_touch and that rare case, ytext is y1,xtext is x1
+		}
 		n++;
-		if(n==max)break;
+		if(n==max){
+			finds(true,number+(n*here_sense),-n,'+');
+			break;
+		}
 	}
-	finds(true,number+(n*here_sense),-n,n!=max?0:'+');
 	wmove(w,getcury(w),getcurx(w));//print the result
 }
 
 //1,0cancel,-2resz
 static int find_core(WINDOW*w,size_t cursor,int y,size_t pos,size_t sz){
+	size_t y1=ytext;size_t x1=xtext;
+
 	finds_total(0,ytext,xtext,0,0,true,cursor,w);
+	ytext=y1;xtext=x1;
 	int number=0;
 	//number2=0;//is set inside
 	//number3=getmaxx(stdscr);//in case is required at clean. is set inside
 
 	bool forward=true;
-	size_t y1=ytext;size_t x1=xtext;
 	bool phase=false;
 	wnoutrefresh(stdscr);
 	size_t xr;size_t xc;
@@ -966,13 +973,9 @@ static int find_core(WINDOW*w,size_t cursor,int y,size_t pos,size_t sz){
 		}else if(a==KEY_RIGHT){
 			if(number2==0){//only when not knowing the total
 				if(delimiter_touched==false){//to omit last replace return if that can happen at this point
-					//keep markers
-					size_t ystart=ytext;size_t xstart=xtext;size_t xrstart=xr;size_t xcstart=xc;
-
+					size_t storeytext=ytext;size_t storextext=xtext;
 					finds_total(number,y1,x1,xr,xc,untouched,cursor,w);
-
-					//restore markers
-					ytext=ystart;xtext=xstart;xr=xrstart;xc=xcstart;
+					ytext=storeytext;xtext=storextext;
 				}
 			}
 			continue;
