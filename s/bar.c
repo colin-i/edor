@@ -895,20 +895,57 @@ static bool delimiter(size_t y1,size_t x1,int y,size_t pos,size_t sz,size_t c,bo
 #define quick_get(z) ((WINDOW**)((void*)z))[1]
 #define find_returner return a==KEY_RESIZE?-2:1;
 
+static void finds_total(int number,size_t y1,size_t x1,size_t xr,size_t xc,bool untouched,size_t cursor,WINDOW*w){
+	//set a limit
+	const size_t max=100;
+	size_t n;
+	//only depending on number not on forward
+	int here_sense;bool here_forward;
+	if(number==0){//on delimiter or after a replace at 1/-1
+		here_sense=1;
+		ytext=y1;xtext=x1;
+		n=1;
+		here_forward=true;
+	}else{
+		ytext+=xr;xtext+=xc;
+		if(number>0){
+			here_sense=1;
+			if(untouched/*true*/)n=1;
+			else n=0;
+			here_forward=true;
+		}else{
+			here_sense=-1;
+			if(untouched/*true*/)n=1;
+			else n=0;
+			here_forward=false;
+		}
+	}
+	for(;;){
+		finding(cursor,0,here_forward?cursor:0,here_forward);//is true
+		if(ytext==y1&&xtext==x1)break;
+		n++;
+		if(n==max)break;
+	}
+	finds(true,number+(n*here_sense),-n,n!=max?0:'+');
+	wmove(w,getcury(w),getcurx(w));//print the result
+}
+
 //1,0cancel,-2resz
-static int find_core(WINDOW*w,size_t cursor,size_t xr,size_t xc,int y,size_t pos,size_t sz){
+static int find_core(WINDOW*w,size_t cursor,int y,size_t pos,size_t sz){
+	finds_total(0,ytext,xtext,0,0,true,cursor,w);
+	int number=0;
+	//number2=0;//is set inside
+	//number3=getmaxx(stdscr);//in case is required at clean. is set inside
+
 	bool forward=true;
 	size_t y1=ytext;size_t x1=xtext;
 	bool phase=false;
 	wnoutrefresh(stdscr);
+	size_t xr;size_t xc;
 	centering(w,&xr,&xc)
 	bool untouched=true;bool delimiter_touched=false;
 	char prev_key=' ';
 	//bool is_for_forward=true;//last key only at next/prev/replace
-
-	int number=0;
-	number2=0;
-	number3=getmaxx(stdscr);//in case is required at clean
 
 	for(;;){
 		int a=wgetch(w);
@@ -929,44 +966,11 @@ static int find_core(WINDOW*w,size_t cursor,size_t xr,size_t xc,int y,size_t pos
 		}else if(a==KEY_RIGHT){
 			if(number2==0){//only when not knowing the total
 				if(delimiter_touched==false){//to omit last replace return if that can happen at this point
-					//set a limit
-					const size_t max=100;
 					//keep markers
 					size_t ystart=ytext;size_t xstart=xtext;size_t xrstart=xr;size_t xcstart=xc;
-					size_t n;
-					//only depending on number not on forward
-					int here_sense;bool here_forward;
-					if(number==0){//on delimiter or after a replace at 1/-1
-						here_sense=1;
-						ytext=y1;xtext=x1;xr=0;xc=cursor;
-						n=1;
-						here_forward=true;
-					}else{
-						ytext+=xr;xr=0;//xtext+=xc;xc=0;
-						if(number>0){
-							here_sense=1;
-							if(untouched/*true*/){
-								xc+=cursor;
-								n=1;
-							}else n=0;
-							here_forward=true;
-						}else{
-							here_sense=-1;
-							if(untouched/*true*/)n=1;
-							else n=0;
-							here_forward=false;
-						}
-					}
-					for(;;){
-						finding(cursor,xr,xc,here_forward);//is true
-						if(ytext==y1&&xtext==x1)break;
-						n++;
-						if(n==max)break;
-						//xr=0;//only first was with offset
-						xc=here_forward?cursor:0;//at backward must stay there
-					}
-					finds(true,number+(n*here_sense),-n,n!=max?0:'+');
-					wmove(w,getcury(w),getcurx(w));//print the result
+
+					finds_total(number,y1,x1,xr,xc,untouched,cursor,w);
+
 					//restore markers
 					ytext=ystart;xtext=xstart;xr=xrstart;xc=xcstart;
 				}
@@ -1055,12 +1059,8 @@ static int find_core(WINDOW*w,size_t cursor,size_t xr,size_t xc,int y,size_t pos
 }
 //same
 static int find(char*z,size_t cursor,size_t pos,size_t visib,int y){
-	/*warning: cast from
-      'char *' to 'size_t *' (aka
-      'unsigned int *') increases required
-      alignment from 1 to 4*/
-	/*warning: arithmetic on
-      a pointer to void is a GNU extension*/
+	//warning: cast from 'char *' to 'size_t *' (aka 'unsigned int *') increases required alignment from 1 to 4
+	//warning: arithmetic on a pointer to void is a GNU extension
 	//z+=sizeof(void*);
 	WINDOW*w=quick_get(z);
 	size_t xr=(size_t)getcury(w);
@@ -1071,7 +1071,7 @@ static int find(char*z,size_t cursor,size_t pos,size_t visib,int y){
 	colorfind(1,y,pos,sz);
 	//
 	if(finding(cursor,xr,xc,true)/*true*/){
-		int r=find_core(w,cursor,xr,xc,y,pos,sz);
+		int r=find_core(w,cursor,y,pos,sz);
 		finds_clean();
 		return r;
 	}
