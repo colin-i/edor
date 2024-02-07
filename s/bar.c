@@ -970,15 +970,6 @@ static int find_core(WINDOW*w,size_t cursor,int y,size_t pos,size_t sz){
 				if(number>0)number-=1;
 			}
 			forward=false;
-		}else if(a==KEY_RIGHT){
-			if(number2==0){//only when not knowing the total
-				if(delimiter_touched==false){//to omit last replace return if that can happen at this point
-					size_t storeytext=ytext;size_t storextext=xtext;
-					finds_total(number,y1,x1,xr,xc,untouched,cursor,w);
-					ytext=storeytext;xtext=storextext;
-				}
-			}
-			continue;
 		}else if(a==KEY_LEFT){
 			size_t iferrory=ytext;size_t iferrorx=xtext;
 			if(number3!=getmaxx(stdscr)){//in second case this can be if total is requested
@@ -1021,6 +1012,17 @@ static int find_core(WINDOW*w,size_t cursor,int y,size_t pos,size_t sz){
 			int rstart=getcury(w);
 			if(replace_text(w,rstart,getcurx(w),rstart,rstart+1)/*true*/)return -2;
 			continue;
+		}else if(a=='c'){
+			return 0;
+		}else if(a==KEY_RIGHT){
+			if(number2==0){//only when not knowing the total
+				if(delimiter_touched==false){//to omit last replace return if that can happen at this point
+					size_t storeytext=ytext;size_t storextext=xtext;
+					finds_total(number,y1,x1,xr,xc,untouched,cursor,w);
+					ytext=storeytext;xtext=storextext;
+				}
+			}
+			continue;
 		}else if(a=='R'){
 			wattrset(w,COLOR_PAIR(2));
 			int yb=getcury(w);int xb=getcurx(w);
@@ -1030,8 +1032,6 @@ static int find_core(WINDOW*w,size_t cursor,int y,size_t pos,size_t sz){
 			}
 			if(replace_text(w,yb,xb,rstart,rstop)/*true*/)return -2;
 			continue;
-		}else if(a=='c'){
-			return 0;
 		}else{
 			find_returner
 		}

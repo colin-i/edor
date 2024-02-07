@@ -21,8 +21,8 @@
 \n    if found\
 \n      Enter       = next\
 \n      Space       = previous\
-\n      Right Arrow = total\
 \n      Left Arrow  = [(next/prev)&] replace\
+\n      Right Arrow = total\
 \n      r           = reset replace text\
 \n      R           = modify replace text\
 \n    c = cancel\
