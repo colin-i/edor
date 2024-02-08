@@ -1,3 +1,9 @@
+edor (1-x50) focal; urgency=medium
+
+  * finds total at first find
+
+ -- bc <bc@bc-Type1ProductConfigId>  Thu, 08 Feb 2024 07:25:23 +0200
+
 edor (1-x49) focal; urgency=medium
 
   * total+ at finds
