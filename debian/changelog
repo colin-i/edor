@@ -1,3 +1,9 @@
+edor (1-x51) focal; urgency=medium
+
+  * fix save
+
+ -- bc <bc@bc-Type1ProductConfigId>  Tue, 13 Feb 2024 08:44:05 +0200
+
 edor (1-x50) focal; urgency=medium
 
   * finds total at first find
