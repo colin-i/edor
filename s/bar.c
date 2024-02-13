@@ -521,7 +521,7 @@ int save(){
 	if(textfile!=nullptr){
 		return saving();
 	}
-	char a=0;
+	char a=com_nr_save;
 	return command(&a);
 }
 WINDOW*position_init(){
