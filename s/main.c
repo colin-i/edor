@@ -1209,7 +1209,7 @@ static void mod_set(bool flag,chtype ch){
 }
 #define modif_visual '*'
 void mod_set_off(){
-	hardtime=time((time_t)nullptr);//cast only at non-header
+	hardtime=time((time_t*)nullptr);//cast only at non-header
 	//cannot delete mod_flag, it has meanings at undo type/bk/del sum and quit without save
 	mod_set(false,modif_visual);
 }
@@ -1274,7 +1274,7 @@ static void hardtime_resolve_returner(WINDOW*w){//argument for errors
 static void hardtime_resolve(WINDOW*w){//argument for errors
 	if(hardtime!=0){
 		//if((time((time_t)nullptr)-hardtime)>=one_minute){//= here is easily tested(set to 3, will wait 6 seconds if not and equal
-		if((time((time_t)nullptr)-hardtime)>one_minute_less){
+		if((time((time_t*)nullptr)-hardtime)>one_minute_less){
 			hardtime_resolve_returner(w);
 			easytime();
 		}
