@@ -305,8 +305,8 @@ static int inputcmp(char*S1,size_t L1,size_t l2){
 				if(charcompare(S1[i+j],inputf[j])==false)break;
 			}
 			if(j==l2)return(int)i;
-			i+=j;
-		}else i++;
+		}
+		i++;
 	}
 	return -1;
 }
@@ -354,8 +354,7 @@ static int inputrcmp(char*S1,size_t L1,size_t l2){
 					break;
 				}
 			}
-			i-=m-j;
-			if(j==0)return(int)i;
+			if(j==0)return(int)(i-m);
 		}
 	}
 	return -1;
