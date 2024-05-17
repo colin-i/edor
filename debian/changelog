@@ -1,3 +1,9 @@
+edor (1-x53) focal; urgency=medium
+
+  * fix find
+
+ -- bc <bc@bc-desktop>  Fri, 17 May 2024 08:35:26 +0300
+
 edor (1-x52) focal; urgency=medium
 
   * rn to n
