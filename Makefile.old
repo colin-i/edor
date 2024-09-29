@@ -38,4 +38,4 @@ distclean: clean
 uninstall:
 	-rm -f $(DESTDIR)$(prefix)/bin/edor
 
-.PHONY: all install clean distclean uninstall
+.PHONY: all install clean clean-compile clean-link distclean uninstall
