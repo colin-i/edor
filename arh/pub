@@ -24,4 +24,4 @@ last=$(curl https://api.github.com/repos/colin-i/$(cat debian/changelog | head -
 ~/test/arh2 ${last} 0
 
 #titles for fast going: a(){  ...  n(){ ...
-#2 code separation: o_code(|||"actionscript code file"|||) a temp file that is split saving the code
+#2 code separation: o_code("|||actionscript code file|||") a temp file that is split saving the code
