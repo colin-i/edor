@@ -1,3 +1,9 @@
+edor (1-x55) focal; urgency=medium
+
+  * same(build-essential fix)
+
+ -- bc <bc@bc-desktop>  Wed, 16 Oct 2024 15:47:50 +0300
+
 edor (1-x54) focal; urgency=medium
 
   * when bcsp/del with tabs at end ( at rowfixdel )
