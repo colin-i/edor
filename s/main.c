@@ -1529,7 +1529,7 @@ static void rowfixdel(WINDOW*w,int r,int c,row*rw,size_t i){
 			c+=tab_sz;wmove(w,r,c);
 		}
 		i++;
-		if(c==wd){
+		if(c>=wd){ //here == is not ok, if c+=tab_sz goes > then will be wrong (also, visible on display)
 			if(i<mx)content_at_right(r);
 			break;
 		}
