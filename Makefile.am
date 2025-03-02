@@ -5,6 +5,7 @@ SUBDIRS = s
 test:
 	cp -r s test
 	cd test && make clean && ./headless
+	rm -r test #it is a mirror, who can use it instead of ./s ?
 
 #install-exec-local:
 #	if [ ! -e "`cat ./bash_home`/.@PROJ@info" ]; then cp "./.@PROJ@info" "`cat ./bash_home`/" --preserve=ownership; fi
