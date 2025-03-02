@@ -15,12 +15,6 @@ grep --color "${a}" mk
 sed -i "s/${a}//g" mk
 grep --color "${a}" mk
 
-#c only headers
-a="\-DHAVE_STDBOOL_H=1 \-DHAVE_STDDEF_H=1"
-grep --color "${a}" mk
-sed -i "s/${a}//g" mk
-grep --color "${a}" mk
-
 if [ "${1}" = "1" ]; then
 	a="\-DPLATFORM64=1"
 	grep --color "${a}" mk
@@ -29,15 +23,22 @@ if [ "${1}" = "1" ]; then
 	#and  if wanting 32
 fi
 
-#here when cpp flags
 a="edor_CPPFLAGS ="
 n=`grep "^${a}" -n Makefile | grep -o "^[^:]*"`
 if [ -n "${n}" ]; then
+	#here when cpp flags
+
 	grep --color "${a}" mk
 	sed -i "${n}s/.*/${a}/" mk
 	grep --color "${a}" mk
 
 	a="\-DUSE_FS=1"
+	grep --color "${a}" mk
+	sed -i "s/${a}//g" mk
+	grep --color "${a}" mk
+else
+	#c only headers
+	a="\-DHAVE_STDBOOL_H=1 \-DHAVE_STDDEF_H=1"
 	grep --color "${a}" mk
 	sed -i "s/${a}//g" mk
 	grep --color "${a}" mk
