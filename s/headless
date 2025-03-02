@@ -1,5 +1,5 @@
 
-#1 0/nothing=64,1=32  2 remove
+#1 0/nothing=nothing,1=remove_platform_64_flag  2 remove
 
 cp Makefile mk
 
@@ -11,7 +11,6 @@ grep --color "${a}" mk
 
 #input headers
 a="\-DHAVE_DIRENT_H=1 \-DHAVE_ERRNO_H=1 \-DHAVE_FCNTL_H=1 \-DHAVE_POLL_H=1 \-DHAVE_STDIO_H=1 \-DHAVE_STDLIB_H=1 \-DHAVE_STRING_H=1 \-DHAVE_UNISTD_H=1 \-DHAVE_TIME_H=1 \-DHAVE_SYS_STAT_H=1 \-DHAVE_CURSES_H=1"
-#at cpp += \-DUSE_FS=1
 grep --color "${a}" mk
 sed -i "s/${a}//g" mk
 grep --color "${a}" mk
@@ -23,11 +22,25 @@ sed -i "s/${a}//g" mk
 grep --color "${a}" mk
 
 if [ "${1}" = "1" ]; then
-a="\-DPLATFORM64=1"
-grep --color "${a}" mk
-sed -i "s/${a}//g" mk
-grep --color "${a}" mk
-#and  if wanting 32
+	a="\-DPLATFORM64=1"
+	grep --color "${a}" mk
+	sed -i "s/${a}//g" mk
+	grep --color "${a}" mk
+	#and  if wanting 32
+fi
+
+#here when cpp flags
+a="edor_CPPFLAGS ="
+n=`grep "^${a}" -n Makefile | grep -o "^[^:]*"`
+if [ -n "${n}" ]; then
+	grep --color "${a}" mk
+	sed -i "${n}s/.*/${a}/" mk
+	grep --color "${a}" mk
+
+	a="\-DUSE_FS=1"
+	grep --color "${a}" mk
+	sed -i "s/${a}//g" mk
+	grep --color "${a}" mk
 fi
 
 make -f mk

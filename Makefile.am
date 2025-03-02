@@ -5,3 +5,9 @@ SUBDIRS = s
 
 #uninstall-local:
 #	if [ -e "`cat ./bash_home`/.@PROJ@info" ]; then rm "`cat ./bash_home`/.@PROJ@info"; fi
+
+#here will add
+.PHONY: test
+test:
+	cp -r s test
+	cd test && make clean && ./headless
