@@ -14,18 +14,20 @@ bool paste(size_t,size_t,size_t*,char*,size_t,size_t,bool);
 void printinverted(const char*s);
 void refreshrowsbot(WINDOW*,int,int);
 #define refreshrows(w,i) refreshrowsbot(w,i,getmaxy(w))
-#define refreshpage(w) refreshrows(w,0)
 void restore_rebase();
 bool row_alloc(row*,size_t,size_t,size_t);
 void row_set(row*,size_t,size_t,size_t,const char*);
 size_t sizemembuf(size_t,size_t,size_t,size_t);
 void vis(char,WINDOW*);
 //tw
-int movment(int,WINDOW*);
 int xc_to_c(size_t,int);
-//bar,tw
+//bar,tit
+#define refreshpage(w) refreshrows(w,0)
+//bar,tw,tit
 void visual(char);
 void fixed_yx(size_t*,size_t*,int,int);
+//tw,tit
+int movment(int,WINDOW*);
 
 //bar
 //main
@@ -67,7 +69,13 @@ void centering3(WINDOW*,size_t*,size_t*,bool);
 size_t centeringy(WINDOW*);
 
 //tw
+//main
 bool text_wrap(WINDOW*);
+//tit
+void extra_unlock(size_t,size_t,WINDOW*);
+
+//tit
+bool titles(WINDOW*);
 
 //main,bar
 extern char ln_term[3];
@@ -76,11 +84,16 @@ extern char*textfile;
 extern bool mod_flag;
 extern bool issensitive;
 extern char*ocode_extension;
-//main,bar,tw
+//main,bar,tw,tit
 extern row*rows;
 extern size_t rows_tot;
 extern size_t ytext;
 extern size_t xtext;
-//main,tw
+//main,tw,tit
 extern bool ocompiler_flag;
 extern size_t aftercall;
+//tw,tit
+extern row*rowswrap;
+extern row*store_rows;
+extern size_t store_rows_tot;
+extern size_t store_aftercall;

@@ -29,6 +29,7 @@
 \n    other key to return\
 \nCtrl+u = undo; Alt+u = undo mode: left=undo,right=redo,other key to return\
 \nCtrl+r = redo\
+\nCtrl+h = titles (movement, Enter at done)\
 \nCtrl+w = text wrapping (movement. another key to return)\
 \nCtrl+e = enable/disable internal mouse/touch\
 \nCtrl+n = disable/enable indentation\
@@ -601,6 +602,7 @@ static int home(WINDOW*w,size_t r){
 	}
 	return c;
 }
+
 int xc_to_c(size_t col,int r){
 	int*p=&tabs[tabs_rsz*r];
 	int n=p[0];
@@ -637,6 +639,11 @@ void fixed_yx(size_t*y,size_t*x,int r,int c){
 	*x=xtext+c_to_xc(c,r);
 	fixmembuf(y,x);
 }
+/*void fixed_x(size_t y,size_t*x,int r,int c){
+	*x=xtext+c_to_xc(c,r);
+	size_t sz=rows[y].sz;
+	if(*x>sz)*x=sz;
+}*/
 
 static bool is_wordchar(char a){
 	return is_word_char(a);
@@ -2112,18 +2119,16 @@ static bool loopin(WINDOW*w){
 			}
 		}else{
 			//QWERTyUioP
-			//ASdFGhjkl
+			//ASdFGHjkl
 			// zxcVbNm
 			const char*s=keyname(c);
 			if(strcmp(s,"^V")==0){
 				if(visual_mode(w,false)/*true*/)return true;
-			}
-			else if(strcmp(s,"^P")==0)past(w);
+			}else if(strcmp(s,"^P")==0)past(w);
 			else if((strcmp(s,"^S")==0)){
 				bool b=savetofile(w,true);
 				if(b/*true*/)return true;
-			}
-			else if(strcmp(s,"^G")==0){
+			}else if(strcmp(s,"^G")==0){
 				char aa=com_nr_goto;
 				if(goto_mode(&aa,w)/*true*/)return true;
 			}else if(strcmp(s,"^F")==0){
@@ -2134,20 +2139,9 @@ static bool loopin(WINDOW*w){
 				undo(w);
 			}else if(strcmp(s,"^R")==0){
 				redo(w);
-			}else if(strcmp(s,"KEY_F(1)")==0){
-				int cy=getcury(w);int cx=getcurx(w);
-				phelp=0;
-				int i=helpshow(0);
-				int mx=getmaxy(stdscr)-2;
-				for(;i<mx;i++){move(i,0);clrtoeol();}
-				move(mx,3);clrtoeol();
-				if(helpin(w)/*true*/){
-					ungetch(c);
-					return true;
-				}
-				wmove(w,cy,cx);
-			}
-			else if(strcmp(s,"^Q")==0){
+			}else if(strcmp(s,"^H")==0){
+				if(titles(w)/*true*/)return true;
+			}else if(strcmp(s,"^Q")==0){
 				if(mod_flag==false){
 					bar_clear();//errors
 					int q=question("And save");
@@ -2164,42 +2158,49 @@ static bool loopin(WINDOW*w){
 				}
 				if(restorefile!=nullptr)unlink(restorefile);//here restorefile is deleted
 				return false;
-			}
-			else if(strcmp(s,"^E")==0){
+			}else if(strcmp(s,"^E")==0){
 				bool b;char c;
 				if(stored_mouse_mask==0){stored_mouse_mask=mousemask(ALL_MOUSE_EVENTS,nullptr);c='E';}//;b=false
 				else{stored_mouse_mask=mousemask(0,nullptr);c='e';}//;b=true
 				setprefs(mask_mouse,!stored_mouse_mask);
 				vis(c,w);
-			}
-			else if(strcmp(s,"^N")==0){
+			}else if(strcmp(s,"^N")==0){
 				char c;
 				if(indent_flag/*true*/){indent_flag=false;c='n';}
 				else{indent_flag=true;c='N';}
 				setprefs(mask_indent,indent_flag);
 				vis(c,w);//is not showing on stdscr without wnoutrefresh(thisWindow)
-			}
-			else if(strcmp(s,"^T")==0){
+			}else if(strcmp(s,"^T")==0){
 				bool b;char c;
 				if(issensitive/*true*/){issensitive=false;c='T';}
 				else{issensitive=true;c='t';}
 				setprefs(mask_insensitive,issensitive);
 				vis(c,w);//is not showing on stdscr without wnoutrefresh(thisWindow)
-			}
-			else if(strcmp(s,"^A")==0){
+			}else if(strcmp(s,"^A")==0){
 				if(ocompiler_flag/*true*/){ocompiler_flag=false;c='a';}
 				else{ocompiler_flag=true;c='A';
 					aftercall=aftercall_find();}
 				setprefs(mask_ocompiler,!ocompiler_flag);
 				visual(c);//addch for more info, first to window, then wnoutrefresh to virtual, then doupdate to phisical
 				aftercall_draw(w);
-			}
-			else if(strcmp(s,"^W")==0){if(text_wrap(w)/*true*/)return true;}
+			}else if(strcmp(s,"^W")==0){if(text_wrap(w)/*true*/)return true;}
 
 			//i saw these only when mousemask is ALL_MOUSE_EVENTS : focus in, focus out
 			else if(strcmp(s,"kxIN")==0||strcmp(s,"kxOUT")==0){}
 
-			else type(c,w);
+			else if(strcmp(s,"KEY_F(1)")==0){
+				int cy=getcury(w);int cx=getcurx(w);
+				phelp=0;
+				int i=helpshow(0);
+				int mx=getmaxy(stdscr)-2;
+				for(;i<mx;i++){move(i,0);clrtoeol();}
+				move(mx,3);clrtoeol();
+				if(helpin(w)/*true*/){
+					ungetch(c);
+					return true;
+				}
+				wmove(w,cy,cx);
+			}else type(c,w);
 			//continue;
 		}
 	}

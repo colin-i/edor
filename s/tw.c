@@ -20,16 +20,16 @@ typedef struct{
 	size_t xtext;
 }rowwrap;//is used as an array allocated, to combine need to add this at row, memory waste
 
-static row*rowswrap;
-static row*store_rows;
-static size_t store_rows_tot;
-static size_t store_aftercall;
+row*rowswrap;
+row*store_rows;
+size_t store_rows_tot;
+size_t store_aftercall;
 
-static void tw_unlock(size_t y,size_t x,WINDOW*w){
+void extra_unlock(size_t y,size_t x,WINDOW*w){
 	//restore variables
 	rows=store_rows;
 	rows_tot=store_rows_tot;
-	if(ocompiler_flag/**/){
+	if(ocompiler_flag/*true*/){
 		aftercall=store_aftercall;
 	}
 	ytext=y;
@@ -44,7 +44,7 @@ bool text_wrap(WINDOW*w){
 	int max=getmaxx(w);
 	size_t n=0;
 	for(size_t i=0;i<rows_tot;i++){
-		if(ocompiler_flag/**/){
+		if(ocompiler_flag/*true*/){
 			if(i==aftercall)aftercall_aux=n;
 		}
 		row*r=&rows[i];
@@ -127,7 +127,7 @@ bool text_wrap(WINDOW*w){
 		//tw store some variables
 		store_rows=rows;rows=rowswrap;
 		store_rows_tot=rows_tot;rows_tot=j;
-		if(ocompiler_flag/**/){
+		if(ocompiler_flag/*true*/){
 			store_aftercall=aftercall;aftercall=aftercall_aux;
 		}
 
@@ -141,14 +141,14 @@ bool text_wrap(WINDOW*w){
 		do{
 			int b=wgetch(w);
 			z=movment(b,w);
-			if(z==1){tw_unlock(rowswrap_add[y].ytext,rowswrap_add[y].xtext+x,w);return true;}
+			if(z==1){extra_unlock(rowswrap_add[y].ytext,rowswrap_add[y].xtext+x,w);return true;}
 
 			fixed_yx(&y,&x,getcury(w),getcurx(w));
 			position_core(rowswrap_add[y].ytext,rowswrap_add[y].xtext+x);
 		}while(z!=0);
 
 		visual(' ');
-		tw_unlock(rowswrap_add[y].ytext,rowswrap_add[y].xtext+x,w);
+		extra_unlock(rowswrap_add[y].ytext,rowswrap_add[y].xtext+x,w);
 	}
 	return false;
 }

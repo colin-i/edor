@@ -16,7 +16,6 @@ extern "C" {
 
 //main/bar
 int move(int,int);
-int wmove(WINDOW*,int,int);
 int getch(void);
 int getmaxy(const WINDOW*);
 int addch(const chtype);
@@ -31,10 +30,12 @@ int wattrset(WINDOW*,int);
 int COLOR_PAIR(int);
 WINDOW*newwin(int,int,int,int);
 //main/bar/tw
+int getmaxx(const WINDOW*);
+//main/bar/tw/tit
 int getcurx(const WINDOW*);
 int getcury(const WINDOW*);
-int getmaxx(const WINDOW*);
 int wgetch(WINDOW*);
+int wmove(WINDOW*,int,int);
 
 #ifdef __cplusplus
 }
