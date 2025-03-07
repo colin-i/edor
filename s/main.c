@@ -29,7 +29,7 @@
 \n    other key to return\
 \nCtrl+u = undo; Alt+u = undo mode: left=undo,right=redo,other key to return\
 \nCtrl+r = redo\
-\nCtrl+h = titles (movement, Enter at done)\
+\nCtrl+h = titles (movement, Enter at done, other keys to search)\
 \nCtrl+w = text wrapping (movement. another key to return)\
 \nCtrl+e = enable/disable internal mouse/touch\
 \nCtrl+n = disable/enable indentation\
@@ -302,13 +302,13 @@ void refreshrowsbot(WINDOW*w,int i,int maxy){
 			//was moved inside tab_grow
 
 			if(ocompiler_flag/*true*/){
-				if(aftercall<=j)printsyntax(4,i);
-				else printsyntax(0,i);//when coming back
-			}else printsyntax(0,i);//when coming back
+				if(aftercall<=j)printsyntax(color_d,i);
+				else printsyntax(color_0,i);//when coming back
+			}else printsyntax(color_0,i);//when coming back
 		}else{
 			x_right[i]=false;
 			wclrtoeol(w);
-			printsyntax(3,i);
+			printsyntax(color_c,i);
 		}
 		mvwaddch(leftcontent,i,0,at_left);
 		mvwaddch(rightcontent,i,0,at_right);
@@ -408,7 +408,7 @@ static void vdNmove(WINDOW*w,int y,size_t n){
 }
 #define vd1move(w,y) vdNmove(w,y,1)
 void printinverted(const char*s){
-	attrset(COLOR_PAIR(1));
+	attrset(COLOR_PAIR(color_a));
 	addstr(s);
 	//attr set here,cause,print"   "
 	attrset(0);
@@ -1006,7 +1006,7 @@ static void setmembuf(size_t y,size_t x,bool*orig,size_t*yb,size_t*xb,size_t*ye,
 	}
 }
 static void unsel(WINDOW*w){
-	sel(w,0,0,_rb,_cb,_re,_ce);
+	sel(w,color_0,color_0,_rb,_cb,_re,_ce);
 }
 static void difsel(WINDOW*w,int rb,int cb,int re,int ce){
 	bool a;bool b;
@@ -1028,7 +1028,7 @@ static void difsel(WINDOW*w,int rb,int cb,int re,int ce){
 		a=false;
 	}
 	if(a/*true*/)unsel(w);
-	if(b/*true*/)sel(w,1,2,rb,cb,re,ce);
+	if(b/*true*/)sel(w,color_a,color_b,rb,cb,re,ce);
 }
 static void printsel(WINDOW*w,size_t ybsel,size_t xbsel,size_t yesel,size_t xesel,bool care){
 	int wd=getmaxx(w);
@@ -1064,7 +1064,7 @@ static void printsel(WINDOW*w,size_t ybsel,size_t xbsel,size_t yesel,size_t xese
 		}
 	}
 	ce++;
-	if(care/*true*/)sel(w,1,2,rb,cb,re,ce);
+	if(care/*true*/)sel(w,color_a,color_b,rb,cb,re,ce);
 	else difsel(w,rb,cb,re,ce);
 	wattrset(w,0);
 	_rb=rb;_cb=cb;
@@ -1191,14 +1191,14 @@ static void row_del(size_t a,size_t b,int r){
 		else if(b<aftercall)aftercall-=diff;
 		else if(b==aftercall){
 			aftercall-=diff;
-			if(r!=-1)printsyntax(4,r);//at backspace when moving one row up
+			if(r!=-1)printsyntax(color_d,r);//at backspace when moving one row up
 			//this r -1 is from backspacing first row on screen
 		}
 		else{
 			aftercall=rows_tot;//will be redrawn in the next functions
 			//on select all will be ok
 			//on backspace,delete need to set the current row, anyway on select is not fast without r=-1
-			if(r!=-1)printsyntax(0,r);
+			if(r!=-1)printsyntax(color_0,r);
 		}
 	}
 }
@@ -2467,10 +2467,10 @@ static void writefilebuf(char*cutbuf_file){
 }
 static void color(){
 	if(start_color()!=ERR){
-		if(init_pair(1,COLOR_BLACK,COLOR_WHITE)!=ERR){//TERM vt100
-			if(init_pair(2,COLOR_BLACK,COLOR_CYAN)!=ERR){
-				if(init_pair(3,COLOR_BLACK,COLOR_GREEN)!=ERR){
-					init_pair(4,COLOR_BLACK,COLOR_YELLOW);
+		if(init_pair(color_a,COLOR_BLACK,COLOR_WHITE)!=ERR){//TERM vt100
+			if(init_pair(color_b,COLOR_BLACK,COLOR_CYAN)!=ERR){
+				if(init_pair(color_c,COLOR_BLACK,COLOR_GREEN)!=ERR){
+					init_pair(color_d,COLOR_BLACK,COLOR_YELLOW);
 				}
 			}
 		}

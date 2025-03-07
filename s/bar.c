@@ -880,12 +880,12 @@ static void finds(bool phase,int number,int number_fix,char extra){//,bool*heade
 static bool delim_touch(size_t y1,size_t x1,size_t c){return ytext==y1&&(xtext==x1||(xtext<x1&&xtext+c>x1));}
 static bool delimiter(size_t y1,size_t x1,int y,size_t pos,size_t sz,size_t c,bool phase){
 	if(delim_touch(y1,x1,c)/*true*/){
-		colorfind(2,y,pos,sz);
+		colorfind(color_b,y,pos,sz);
 		wnoutrefresh(stdscr);
 		return true;
 	}
 	if(phase/*true*/){
-		colorfind(1,y,pos,sz);
+		colorfind(color_a,y,pos,sz);
 		wnoutrefresh(stdscr);
 	}
 	return false;
@@ -1007,7 +1007,7 @@ static int find_core(WINDOW*w,size_t cursor,int y,size_t pos,size_t sz){
 			}
 			return 1;
 		}else if(a=='r'){
-			cursorr=0;wattrset(w,COLOR_PAIR(2));
+			cursorr=0;wattrset(w,COLOR_PAIR(color_b));
 			int rstart=getcury(w);
 			if(replace_text(w,rstart,getcurx(w),rstart,rstart+1)/*true*/)return -2;
 			continue;
@@ -1023,7 +1023,7 @@ static int find_core(WINDOW*w,size_t cursor,int y,size_t pos,size_t sz){
 			}
 			continue;
 		}else if(a=='R'){
-			wattrset(w,COLOR_PAIR(2));
+			wattrset(w,COLOR_PAIR(color_b));
 			int yb=getcury(w);int xb=getcurx(w);
 			int rstart=yb;int rstop=yb+1;
 			for(size_t i=0;i<cursorr;i++){
@@ -1070,7 +1070,7 @@ static int find(char*z,size_t cursor,size_t pos,size_t visib,int y){
 	//
 	size_t sz=cursor-pos;
 	if(sz>visib)sz=visib;
-	colorfind(1,y,pos,sz);
+	colorfind(color_a,y,pos,sz);
 	//
 	if(finding(cursor,xr,xc,true)/*true*/){
 		int r=find_core(w,cursor,y,pos,sz);

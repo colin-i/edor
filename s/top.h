@@ -48,3 +48,9 @@ typedef struct{
 #define command_return_ok 1
 
 #define comnrp_define char*
+
+#define color_0 0
+#define color_a 1
+#define color_b 2
+#define color_c 3
+#define color_d 4
