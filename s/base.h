@@ -21,6 +21,8 @@ size_t sizemembuf(size_t,size_t,size_t,size_t);
 void vis(char,WINDOW*);
 //tw
 int xc_to_c(size_t,int);
+//tit
+void fixed_x(size_t,size_t*,int,int);
 //bar,tit
 #define refreshpage(w) refreshrows(w,0)
 //bar,tw,tit
@@ -66,6 +68,7 @@ size_t init_aftercall();
 //tw
 void position_core(size_t,size_t);
 void centering3(WINDOW*,size_t*,size_t*,bool);
+//tw,tit
 size_t centeringy(WINDOW*);
 
 //tw

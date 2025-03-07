@@ -639,11 +639,11 @@ void fixed_yx(size_t*y,size_t*x,int r,int c){
 	*x=xtext+c_to_xc(c,r);
 	fixmembuf(y,x);
 }
-/*void fixed_x(size_t y,size_t*x,int r,int c){
+void fixed_x(size_t y,size_t*x,int r,int c){
 	*x=xtext+c_to_xc(c,r);
 	size_t sz=rows[y].sz;
 	if(*x>sz)*x=sz;
-}*/
+}
 
 static bool is_wordchar(char a){
 	return is_word_char(a);

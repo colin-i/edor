@@ -12,6 +12,11 @@
 #else
 #include"inc/curses.h"
 #endif
+#ifdef HAVE_STRING_H
+#include<string.h>
+#else
+#include"inc/tit/string.h"
+#endif
 
 #include "base.h"
 
@@ -85,25 +90,27 @@ bool titles(WINDOW*w){
 				break;
 			}
 			//find next row start same as [0,x)+b and wmove there
-			/*if(y<rows_tot){
-				row*rw=rows[y];
+			if(y<rows_tot){
+				row*rw=&rows[y];
 				char*data=rw->data;
-				size_t x=fixed_x(y,&x,r,getcurx(w));
+				size_t sz;
+				int c=getcurx(w);
+				fixed_x(y,&sz,r,c);
 				y++;
 				while(y<rows_tot){
-					row*rw2=rows[y];
-					size_t sz2=rw2->sz;
-					if(sz2>sz){//only if +b
+					row*rw2=&rows[y];
+					if(rw2->sz>sz){//only if +b
 						if(memcmp(data,rw2->data,sz)==0){
 							if(rw2->data[sz]==b){
 								ytext=y;
-								centeringy(w);
+								wmove(w,centeringy(w),c);
+								break;
 							}
 						}
 					}
 					y++;
 				}
-			}*/
+			}
 		}while(true);
 
 		visual(' ');
