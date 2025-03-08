@@ -165,6 +165,11 @@ void err_set(WINDOW*w){
 		wmove(w,getcury(w),getcurx(w));//newpath+save
 	}
 }
+void bar_char(char c,WINDOW*w){
+	mvaddch(getmaxy(stdscr)-1,com_left,c);
+	wnoutrefresh(stdscr);wmove(w,getcury(w),getcurx(w));//refresh() is moving down
+}
+
 int open_new(char*path){
 	return open(path,O_CREAT|O_WRONLY|O_TRUNC,S_IRUSR|S_IWUSR);
 }
@@ -433,9 +438,9 @@ void centering3(WINDOW*w,size_t*prw,size_t*pxc,bool right){
 		prw[0]=hg;pxc[0]=xc-xtext;
 	}
 }
-size_t centeringy(WINDOW*w){
-	size_t hg=(size_t)getmaxy(w)/2;
-	if((int)(ytext-hg)<0){hg=ytext;ytext=0;}
+int centeringy(WINDOW*w){
+	int hg=getmaxy(w)/2;
+	if(ytext<hg){hg=ytext;ytext=0;}
 	else ytext=ytext-hg;
 	refreshpage(w);
 	return hg;
@@ -443,7 +448,7 @@ size_t centeringy(WINDOW*w){
 static void colorfind(int a,int y,size_t pos,size_t sz){
 	attrset(COLOR_PAIR(a));
 	mvaddnstr(y,com_left,inputf+pos,(int)sz);
-	attrset(0);
+	attrset(color_0);
 }
 static void replace_text_add(WINDOW*w,chtype c,int*rstart,int*rstop){
 	int cx=getcurx(w);

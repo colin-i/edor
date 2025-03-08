@@ -57,7 +57,6 @@ bool undo_bcsp(size_t,size_t,size_t,size_t);
 bool undo_delk(size_t,size_t,size_t,size_t);
 void undo_loop(WINDOW*);
 bool new_visual(char*);
-bool bar_clear(void);
 bool is_dir(int);
 void err_set(WINDOW*);
 int open_new(char*);
@@ -68,8 +67,12 @@ size_t init_aftercall();
 //tw
 void position_core(size_t,size_t);
 void centering3(WINDOW*,size_t*,size_t*,bool);
+//tit
+void bar_char(char,WINDOW*);
+//main,tit
+bool bar_clear(void);
 //tw,tit
-size_t centeringy(WINDOW*);
+int centeringy(WINDOW*);
 
 //tw
 //main

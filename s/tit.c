@@ -20,6 +20,12 @@
 
 #include "base.h"
 
+static void titcolor(char b,char*color,WINDOW*w){
+	bar_char(b,w);
+	if(*color==color_0)*color=color_a;else *color=color_0;
+	attrset(COLOR_PAIR(*color));
+}
+
 bool titles(WINDOW*w){
 	//calculate rows required
 	size_t n=0;
@@ -70,11 +76,13 @@ bool titles(WINDOW*w){
 		ytext=0;xtext=0;
 
 		//visual
+		bar_clear();
 		visual('H');
 		refreshpage(w);//visual shows now only with this
 		wmove(w,0,0);  //                        or this
 
 		//loop
+		char color=color_0;
 		int z;
 		do{
 			int b=wgetch(w);
@@ -90,6 +98,7 @@ bool titles(WINDOW*w){
 				break;
 			}
 			//find next row start same as [0,x)+b and wmove there
+			titcolor(b,&color,w);
 			if(y<rows_tot){
 				row*rw=&rows[y];
 				char*data=rw->data;
@@ -113,6 +122,8 @@ bool titles(WINDOW*w){
 			}
 		}while(true);
 
+		if(color!=color_0)attrset(color_0);//reset back
+		bar_char(' ',w);//and clear, can set new_v or err for later clear but is extra
 		visual(' ');
 		extra_unlock(orig_ytext,orig_xtext,w);
 	}

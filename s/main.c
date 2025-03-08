@@ -411,7 +411,7 @@ void printinverted(const char*s){
 	attrset(COLOR_PAIR(color_a));
 	addstr(s);
 	//attr set here,cause,print"   "
-	attrset(0);
+	attrset(color_0);
 }
 static void helpposition(){
 	move(getmaxy(stdscr)-2,0);
@@ -2271,12 +2271,14 @@ static bool grab_file(char*f,size_t*text_sz){
 		}
 		else{
 			size_t size=(size_t)lseek(fd,0,SEEK_END);
-			text_init_b=(char*)malloc(size);
-			if(text_init_b!=nullptr){
-				lseek(fd,0,SEEK_SET);
-				read(fd,text_init_b,size);
-				text_sz[0]=size;
-				fake=false;
+			if(size!=-1){
+				text_init_b=(char*)malloc(size);
+				if(text_init_b!=nullptr){
+					lseek(fd,0,SEEK_SET);
+					read(fd,text_init_b,size);
+					text_sz[0]=size;
+					fake=false;
+				}
 			}
 		}
 		close(fd);
@@ -2373,7 +2375,7 @@ static void getfilebuf(char*cutbuf_file){//,size_t off){
 	}*/
 	if(f!=-1){
 		size_t sz=(size_t)lseek(f,0,SEEK_END);
-		if(sz!=0){
+		if(sz!=0&&sz!=-1){
 			char*v=(char*)malloc(sz);
 			if(v!=nullptr){
 				lseek(f,0,SEEK_SET);
