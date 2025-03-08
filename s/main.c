@@ -2119,8 +2119,8 @@ static bool loopin(WINDOW*w){
 			}
 		}else{
 			//QWERTyUioP
-			//ASdFGHjkl
-			// zxcVbNm
+			//ASdFGHJkl
+			// zxCVbNm
 			const char*s=keyname(c);
 			if(strcmp(s,"^V")==0){
 				if(visual_mode(w,false)/*true*/)return true;
@@ -2180,9 +2180,15 @@ static bool loopin(WINDOW*w){
 				if(ocompiler_flag/*true*/){ocompiler_flag=false;c='a';}
 				else{ocompiler_flag=true;c='A';
 					aftercall=aftercall_find();}
-				setprefs(mask_ocompiler,!ocompiler_flag);
+				setprefs(mask_ocompiler,ocompiler_flag);
 				visual(c);//addch for more info, first to window, then wnoutrefresh to virtual, then doupdate to phisical
 				aftercall_draw(w);
+			//}else if(strcmp(s,"^J")==0){//joins //alt j is set delimiter |||file.as||| to //|||file.as\nfile content\n//|||
+			//	char c;
+			//	if(splits_flag/*true*/){splits_flag=false;c='j';}
+			//	else{splits_flag=true;c='J';}
+			//	setprefs(mask_splits,splits_flag);
+			//	vis(c,w);
 			}else if(strcmp(s,"^W")==0){if(text_wrap(w)/*true*/)return true;}
 
 			//i saw these only when mousemask is ALL_MOUSE_EVENTS : focus in, focus out
@@ -2319,7 +2325,6 @@ static bool valid_ln_term(int argc,char**argv,bool*not_forced){
 //same as normalize
 static int startfile(char*argfile,int argc,char**argv,size_t*text_sz,bool no_file,bool no_input,bool not_forced){
 	if(no_file==false)if(grab_file(argfile,text_sz)/*true*/)return 0;
-
 	if(no_input==false){
 		if(no_file/*true*/){
 			text_init_b=(char*)malloc(0);
@@ -2329,6 +2334,9 @@ static int startfile(char*argfile,int argc,char**argv,size_t*text_sz,bool no_fil
 		//else will be appended to existing file
 		if(grab_input(text_sz)/*true*/)return 0;
 	}
+
+	//split_grab || 0
+
 	if(not_forced/*true*/){
 		size_t i=*text_sz;
 		while(i>0){
@@ -2396,7 +2404,7 @@ static void getprefs(){
 			if((mask&mask_mouse)==0)stored_mouse_mask=mousemask(ALL_MOUSE_EVENTS,nullptr);
 			if((mask&mask_indent)==0)indent_flag=false;
 			if((mask&mask_insensitive)==0)issensitive=false;
-			if((mask&mask_ocompiler)==0)ocompiler_flag=true;
+			if((mask&mask_ocompiler)!=0)ocompiler_flag=true;
 			unsigned char len;
 			if(read(f,&len,extlen_size)==extlen_size){
 				ocode_extension_new=(char*)malloc(len+1);
