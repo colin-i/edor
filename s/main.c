@@ -2327,7 +2327,7 @@ static int startfile(char*argfile,int argc,char**argv,size_t*text_sz,bool no_fil
 	if(no_file==false)if(grab_file(argfile,text_sz)/*true*/)return 0;
 	if(no_input==false){
 		if(no_file/*true*/){
-			text_init_b=(char*)malloc(0);
+			text_init_b=(char*)malloc(1);//1 is for some systems that at malloc(0) are returning null
 			if(text_init_b==nullptr)return 0;
 			*text_sz=0;
 		}
@@ -2335,29 +2335,29 @@ static int startfile(char*argfile,int argc,char**argv,size_t*text_sz,bool no_fil
 		if(grab_input(text_sz)/*true*/)return 0;
 	}
 
-	//split_grab || 0
-
-	if(not_forced/*true*/){
-		size_t i=*text_sz;
-		while(i>0){
-			i--;
-			if(text_init_b[i]=='\n'){
-				if(i!=0&&text_init_b[i-1]=='\r'){
+	//if(split_grab(&text_init_b,text_sz)/*true*/){
+		if(not_forced/*true*/){
+			size_t i=*text_sz;
+			while(i>0){
+				i--;
+				if(text_init_b[i]=='\n'){
+					if(i!=0&&text_init_b[i-1]=='\r'){
+						ln_term[0]='\r';
+						ln_term[1]='\n';
+						ln_term[2]='\0';
+						ln_term_sz=2;
+					}
+					break;
+				}else if(text_init_b[i]=='\r'){
 					ln_term[0]='\r';
-					ln_term[1]='\n';
-					ln_term[2]='\0';
-					ln_term_sz=2;
+					break;
 				}
-				break;
-			}else if(text_init_b[i]=='\r'){
-				ln_term[0]='\r';
-				break;
 			}
+			return normalize(&text_init_b,text_sz,&rows_tot);
 		}
-		return normalize(&text_init_b,text_sz,&rows_tot);
-	}
-	if(normalize(&text_init_b,text_sz,&rows_tot)==0)return 0;
-	return 1;
+		if(normalize(&text_init_b,text_sz,&rows_tot)!=0)return 1;
+	//}
+	return 0;
 }
 static bool help_init(char*f,size_t szf){
 	size_t sz1=sizeof(hel1)-1;

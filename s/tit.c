@@ -7,15 +7,15 @@
 #else
 #include"inc/tit/stdlib.h"
 #endif
-#ifdef HAVE_CURSES_H
-#include<curses.h>
-#else
-#include"inc/curses.h"
-#endif
 #ifdef HAVE_STRING_H
 #include<string.h>
 #else
 #include"inc/tit/string.h"
+#endif
+#ifdef HAVE_CURSES_H
+#include<curses.h>
+#else
+#include"inc/curses.h"
 #endif
 
 #include "base.h"

@@ -83,6 +83,9 @@ void extra_unlock(size_t,size_t,WINDOW*);
 //tit
 bool titles(WINDOW*);
 
+//split
+bool split_grab(char**,size_t*);
+
 //main,bar
 extern char ln_term[3];
 extern size_t ln_term_sz;
