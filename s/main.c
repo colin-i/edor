@@ -2247,6 +2247,14 @@ static int normalize(char**c,size_t*size,size_t*r){
 	}
 	return ok;
 }
+//same as normalize
+#define normalize_split(c,s,r) normalize(c,s,r)
+//static int normalize_split(char**c,size_t*size,size_t*r){
+//	if(split_grab(c,s)/*true*/){//if at normalize will work also in open cutbufs but will error at explodes there(save cutbuf with explodes)
+//		return normalize(c,s,r);
+//	}
+//	return 0;
+//}
 static void rows_init(size_t size){
 	char*b=&text_init_b[size];
 	row*z=&rows[0];
@@ -2337,7 +2345,7 @@ static int startfile(char*argfile,int argc,char**argv,size_t*text_sz,bool no_fil
 
 	if(not_forced/*true*/){
 		size_t i=*text_sz;
-		while(i>0){
+		while(i>0){ //only one \n or \r to detect
 			i--;
 			if(text_init_b[i]=='\n'){
 				if(i!=0&&text_init_b[i-1]=='\r'){
@@ -2352,15 +2360,9 @@ static int startfile(char*argfile,int argc,char**argv,size_t*text_sz,bool no_fil
 				break;
 			}
 		}
+		return normalize_split(&text_init_b,text_sz,&rows_tot);
 	}
-
-	//if(split_grab(&text_init_b,text_sz)/*true*/){//if at normalize will work also in open cutbufs but will error at explodes there(save cutbuf with explodes)
-		char nr=normalize(&text_init_b,text_sz,&rows_tot);
-		if(nr!=0){
-			if(not_forced/*true*/)return nr;
-			return 1;
-		}
-	//}
+	if(normalize_split(&text_init_b,text_sz,&rows_tot)!=0)return 1;
 	return 0;
 }
 static bool help_init(char*f,size_t szf){
