@@ -8,15 +8,15 @@
 
 #include "top.h" //bool,nullptr,etc
 
-#ifdef HAVE_STDLIB_H
-#include<stdlib.h>
-#else
-#include"inc/stdlib.h"
-#endif
 #ifdef HAVE_STDIO_H
 #include<stdio.h>
 #else
 #include"inc/stdio.h"
+#endif
+#ifdef HAVE_STDLIB_H
+#include<stdlib.h>
+#else
+#include"inc/stdlib.h"
 #endif
 #ifdef HAVE_STRING_H
 #include<string.h>

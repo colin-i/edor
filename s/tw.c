@@ -9,15 +9,15 @@
 #include "top.h"
 //bool,nullptr,...
 
-#ifdef HAVE_STDLIB_H
-#include<stdlib.h>
-#else
-#include"inc/stdlib.h"
-#endif
 #ifdef HAVE_CURSES_H
 #include<curses.h>
 #else
 #include"inc/curses.h"
+#endif
+#ifdef HAVE_STDLIB_H
+#include<stdlib.h>
+#else
+#include"inc/stdlib.h"
 #endif
 
 #include "base.h"

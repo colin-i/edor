@@ -9,6 +9,11 @@
 #include "top.h"
 //bool,nullptr,...
 
+#ifdef HAVE_CURSES_H
+#include<curses.h>
+#else
+#include"inc/curses.h"
+#endif
 #ifdef HAVE_STDLIB_H
 #include<stdlib.h>
 #else
@@ -18,11 +23,6 @@
 #include<string.h>
 #else
 #include"inc/string.h"
-#endif
-#ifdef HAVE_CURSES_H
-#include<curses.h>
-#else
-#include"inc/curses.h"
 #endif
 
 #include "base.h"

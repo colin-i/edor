@@ -46,6 +46,11 @@
 
 #include "top.h"
 
+#ifdef HAVE_CURSES_H
+#include<curses.h>
+#else
+#include"inc/main/curses.h"
+#endif
 #ifdef HAVE_FCNTL_H
 #include<fcntl.h>
 #else
@@ -56,15 +61,15 @@
 #else
 #include"inc/main/poll.h"
 #endif
-#ifdef HAVE_STDLIB_H
-#include<stdlib.h>
-#else
-#include"inc/main/stdlib.h"
-#endif
 #ifdef HAVE_STDIO_H
 #include<stdio.h>
 #else
 #include"inc/main/stdio.h"
+#endif
+#ifdef HAVE_STDLIB_H
+#include<stdlib.h>
+#else
+#include"inc/main/stdlib.h"
 #endif
 #ifdef HAVE_STRING_H
 #include<string.h>
@@ -85,11 +90,6 @@
 #include <sys/stat.h>
 #else
 #include"inc/main/sys_stat.h"
-#endif
-#ifdef HAVE_CURSES_H
-#include<curses.h>
-#else
-#include"inc/main/curses.h"
 #endif
 
 #include"sep.h"

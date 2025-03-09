@@ -8,6 +8,11 @@
 
 #include "top.h"
 
+#ifdef HAVE_CURSES_H
+#include<curses.h>
+#else
+#include"inc/bar/curses.h"
+#endif
 #ifdef HAVE_DIRENT_H
 #include<dirent.h>
 #else
@@ -23,15 +28,15 @@
 #else
 #include"inc/bar/fcntl.h"
 #endif
-#ifdef HAVE_STDLIB_H
-#include<stdlib.h>
-#else
-#include"inc/bar/stdlib.h"
-#endif
 #ifdef HAVE_STDIO_H
 #include<stdio.h>
 #else
 #include"inc/stdio.h"
+#endif
+#ifdef HAVE_STDLIB_H
+#include<stdlib.h>
+#else
+#include"inc/bar/stdlib.h"
 #endif
 #ifdef HAVE_STRING_H
 #include<string.h>
@@ -42,11 +47,6 @@
 #include<unistd.h>
 #else
 #include"inc/unistd.h"
-#endif
-#ifdef HAVE_CURSES_H
-#include<curses.h>
-#else
-#include"inc/bar/curses.h"
 #endif
 
 #include"base.h"
