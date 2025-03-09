@@ -46,11 +46,16 @@ static void split_error_free(filedata*files){
 	filesfree(files);
 	split_error();
 }
+static void split_add(char**text,char*next,char**newtext,size_t*remaining_size){
+	size_t dif=next-*text;
+	memcpy(*newtext,*text,dif);
+	*text+=dif;*newtext+=dif;*remaining_size-=dif;
+}
 
 bool split_grab(char**p_text,size_t*p_size){
 	if(splits_flag/*true*/){
-		char*text;size_t size;int cmp;
-		const char*sdelimiter="|||";
+		char*text;size_t size;int cmp;char*next;
+		char*sdelimiter="|||";
 		char a=*sdelimiter;
 		size_t sdelimsize=strlen(sdelimiter);//size_t? this can be from file read
 
@@ -58,11 +63,11 @@ bool split_grab(char**p_text,size_t*p_size){
 		size_t explodes=0;
 		text=*p_text;size=*p_size;
 		do{
-			char*next=(char*)memchr(text,a,size);
+			next=(char*)memchr(text,a,size);
 			if(next==nullptr)break;
 			next++;size-=next-text;
 			if(size<=(sdelimsize-1))break;
-			cmp=memcmp(next,(void*)(sdelimiter+1),sdelimsize-1);
+			cmp=memcmp(next,sdelimiter+1,sdelimsize-1);
 			next+=sdelimsize-1;text=next;size-=next-text;
 			if(cmp!=0)continue;
 
@@ -70,14 +75,13 @@ bool split_grab(char**p_text,size_t*p_size){
 			if(next==nullptr){split_error();return false;}
 			next++;size-=next-text;
 			if(size<=(sdelimsize-1)){split_error();return false;}
-			cmp=memcmp(next,(void*)(sdelimiter+1),sdelimsize-1);
+			cmp=memcmp(next,sdelimiter+1,sdelimsize-1);
 			if(cmp!=0){split_error();return false;}//it looks like the delimiter chars can't be in filename chars
 			next+=sdelimsize-1;text=next;size-=next-text;
 
 			explodes++;
 		}while(true);
 		if(explodes!=0){
-			//alloc
 			filedata*files=(filedata*)malloc(sizeof(filedata)*(explodes+1));//+1 because decided to not global store number of explodes
 			if(files!=nullptr){
 				files[0].file=-1;
@@ -89,15 +93,14 @@ bool split_grab(char**p_text,size_t*p_size){
 				do{
 					size_t dif;
 
-					char*next=(char*)memchr(text,a,size);
+					next=(char*)memchr(text,a,size);
 					if(next==nullptr)break;
 					next++;dif=next-text;size-=dif;calculated_new_size+=dif;
 					if(size<=(sdelimsize-1))break;
-					cmp=memcmp(next,(void*)(sdelimiter+1),sdelimsize-1);
+					cmp=memcmp(next,sdelimiter+1,sdelimsize-1);
 					next+=sdelimsize-1;text=next;dif=next-text;size-=dif;calculated_new_size+=dif;
 					if(cmp!=0)continue;
 
-					//calculated_new_size+=escape_delimiter;
 					next=(char*)memchr(text,a,size);
 					*next='\0';
 					int f=open(text,O_RDONLY);
@@ -115,12 +118,49 @@ bool split_grab(char**p_text,size_t*p_size){
 				}while(true);
 				calculated_new_size+=size;
 
-				text=(char*)realloc(*p_text,calculated_new_size);
-				if(text==nullptr){filesfree(files);return false;}
+				char* newtext=(char*)malloc(calculated_new_size);
+				if(newtext==nullptr){filesfree(files);return false;}
 
-				//lseek(f,0,(SEEK_SET));
+				//substitutions
+				text=*p_text;size=*p_size;
+				char*cursor=newtext;
+				do{
+					next=(char*)memchr(text,a,size);
+					if(next==nullptr)break;
+					split_add(&text,next,&cursor,&size);
 
-				*p_text=text;*p_size=calculated_new_size;
+					if(size<=sdelimsize)break;
+					cmp=memcmp(next+1,sdelimiter+1,sdelimsize-1);
+					next+=sdelimsize;
+					if(cmp!=0){
+						split_add(&text,next,&cursor,&size);
+						continue;
+					}
+
+					//escape
+					//delim
+					split_add(&text,next,&cursor,&size);
+
+					//file
+					next=(char*)memchr(text,a,size);
+					split_add(&text,next,&cursor,&size);
+
+					//ln_term
+
+					//content
+					//lseek(f,0,(SEEK_SET));
+
+					//ln_term
+
+					//escape
+					//delim
+					next+=sdelimsize;
+					split_add(&text,next,&cursor,&size);
+				}while(true);
+				memcpy(cursor,text,size);
+
+				free(*p_text);
+				*p_text=newtext;*p_size=calculated_new_size;
 				filesfree(files);
 				return true;
 			}

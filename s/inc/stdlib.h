@@ -20,7 +20,7 @@ void free(void*);
 #endif
 #endif
 
-#if defined(is_main_c)||defined(is_bar_c)||defined(is_split_c)
+#if defined(is_main_c)||defined(is_bar_c)
 #ifdef __cplusplus
 extern "C" {
 #endif
