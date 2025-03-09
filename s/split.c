@@ -36,8 +36,9 @@
 
 #include "def.h"
 
-bool splits_flag=true;
-// |||file.as||| to //|||file.as[ln_term]file content[ln_term]//|||
+bool splits_flag=false;
+char*sdelimiter="|||";
+char*esdelimiter="//";
 
 typedef struct{
 	int file;
@@ -64,11 +65,9 @@ static void split_add(char**text,char*next,char**newtext,size_t*remaining_size){
 bool split_grab(char**p_text,size_t*p_size){
 	if(splits_flag/*true*/){
 		char*text;size_t size;int cmp;char*next;
-		char*sdelimiter="|||";
 		char a=*sdelimiter;
-		size_t sdelimsize=strlen(sdelimiter);//size_t? this can be from file read
-		char*esdelimiter="//";//same, from preferences
-		size_t esdelimsize=strlen(esdelimiter);
+		unsigned char sdelimsize=strlen(sdelimiter);//at file read only one byte for size
+		unsigned char esdelimsize=strlen(esdelimiter);//same from preferences
 
 		//calculate number of explodes
 		size_t explodes=0;
@@ -187,4 +186,19 @@ bool split_grab(char**p_text,size_t*p_size){
 		}
 	}
 	return true;
+}
+
+void split_writeprefs(int f){
+	unsigned char sz=strlen(sdelimiter);
+	if(write(f,&sz,extlen_size)==extlen_size){
+		if(write(f,sdelimiter,sz)==sz){
+			sz=strlen(esdelimiter);
+			if(write(f,&sz,extlen_size)==extlen_size){
+				#pragma GCC diagnostic push
+				#pragma GCC diagnostic ignored "-Wunused-result"
+				write(f,esdelimiter,sz);
+				#pragma GCC diagnostic pop
+			}
+		}
+	}
 }

@@ -55,3 +55,5 @@ typedef struct{
 #define color_b 2
 #define color_c 3
 #define color_d 4
+
+#define extlen_size 1

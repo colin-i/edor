@@ -35,6 +35,7 @@
 \nCtrl+n = disable/enable indentation\
 \nCtrl+t = enable/disable insensitive search\
 \nCtrl+a = enable/disable O language syntax; Alt+a = syntax rescan; Alt+A = change extension test\
+\nCtrl+j = enable/disable OA split syntax\
 \nCtrl+q = quit"
 
 #define is_main_c
@@ -218,8 +219,8 @@ static bool indent_flag=true;
 #define mask_indent 2
 #define mask_insensitive 4
 #define mask_ocompiler 8
+#define mask_splits 16
 static char prefs_file[max_path_0]={'\0'};//only the first byte is set
-#define extlen_size 1
 static char*ocode_extension_new=nullptr;
 
 static bool visual_bool=false;
@@ -2017,12 +2018,11 @@ static bool savetofile(WINDOW*w,bool has_file){
 }
 static void writeprefs(int f,char mask){
 	if(write(f,&mask,mask_size)==mask_size){
-		size_t sz=strlen(ocode_extension);
+		unsigned char sz=strlen(ocode_extension);//at prefs one byte is taken, and also input has 255 max
 		if(write(f,&sz,extlen_size)==extlen_size){
-			#pragma GCC diagnostic push
-			#pragma GCC diagnostic ignored "-Wunused-result"
-			write(f,ocode_extension,sz);
-			#pragma GCC diagnostic pop
+			if(write(f,ocode_extension,sz)==sz){
+				split_writeprefs(f);
+			}
 		}
 	}
 	close(f);
@@ -2165,6 +2165,12 @@ static bool loopin(WINDOW*w){
 				}
 				if(restorefile!=nullptr)unlink(restorefile);//here restorefile is deleted
 				return false;
+			}else if(strcmp(s,"^T")==0){
+				bool b;char c;
+				if(issensitive/*true*/){issensitive=false;c='T';}
+				else{issensitive=true;c='t';}
+				setprefs(mask_insensitive,issensitive);
+				vis(c,w);//is not showing on stdscr without wnoutrefresh(thisWindow)
 			}else if(strcmp(s,"^E")==0){
 				bool b;char c;
 				if(stored_mouse_mask==0){stored_mouse_mask=mousemask(ALL_MOUSE_EVENTS,nullptr);c='E';}//;b=false
@@ -2177,12 +2183,6 @@ static bool loopin(WINDOW*w){
 				else{indent_flag=true;c='N';}
 				setprefs(mask_indent,indent_flag);
 				vis(c,w);//is not showing on stdscr without wnoutrefresh(thisWindow)
-			}else if(strcmp(s,"^T")==0){
-				bool b;char c;
-				if(issensitive/*true*/){issensitive=false;c='T';}
-				else{issensitive=true;c='t';}
-				setprefs(mask_insensitive,issensitive);
-				vis(c,w);//is not showing on stdscr without wnoutrefresh(thisWindow)
 			}else if(strcmp(s,"^A")==0){
 				if(ocompiler_flag/*true*/){ocompiler_flag=false;c='a';}
 				else{ocompiler_flag=true;c='A';
@@ -2190,12 +2190,12 @@ static bool loopin(WINDOW*w){
 				setprefs(mask_ocompiler,ocompiler_flag);
 				visual(c);//addch for more info, first to window, then wnoutrefresh to virtual, then doupdate to phisical
 				aftercall_draw(w);
-			//}else if(strcmp(s,"^J")==0){//joins //alt j is set delimiter,alt J escape delimiter
-			//	char c;
-			//	if(splits_flag/*true*/){splits_flag=false;c='j';}
-			//	else{splits_flag=true;c='J';}
-			//	setprefs(mask_splits,splits_flag);
-			//	vis(c,w);
+			}else if(strcmp(s,"^J")==0){//joins //alt j is set delimiter,alt J escape delimiter
+				char c;
+				if(splits_flag/*true*/){splits_flag=false;c='j';}
+				else{splits_flag=true;c='J';}
+				setprefs(mask_splits,splits_flag);
+				vis(c,w);
 			}else if(strcmp(s,"^W")==0){if(text_wrap(w)/*true*/)return true;}
 
 			//i saw these only when mousemask is ALL_MOUSE_EVENTS : focus in, focus out
@@ -2255,13 +2255,12 @@ static int normalize(char**c,size_t*size,size_t*r){
 	return ok;
 }
 //same as normalize
-#define normalize_split(c,s,r) normalize(c,s,r)
-//static int normalize_split(char**c,size_t*s,size_t*r){
-//	if(split_grab(c,s)/*true*/){//if at normalize will work also in open cutbufs but will error at explodes there(save cutbuf with explodes)
-//		return normalize(c,s,r);
-//	}
-//	return 0;
-//}
+static int normalize_split(char**c,size_t*s,size_t*r){
+	if(split_grab(c,s)/*true*/){//if at normalize will work also in open cutbufs but will error at explodes there(save cutbuf with explodes)
+		return normalize(c,s,r);
+	}
+	return 0;
+}
 static void rows_init(size_t size){
 	char*b=&text_init_b[size];
 	row*z=&rows[0];
@@ -2418,6 +2417,7 @@ static void getprefs(){
 			if((mask&mask_indent)==0)indent_flag=false;
 			if((mask&mask_insensitive)==0)issensitive=false;
 			if((mask&mask_ocompiler)!=0)ocompiler_flag=true;
+			if((mask&mask_splits)!=0)splits_flag=true;
 			unsigned char len;
 			if(read(f,&len,extlen_size)==extlen_size){
 				ocode_extension_new=(char*)malloc(len+1);
@@ -2670,6 +2670,9 @@ static void action_go(int argc,char**argv,char*cutbuf_file,char*argfile){
 		}
 		if(valid_ln_term(argc,argv,&not_forced)/*true*/)return;
 	}
+
+	if(prefs_file[0]!='\0')getprefs();//split is first that depends on prefs
+
 	struct pollfd fds[1];
 	//typedef struct __sFILE FILE;
 	//FILE* stdin __attribute__((annotate("introduced_in=" "23")));
@@ -2724,7 +2727,6 @@ static void action_go(int argc,char**argv,char*cutbuf_file,char*argfile){
 			//the only difference with ALL_..EVENTS is that we want to speed up and process all events here (if there is a curses implementation like that)
 			//this was default for android, but nowadays on desktop is not a default
 			//stored_mouse_mask=mousemask(ALL_MOUSE_EVENTS,nullptr);//for error, export TERM=vt100
-			if(prefs_file[0]!='\0')getprefs();
 
 			if(ocompiler_flag/*true*/){//this is here, in loop can be set if wanted with enable/disable and rescan keys
 				aftercall=init_aftercall();

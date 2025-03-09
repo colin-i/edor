@@ -11,6 +11,15 @@ extern "C" {
 #endif
 int access(const char*,int);
 int close(int);
+#ifdef __cplusplus
+}
+#endif
+#endif
+
+#if defined(is_main_c)||defined(is_bar_c)||defined(is_split_c)
+#ifdef __cplusplus
+extern "C" {
+#endif
 ssize_t write(int,const void*,size_t);
 #ifdef __cplusplus
 }

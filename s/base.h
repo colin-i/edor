@@ -81,10 +81,13 @@ bool text_wrap(WINDOW*);
 void extra_unlock(size_t,size_t,WINDOW*);
 
 //tit
+//main
 bool titles(WINDOW*);
 
 //split
+//main
 bool split_grab(char**,size_t*);
+void split_writeprefs(int);
 
 //main,bar
 extern char*textfile;
@@ -99,6 +102,8 @@ extern size_t xtext;
 //main,tw,tit
 extern bool ocompiler_flag;
 extern size_t aftercall;
+//main,split
+extern bool splits_flag;
 //tw,tit
 extern row*rowswrap;
 extern row*store_rows;
