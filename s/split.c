@@ -37,8 +37,9 @@
 #include "def.h"
 
 bool splits_flag=false;
-char*sdelimiter="|||";
-char*esdelimiter="//";
+
+static char*sdelimiter="|||";
+static char*esdelimiter="//";
 
 typedef struct{
 	int file;
