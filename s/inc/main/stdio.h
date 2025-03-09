@@ -13,7 +13,6 @@ FILE* freopen(const char *filename, const char *mode, FILE *stream);
 int getchar(void);
 int printf(const char *, ...);
 int putchar(int);
-int puts(const char*);
 int rename(const char*,const char*);
 //int snprintf(char* __buf, size_t __size, const char* __fmt, ...);
 

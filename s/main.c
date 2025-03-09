@@ -39,21 +39,6 @@
 
 #include "top.h"
 
-#ifdef HAVE_CURSES_H
-#include<curses.h>
-#else
-#include"inc/main/curses.h"
-#endif
-#ifdef HAVE_FCNTL_H
-#include<fcntl.h>
-#else
-#include"inc/main/fcntl.h"
-#endif
-#ifdef HAVE_POLL_H
-#include<poll.h>
-#else
-#include"inc/main/poll.h"
-#endif
 #ifdef HAVE_STDLIB_H
 #include<stdlib.h>
 #else
@@ -83,6 +68,21 @@
 #include <sys/stat.h>
 #else
 #include"inc/main/sys_stat.h"
+#endif
+#ifdef HAVE_FCNTL_H
+#include<fcntl.h>
+#else
+#include"inc/main/fcntl.h"
+#endif
+#ifdef HAVE_POLL_H
+#include<poll.h>
+#else
+#include"inc/main/poll.h"
+#endif
+#ifdef HAVE_CURSES_H
+#include<curses.h>
+#else
+#include"inc/main/curses.h"
 #endif
 
 #include"sep.h"
@@ -2249,7 +2249,7 @@ static int normalize(char**c,size_t*size,size_t*r){
 }
 //same as normalize
 #define normalize_split(c,s,r) normalize(c,s,r)
-//static int normalize_split(char**c,size_t*size,size_t*r){
+//static int normalize_split(char**c,size_t*s,size_t*r){
 //	if(split_grab(c,s)/*true*/){//if at normalize will work also in open cutbufs but will error at explodes there(save cutbuf with explodes)
 //		return normalize(c,s,r);
 //	}

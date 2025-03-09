@@ -10,7 +10,7 @@
 #ifdef HAVE_STRING_H
 #include<string.h>
 #else
-#include"inc/tit/string.h"
+#include"inc/string.h"
 #endif
 #ifdef HAVE_CURSES_H
 #include<curses.h>

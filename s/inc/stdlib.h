@@ -1,9 +1,6 @@
 
 #if defined(is_main_c)||defined(is_bar_c)||defined(is_tw_c)||defined(is_tit_c)||defined(is_split_c)
 #include "inc/stddef.h"
-#endif
-
-#if defined(is_main_c)||defined(is_bar_c)||defined(is_tw_c)||defined(is_tit_c)
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -13,7 +10,7 @@ void*malloc(size_t);
 #endif
 #endif
 
-#if defined(is_main_c)||defined(is_bar_c)||defined(is_tw_c)
+#if defined(is_main_c)||defined(is_bar_c)||defined(is_tw_c)||defined(is_split_c)
 #ifdef __cplusplus
 extern "C" {
 #endif
