@@ -1,5 +1,4 @@
 
-#define is_bar_c
 #include "inc/stdlib.h"
 
 #ifdef __cplusplus

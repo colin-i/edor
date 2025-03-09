@@ -1,10 +1,17 @@
 
+#define is_split_c
+#ifdef HAVE_STDDEF_H
+#include<stddef.h>
+#else
+#include"inc/stddef.h"
+#endif
+
 #include "top.h" //bool,nullptr,etc
 
 #ifdef HAVE_STDLIB_H
 #include<stdlib.h>
 #else
-#include"inc/split/stdlib.h"
+#include"inc/stdlib.h"
 #endif
 #ifdef HAVE_STDIO_H
 #include<stdio.h>
@@ -26,6 +33,8 @@
 #else
 #include"inc/fcntl.h"
 #endif
+
+#include "def.h"
 
 bool splits_flag=true;
 // |||file.as||| to //|||file.as[ln_term]file content[ln_term]//|||
@@ -58,6 +67,8 @@ bool split_grab(char**p_text,size_t*p_size){
 		char*sdelimiter="|||";
 		char a=*sdelimiter;
 		size_t sdelimsize=strlen(sdelimiter);//size_t? this can be from file read
+		char*esdelimiter="//";//same, from preferences
+		size_t esdelimsize=strlen(esdelimiter);
 
 		//calculate number of explodes
 		size_t explodes=0;
@@ -114,7 +125,7 @@ bool split_grab(char**p_text,size_t*p_size){
 					*next=a;
 
 					next+=sdelimsize;text=next;dif=next-text;size-=dif;
-					calculated_new_size+=dif;//+2ln_term_sz +2escape_delimiter +sz
+					calculated_new_size+=dif+(2*esdelimsize)+(2*ln_term_sz)+sz;
 				}while(true);
 				calculated_new_size+=size;
 
@@ -122,7 +133,7 @@ bool split_grab(char**p_text,size_t*p_size){
 				if(newtext==nullptr){filesfree(files);return false;}
 
 				//substitutions
-				text=*p_text;size=*p_size;
+				text=*p_text;size=*p_size;explodes=0;
 				char*cursor=newtext;
 				do{
 					next=(char*)memchr(text,a,size);
@@ -138,6 +149,7 @@ bool split_grab(char**p_text,size_t*p_size){
 					}
 
 					//escape
+					memcpy(cursor,esdelimiter,esdelimsize);cursor+=esdelimsize;
 					//delim
 					split_add(&text,next,&cursor,&size);
 
@@ -146,13 +158,20 @@ bool split_grab(char**p_text,size_t*p_size){
 					split_add(&text,next,&cursor,&size);
 
 					//ln_term
+					memcpy(cursor,ln_term,ln_term_sz);cursor+=ln_term_sz;
 
 					//content
-					//lseek(f,0,(SEEK_SET));
+					int f=files[explodes].file;
+					lseek(f,0,(SEEK_SET));//was at size tell
+					read(f,cursor,files[explodes].size);//can close now but is extra code
+					cursor+=files[explodes].size;
+					explodes++;
 
 					//ln_term
+					memcpy(cursor,ln_term,ln_term_sz);cursor+=ln_term_sz;
 
 					//escape
+					memcpy(cursor,esdelimiter,esdelimsize);cursor+=esdelimsize;
 					//delim
 					next+=sdelimsize;
 					split_add(&text,next,&cursor,&size);

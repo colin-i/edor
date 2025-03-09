@@ -1,10 +1,13 @@
+
+#define is_bar_c
+#ifdef HAVE_STDDEF_H
+#include<stddef.h>
+#else
+#include"inc/stddef.h"
+#endif
+
 #include "top.h"
 
-#ifdef HAVE_CURSES_H
-#include<curses.h>
-#else
-#include"inc/bar/curses.h"
-#endif
 #ifdef HAVE_DIRENT_H
 #include<dirent.h>
 #else
@@ -39,6 +42,11 @@
 #include<unistd.h>
 #else
 #include"inc/unistd.h"
+#endif
+#ifdef HAVE_CURSES_H
+#include<curses.h>
+#else
+#include"inc/bar/curses.h"
 #endif
 
 #include"base.h"

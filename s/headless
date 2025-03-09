@@ -10,7 +10,7 @@ sed -i "s/${a}//g" mk
 grep --color "${a}" mk
 
 #input headers
-a="\-DHAVE_DIRENT_H=1 \-DHAVE_ERRNO_H=1 \-DHAVE_FCNTL_H=1 \-DHAVE_POLL_H=1 \-DHAVE_STDIO_H=1 \-DHAVE_STDLIB_H=1 \-DHAVE_STRING_H=1 \-DHAVE_UNISTD_H=1 \-DHAVE_TIME_H=1 \-DHAVE_SYS_STAT_H=1 \-DHAVE_CURSES_H=1"
+a="\-DHAVE_STDDEF_H=1 \-DHAVE_DIRENT_H=1 \-DHAVE_ERRNO_H=1 \-DHAVE_FCNTL_H=1 \-DHAVE_POLL_H=1 \-DHAVE_STDIO_H=1 \-DHAVE_STDLIB_H=1 \-DHAVE_STRING_H=1 \-DHAVE_UNISTD_H=1 \-DHAVE_TIME_H=1 \-DHAVE_SYS_STAT_H=1 \-DHAVE_CURSES_H=1"
 grep --color "${a}" mk
 sed -i "s/${a}//g" mk
 grep --color "${a}" mk
@@ -38,7 +38,7 @@ if [ -n "${n}" ]; then
 	grep --color "${a}" mk
 else
 	#c only headers
-	a="\-DHAVE_STDBOOL_H=1 \-DHAVE_STDDEF_H=1"
+	a="\-DHAVE_STDBOOL_H=1"
 	grep --color "${a}" mk
 	sed -i "s/${a}//g" mk
 	grep --color "${a}" mk

@@ -28,7 +28,7 @@ AC_PROG_CC
 
 # Checks for header files. Checks for libraries.
 
-AC_CHECK_HEADERS(dirent.h errno.h fcntl.h poll.h stdio.h stdlib.h string.h unistd.h time.h sys/stat.h)
+AC_CHECK_HEADERS(stddef.h dirent.h errno.h fcntl.h poll.h stdio.h stdlib.h string.h unistd.h time.h sys/stat.h)
 AC_CHECK_HEADERS(curses.h, [AC_SUBST(CSS, "")], [AC_SUBST(CSS, "-Wno-padded")])
 AC_SUBST(UNW, "")
 
@@ -90,7 +90,7 @@ char a=std::filesystem::path::preferred_separator;
 	])
 ])
 ],[
-AC_CHECK_HEADERS(stdbool.h stddef.h)
+AC_CHECK_HEADERS(stdbool.h)
 ])
 
 AC_RUN_IFELSE([AC_LANG_SOURCE([

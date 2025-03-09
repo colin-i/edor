@@ -1,6 +1,6 @@
 
 #ifdef HAVE_STDDEF_H
-#include<stddef.h>
+//#include<stddef.h>
 //there are warnings at cpp with NULL(__null) from stddef at comparisons
 #define nullptr NULL
 #else

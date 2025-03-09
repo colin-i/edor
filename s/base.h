@@ -87,8 +87,6 @@ bool titles(WINDOW*);
 bool split_grab(char**,size_t*);
 
 //main,bar
-extern char ln_term[3];
-extern size_t ln_term_sz;
 extern char*textfile;
 extern bool mod_flag;
 extern bool issensitive;
@@ -106,3 +104,5 @@ extern row*rowswrap;
 extern row*store_rows;
 extern size_t store_rows_tot;
 extern size_t store_aftercall;
+
+#include "def.h"

@@ -37,8 +37,25 @@
 \nCtrl+a = enable/disable O language syntax; Alt+a = syntax rescan; Alt+A = change extension test\
 \nCtrl+q = quit"
 
+#define is_main_c
+#ifdef HAVE_STDDEF_H
+#include<stddef.h>
+#else
+#include"inc/stddef.h"
+#endif
+
 #include "top.h"
 
+#ifdef HAVE_FCNTL_H
+#include<fcntl.h>
+#else
+#include"inc/main/fcntl.h"
+#endif
+#ifdef HAVE_POLL_H
+#include<poll.h>
+#else
+#include"inc/main/poll.h"
+#endif
 #ifdef HAVE_STDLIB_H
 #include<stdlib.h>
 #else
@@ -68,16 +85,6 @@
 #include <sys/stat.h>
 #else
 #include"inc/main/sys_stat.h"
-#endif
-#ifdef HAVE_FCNTL_H
-#include<fcntl.h>
-#else
-#include"inc/main/fcntl.h"
-#endif
-#ifdef HAVE_POLL_H
-#include<poll.h>
-#else
-#include"inc/main/poll.h"
 #endif
 #ifdef HAVE_CURSES_H
 #include<curses.h>

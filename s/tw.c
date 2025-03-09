@@ -1,11 +1,18 @@
 
+#define is_tw_c
+#ifdef HAVE_STDDEF_H
+#include<stddef.h>
+#else
+#include"inc/stddef.h"
+#endif
+
 #include "top.h"
 //bool,nullptr,...
 
 #ifdef HAVE_STDLIB_H
 #include<stdlib.h>
 #else
-#include"inc/tw/stdlib.h"
+#include"inc/stdlib.h"
 #endif
 #ifdef HAVE_CURSES_H
 #include<curses.h>
