@@ -2167,15 +2167,14 @@ static bool loopin(WINDOW*w){
 				return false;
 			}else if(strcmp(s,"^T")==0){
 				bool b;char c;
-				if(issensitive/*true*/){issensitive=false;c='T';}
-				else{issensitive=true;c='t';}
-				setprefs(mask_insensitive,issensitive);
+				if(insensitive/*true*/){insensitive=false;c='t';}
+				else{insensitive=true;c='T';}
+				setprefs(mask_insensitive,insensitive);//here the bit is set on full insensitive search
 				vis(c,w);//is not showing on stdscr without wnoutrefresh(thisWindow)
 			}else if(strcmp(s,"^E")==0){
 				bool b;char c;
-				if(stored_mouse_mask==0){stored_mouse_mask=mousemask(ALL_MOUSE_EVENTS,nullptr);c='E';}//;b=false
-				else{stored_mouse_mask=mousemask(0,nullptr);c='e';}//;b=true
-				setprefs(mask_mouse,!stored_mouse_mask);
+				if(stored_mouse_mask==0){stored_mouse_mask=mousemask(ALL_MOUSE_EVENTS,nullptr);c='E';setprefs(mask_mouse,true);}
+				else{stored_mouse_mask=mousemask(0,nullptr);c='e';setprefs(mask_mouse,false);}
 				vis(c,w);
 			}else if(strcmp(s,"^N")==0){
 				char c;
@@ -2413,9 +2412,9 @@ static void getprefs(){
 	int f=open(prefs_file,O_RDONLY);
 	if(f!=-1){
 		if(read(f,&mask,mask_size)==mask_size){
-			if((mask&mask_mouse)==0)stored_mouse_mask=mousemask(ALL_MOUSE_EVENTS,nullptr);
+			if((mask&mask_mouse)!=0)stored_mouse_mask=~0;
 			if((mask&mask_indent)==0)indent_flag=false;
-			if((mask&mask_insensitive)==0)issensitive=false;
+			if((mask&mask_insensitive)!=0)insensitive=true;
 			if((mask&mask_ocompiler)!=0)ocompiler_flag=true;
 			if((mask&mask_splits)!=0)splits_flag=true;
 			unsigned char len;
@@ -2434,7 +2433,7 @@ static void getprefs(){
 	}
 	f=open_new(prefs_file);
 	if(f!=-1){
-		mask=mask_mouse|mask_indent|mask_insensitive;
+		mask=mask_indent;
 		writeprefs(f,mask);
 	}
 }
@@ -2727,6 +2726,7 @@ static void action_go(int argc,char**argv,char*cutbuf_file,char*argfile){
 			//the only difference with ALL_..EVENTS is that we want to speed up and process all events here (if there is a curses implementation like that)
 			//this was default for android, but nowadays on desktop is not a default
 			//stored_mouse_mask=mousemask(ALL_MOUSE_EVENTS,nullptr);//for error, export TERM=vt100
+			if(stored_mouse_mask!=0)stored_mouse_mask=mousemask(ALL_MOUSE_EVENTS,nullptr);//must set it after initscr to work
 
 			if(ocompiler_flag/*true*/){//this is here, in loop can be set if wanted with enable/disable and rescan keys
 				aftercall=init_aftercall();

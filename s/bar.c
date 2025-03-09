@@ -59,7 +59,7 @@
 
 #define err_len_min 2
 
-bool issensitive=true;
+bool insensitive=false;
 
 static int err_l=0;
 static char*err_s;
@@ -296,7 +296,7 @@ static int del(int x,char*input,int cursor,int dif){
 #define AZ_to_az 'a'-'A'
 static bool charcompare(char a,char b){
 	if(a!=b){
-		if(issensitive==false){
+		if(insensitive/*true*/){
 			if((a<='Z')&&(b>='a')){
 				if((a+AZ_to_az)==b)return true;
 			}else if((b<='Z')&&(a>='a')){

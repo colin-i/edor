@@ -92,7 +92,7 @@ void split_writeprefs(int);
 //main,bar
 extern char*textfile;
 extern bool mod_flag;
-extern bool issensitive;
+extern bool insensitive;
 extern char*ocode_extension;
 //main,bar,tw,tit
 extern row*rows;
