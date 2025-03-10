@@ -256,8 +256,8 @@ void split_write_free(){free(fulldelim);}
 bool split_write(size_t*_index,int orig_file){
 	size_t i=*_index;
 	row*rw=&rows[i];
-	char*data=r->data;
-	unsigned int size=r->sz;
+	char*data=rw->data;
+	unsigned int size=rw->sz;
 	void*pointer=memmem(data,size,fulldelim,fulldelim_size);
 	if(pointer!=nullptr){
 		char*cursor=pointer+fulldelim_size;
