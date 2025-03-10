@@ -258,7 +258,7 @@ void split_write_free(){free(fulldelim);}
 static bool split_realwrite(size_t i,size_t*_index,int orig_file,char*data,unsigned int size){
 	for(size_t j=i;j<rows_tot;j++){
 		if(memcmp((&rows[j])->data,fulldelim,fulldelim_size)==0){
-			char aux=data[size];//also alloced rows have +1
+			//char aux=data[size];//also alloced rows have +1
 			data[size]='\0';//this is for unmodified where ln_term is there, for alloced is undefined there
 			int f=open_or_new(data);
 			//data[size]=aux;//is not important to have ln_term back there
