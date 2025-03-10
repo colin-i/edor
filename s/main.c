@@ -34,8 +34,8 @@
 \nCtrl+e = enable/disable internal mouse/touch\
 \nCtrl+n = disable/enable indentation\
 \nCtrl+t = enable/disable insensitive search\
-\nCtrl+a = enable/disable O language syntax; Alt+a = syntax rescan; Alt+A = change extension test\
-\nCtrl+j = enable/disable OA split syntax\
+\nCtrl+a = enable/disable O language syntax; Alt+a = syntax rescan; Alt+A = change extension name\
+\nCtrl+j = enable/disable OA split syntax; Alt+j = change delimiter; Alt+J = change escape delimiter\
 \nCtrl+q = quit"
 
 #define is_main_c
@@ -1968,10 +1968,11 @@ static bool visual_mode(WINDOW*w,bool v_l){
 	}while(z!=0);
 	return false;
 }
-#define quick_pack(nr,w) comnrp_define args[2];args[0]=(comnrp_define)nr;args[1]=(comnrp_define)w;
+#define quickest_pack(nr,w,ix) comnrp_define args[ix];args[0]=(comnrp_define)nr;args[1]=(comnrp_define)w;
+#define quick_pack(nr,w) quickest_pack(nr,w,2)
 static bool find_mode(int nr,WINDOW*w){
 	quick_pack((long)nr,w)
-	int r=command((char*)args);
+	int r=command((comnrp_define)args);
 	if(r==-2)return true;
 	else if(r!=0){
 		wmove(w,getcury(w),getcurx(w));//at 0 (false not err) will remain on the bar
@@ -2046,23 +2047,33 @@ static void setprefs(int flag,bool set){
 	}
 }
 
-static void ocode_extension_change(char*newinput,size_t cursor){
-	if(ocode_extension_new!=nullptr){
-		size_t len=strlen(ocode_extension_new);
+void pref_modify(char**pref_orig,char**pref_buf,char*newinput,size_t cursor){
+	if(*pref_buf!=nullptr){
+		size_t len=strlen(*pref_buf);
 		if(len<cursor){
 			char*newmem=(char*)malloc(cursor+1);
-			if(newmem!=nullptr)ocode_extension_new=newmem;
+			if(newmem!=nullptr)*pref_buf=newmem;
 			else return;
 		}
 	}else{
 		char*newmem=(char*)malloc(cursor+1);
-		if(newmem!=nullptr)ocode_extension_new=newmem;
+		if(newmem!=nullptr)*pref_buf=newmem;
 		else return;
 	}
-	memcpy(ocode_extension_new,newinput,cursor);
-	ocode_extension_new[cursor]='\0';
-	ocode_extension=ocode_extension_new;//at start extension_new is not 100%
+	memcpy(*pref_buf,newinput,cursor);
+	(*pref_buf)[cursor]='\0';
+	*pref_orig=*pref_buf;//at start extension_new is not 100%
 	setprefs(mask_nomask,ignored);
+}
+static bool pref_change(WINDOW*w,char**pref_orig,char**pref_buf){
+	quickest_pack(com_nr_ext,pref_orig,3)
+	args[2]=(comnrp_define)pref_buf;
+	int nr=command((char*)args);
+	if(nr>-2){
+		wmove(w,getcury(w),getcurx(w));//ok/quit/err
+		return false;
+	}
+	return true;
 }
 
 static time_t guardian=0;
@@ -2118,12 +2129,9 @@ static bool loopin(WINDOW*w){
 			else if(z=='u'){vis('U',w);undo_loop(w);vis(' ',w);}
 			else if(z=='s'){bool b=savetofile(w,false);if(b/*true*/)return true;}
 			else if(z=='a'){aftercall=aftercall_find();aftercall_draw(w);}
-			else if(z=='A'){
-				quick_pack(com_nr_ext,ocode_extension_change)
-				int nr=command((char*)args);
-				if(nr>-2)wmove(w,getcury(w),getcurx(w));//ok/quit/err
-				else return true;
-			}
+			else if(z=='A'){if(pref_change(w,&ocode_extension,&ocode_extension_new)/*true*/)return true;}
+			else if(z=='j'){if(pref_change(w,&sdelimiter,&sdelimiter_new)/*true*/)return true;}
+			else if(z=='J'){if(pref_change(w,&esdelimiter,&esdelimiter_new)/*true*/)return true;}
 		}else{
 			//QWERTyUioP
 			//ASdFGHJkl
@@ -2424,6 +2432,7 @@ static void getprefs(){
 					if(read(f,ocode_extension_new,len)==len){
 						ocode_extension=ocode_extension_new;
 						ocode_extension[len]='\0';
+						split_readprefs(f);
 					}
 				}
 			}
@@ -2745,7 +2754,10 @@ static void action_go(int argc,char**argv,char*cutbuf_file,char*argfile){
 			}
 			endwin();
 
-			if(ocode_extension_new!=nullptr)free(ocode_extension_new);//still need it at change for view what is was
+			if(ocode_extension_new!=nullptr){
+				free(ocode_extension_new);//also need it at change for view what is was
+				split_freeprefs();
+			}
 		}
 	}
 	if(text_init_b!=nullptr){

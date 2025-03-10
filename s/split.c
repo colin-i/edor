@@ -38,8 +38,10 @@
 
 bool splits_flag=false;
 
-static char*sdelimiter="|||";
-static char*esdelimiter="//";
+char*sdelimiter=(char*)"|||";
+char*esdelimiter=(char*)"//";
+char* sdelimiter_new=nullptr;
+char* esdelimiter_new=nullptr;
 
 typedef struct{
 	int file;
@@ -200,6 +202,35 @@ void split_writeprefs(int f){
 				write(f,esdelimiter,sz);
 				#pragma GCC diagnostic pop
 			}
+		}
+	}
+}
+void split_readprefs(int f){
+	unsigned char len;
+	if(read(f,&len,extlen_size)==extlen_size){
+		sdelimiter_new=(char*)malloc(len+1);
+		if(sdelimiter_new!=nullptr){
+			if(read(f,sdelimiter_new,len)==len){
+				sdelimiter_new[len]='\0';
+				sdelimiter=sdelimiter_new;
+				if(read(f,&len,extlen_size)==extlen_size){
+					esdelimiter_new=(char*)malloc(len+1);
+					if(esdelimiter_new!=nullptr){
+						if(read(f,esdelimiter_new,len)==len){
+							esdelimiter_new[len]='\0';
+							esdelimiter=esdelimiter_new;
+						}
+					}
+				}
+			}
+		}
+	}
+}
+void split_freeprefs(){
+	if(sdelimiter_new!=nullptr){
+		free(sdelimiter_new);
+		if(esdelimiter_new!=nullptr){
+			free(esdelimiter_new);
 		}
 	}
 }

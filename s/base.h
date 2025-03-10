@@ -11,6 +11,7 @@ void mod_set_off_wrap();
 void mod_set_on();
 bool no_char(char);
 bool paste(size_t,size_t,size_t*,char*,size_t,size_t,bool);
+void pref_modify(char**,char**,char*,size_t);
 void printinverted(const char*s);
 void refreshrowsbot(WINDOW*,int,int);
 #define refreshrows(w,i) refreshrowsbot(w,i,getmaxy(w))
@@ -88,6 +89,8 @@ bool titles(WINDOW*);
 //main
 bool split_grab(char**,size_t*);
 void split_writeprefs(int);
+void split_readprefs(int);
+void split_freeprefs();
 
 //main,bar
 extern char*textfile;
@@ -102,12 +105,16 @@ extern size_t xtext;
 //main,tw,tit
 extern bool ocompiler_flag;
 extern size_t aftercall;
-//main,split
-extern bool splits_flag;
 //tw,tit
 extern row*rowswrap;
 extern row*store_rows;
 extern size_t store_rows_tot;
 extern size_t store_aftercall;
+//split,main
+extern bool splits_flag;
+extern char*sdelimiter;
+extern char*esdelimiter;
+extern char*sdelimiter_new;
+extern char*esdelimiter_new;
 
 #include "def.h"

@@ -1133,7 +1133,7 @@ static int word_at_cursor(char*z){
 }
 
 //-2resize,-1no/quit,0er/fals,1ok
-int command(char*comnrp){
+int command(comnrp_define comnrp){
 	int rightexcl=get_right;
 	int right=rightexcl-1;
 	int visib=rightexcl-com_left;
@@ -1149,7 +1149,7 @@ int command(char*comnrp){
 		input=input0;
 		if(*comnrp==com_nr_goto_alt)cursor=sprintf(input,protocol ",",1+ytext
 			+(size_t)getcury(quick_get(comnrp)));
-		else if(*comnrp==com_nr_ext)cursor=sprintf(input,"%s",ocode_extension);//on prefs is len<=0xff and max_path_0 is 0x100
+		else if(*comnrp==com_nr_ext)cursor=sprintf(input,"%s",(((comnrp_define**)comnrp)[1])[0]);//on prefs is len<=0xff and max_path_0 is 0x100
 		else cursor=0;
 	}
 	if(cursor==0)move(y,com_left);
@@ -1201,7 +1201,8 @@ int command(char*comnrp){
 				}
 			}else{//com_nr_ext
 				//                                              will not call on 8bits char*, can call on long* but long is not a pointer on all platform, better to define
-				((void(*)(char*,unsigned long int))(((comnrp_define*)comnrp)[1]))(input,cursor);
+				//((void(*)(char*,unsigned long int))(((comnrp_define*)comnrp)[1]))(input,cursor);
+				pref_modify(((comnrp_define**)comnrp)[1],((comnrp_define**)comnrp)[2],input,cursor);
 				r=1;
 			}
 			break;
