@@ -113,23 +113,25 @@ void bar_init(){
 	}
 	return wrt_simple(f);
 }*/
+//true if ok
+static bool wrt_loop(int f,size_t n){
+	for(size_t i=0;i<n;i++){
+		//if(splits_flag/*true*/){
+		//	for(size_t m=i;split_write(&m,f)/*true*/;i=m;){
+		//		if(m==n)return true;//last row can also be blank
+		//		if(m==i)return false;//errors
+		//	}
+		//}
+		row*r=&rows[i];
+		if(write(f,r->data,r->sz)!=r->sz)return false;
+		if(write(f,ln_term,ln_term_sz)!=ln_term_sz)return false;
+	}
+	return true;
+}
 //same
 static int wrt/*_simple*/(int f){
 	size_t n=rows_tot-1;
-	for(size_t i=0;i<n;i++){
-		//if(splits_flag/*true*/){
-		//	size_t m=i;while(split_write(&m,f)/*true*/){
-		//		if(m==n)break;//last row can also be blank
-		//		if(m==i)return 0;//errors
-		//		i=m;
-		//	}
-		//	if(m==n)break;
-		//}
-		row*r=&rows[i];
-		if(write(f,r->data,r->sz)!=r->sz)return 0;
-		if(write(f,ln_term,ln_term_sz)!=ln_term_sz)return 0;
-	}
-	if(write(f,rows[n].data,rows[n].sz)==rows[n].sz)return command_return_ok;
+	if(wrt_loop(f,n)/*true*/)if(write(f,rows[n].data,rows[n].sz)==rows[n].sz)return command_return_ok;
 	return 0;
 }
 static int bcdl(int y,int*p,char*input,int cursor){

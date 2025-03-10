@@ -127,7 +127,7 @@ bool split_grab(char**p_text,size_t*p_size){
 					*next=a;
 
 					next+=sdelimsize;text=next;dif=next-text;size-=dif;
-					calculated_new_size+=dif+(2*esdelimsize)+(4*ln_term_sz)+sz;
+					calculated_new_size+=dif+(2*esdelimsize)+(3*ln_term_sz)+sz;
 				}while(true);
 				calculated_new_size+=size;
 
