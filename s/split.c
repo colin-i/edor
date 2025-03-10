@@ -255,15 +255,30 @@ bool split_write_init(){
 	return false;
 }
 void split_write_free(){free(fulldelim);}
-static bool split_realwrite(int f,size_t i,size_t*_index){
+static bool split_realwrite(size_t i,size_t*_index,int orig_file,char*data,unsigned int size){
 	for(size_t j=i;j<rows_tot;j++){
 		if(memcmp((&rows[j])->data,fulldelim,fulldelim_size)==0){
-			for(size_t k=i;k<j;k++){
-				row*r=&rows[k];
-				unsigned int size=r->sz;
-				if(write(f,r->data,size)!=size)return true;
+			char aux=data[size];//also alloced rows have +1
+			data[size]='\0';
+			int f=open_or_new(data);
+			data[size]=aux;
+			if(f!=-1){
+				for(size_t k=i;k<j;k++){
+					row*r=&rows[k];
+					unsigned int size=r->sz;
+					if(write(f,r->data,size)!=size){close(f);return true;}
+				}
+				close(f);
+				lseek(orig_file,-ln_term_size,(SEEK_CUR));
+				if(write(orig_file,sdelimiter,sdelimiter_size)==sdelimiter_size){
+					if(write(orig_file,data,size)==size){
+						if(write(orig_file,sdelimiter,sdelimiter_size)==sdelimiter_size){
+							*_index=j+1;
+						}
+					}
+				}
+
 			}
-			*_index=j+1;
 			return true;
 		}
 	}
@@ -276,33 +291,7 @@ bool split_write(size_t*_index,int orig_file){
 	char*data=r->data;
 	if(memcmp(data,fulldelim,fulldelim_size)==0){
 		unsigned int size=r->sz-fulldelim_size;
-		if(size!=0){
-			data+=fulldelim_size;
-			char aux=data[size];//also alloced rows have +1
-			data[size]='\0';
-			int f=open_or_new(data);
-			data[size]=aux;
-			if(f!=-1){
-				bool b=split_realwrite(f,i+1,_index);
-				close(f);
-				if(b/true/){//was split
-					if(i!=*_index){//no errors
-						lseek(orig_file,-ln_term_size,(SEEK_CUR));
-						if(write(orig_file,sdelimiter,sdelimiter_size)==sdelimiter_size){
-							if(write(orig_file,data,size)==size){
-								if(write(orig_file,sdelimiter,sdelimiter_size)==sdelimiter_size){
-									return true;
-								}
-							}
-						}
-						*_index=i;//will error outside
-					}
-					return true;
-				}
-				return false;
-			}
-			return true;//will error outside
-		}
+		if(size!=0)return split_realwrite(i+1,_index,orig_file,data+fulldelim_size,size);
 	}
 	return false;
 }

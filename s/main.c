@@ -2231,7 +2231,7 @@ static int normalize(char**c,size_t*size,size_t*r){
 	int ok=0;
 	char*text_w=c[0];
 	size_t sz=size[0];
-	char*norm=(char*)malloc(2*sz+1); //+1, there are many curses addstr, and at split_write
+	char*norm=(char*)malloc(2*sz+1); //+1, there are many curses addstr
 	if(norm!=nullptr){
 		size_t j=0;ok=1;
 		for(size_t i=0;i<sz;i++){
