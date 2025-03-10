@@ -101,18 +101,6 @@ void bar_init(){
 	printinverted(b_inf_s);
 	if(new_f/*true*/)texter_macro(new_s);
 }
-//command return
-/*static int wrt(int f){
-	if(splits_flag/true/){
-		if(split_write_init()/true/){
-			int a=wrt_simple(f);
-			split_write_free();
-			return a;
-		}
-		return 0;
-	}
-	return wrt_simple(f);
-}*/
 //true if ok
 static bool wrt_loop(int f,size_t n){
 	for(size_t i=0;i<n;i++){
@@ -128,12 +116,24 @@ static bool wrt_loop(int f,size_t n){
 	}
 	return true;
 }
-//same
+//command return
 static int wrt/*_simple*/(int f){
 	size_t n=rows_tot-1;
 	if(wrt_loop(f,n)/*true*/)if(write(f,rows[n].data,rows[n].sz)==rows[n].sz)return command_return_ok;
 	return 0;
 }
+//same
+/*static int wrt(int f){
+	if(splits_flag/true/){
+		if(split_write_init()/true/){
+			int a=wrt_simple(f);
+			split_write_free();
+			return a;
+		}
+		return 0;
+	}
+	return wrt_simple(f);
+}*/
 static int bcdl(int y,int*p,char*input,int cursor){
 	int x=getcurx(stdscr);
 	int pos=p[0];
