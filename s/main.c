@@ -2040,7 +2040,7 @@ static void setprefs(int flag,bool set){
 					if(set/*true*/)mask|=flag;
 					else mask&=~flag;
 				}
-				f=open(prefs_file,O_WRONLY);
+				f=open(prefs_file,O_WRONLY|O_TRUNC);
 				if(f!=-1)writeprefs(f,mask);
 			}
 		}
@@ -2048,6 +2048,7 @@ static void setprefs(int flag,bool set){
 }
 
 void pref_modify(char**pref_orig,char**pref_buf,char*newinput,size_t cursor){
+	if(cursor==0)if(*pref_orig!=ocode_extension)return;//don't allow no size delimiters
 	if(*pref_buf!=nullptr){
 		size_t len=strlen(*pref_buf);
 		if(len<cursor){
@@ -2230,7 +2231,7 @@ static int normalize(char**c,size_t*size,size_t*r){
 	int ok=0;
 	char*text_w=c[0];
 	size_t sz=size[0];
-	char*norm=(char*)malloc(2*sz+1); //+1, there are many curses addstr
+	char*norm=(char*)malloc(2*sz+1); //+1, there are many curses addstr, and at split_write
 	if(norm!=nullptr){
 		size_t j=0;ok=1;
 		for(size_t i=0;i<sz;i++){

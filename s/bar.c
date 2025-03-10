@@ -102,11 +102,23 @@ void bar_init(){
 	if(new_f/*true*/)texter_macro(new_s);
 }
 //command return
-static int wrt(int f){
+/*static int wrt(int f){
+	if(splits_flag/true/){
+		if(split_write_init()/true/){
+			int a=wrt_simple(f);
+			split_write_free();
+			return a;
+		}
+		return 0;
+	}
+	return wrt_simple(f);
+}*/
+//same
+static int wrt/*_simple*/(int f){
 	size_t n=rows_tot-1;
 	for(size_t i=0;i<n;i++){
 		//if(splits_flag/*true*/){
-		//	size_t m=i;if(split_write(&m)/*true*/){
+		//	size_t m=i;if(split_write(&m,f)/*true*/){
 		//		if(m==n)break;//there is 1 more row
 		//		if(m==rows_tot)return command_return_ok;//split was also on last row
 		//		if(m==i)return 0;//errors
@@ -114,10 +126,10 @@ static int wrt(int f){
 		//	}
 		//}
 		row*r=&rows[i];
-		if((size_t)write(f,r->data,r->sz)!=r->sz)return 0;
-		if((size_t)write(f,ln_term,ln_term_sz)!=ln_term_sz)return 0;
+		if(write(f,r->data,r->sz)!=r->sz)return 0;
+		if(write(f,ln_term,ln_term_sz)!=ln_term_sz)return 0;
 	}
-	if((size_t)write(f,rows[n].data,rows[n].sz)==rows[n].sz)return command_return_ok;
+	if(write(f,rows[n].data,rows[n].sz)==rows[n].sz)return command_return_ok;
 	return 0;
 }
 static int bcdl(int y,int*p,char*input,int cursor){
@@ -189,9 +201,8 @@ void bar_char(char c,WINDOW*w){
 int open_new(char*path){
 	return open(path,O_CREAT|O_WRONLY|O_TRUNC,S_IRUSR|S_IWUSR);
 }
-//command return
-int saving_base(char*dest){
-	int f;int r;
+int open_or_new(char*dest){
+	int f;
 	//this 'if' can be the second time in some places, but it is not a must to write once
 	if(access(dest,F_OK)==-1){
 	//if(new_f/*true*/){
@@ -200,6 +211,12 @@ int saving_base(char*dest){
 		//if(new_f/*true*/){
 	}
 	else f=open(dest,O_WRONLY|O_TRUNC);
+	return f;
+}
+//command return
+int saving_base(char*dest){
+	int r;
+	int f=open_or_new(dest);
 	if(f!=-1){
 		r=wrt(f);
 		close(f);
@@ -1367,6 +1384,7 @@ void aftercall_draw(WINDOW*w){
 }
 size_t init_aftercall(){
 	if(textfile!=nullptr){
+		if(*ocode_extension=='\0')return aftercall_find();//all files
 		char*pos=strrchr(textfile,'.');
 		if(pos!=nullptr){
 			pos++;

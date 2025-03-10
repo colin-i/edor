@@ -127,7 +127,7 @@ bool split_grab(char**p_text,size_t*p_size){
 					*next=a;
 
 					next+=sdelimsize;text=next;dif=next-text;size-=dif;
-					calculated_new_size+=dif+(2*esdelimsize)+(2*ln_term_sz)+sz;
+					calculated_new_size+=dif+(2*esdelimsize)+(4*ln_term_sz)+sz;
 				}while(true);
 				calculated_new_size+=size;
 
@@ -149,6 +149,9 @@ bool split_grab(char**p_text,size_t*p_size){
 						split_add(&text,next,&cursor,&size);
 						continue;
 					}
+
+					//ln_term convenient at write
+					memcpy(cursor,ln_term,ln_term_sz);cursor+=ln_term_sz;
 
 					//escape
 					memcpy(cursor,esdelimiter,esdelimsize);cursor+=esdelimsize;
@@ -177,6 +180,9 @@ bool split_grab(char**p_text,size_t*p_size){
 					//delim
 					next+=sdelimsize;
 					split_add(&text,next,&cursor,&size);
+
+					//ln_term this one is for convenient write to not extra code to search for a new row on the closing row
+					memcpy(cursor,ln_term,ln_term_sz);cursor+=ln_term_sz;
 				}while(true);
 				memcpy(cursor,text,size);
 
@@ -235,19 +241,69 @@ void split_freeprefs(){
 	}
 }
 
-//true if the row has split start syntax
-//bool split_write(size_t*_index){
-//	row*r=&rows[*_index];
-	//memcmp esdelimiter+sdelimiter
-	//if true{
-	//	//find closing esdelimiter+sdelimiter on another row
-	//	if true{
-	//		{
-	//			//can have errors and
-	//			*_index=i;
-	//		}
-	//		return true;
-	//	}
-	//}
-	//return false;
-//}
+/*//true at ok
+bool split_write_init(){
+	sdelimiter_size=strlen(sdelimiter);
+	unsigned char s2=strlen(esdelimiter);
+	unsigned short fulldelim_size=sdelimiter_size+s2;
+	fulldelim=(char*)malloc(fulldelim_size);
+	if(fulldelim!=nullptr){
+		memcpy(fulldelim,esdelimiter,s2);
+		memcpy(fulldelim+s2,sdelimiter,sdelimiter_size);
+		return true;
+	}
+	return false;
+}
+void split_write_free(){free(fulldelim);}
+static bool split_realwrite(int f,size_t i,size_t*_index){
+	for(size_t j=i;j<rows_tot;j++){
+		if(memcmp((&rows[j])->data,fulldelim,fulldelim_size)==0){
+			for(size_t k=i;k<j;k++){
+				row*r=&rows[k];
+				unsigned int size=r->sz;
+				if(write(f,r->data,size)!=size)return true;
+			}
+			*_index=j+1;
+			return true;
+		}
+	}
+	return false;
+}
+//true if the row has split start syntax and a split end syntax exists
+bool split_write(size_t*_index,int orig_file){
+	size_t i=*_index;
+	row*r=&rows[i];
+	char*data=r->data;
+	if(memcmp(data,fulldelim,fulldelim_size)==0){
+		unsigned int size=r->sz-fulldelim_size;
+		if(size!=0){
+			data+=fulldelim_size;
+			char aux=data[size];//also alloced rows have +1
+			data[size]='\0';
+			int f=open_or_new(data);
+			data[size]=aux;
+			if(f!=-1){
+				bool b=split_realwrite(f,i+1,_index);
+				close(f);
+				if(b/true/){//was split
+					if(i!=*_index){//no errors
+						lseek(orig_file,-ln_term_size,(SEEK_CUR));
+						if(write(orig_file,sdelimiter,sdelimiter_size)==sdelimiter_size){
+							if(write(orig_file,data,size)==size){
+								if(write(orig_file,sdelimiter,sdelimiter_size)==sdelimiter_size){
+									return true;
+								}
+							}
+						}
+						*_index=i;//will error outside
+					}
+					return true;
+				}
+				return false;
+			}
+			return true;//will error outside
+		}
+	}
+	return false;
+}
+*/
