@@ -234,3 +234,20 @@ void split_freeprefs(){
 		}
 	}
 }
+
+//true if the row has split start syntax
+//bool split_write(size_t*_index){
+//	row*r=&rows[*_index];
+	//memcmp esdelimiter+sdelimiter
+	//if true{
+	//	//find closing esdelimiter+sdelimiter on another row
+	//	if true{
+	//		{
+	//			//can have errors and
+	//			*_index=i;
+	//		}
+	//		return true;
+	//	}
+	//}
+	//return false;
+//}

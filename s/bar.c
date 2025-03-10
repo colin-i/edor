@@ -105,6 +105,14 @@ void bar_init(){
 static int wrt(int f){
 	size_t n=rows_tot-1;
 	for(size_t i=0;i<n;i++){
+		//if(splits_flag/*true*/){
+		//	size_t m=i;if(split_write(&m)/*true*/){
+		//		if(m==n)break;//there is 1 more row
+		//		if(m==rows_tot)return command_return_ok;//split was also on last row
+		//		if(m==i)return 0;//errors
+		//		i=m;
+		//	}
+		//}
 		row*r=&rows[i];
 		if((size_t)write(f,r->data,r->sz)!=r->sz)return 0;
 		if((size_t)write(f,ln_term,ln_term_sz)!=ln_term_sz)return 0;
