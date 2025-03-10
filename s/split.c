@@ -150,9 +150,6 @@ bool split_grab(char**p_text,size_t*p_size){
 						continue;
 					}
 
-					//ln_term convenient at write
-					memcpy(cursor,ln_term,ln_term_sz);cursor+=ln_term_sz;
-
 					//escape
 					memcpy(cursor,esdelimiter,esdelimsize);cursor+=esdelimsize;
 					//delim
@@ -255,43 +252,47 @@ bool split_write_init(){
 	return false;
 }
 void split_write_free(){free(fulldelim);}
-static bool split_realwrite(size_t i,size_t*_index,int orig_file,char*data,unsigned int size){
-	for(size_t j=i;j<rows_tot;j++){
-		if(memcmp((&rows[j])->data,fulldelim,fulldelim_size)==0){
-			//char aux=data[size];//also alloced rows have +1
-			data[size]='\0';//this is for unmodified where ln_term is there, for alloced is undefined there
-			int f=open_or_new(data);
-			//data[size]=aux;//is not important to have ln_term back there
-			if(f!=-1){
-				for(size_t k=i;k<j;k++){
-					row*r=&rows[k];
-					unsigned int size=r->sz;
-					if(write(f,r->data,size)!=size){close(f);return true;}
-				}
-				close(f);
-				lseek(orig_file,-ln_term_size,(SEEK_CUR));
-				if(write(orig_file,sdelimiter,sdelimiter_size)==sdelimiter_size){
-					if(write(orig_file,data,size)==size){
-						if(write(orig_file,sdelimiter,sdelimiter_size)==sdelimiter_size){
-							*_index=j+1;
-						}
-					}
-				}
-
-			}
-			return true;
-		}
-	}
-	return false;
-}
 //true if the row has split start syntax and a split end syntax exists
 bool split_write(size_t*_index,int orig_file){
 	size_t i=*_index;
-	row*r=&rows[i];
+	row*rw=&rows[i];
 	char*data=r->data;
-	if(memcmp(data,fulldelim,fulldelim_size)==0){
-		unsigned int size=r->sz-fulldelim_size;
-		if(size!=0)return split_realwrite(i+1,_index,orig_file,data+fulldelim_size,size);
+	unsigned int size=r->sz;
+	void*pointer=memmem(data,size,fulldelim,fulldelim_size);
+	if(pointer!=nullptr){
+		char*cursor=pointer+fulldelim_size;
+		size-=cursor-data;
+		if(size!=0){
+			i++;
+			size_t last=rows_tot-1;// is fulldelim + ln_term at end, more when was write
+			for(size_t j=i;j<last;j++){
+				if(memcmp((&rows[j])->data,fulldelim,fulldelim_size)==0){
+					//char aux=cursor[size];//also alloced rows have +1
+					cursor[size]='\0';//this is for unmodified where ln_term is there, for alloced is undefined there
+					int f=open_or_new(cursor);
+					//cursor[size]=aux;//is not important to have ln_term back there
+					if(f!=-1){
+						for(size_t k=i;k<j;k++){
+							row*r=&rows[k];
+							unsigned int sz=r->sz;
+							if(write(f,r->data,sz)!=sz){close(f);return true;}
+						}
+						close(f);
+					}
+					unsigned int sz=pointer-data;
+					if(write(orig_file,data,sz)==sz){
+						if(write(orig_file,sdelimiter,sdelimiter_size)==sdelimiter_size){
+							if(write(orig_file,cursor,size)==size){
+								if(write(orig_file,sdelimiter,sdelimiter_size)==sdelimiter_size){
+									*_index=j+1;
+								}
+							}
+						}
+					}
+					return true;
+				}
+			}
+		}
 	}
 	return false;
 }

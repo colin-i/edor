@@ -118,12 +118,12 @@ static int wrt/*_simple*/(int f){
 	size_t n=rows_tot-1;
 	for(size_t i=0;i<n;i++){
 		//if(splits_flag/*true*/){
-		//	size_t m=i;if(split_write(&m,f)/*true*/){
-		//		if(m==n)break;//there is 1 more row
-		//		if(m==rows_tot)return command_return_ok;//split was also on last row
+		//	size_t m=i;while(split_write(&m,f)/*true*/){
+		//		if(m==n)break;//last row can also be blank
 		//		if(m==i)return 0;//errors
 		//		i=m;
 		//	}
+		//	if(m==n)break;
 		//}
 		row*r=&rows[i];
 		if(write(f,r->data,r->sz)!=r->sz)return 0;
