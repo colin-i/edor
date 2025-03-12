@@ -102,34 +102,47 @@ void bar_init(){
 	if(new_f/*true*/)texter_macro(new_s);
 }
 //true if ok
-static bool wrt_loop(int f,size_t n){
+static bool wrt_loop_split(int f,size_t n,unsigned int*_off){
 	for(size_t i=0;i<n;i++){
-		if(splits_flag/*true*/){
-			size_t m=i;
-			do{
-				i=m;
-				char*errors=split_write(&m,f);
-				if(errors!=nullptr)texter_macro(errors);
-				if(m==n)return true;//last row can also be blank
-			}while(m!=i);
-		}
+		size_t m=i;
+		do{
+			i=m;
+			char*errors=split_write(&m,f,_off);
+			if(errors!=nullptr)texter_macro(errors);
+			if(m==n)return true;//last row can also be blank
+		}while(m!=i);
 		row*r=&rows[i];
-		if(write(f,r->data,r->sz)!=r->sz)return false;
+		if(*_off!=0){
+			if(write(f,r->data+*_off,r->sz-*_off)!=r->sz-*_off)return false;
+			*_off=0;
+		}else if(write(f,r->data,r->sz)!=r->sz)return false;
 		if(write(f,ln_term,ln_term_sz)!=ln_term_sz)return false;
 	}
 	return true;
 }
 //command return
+static int wrt_simple_split(int f){
+	size_t n=rows_tot-1;
+	unsigned int off=0;
+	if(wrt_loop_split(f,n,&off)/*true*/)if(write(f,rows[n].data+off,rows[n].sz-off)==rows[n].sz-off)return command_return_ok;
+	return 0;
+}
+//same
 static int wrt_simple(int f){
 	size_t n=rows_tot-1;
-	if(wrt_loop(f,n)/*true*/)if(write(f,rows[n].data,rows[n].sz)==rows[n].sz)return command_return_ok;
+	for(size_t i=0;i<n;i++){
+		row*r=&rows[i];
+		if(write(f,r->data,r->sz)!=r->sz)return 0;
+		if(write(f,ln_term,ln_term_sz)!=ln_term_sz)return 0;
+	}
+	if(write(f,rows[n].data,rows[n].sz)==rows[n].sz)return command_return_ok;
 	return 0;
 }
 //same
 static int wrt(int f){
 	if(splits_flag/*true*/){
 		if(split_write_init()/*true*/){
-			int a=wrt_simple(f);
+			int a=wrt_simple_split(f);
 			split_write_free();
 			return a;
 		}

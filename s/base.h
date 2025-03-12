@@ -92,7 +92,7 @@ void split_writeprefs(int);
 void split_readprefs(int);
 void split_freeprefs();
 bool split_write_init();
-char* split_write(size_t*,int);
+char* split_write(size_t*,int,unsigned int*);
 void split_write_free();
 
 //main

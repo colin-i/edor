@@ -127,7 +127,7 @@ bool split_grab(char**p_text,size_t*p_size){
 					*next=a;
 
 					next+=sdelimsize;text=next;dif=next-text;size-=dif;
-					calculated_new_size+=dif+(2*esdelimsize)+(3*ln_term_sz)+sz;
+					calculated_new_size+=dif+(2*esdelimsize)+(2*ln_term_sz)+sz;
 				}while(true);
 				calculated_new_size+=size;
 
@@ -177,9 +177,6 @@ bool split_grab(char**p_text,size_t*p_size){
 					//delim
 					next+=sdelimsize;
 					split_add(&text,next,&cursor,&size);
-
-					//ln_term this one is for convenient write to not extra code to search for a new row on the closing row
-					memcpy(cursor,ln_term,ln_term_sz);cursor+=ln_term_sz;
 				}while(true);
 				memcpy(cursor,text,size);
 
@@ -272,21 +269,20 @@ static bool split_write_split(char*file,size_t start,size_t end){
 }
 void split_write_free(){free(fulldelim);}
 //true if the row has split start syntax and a split end syntax exists
-const char* split_write(size_t*_index,int orig_file){
+const char* split_write(size_t*_index,int orig_file,unsigned int*_off){
 	size_t i=*_index;
 	row*rw=&rows[i];
-	char*data=rw->data;
-	unsigned int size=rw->sz;
+	char*data=rw->data+*_off;
+	unsigned int size=rw->sz-*_off;
 	char*pointer=(char*)memmem(data,size,fulldelim,fulldelim_size);
 	if(pointer!=nullptr){
 		char*cursor=pointer+fulldelim_size;
 		size-=cursor-data;
 		if(size!=0){
 			i++;
-			size_t last=rows_tot-1;// is fulldelim + ln_term at end, more when was write
-			for(size_t j=i+1;j<last;j++){//+1, if blank there is the empty row
+			for(size_t j=i+1;j<rows_tot;j++){//+1, if blank there is the empty row
 				if(memcmp((&rows[j])->data,fulldelim,fulldelim_size)==0){
-					*_index=j+1;
+					*_index=j;*_off=fulldelim_size;
 					//char aux=cursor[size];//also alloced rows have +1
 					cursor[size]='\0';//this is for unmodified where ln_term is there, for alloced is undefined there
 					bool no_errors=split_write_split(cursor,i,j-1);
