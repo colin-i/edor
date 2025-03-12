@@ -92,26 +92,31 @@ void split_writeprefs(int);
 void split_readprefs(int);
 void split_freeprefs();
 bool split_write_init();
-bool split_write(size_t*,int);
+char* split_write(size_t*,int);
 void split_write_free();
 
-//main,bar
+//main
+//bar
 extern char*textfile;
 extern bool mod_flag;
 extern bool insensitive;
 extern char*ocode_extension;
-//main,bar,tw,tit
+//bar,tw,tit
 extern size_t ytext;
 extern size_t xtext;
-//main,tw,tit
+//tw,tit
 extern bool ocompiler_flag;
 extern size_t aftercall;
-//tw,tit
+
+//tw
+//tit
 extern row*rowswrap;
 extern row*store_rows;
 extern size_t store_rows_tot;
 extern size_t store_aftercall;
-//split,main
+
+//split
+//main
 extern bool splits_flag;
 extern char*sdelimiter;
 extern char*esdelimiter;

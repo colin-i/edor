@@ -5,9 +5,12 @@
 //split
 int open_or_new(char*);
 
-//main,bar,tw,tit,split
+//main
+//bar,tw,tit,split
 extern row*rows;
 extern size_t rows_tot;
-//main,bar,split
+//bar,split
 extern char ln_term[3];
 extern size_t ln_term_sz;
+//split
+extern size_t clue;

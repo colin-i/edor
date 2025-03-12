@@ -254,9 +254,25 @@ bool split_write_init(){
 	}
 	return false;
 }
+static bool split_write_split(char*file,size_t start,size_t end){
+	int f=open_or_new(file);
+	if(f!=-1){
+		for(size_t k=start;k<end;k++){
+			row*r=&rows[k];
+			unsigned int sz=r->sz;
+			if(write(f,r->data,sz)!=sz){close(f);return false;}
+			if(write(f,ln_term,ln_term_sz)!=ln_term_sz){close(f);return false;}
+		}
+		row*r=&rows[end];unsigned int sz=r->sz;
+		if(write(f,r->data,sz)==sz){close(f);return true;}
+		close(f);
+	}
+	clue=start;
+	return false;
+}
 void split_write_free(){free(fulldelim);}
 //true if the row has split start syntax and a split end syntax exists
-bool split_write(size_t*_index,int orig_file){
+const char* split_write(size_t*_index,int orig_file){
 	size_t i=*_index;
 	row*rw=&rows[i];
 	char*data=rw->data;
@@ -270,37 +286,22 @@ bool split_write(size_t*_index,int orig_file){
 			size_t last=rows_tot-1;// is fulldelim + ln_term at end, more when was write
 			for(size_t j=i+1;j<last;j++){//+1, if blank there is the empty row
 				if(memcmp((&rows[j])->data,fulldelim,fulldelim_size)==0){
+					*_index=j+1;
 					//char aux=cursor[size];//also alloced rows have +1
 					cursor[size]='\0';//this is for unmodified where ln_term is there, for alloced is undefined there
-					int f=open_or_new(cursor);
+					bool no_errors=split_write_split(cursor,i,j-1);
 					//cursor[size]=aux;//is not important to have ln_term back there
-					if(f!=-1){
-						size_t l=j-1;
-						for(size_t k=i;k<l;k++){
-							row*r=&rows[k];
-							unsigned int sz=r->sz;
-							if(write(f,r->data,sz)!=sz){close(f);return true;}
-							if(write(f,ln_term,ln_term_sz)!=ln_term_sz){close(f);return true;}
-						}
-						row*r=&rows[l];unsigned int sz=r->sz;
-						if(write(f,r->data,sz)==sz){
-							unsigned int sz=pointer-data;
-							if(write(orig_file,data,sz)==sz){
-								if(write(orig_file,sdelimiter,sdelimiter_size)==sdelimiter_size){
-									if(write(orig_file,cursor,size)==size){
-										if(write(orig_file,sdelimiter,sdelimiter_size)==sdelimiter_size){
-											*_index=j+1;
-										}
-									}
-								}
-							}
-						}
-						close(f);
-					}
-					return true;
+					unsigned int sz=pointer-data;
+					if(write(orig_file,data,sz)==sz)
+						if(write(orig_file,sdelimiter,sdelimiter_size)==sdelimiter_size)
+							if(write(orig_file,cursor,size)==size)
+								if(write(orig_file,sdelimiter,sdelimiter_size)==sdelimiter_size)
+									if(no_errors/*true*/)
+										return nullptr;
+					return "Error(s) at split write";
 				}
 			}
 		}
 	}
-	return false;
+	return nullptr;
 }

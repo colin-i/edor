@@ -105,10 +105,13 @@ void bar_init(){
 static bool wrt_loop(int f,size_t n){
 	for(size_t i=0;i<n;i++){
 		if(splits_flag/*true*/){
-			for(size_t m=i;split_write(&m,f)/*true*/;i=m){
+			size_t m=i;
+			do{
+				i=m;
+				char*errors=split_write(&m,f);
+				if(errors!=nullptr)texter_macro(errors);
 				if(m==n)return true;//last row can also be blank
-				if(m==i)return false;//errors
-			}
+			}while(m!=i);
 		}
 		row*r=&rows[i];
 		if(write(f,r->data,r->sz)!=r->sz)return false;

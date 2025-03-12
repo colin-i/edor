@@ -180,6 +180,7 @@ static void __attribute__((noreturn)) signalHandler(int sig,siginfo_t *info,void
 #include"base.h"
 
 #define ignored 0
+#define no_clue (size_t)-1
 
 char ln_term[3]="\n";
 size_t ln_term_sz=1;
@@ -191,6 +192,7 @@ size_t xtext=0;
 bool mod_flag=true;
 bool ocompiler_flag=false;
 size_t aftercall;
+size_t clue=no_clue;
 
 #define Char_Escape 27
 static char*mapsel=nullptr;
@@ -2755,6 +2757,7 @@ static void action_go(int argc,char**argv,char*cutbuf_file,char*argfile){
 			}
 			endwin();
 
+			if(clue!=no_clue)printf("last row where was an error at split write was: %lu\n",clue);
 			if(ocode_extension_new!=nullptr){
 				free(ocode_extension_new);//also need it at change for view what is was
 				split_freeprefs();
