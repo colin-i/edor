@@ -238,11 +238,14 @@ void split_freeprefs(){
 	}
 }
 
-/*//true at ok
+char*fulldelim;
+unsigned short fulldelim_size;
+unsigned char sdelimiter_size;
+//true at ok
 bool split_write_init(){
 	sdelimiter_size=strlen(sdelimiter);
 	unsigned char s2=strlen(esdelimiter);
-	unsigned short fulldelim_size=sdelimiter_size+s2;
+	fulldelim_size=sdelimiter_size+s2;
 	fulldelim=(char*)malloc(fulldelim_size);
 	if(fulldelim!=nullptr){
 		memcpy(fulldelim,esdelimiter,s2);
@@ -258,36 +261,41 @@ bool split_write(size_t*_index,int orig_file){
 	row*rw=&rows[i];
 	char*data=rw->data;
 	unsigned int size=rw->sz;
-	void*pointer=memmem(data,size,fulldelim,fulldelim_size);
+	char*pointer=(char*)memmem(data,size,fulldelim,fulldelim_size);
 	if(pointer!=nullptr){
 		char*cursor=pointer+fulldelim_size;
 		size-=cursor-data;
 		if(size!=0){
 			i++;
 			size_t last=rows_tot-1;// is fulldelim + ln_term at end, more when was write
-			for(size_t j=i;j<last;j++){
+			for(size_t j=i+1;j<last;j++){//+1, if blank there is the empty row
 				if(memcmp((&rows[j])->data,fulldelim,fulldelim_size)==0){
 					//char aux=cursor[size];//also alloced rows have +1
 					cursor[size]='\0';//this is for unmodified where ln_term is there, for alloced is undefined there
 					int f=open_or_new(cursor);
 					//cursor[size]=aux;//is not important to have ln_term back there
 					if(f!=-1){
-						for(size_t k=i;k<j;k++){
+						size_t l=j-1;
+						for(size_t k=i;k<l;k++){
 							row*r=&rows[k];
 							unsigned int sz=r->sz;
 							if(write(f,r->data,sz)!=sz){close(f);return true;}
+							if(write(f,ln_term,ln_term_sz)!=ln_term_sz){close(f);return true;}
 						}
-						close(f);
-					}
-					unsigned int sz=pointer-data;
-					if(write(orig_file,data,sz)==sz){
-						if(write(orig_file,sdelimiter,sdelimiter_size)==sdelimiter_size){
-							if(write(orig_file,cursor,size)==size){
+						row*r=&rows[l];unsigned int sz=r->sz;
+						if(write(f,r->data,sz)==sz){
+							unsigned int sz=pointer-data;
+							if(write(orig_file,data,sz)==sz){
 								if(write(orig_file,sdelimiter,sdelimiter_size)==sdelimiter_size){
-									*_index=j+1;
+									if(write(orig_file,cursor,size)==size){
+										if(write(orig_file,sdelimiter,sdelimiter_size)==sdelimiter_size){
+											*_index=j+1;
+										}
+									}
 								}
 							}
 						}
+						close(f);
 					}
 					return true;
 				}
@@ -296,4 +304,3 @@ bool split_write(size_t*_index,int orig_file){
 	}
 	return false;
 }
-*/

@@ -19,7 +19,7 @@ enum{false=0!=0,true=1==1};
 
 typedef struct{
 	char*data;
-	unsigned int spc;//at row_alloc(type,undo,...),pasting,enter
+	unsigned int spc;//at row_alloc(type,undo,...),pasting,enter, must be +1 for curses addstr and at split where right part is the file name
 	unsigned int sz;
 }row;
 //typedef struct {}rowwrap;

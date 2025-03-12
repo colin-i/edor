@@ -91,6 +91,9 @@ bool split_grab(char**,size_t*);
 void split_writeprefs(int);
 void split_readprefs(int);
 void split_freeprefs();
+bool split_write_init();
+bool split_write(size_t*,int);
+void split_write_free();
 
 //main,bar
 extern char*textfile;
@@ -98,8 +101,6 @@ extern bool mod_flag;
 extern bool insensitive;
 extern char*ocode_extension;
 //main,bar,tw,tit
-extern row*rows;
-extern size_t rows_tot;
 extern size_t ytext;
 extern size_t xtext;
 //main,tw,tit

@@ -104,12 +104,12 @@ void bar_init(){
 //true if ok
 static bool wrt_loop(int f,size_t n){
 	for(size_t i=0;i<n;i++){
-		//if(splits_flag/*true*/){
-		//	for(size_t m=i;split_write(&m,f)/*true*/;i=m;){
-		//		if(m==n)return true;//last row can also be blank
-		//		if(m==i)return false;//errors
-		//	}
-		//}
+		if(splits_flag/*true*/){
+			for(size_t m=i;split_write(&m,f)/*true*/;i=m){
+				if(m==n)return true;//last row can also be blank
+				if(m==i)return false;//errors
+			}
+		}
 		row*r=&rows[i];
 		if(write(f,r->data,r->sz)!=r->sz)return false;
 		if(write(f,ln_term,ln_term_sz)!=ln_term_sz)return false;
@@ -117,15 +117,15 @@ static bool wrt_loop(int f,size_t n){
 	return true;
 }
 //command return
-static int wrt/*_simple*/(int f){
+static int wrt_simple(int f){
 	size_t n=rows_tot-1;
 	if(wrt_loop(f,n)/*true*/)if(write(f,rows[n].data,rows[n].sz)==rows[n].sz)return command_return_ok;
 	return 0;
 }
 //same
-/*static int wrt(int f){
-	if(splits_flag/true/){
-		if(split_write_init()/true/){
+static int wrt(int f){
+	if(splits_flag/*true*/){
+		if(split_write_init()/*true*/){
 			int a=wrt_simple(f);
 			split_write_free();
 			return a;
@@ -133,7 +133,7 @@ static int wrt/*_simple*/(int f){
 		return 0;
 	}
 	return wrt_simple(f);
-}*/
+}
 static int bcdl(int y,int*p,char*input,int cursor){
 	int x=getcurx(stdscr);
 	int pos=p[0];
