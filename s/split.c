@@ -247,29 +247,62 @@ bool split_write_init(){
 	if(fulldelim!=nullptr){
 		memcpy(fulldelim,esdelimiter,s2);
 		memcpy(fulldelim+s2,sdelimiter,sdelimiter_size);
-		return true;
+		/*if(*split_out!='\0'){
+			size_t a=strlen(split_out);
+			size_t b=strlen(filename);
+			char*c=(char*)malloc(a+b+1);
+			if(c!=nullptr){
+				memcpy(c,split_out,a);
+				memcpy(c+a,filename,b);
+				c[a+b]='\0';
+				*split_out_file=open_or_new(c);
+				free(c);
+				if(*split_out_file!=-1){
+					*/return true;/*
+				}
+			}
+			free(fulldelim);
+		}*/
 	}
 	return false;
 }
-//
+void split_write_free(){
+	free(fulldelim);
+	/*if(*split_out!='\0'){
+		close(*split_out_file);
+	}*/
+}
+
+bool swrite(int f,void*buf,unsigned int size){
+	if(write(f,buf,size)==size){
+		/*if(*split_out!='\0'){
+			if(write(*split_out_file,buf,size)==size){
+				return swrite_ok;
+			}
+			return swrite_bad;
+		}*/
+		return swrite_ok;
+	}
+	return swrite_bad;
+}
+//true if ok
 static bool split_write_split(char*file,size_t start,size_t end,bool*majorerror){
 	int f=open_or_new(file);
 	if(f!=-1){
 		for(size_t k=start;k<end;k++){
 			row*r=&rows[k];
 			unsigned int sz=r->sz;
-			if(write(f,r->data,sz)!=sz){close(f);return false;}
-			if(write(f,ln_term,ln_term_sz)!=ln_term_sz){close(f);return false;}
+			if(swrite(f,r->data,sz)/*true*/){close(f);return false;}
+			if(swrite(f,ln_term,ln_term_sz)/*true*/){close(f);return false;}
 		}
 		row*r=&rows[end];unsigned int sz=r->sz;
-		if(write(f,r->data,sz)==sz){close(f);return true;}
+		if(swrite(f,r->data,sz)==swrite_ok){close(f);return true;}
 		close(f);
 	}
 	clue=start;
 	*majorerror=false;
 	return false;
 }
-void split_write_free(){free(fulldelim);}
 //true if the row has split start syntax and a split end syntax exists
 const char* split_write(size_t*_index,int orig_file,unsigned int*_off,bool*majorerror){
 	size_t i=*_index;
@@ -290,12 +323,15 @@ const char* split_write(size_t*_index,int orig_file,unsigned int*_off,bool*major
 					bool no_errors=split_write_split(cursor,i,j-1,majorerror);
 					//cursor[size]=aux;//is not important to have ln_term back there
 					unsigned int sz=pointer-data;
-					if(write(orig_file,data,sz)==sz)
-						if(write(orig_file,sdelimiter,sdelimiter_size)==sdelimiter_size)
-							if(write(orig_file,cursor,size)==size)
-								if(write(orig_file,sdelimiter,sdelimiter_size)==sdelimiter_size)
-									if(no_errors/*true*/)
-										return nullptr;
+					if(swrite(orig_file,data,sz)==swrite_ok){
+						//if(*split_out=='\0'){
+							if(write(orig_file,sdelimiter,sdelimiter_size)==sdelimiter_size)
+								if(write(orig_file,cursor,size)==size)
+									if(write(orig_file,sdelimiter,sdelimiter_size)==sdelimiter_size)
+										if(no_errors/*true*/)
+											return nullptr;
+						//}else if(no_errors/*true*/)return nullptr;
+					}
 					return "Error(s) at split write";
 				}
 			}

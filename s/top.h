@@ -24,6 +24,12 @@ typedef struct{
 }row;
 //typedef struct {}rowwrap;
 
+typedef struct{
+	char**orig;
+	char**buf;
+	bool sizedonly;
+}extdata;
+
 #define Char_Return 0xd
 #define row_pad 0xF
 #define tab_sz 6
@@ -57,3 +63,6 @@ typedef struct{
 #define color_d 4
 
 #define extlen_size 1
+
+#define swrite_ok false
+#define swrite_bad true

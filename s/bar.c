@@ -117,10 +117,10 @@ static bool wrt_loop_split(int f,size_t n,unsigned int*_off){
 		}while(m!=i);
 		row*r=&rows[i];
 		if(*_off!=0){
-			if(write(f,r->data+*_off,r->sz-*_off)!=r->sz-*_off)return false;
+			if(swrite(f,r->data+*_off,r->sz-*_off)/*true*/)return false;
 			*_off=0;
-		}else if(write(f,r->data,r->sz)!=r->sz)return false;
-		if(write(f,ln_term,ln_term_sz)!=ln_term_sz)return false;
+		}else if(swrite(f,r->data,r->sz)/*true*/)return false;
+		if(swrite(f,ln_term,ln_term_sz)/*true*/)return false;
 	}
 	return true;
 }
@@ -128,11 +128,20 @@ static bool wrt_loop_split(int f,size_t n,unsigned int*_off){
 static int wrt_simple_split(int f){
 	size_t n=rows_tot-1;
 	unsigned int off=0;
-	if(wrt_loop_split(f,n,&off)/*true*/)if(write(f,rows[n].data+off,rows[n].sz-off)==rows[n].sz-off)return command_return_ok;
+	if(wrt_loop_split(f,n,&off)/*true*/)if(swrite(f,rows[n].data+off,rows[n].sz-off)==swrite_ok)return command_return_ok;
 	return 0;
 }
 //same
-static int wrt_simple(int f){
+static int wrt_split(int f){//,char*filename){
+	if(split_write_init()/*true*/){
+		int a=wrt_simple_split(f);
+		split_write_free();
+		return a;
+	}
+	return 0;
+}
+//same
+static int wrt(int f){
 	size_t n=rows_tot-1;
 	for(size_t i=0;i<n;i++){
 		row*r=&rows[i];
@@ -141,18 +150,6 @@ static int wrt_simple(int f){
 	}
 	if(write(f,rows[n].data,rows[n].sz)==rows[n].sz)return command_return_ok;
 	return 0;
-}
-//same
-static int wrt(int f){
-	if(splits_flag/*true*/){
-		if(split_write_init()/*true*/){
-			int a=wrt_simple_split(f);
-			split_write_free();
-			return a;
-		}
-		return 0;
-	}
-	return wrt_simple(f);
 }
 static int bcdl(int y,int*p,char*input,int cursor){
 	int x=getcurx(stdscr);
@@ -240,7 +237,8 @@ int saving_base(char*dest){
 	int r;
 	int f=open_or_new(dest);
 	if(f!=-1){
-		r=wrt(f);
+		if(splits_flag/*true*/)r=wrt_split(f);//,dest);
+		else r=wrt(f);
 		close(f);
 	}else{
 		//this was for open_new, and is ok also when the file is already there
@@ -1196,7 +1194,10 @@ int command(comnrp_define comnrp){
 		input=input0;
 		if(*comnrp==com_nr_goto_alt)cursor=sprintf(input,protocol ",",1+ytext
 			+(size_t)getcury(quick_get(comnrp)));
-		else if(*comnrp==com_nr_ext)cursor=sprintf(input,"%s",(((comnrp_define**)comnrp)[1])[0]);//on prefs is len<=0xff and max_path_0 is 0x100
+		else if(*comnrp==com_nr_ext){
+			extdata*d=((extdata**)comnrp)[1];
+			cursor=sprintf(input,"%s",(d->orig)[0]);//on prefs is len<=0xff and max_path_0 is 0x100
+		}
 		else cursor=0;
 	}
 	if(cursor==0)move(y,com_left);
@@ -1249,7 +1250,8 @@ int command(comnrp_define comnrp){
 			}else{//com_nr_ext
 				//                                              will not call on 8bits char*, can call on long* but long is not a pointer on all platform, better to define
 				//((void(*)(char*,unsigned long int))(((comnrp_define*)comnrp)[1]))(input,cursor);
-				pref_modify(((comnrp_define**)comnrp)[1],((comnrp_define**)comnrp)[2],input,cursor);
+				extdata*d=((extdata**)comnrp)[1];
+				pref_modify(d->orig,d->buf,d->sizedonly,input,cursor);
 				r=1;
 			}
 			break;

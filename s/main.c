@@ -34,7 +34,7 @@
 \nCtrl+e = enable/disable internal mouse/touch\
 \nCtrl+n = disable/enable indentation\
 \nCtrl+t = enable/disable insensitive search\
-\nCtrl+a = enable/disable O language syntax; Alt+a = syntax rescan; Alt+A = change extension name\
+\nCtrl+a = enable/disable O language syntax; Alt+a = syntax rescan; Alt+A = change extension name (blank is all)\
 \nCtrl+j = enable/disable OA split syntax; Alt+j = change delimiter; Alt+J = change escape delimiter\
 \nCtrl+q = quit"
 
@@ -1970,8 +1970,7 @@ static bool visual_mode(WINDOW*w,bool v_l){
 	}while(z!=0);
 	return false;
 }
-#define quickest_pack(nr,w,ix) comnrp_define args[ix];args[0]=(comnrp_define)nr;args[1]=(comnrp_define)w;
-#define quick_pack(nr,w) quickest_pack(nr,w,2)
+#define quick_pack(nr,w) comnrp_define args[2];((comnrp_define)args)[0]=nr;args[1]=(comnrp_define)w;
 static bool find_mode(int nr,WINDOW*w){
 	quick_pack((long)nr,w)
 	int r=command((comnrp_define)args);
@@ -2049,8 +2048,8 @@ static void setprefs(int flag,bool set){
 	}
 }
 
-void pref_modify(char**pref_orig,char**pref_buf,char*newinput,size_t cursor){
-	if(cursor==0)if(*pref_orig!=ocode_extension)return;//don't allow no size delimiters
+void pref_modify(char**pref_orig,char**pref_buf,bool sizedonly,char*newinput,size_t cursor){
+	if(cursor==0)if(sizedonly)return;
 	if(*pref_buf!=nullptr){
 		size_t len=strlen(*pref_buf);
 		if(len<cursor){
@@ -2068,9 +2067,9 @@ void pref_modify(char**pref_orig,char**pref_buf,char*newinput,size_t cursor){
 	*pref_orig=*pref_buf;//at start extension_new is not 100%
 	setprefs(mask_nomask,ignored);
 }
-static bool pref_change(WINDOW*w,char**pref_orig,char**pref_buf){
-	quickest_pack(com_nr_ext,pref_orig,3)
-	args[2]=(comnrp_define)pref_buf;
+static bool pref_change(WINDOW*w,char**pref_orig,char**pref_buf,bool sizedonly){
+	extdata d={pref_orig,pref_buf,sizedonly};
+	quick_pack(com_nr_ext,&d)
 	int nr=command((char*)args);
 	if(nr>-2){
 		wmove(w,getcury(w),getcurx(w));//ok/quit/err
@@ -2132,9 +2131,9 @@ static bool loopin(WINDOW*w){
 			else if(z=='u'){vis('U',w);undo_loop(w);vis(' ',w);}
 			else if(z=='s'){bool b=savetofile(w,false);if(b/*true*/)return true;}
 			else if(z=='a'){aftercall=aftercall_find();aftercall_draw(w);}
-			else if(z=='A'){if(pref_change(w,&ocode_extension,&ocode_extension_new)/*true*/)return true;}
-			else if(z=='j'){if(pref_change(w,&sdelimiter,&sdelimiter_new)/*true*/)return true;}
-			else if(z=='J'){if(pref_change(w,&esdelimiter,&esdelimiter_new)/*true*/)return true;}
+			else if(z=='A'){if(pref_change(w,&ocode_extension,&ocode_extension_new,false)/*true*/)return true;}
+			else if(z=='j'){if(pref_change(w,&sdelimiter,&sdelimiter_new,true)/*true*/)return true;}  //don't allow no size delimiters
+			else if(z=='J'){if(pref_change(w,&esdelimiter,&esdelimiter_new,true)/*true*/)return true;}//
 		}else{
 			//QWERTyUioP
 			//ASdFGHJkl
