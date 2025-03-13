@@ -42,6 +42,14 @@ char*sdelimiter=(char*)"|||";
 char*esdelimiter=(char*)"//";
 char* sdelimiter_new=nullptr;
 char* esdelimiter_new=nullptr;
+char*split_out="";
+char*split_out_new=nullptr;
+
+char*fulldelim;
+unsigned short fulldelim_size;
+unsigned char sdelimiter_size;
+
+static int split_out_file;
 
 typedef struct{
 	int file;
@@ -197,10 +205,15 @@ void split_writeprefs(int f){
 		if(write(f,sdelimiter,sz)==sz){
 			sz=strlen(esdelimiter);
 			if(write(f,&sz,extlen_size)==extlen_size){
-				#pragma GCC diagnostic push
-				#pragma GCC diagnostic ignored "-Wunused-result"
-				write(f,esdelimiter,sz);
-				#pragma GCC diagnostic pop
+				if(write(f,esdelimiter,sz)==sz){
+					sz=strlen(split_out);
+					if(write(f,&sz,extlen_size)==extlen_size){
+						#pragma GCC diagnostic push
+						#pragma GCC diagnostic ignored "-Wunused-result"
+						write(f,split_out,sz);
+						#pragma GCC diagnostic pop
+					}
+				}
 			}
 		}
 	}
@@ -219,6 +232,15 @@ void split_readprefs(int f){
 						if(read(f,esdelimiter_new,len)==len){
 							esdelimiter_new[len]='\0';
 							esdelimiter=esdelimiter_new;
+							if(read(f,&len,extlen_size)==extlen_size){
+								split_out_new=malloc(len+1);
+								if(split_out_new!=nullptr){
+									if(read(f,split_out_new,len)==len){
+										split_out_new[len]='\0';
+										split_out=split_out_new;
+									}
+								}
+							}
 						}
 					}
 				}
@@ -231,15 +253,15 @@ void split_freeprefs(){
 		free(sdelimiter_new);
 		if(esdelimiter_new!=nullptr){
 			free(esdelimiter_new);
+			if(split_out_new!=nullptr){
+				free(split_out_new);
+			}
 		}
 	}
 }
 
-char*fulldelim;
-unsigned short fulldelim_size;
-unsigned char sdelimiter_size;
 //true at ok
-bool split_write_init(){
+bool split_write_init(char*orig_filename){
 	sdelimiter_size=strlen(sdelimiter);
 	unsigned char s2=strlen(esdelimiter);
 	fulldelim_size=sdelimiter_size+s2;
@@ -247,40 +269,42 @@ bool split_write_init(){
 	if(fulldelim!=nullptr){
 		memcpy(fulldelim,esdelimiter,s2);
 		memcpy(fulldelim+s2,sdelimiter,sdelimiter_size);
-		/*if(*split_out!='\0'){
-			size_t a=strlen(split_out);
-			size_t b=strlen(filename);
-			char*c=(char*)malloc(a+b+1);
-			if(c!=nullptr){
-				memcpy(c,split_out,a);
-				memcpy(c+a,filename,b);
-				c[a+b]='\0';
-				*split_out_file=open_or_new(c);
-				free(c);
-				if(*split_out_file!=-1){
-					*/return true;/*
-				}
+		if(*split_out=='\0')return true;
+
+		size_t a=strlen(split_out);
+		size_t b=a+1;
+		size_t c=strlen(orig_filename);
+		char*d=(char*)malloc(b+c+1);
+		if(d!=nullptr){
+			memcpy(d,split_out,a);
+			d[a]=path_separator;
+			memcpy(d+b,orig_filename,c);
+			d[b+c]='\0';
+			split_out_file=open_or_new(d);
+			free(d);
+			if(split_out_file!=-1){
+				return true;
 			}
-			free(fulldelim);
-		}*/
+		}
+		free(fulldelim);
 	}
 	return false;
 }
 void split_write_free(){
 	free(fulldelim);
-	/*if(*split_out!='\0'){
-		close(*split_out_file);
-	}*/
+	if(*split_out!='\0'){
+		close(split_out_file);
+	}
 }
 
 bool swrite(int f,void*buf,unsigned int size){
 	if(write(f,buf,size)==size){
-		/*if(*split_out!='\0'){
-			if(write(*split_out_file,buf,size)==size){
+		if(*split_out!='\0'){
+			if(write(split_out_file,buf,size)==size){
 				return swrite_ok;
 			}
 			return swrite_bad;
-		}*/
+		}
 		return swrite_ok;
 	}
 	return swrite_bad;
@@ -301,14 +325,11 @@ static bool split_write_split(char*file,size_t start,size_t end,bool*majorerror)
 	}
 	clue=start;*majorerror=false;return false;
 }
-static bool split_write_aroundsplit(int orig_file,char*data,unsigned int sz,char*cursor,unsigned int size,bool*majorerror){
-	if(swrite(orig_file,data,sz)==swrite_ok){
-		//if(*split_out!='\0')return true;
-		if(write(orig_file,sdelimiter,sdelimiter_size)==sdelimiter_size)
-			if(write(orig_file,cursor,size)==size)
-				if(write(orig_file,sdelimiter,sdelimiter_size)==sdelimiter_size)
-					return true;
-	}
+static bool split_write_orig(int orig_file,char*cursor,unsigned int size,bool*majorerror){
+	if(write(orig_file,sdelimiter,sdelimiter_size)==sdelimiter_size)
+		if(write(orig_file,cursor,size)==size)
+			if(write(orig_file,sdelimiter,sdelimiter_size)==sdelimiter_size)
+				return true;
 	*majorerror=true;return false;
 }
 //true if the row has split start syntax and a split end syntax exists
@@ -326,12 +347,15 @@ const char* split_write(size_t*_index,int orig_file,unsigned int*_off,bool*major
 			for(size_t j=i+1;j<rows_tot;j++){//+1, if blank there is the empty row
 				if(memcmp((&rows[j])->data,fulldelim,fulldelim_size)==0){
 					*_index=j;*_off=fulldelim_size;
-					//char aux=cursor[size];//also alloced rows have +1
-					cursor[size]='\0';//this is for unmodified where ln_term is there, for alloced is undefined there
-					//cursor[size]=aux;//is not important to have ln_term back there
-					if(split_write_split(cursor,i,j-1,majorerror)/*true*/)
-						{if(split_write_aroundsplit(orig_file,data,pointer-data,cursor,size,majorerror)/*true*/)return nullptr;}
-					else if(*majorerror==false)split_write_aroundsplit(orig_file,data,pointer-data,cursor,size,majorerror);
+
+					if(swrite(orig_file,data,pointer-data)==swrite_ok){
+						//char aux=cursor[size];//also alloced rows have +1
+						cursor[size]='\0';//this is for unmodified where ln_term is there, for alloced is undefined there
+						//cursor[size]=aux;//is not important to have ln_term back there
+						if(split_write_split(cursor,i,j-1,majorerror)/*true*/)
+							{if(split_write_orig(orig_file,cursor,size,majorerror)/*true*/)return nullptr;}
+						else if(*majorerror==false)split_write_orig(orig_file,cursor,size,majorerror);
+					}else *majorerror=true;
 					return "Error(s) at split write";
 				}
 			}

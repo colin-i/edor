@@ -132,8 +132,8 @@ static int wrt_simple_split(int f){
 	return 0;
 }
 //same
-static int wrt_split(int f){//,char*filename){
-	if(split_write_init()/*true*/){
+static int wrt_split(int f,char*filename){
+	if(split_write_init(filename)/*true*/){
 		int a=wrt_simple_split(f);
 		split_write_free();
 		return a;
@@ -237,7 +237,7 @@ int saving_base(char*dest){
 	int r;
 	int f=open_or_new(dest);
 	if(f!=-1){
-		if(splits_flag/*true*/)r=wrt_split(f);//,dest);
+		if(splits_flag/*true*/)r=wrt_split(f,dest);
 		else r=wrt(f);
 		close(f);
 	}else{

@@ -124,5 +124,7 @@ extern char*sdelimiter;
 extern char*esdelimiter;
 extern char*sdelimiter_new;
 extern char*esdelimiter_new;
+extern char*split_out;
+extern char*split_out_new;
 
 #include "def.h"

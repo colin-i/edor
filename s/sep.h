@@ -1,5 +1,4 @@
 
-extern char path_separator;
 #ifdef __cplusplus
 extern "C"{
 #endif
