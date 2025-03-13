@@ -91,7 +91,7 @@ bool split_grab(char**,size_t*);
 void split_writeprefs(int);
 void split_readprefs(int);
 void split_freeprefs();
-bool split_write_init();
+bool split_write_init(char*);
 char* split_write(size_t*,int,unsigned int*,bool*);
 void split_write_free();
 //bar

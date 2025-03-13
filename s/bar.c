@@ -165,7 +165,7 @@ static int wrt_split(char*filename){
 		split_write_free();
 		return a;
 	}
-	print_error("Error at split init");
+	print_error((char*)"Error at split init");
 	return 0;
 }
 //same
@@ -262,18 +262,17 @@ int open_or_new(char*dest){
 }
 //command return
 int saving_base(char*dest){
-	int r;
-	if(splits_flag/*true*/)r=wrt_split(dest);
-	else{
-		int f=open_or_new(dest);
-		if(f!=-1){
-			r=wrt(f);
-			close(f);
-		}else{
-			default_error();r=0;
-		}
+	if(splits_flag/*true*/){
+		return wrt_split(dest);
 	}
-	return r;
+	int f=open_or_new(dest);
+	if(f!=-1){
+		int r=wrt(f);
+		close(f);
+		return r;
+	}
+	default_error();
+	return 0;
 }
 //command return
 static int saving(){

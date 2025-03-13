@@ -42,7 +42,7 @@ char*sdelimiter=(char*)"|||";
 char*esdelimiter=(char*)"//";
 char* sdelimiter_new=nullptr;
 char* esdelimiter_new=nullptr;
-char*split_out="";
+char*split_out=(char*)"";
 char*split_out_new=nullptr;
 
 char*fulldelim;
@@ -233,7 +233,7 @@ void split_readprefs(int f){
 							esdelimiter_new[len]='\0';
 							esdelimiter=esdelimiter_new;
 							if(read(f,&len,extlen_size)==extlen_size){
-								split_out_new=malloc(len+1);
+								split_out_new=(char*)malloc(len+1);
 								if(split_out_new!=nullptr){
 									if(read(f,split_out_new,len)==len){
 										split_out_new[len]='\0';
