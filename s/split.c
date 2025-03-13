@@ -39,15 +39,16 @@
 bool splits_flag=false;
 
 char*sdelimiter=(char*)"|||";
-//char*esdelimiter=(char*)"//";//this looks extra at the moment
+char*esdelimiter=(char*)"///";
 char* sdelimiter_new=nullptr;
-//char* esdelimiter_new=nullptr;
+char* esdelimiter_new=nullptr;
 char*split_out=(char*)"";
 char*split_out_new=nullptr;
 
 //char*fulldelim;
 //unsigned short fulldelim_size;
 unsigned char sdelimiter_size;
+unsigned char esdelimiter_size;
 
 static int split_out_file;
 
@@ -78,7 +79,7 @@ bool split_grab(char**p_text,size_t*p_size){
 		char*text;size_t size;int cmp;char*next;
 		char a=*sdelimiter;
 		unsigned char sdelimsize=strlen(sdelimiter);//at file read only one byte for size
-		//unsigned char esdelimsize=strlen(esdelimiter);//same from preferences
+		unsigned char esdelimsize=strlen(esdelimiter);//same from preferences
 
 		//calculate number of explodes
 		size_t explodes=0;
@@ -89,7 +90,7 @@ bool split_grab(char**p_text,size_t*p_size){
 			next++;size-=next-text;
 			if(size<=(sdelimsize-1))break;
 			cmp=memcmp(next,sdelimiter+1,sdelimsize-1);
-			next+=sdelimsize-1;text=next;size-=next-text;
+			text=next+(sdelimsize-1);size-=text-next;
 			if(cmp!=0)continue;
 
 			next=(char*)memchr(text,a,size);
@@ -98,7 +99,7 @@ bool split_grab(char**p_text,size_t*p_size){
 			if(size<=(sdelimsize-1)){split_error();return false;}
 			cmp=memcmp(next,sdelimiter+1,sdelimsize-1);
 			if(cmp!=0){split_error();return false;}//it looks like the delimiter chars can't be in filename chars
-			next+=sdelimsize-1;text=next;size-=next-text;
+			text=next+(sdelimsize-1);size-=text-next;
 
 			explodes++;
 		}while(true);
@@ -119,8 +120,9 @@ bool split_grab(char**p_text,size_t*p_size){
 					next++;dif=next-text;size-=dif;calculated_new_size+=dif;
 					if(size<=(sdelimsize-1))break;
 					cmp=memcmp(next,sdelimiter+1,sdelimsize-1);
-					next+=sdelimsize-1;text=next;dif=next-text;size-=dif;calculated_new_size+=dif;
+					text=next+(sdelimsize-1);dif=text-next;size-=dif;calculated_new_size+=dif;
 					if(cmp!=0)continue;
+					calculated_new_size-=sdelimsize;//we are using another marker at view
 
 					next=(char*)memchr(text,a,size);
 					*next='\0';
@@ -134,8 +136,10 @@ bool split_grab(char**p_text,size_t*p_size){
 					files[explodes].file=-1;
 					*next=a;
 
-					next+=sdelimsize;text=next;dif=next-text;size-=dif;
-					calculated_new_size+=dif+(2*ln_term_sz)+sz;//+(2*esdelimsize)
+					dif=next-text;
+					text=next+sdelimsize;
+					size-=dif+sdelimsize;
+					calculated_new_size+=dif+(2*esdelimsize)+(2*ln_term_sz)+sz;
 				}while(true);
 				calculated_new_size+=size;
 
@@ -159,9 +163,10 @@ bool split_grab(char**p_text,size_t*p_size){
 					}
 
 					//escape
-					//memcpy(cursor,esdelimiter,esdelimsize);cursor+=esdelimsize;
+					memcpy(cursor,esdelimiter,esdelimsize);cursor+=esdelimsize;
 					//delim
-					split_add(&text,next,&cursor,&size);
+					//split_add(&text,next,&cursor,&size);
+					size-=next-text;text=next;
 
 					//file
 					next=(char*)memchr(text,a,size);
@@ -181,10 +186,11 @@ bool split_grab(char**p_text,size_t*p_size){
 					memcpy(cursor,ln_term,ln_term_sz);cursor+=ln_term_sz;
 
 					//escape
-					//memcpy(cursor,esdelimiter,esdelimsize);cursor+=esdelimsize;
+					memcpy(cursor,esdelimiter,esdelimsize);cursor+=esdelimsize;
 					//delim
 					next+=sdelimsize;
-					split_add(&text,next,&cursor,&size);
+					//split_add(&text,next,&cursor,&size);
+					size-=next-text;text=next;
 				}while(true);
 				memcpy(cursor,text,size);
 
@@ -203,13 +209,17 @@ void split_writeprefs(int f){
 	unsigned char sz=strlen(sdelimiter);
 	if(write(f,&sz,extlen_size)==extlen_size){
 		if(write(f,sdelimiter,sz)==sz){
-			//sz=strlen(esdelimiter);if(write(f,&sz,extlen_size)==extlen_size){if(write(f,esdelimiter,sz)==sz){
-			sz=strlen(split_out);
+			sz=strlen(esdelimiter);
 			if(write(f,&sz,extlen_size)==extlen_size){
-				#pragma GCC diagnostic push
-				#pragma GCC diagnostic ignored "-Wunused-result"
-				write(f,split_out,sz);
-				#pragma GCC diagnostic pop
+				if(write(f,esdelimiter,sz)==sz){
+					sz=strlen(split_out);
+					if(write(f,&sz,extlen_size)==extlen_size){
+						#pragma GCC diagnostic push
+						#pragma GCC diagnostic ignored "-Wunused-result"
+						write(f,split_out,sz);
+						#pragma GCC diagnostic pop
+					}
+				}
 			}
 		}
 	}
@@ -222,13 +232,21 @@ void split_readprefs(int f){
 			if(read(f,sdelimiter_new,len)==len){
 				sdelimiter_new[len]='\0';
 				sdelimiter=sdelimiter_new;
-				//if(read(f,&len,extlen_size)==extlen_size){esdelimiter_new=(char*)malloc(len+1);if(esdelimiter_new!=nullptr){if(read(f,esdelimiter_new,len)==len){esdelimiter_new[len]='\0';esdelimiter=esdelimiter_new;
 				if(read(f,&len,extlen_size)==extlen_size){
-					split_out_new=(char*)malloc(len+1);
-					if(split_out_new!=nullptr){
-						if(read(f,split_out_new,len)==len){
-							split_out_new[len]='\0';
-							split_out=split_out_new;
+					esdelimiter_new=(char*)malloc(len+1);
+					if(esdelimiter_new!=nullptr){
+						if(read(f,esdelimiter_new,len)==len){
+							esdelimiter_new[len]='\0';
+							esdelimiter=esdelimiter_new;
+							if(read(f,&len,extlen_size)==extlen_size){
+								split_out_new=(char*)malloc(len+1);
+								if(split_out_new!=nullptr){
+									if(read(f,split_out_new,len)==len){
+										split_out_new[len]='\0';
+										split_out=split_out_new;
+									}
+								}
+							}
 						}
 					}
 				}
@@ -239,9 +257,11 @@ void split_readprefs(int f){
 void split_freeprefs(){
 	if(sdelimiter_new!=nullptr){
 		free(sdelimiter_new);
-		//if(esdelimiter_new!=nullptr){free(esdelimiter_new);
-		if(split_out_new!=nullptr){
-			free(split_out_new);
+		if(esdelimiter_new!=nullptr){
+			free(esdelimiter_new);
+			if(split_out_new!=nullptr){
+				free(split_out_new);
+			}
 		}
 	}
 }
@@ -249,6 +269,7 @@ void split_freeprefs(){
 //true at ok
 bool split_write_init(char*orig_filename){
 	sdelimiter_size=strlen(sdelimiter);
+	esdelimiter_size=strlen(esdelimiter);
 	//unsigned char s2=strlen(esdelimiter);fulldelim_size=sdelimiter_size+s2;fulldelim=(char*)malloc(fulldelim_size);if(fulldelim!=nullptr){memcpy(fulldelim,esdelimiter,s2);memcpy(fulldelim+s2,sdelimiter,sdelimiter_size);
 	if(*split_out!='\0'){
 		size_t a=strlen(split_out);
@@ -318,15 +339,15 @@ const char* split_write(size_t*_index,int orig_file,unsigned int*_off,bool*major
 	row*rw=&rows[i];
 	char*data=rw->data+*_off;
 	unsigned int size=rw->sz-*_off;
-	char*pointer=(char*)memmem(data,size,sdelimiter,sdelimiter_size);//fulldelim,fulldelim_size
+	char*pointer=(char*)memmem(data,size,esdelimiter,esdelimiter_size);//fulldelim,fulldelim_size
 	if(pointer!=nullptr){
-		char*cursor=pointer+sdelimiter_size;//fulldelim_size
+		char*cursor=pointer+esdelimiter_size;//fulldelim_size
 		size-=cursor-data;
 		if(size!=0){
 			i++;
 			for(size_t j=i+1;j<rows_tot;j++){//+1, if blank there is the empty row
-				if(memcmp((&rows[j])->data,sdelimiter,sdelimiter_size)==0){//fulldelim,fulldelim_size
-					*_index=j;*_off=sdelimiter_size;//fulldelim_size
+				if(memcmp((&rows[j])->data,esdelimiter,esdelimiter_size)==0){//fulldelim,fulldelim_size
+					*_index=j;*_off=esdelimiter_size;//fulldelim_size
 
 					if(swrite(orig_file,data,pointer-data)==swrite_ok){
 						//char aux=cursor[size];//also alloced rows have +1

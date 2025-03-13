@@ -35,7 +35,7 @@
 \nCtrl+n = disable/enable indentation\
 \nCtrl+t = enable/disable insensitive search\
 \nCtrl+a = enable/disable O language syntax; Alt+a = syntax rescan; Alt+A = change extension name (blank is all)\
-\nCtrl+j = enable/disable OA split syntax; Alt+j = change delimiter; Alt+J = change splits folder\
+\nCtrl+j = enable/disable OA split syntax; Alt+j = change delimiter; Alt+J = change view delimiter; Alt+o = change splits folder\
 \nCtrl+q = quit"
 
 #define is_main_c
@@ -2132,8 +2132,9 @@ static bool loopin(WINDOW*w){
 			else if(z=='s'){bool b=savetofile(w,false);if(b/*true*/)return true;}
 			else if(z=='a'){aftercall=aftercall_find();aftercall_draw(w);}
 			else if(z=='j'){if(pref_change(w,&sdelimiter,&sdelimiter_new,true)/*true*/)return true;}//don't allow no size delimiters
+			else if(z=='o'){if(pref_change(w,&split_out,&split_out_new,false)/*true*/)return true;}
 			else if(z=='A'){if(pref_change(w,&ocode_extension,&ocode_extension_new,false)/*true*/)return true;}
-			else if(z=='J'){if(pref_change(w,&split_out,&split_out_new,false)/*true*/)return true;}
+			else if(z=='J'){if(pref_change(w,&esdelimiter,&esdelimiter_new,true)/*true*/)return true;}//don't allow no size delimiters
 		}else{
 			//QWERTyUioP
 			//ASdFGHJkl
