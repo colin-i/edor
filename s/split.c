@@ -292,16 +292,24 @@ static bool split_write_split(char*file,size_t start,size_t end,bool*majorerror)
 		for(size_t k=start;k<end;k++){
 			row*r=&rows[k];
 			unsigned int sz=r->sz;
-			if(swrite(f,r->data,sz)/*true*/){close(f);return false;}
-			if(swrite(f,ln_term,ln_term_sz)/*true*/){close(f);return false;}
+			if(swrite(f,r->data,sz)/*true*/){close(f);*majorerror=true;return false;}
+			if(swrite(f,ln_term,ln_term_sz)/*true*/){close(f);*majorerror=true;return false;}
 		}
 		row*r=&rows[end];unsigned int sz=r->sz;
 		if(swrite(f,r->data,sz)==swrite_ok){close(f);return true;}
-		close(f);
+		close(f);*majorerror=true;return false;
 	}
-	clue=start;
-	*majorerror=false;
-	return false;
+	clue=start;*majorerror=false;return false;
+}
+static bool split_write_aroundsplit(int orig_file,char*data,unsigned int sz,char*cursor,unsigned int size,bool*majorerror){
+	if(swrite(orig_file,data,sz)==swrite_ok){
+		//if(*split_out!='\0')return true;
+		if(write(orig_file,sdelimiter,sdelimiter_size)==sdelimiter_size)
+			if(write(orig_file,cursor,size)==size)
+				if(write(orig_file,sdelimiter,sdelimiter_size)==sdelimiter_size)
+					return true;
+	}
+	*majorerror=true;return false;
 }
 //true if the row has split start syntax and a split end syntax exists
 const char* split_write(size_t*_index,int orig_file,unsigned int*_off,bool*majorerror){
@@ -320,18 +328,10 @@ const char* split_write(size_t*_index,int orig_file,unsigned int*_off,bool*major
 					*_index=j;*_off=fulldelim_size;
 					//char aux=cursor[size];//also alloced rows have +1
 					cursor[size]='\0';//this is for unmodified where ln_term is there, for alloced is undefined there
-					bool no_errors=split_write_split(cursor,i,j-1,majorerror);
 					//cursor[size]=aux;//is not important to have ln_term back there
-					unsigned int sz=pointer-data;
-					if(swrite(orig_file,data,sz)==swrite_ok){
-						//if(*split_out=='\0'){
-							if(write(orig_file,sdelimiter,sdelimiter_size)==sdelimiter_size)
-								if(write(orig_file,cursor,size)==size)
-									if(write(orig_file,sdelimiter,sdelimiter_size)==sdelimiter_size)
-										if(no_errors/*true*/)
-											return nullptr;
-						//}else if(no_errors/*true*/)return nullptr;
-					}
+					if(split_write_split(cursor,i,j-1,majorerror)/*true*/)
+						{if(split_write_aroundsplit(orig_file,data,pointer-data,cursor,size,majorerror)/*true*/)return nullptr;}
+					else if(*majorerror==false)split_write_aroundsplit(orig_file,data,pointer-data,cursor,size,majorerror);
 					return "Error(s) at split write";
 				}
 			}

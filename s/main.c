@@ -2049,7 +2049,7 @@ static void setprefs(int flag,bool set){
 }
 
 void pref_modify(char**pref_orig,char**pref_buf,bool sizedonly,char*newinput,size_t cursor){
-	if(cursor==0)if(sizedonly)return;
+	if(cursor==0)if(sizedonly/*true*/)return;
 	if(*pref_buf!=nullptr){
 		size_t len=strlen(*pref_buf);
 		if(len<cursor){

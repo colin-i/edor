@@ -103,7 +103,7 @@ void bar_init(){
 }
 //true if ok
 static bool wrt_loop_split(int f,size_t n,unsigned int*_off){
-	bool majorerror=true;
+	bool majorerror;
 	for(size_t i=0;i<n;i++){
 		size_t m=i;
 		do{
