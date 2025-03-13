@@ -251,7 +251,8 @@ bool split_write_init(){
 	}
 	return false;
 }
-static bool split_write_split(char*file,size_t start,size_t end){
+//
+static bool split_write_split(char*file,size_t start,size_t end,bool*majorerror){
 	int f=open_or_new(file);
 	if(f!=-1){
 		for(size_t k=start;k<end;k++){
@@ -265,11 +266,12 @@ static bool split_write_split(char*file,size_t start,size_t end){
 		close(f);
 	}
 	clue=start;
+	*majorerror=false;
 	return false;
 }
 void split_write_free(){free(fulldelim);}
 //true if the row has split start syntax and a split end syntax exists
-const char* split_write(size_t*_index,int orig_file,unsigned int*_off){
+const char* split_write(size_t*_index,int orig_file,unsigned int*_off,bool*majorerror){
 	size_t i=*_index;
 	row*rw=&rows[i];
 	char*data=rw->data+*_off;
@@ -285,7 +287,7 @@ const char* split_write(size_t*_index,int orig_file,unsigned int*_off){
 					*_index=j;*_off=fulldelim_size;
 					//char aux=cursor[size];//also alloced rows have +1
 					cursor[size]='\0';//this is for unmodified where ln_term is there, for alloced is undefined there
-					bool no_errors=split_write_split(cursor,i,j-1);
+					bool no_errors=split_write_split(cursor,i,j-1,majorerror);
 					//cursor[size]=aux;//is not important to have ln_term back there
 					unsigned int sz=pointer-data;
 					if(write(orig_file,data,sz)==sz)

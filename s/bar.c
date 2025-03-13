@@ -103,12 +103,16 @@ void bar_init(){
 }
 //true if ok
 static bool wrt_loop_split(int f,size_t n,unsigned int*_off){
+	bool majorerror=true;
 	for(size_t i=0;i<n;i++){
 		size_t m=i;
 		do{
 			i=m;
-			char*errors=split_write(&m,f,_off);
-			if(errors!=nullptr)texter_macro(errors);
+			char*errors=split_write(&m,f,_off,&majorerror);
+			if(errors!=nullptr){
+				texter_macro(errors);
+				if(majorerror/*true*/)return false;
+			}
 			if(m==n)return true;//last row can also be blank
 		}while(m!=i);
 		row*r=&rows[i];
