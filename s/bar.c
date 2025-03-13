@@ -101,8 +101,20 @@ void bar_init(){
 	printinverted(b_inf_s);
 	if(new_f/*true*/)texter_macro(new_s);
 }
+static void print_error(char*er){
+	err_s=er;
+	err_l=(int)strlen(err_s)+err_len_min;
+	int rg=get_right-com_left;
+	if(err_l>rg)err_l=rg;
+}
+static void default_error(){
+	//this was for open_new, and is ok also when the file is already there
+	bar_clear();//is troubleing with the bool,and more
+	print_error(strerror(errno));
+}
+
 //true if ok
-static bool wrt_loop_split(int f,size_t n,unsigned int*_off){
+static bool wrt_loop_split(int f,size_t n,unsigned int*_off,bool*no_errors){
 	bool majorerror;
 	for(size_t i=0;i<n;i++){
 		size_t m=i;
@@ -110,8 +122,9 @@ static bool wrt_loop_split(int f,size_t n,unsigned int*_off){
 			i=m;
 			char*errors=split_write(&m,f,_off,&majorerror);
 			if(errors!=nullptr){
-				texter_macro(errors);
+				print_error(errors);
 				if(majorerror/*true*/)return false;
+				*no_errors=false;
 			}
 			if(m==n)return true;//last row can also be blank
 		}while(m!=i);
@@ -128,16 +141,31 @@ static bool wrt_loop_split(int f,size_t n,unsigned int*_off){
 static int wrt_simple_split(int f){
 	size_t n=rows_tot-1;
 	unsigned int off=0;
-	if(wrt_loop_split(f,n,&off)/*true*/)if(swrite(f,rows[n].data+off,rows[n].sz-off)==swrite_ok)return command_return_ok;
+	bool no_errors=true;
+	if(wrt_loop_split(f,n,&off,&no_errors)/*true*/){
+		if(swrite(f,rows[n].data+off,rows[n].sz-off)==swrite_ok){
+			if(no_errors/*true*/){
+				return command_return_ok;
+			}
+		}
+	}
 	return 0;
 }
 //same
-static int wrt_split(int f,char*filename){
+static int wrt_split(char*filename){
 	if(split_write_init(filename)/*true*/){
-		int a=wrt_simple_split(f);
+		int a;
+		int f=open_or_new(filename);
+		if(f!=-1){
+			a=wrt_simple_split(f);
+			close(f);
+		}else{
+			default_error();a=0;
+		}
 		split_write_free();
 		return a;
 	}
+	print_error("Error at split init");
 	return 0;
 }
 //same
@@ -235,20 +263,15 @@ int open_or_new(char*dest){
 //command return
 int saving_base(char*dest){
 	int r;
-	int f=open_or_new(dest);
-	if(f!=-1){
-		if(splits_flag/*true*/)r=wrt_split(f,dest);
-		else r=wrt(f);
-		close(f);
-	}else{
-		//this was for open_new, and is ok also when the file is already there
-		bar_clear();//is troubleing with the bool,and more
-		err_s=strerror(errno);
-		err_l=(int)strlen(err_s)+err_len_min;
-		int rg=get_right-com_left;
-		if(err_l>rg)err_l=rg;
-
-		r=0;
+	if(splits_flag/*true*/)r=wrt_split(dest);
+	else{
+		int f=open_or_new(dest);
+		if(f!=-1){
+			r=wrt(f);
+			close(f);
+		}else{
+			default_error();r=0;
+		}
 	}
 	return r;
 }
