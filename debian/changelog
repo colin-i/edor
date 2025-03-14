@@ -1,3 +1,9 @@
+edor (1-x57) focal; urgency=medium
+
+  * same(fix upload-artifact)
+
+ -- bc <bc@bc-desktop>  Fri, 14 Mar 2025 14:14:54 +0200
+
 edor (1-x56) focal; urgency=medium
 
   * titles and splits
