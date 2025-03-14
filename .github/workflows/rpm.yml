@@ -34,7 +34,7 @@ jobs:
       #${fname2} #alien says x86_64 but we coded elsewhere with amd64
       echo "file=${fname}" >> $GITHUB_ENV
    - name: artifact
-     uses: actions/upload-artifact@v3
+     uses: actions/upload-artifact@v4
      with:
       name: rpm
       path: ./${{ env.file }}
