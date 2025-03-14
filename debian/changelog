@@ -1,3 +1,9 @@
+edor (1-x56) focal; urgency=medium
+
+  * titles and splits
+
+ -- bc <bc@bc-desktop>  Fri, 14 Mar 2025 13:59:09 +0200
+
 edor (1-x55) focal; urgency=medium
 
   * same(build-essential fix)
