@@ -1,3 +1,9 @@
+edor (1-x58) focal; urgency=medium
+
+  * /bin/bash for deb pack
+
+ -- bc <bc@bc-desktop>  Fri, 14 Mar 2025 14:38:04 +0200
+
 edor (1-x57) focal; urgency=medium
 
   * same(fix upload-artifact)
