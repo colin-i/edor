@@ -112,6 +112,7 @@ bool split_grab(char**p_text,size_t*p_size){
 				//final size
 				size_t calculated_new_size=0;
 				text=*p_text;size=*p_size;
+				unsigned short calculated_fixed=(2*esdelimsize)+(2*ln_term_sz)-sdelimsize;
 				do{
 					size_t dif;
 
@@ -122,7 +123,7 @@ bool split_grab(char**p_text,size_t*p_size){
 					cmp=memcmp(next,sdelimiter+1,sdelimsize-1);
 					text=next+(sdelimsize-1);dif=text-next;size-=dif;calculated_new_size+=dif;
 					if(cmp!=0)continue;
-					calculated_new_size-=sdelimsize;//we are using another marker at view
+					//calculated_new_size-=sdelimsize;//we are using another marker at view
 
 					next=(char*)memchr(text,a,size);
 					*next='\0';
@@ -139,7 +140,7 @@ bool split_grab(char**p_text,size_t*p_size){
 					dif=next-text;
 					text=next+sdelimsize;
 					size-=dif+sdelimsize;
-					calculated_new_size+=dif+(2*esdelimsize)+(2*ln_term_sz)+sz;
+					calculated_new_size+=dif+sz+calculated_fixed;
 				}while(true);
 				calculated_new_size+=size;
 
