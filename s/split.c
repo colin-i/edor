@@ -179,7 +179,10 @@ bool split_grab(char**p_text,size_t*p_size){
 					//content
 					int f=files[explodes].file;
 					lseek(f,0,(SEEK_SET));//was at size tell
+					#pragma GCC diagnostic push
+					#pragma GCC diagnostic ignored "-Wunused-result"
 					read(f,cursor,files[explodes].size);//can close now but is extra code
+					#pragma GCC diagnostic pop
 					cursor+=files[explodes].size;
 					explodes++;
 

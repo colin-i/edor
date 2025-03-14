@@ -2305,7 +2305,10 @@ static bool grab_file(char*f,size_t*text_sz){
 				text_init_b=(char*)malloc(size);
 				if(text_init_b!=nullptr){
 					lseek(fd,0,SEEK_SET);
+					#pragma GCC diagnostic push
+					#pragma GCC diagnostic ignored "-Wunused-result"
 					read(fd,text_init_b,size);
+					#pragma GCC diagnostic pop
 					text_sz[0]=size;
 					fake=false;
 				}
@@ -2328,8 +2331,10 @@ static bool grab_input(size_t*text_sz){
 		//d=strlen(c);
 		*text_sz+=d;
 	}while(d==s);
-	freopen("/dev/tty","r",stdin);
-	return false;
+	FILE* tty=freopen("/dev/tty","r",stdin);
+	if(tty!=nullptr)
+		return false;
+	return true;//it was a problem at input, not sure if was here
 }
 
 static bool valid_ln_term(int argc,char**argv,bool*not_forced){
