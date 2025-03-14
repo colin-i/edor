@@ -2334,7 +2334,7 @@ static bool grab_input(size_t*text_sz){
 	FILE* tty=freopen("/dev/tty","r",stdin);
 	if(tty!=nullptr)
 		return false;
-	return true;//it was a problem at input, not sure if was here
+	return true;//it was a problem at input, not sure if was here, anyway here is easy to force with sudo chmod 600 /dev/tty
 }
 
 static bool valid_ln_term(int argc,char**argv,bool*not_forced){
