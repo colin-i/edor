@@ -38,12 +38,14 @@
 
 bool splits_flag=false;
 
-char*sdelimiter=(char*)"|||";
+char*sdelimiter=(char*)"|||";// iso forbids
 char*esdelimiter=(char*)"///";
 char* sdelimiter_new=nullptr;
 char* esdelimiter_new=nullptr;
 char*split_out=(char*)"";
 char*split_out_new=nullptr;
+char*split_extension=default_extension;
+char*split_extension_new=nullptr;
 
 //char*fulldelim;
 //unsigned short fulldelim_size;
@@ -74,136 +76,138 @@ static void split_add(char**text,char*next,char**newtext,size_t*remaining_size){
 	*text+=dif;*newtext+=dif;*remaining_size-=dif;
 }
 
-bool split_grab(char**p_text,size_t*p_size){
-	if(splits_flag/*true*/){
-		char*text;size_t size;int cmp;char*next;
-		char a=*sdelimiter;
-		unsigned char sdelimsize=strlen(sdelimiter);//at file read only one byte for size
-		unsigned char esdelimsize=strlen(esdelimiter);//same from preferences
+bool split_grab(char**p_text,size_t*p_size,char*argfile){
+	if(is_extension_ok(split_extension,argfile)/*true*/){
+		if(splits_flag/*true*/){
+			char*text;size_t size;int cmp;char*next;
+			char a=*sdelimiter;
+			unsigned char sdelimsize=strlen(sdelimiter);//at file read only one byte for size
+			unsigned char esdelimsize=strlen(esdelimiter);//same from preferences
 
-		//calculate number of explodes
-		size_t explodes=0;
-		text=*p_text;size=*p_size;
-		do{
-			next=(char*)memchr(text,a,size);
-			if(next==nullptr)break;
-			next++;size-=next-text;
-			if(size<=(sdelimsize-1))break;
-			cmp=memcmp(next,sdelimiter+1,sdelimsize-1);
-			text=next+(sdelimsize-1);size-=text-next;
-			if(cmp!=0)continue;
+			//calculate number of explodes
+			size_t explodes=0;
+			text=*p_text;size=*p_size;
+			do{
+				next=(char*)memchr(text,a,size);
+				if(next==nullptr)break;
+				next++;size-=next-text;
+				if(size<=(sdelimsize-1))break;
+				cmp=memcmp(next,sdelimiter+1,sdelimsize-1);
+				text=next+(sdelimsize-1);size-=text-next;
+				if(cmp!=0)continue;
 
-			next=(char*)memchr(text,a,size);
-			if(next==nullptr){split_error();return false;}
-			next++;size-=next-text;
-			if(size<=(sdelimsize-1)){split_error();return false;}
-			cmp=memcmp(next,sdelimiter+1,sdelimsize-1);
-			if(cmp!=0){split_error();return false;}//it looks like the delimiter chars can't be in filename chars
-			text=next+(sdelimsize-1);size-=text-next;
+				next=(char*)memchr(text,a,size);
+				if(next==nullptr){split_error();return false;}
+				next++;size-=next-text;
+				if(size<=(sdelimsize-1)){split_error();return false;}
+				cmp=memcmp(next,sdelimiter+1,sdelimsize-1);
+				if(cmp!=0){split_error();return false;}//it looks like the delimiter chars can't be in filename chars
+				text=next+(sdelimsize-1);size-=text-next;
 
-			explodes++;
-		}while(true);
-		if(explodes!=0){
-			filedata*files=(filedata*)malloc(sizeof(filedata)*(explodes+1));//+1 because decided to not global store number of explodes
-			if(files!=nullptr){
-				files[0].file=-1;
-				explodes=0;
+				explodes++;
+			}while(true);
+			if(explodes!=0){
+				filedata*files=(filedata*)malloc(sizeof(filedata)*(explodes+1));//+1 because decided to not global store number of explodes
+				if(files!=nullptr){
+					files[0].file=-1;
+					explodes=0;
 
-				//final size
-				size_t calculated_new_size=0;
-				text=*p_text;size=*p_size;
-				unsigned short calculated_fixed=(2*esdelimsize)+(2*ln_term_sz)-sdelimsize;
-				do{
-					size_t dif;
+					//final size
+					size_t calculated_new_size=0;
+					text=*p_text;size=*p_size;
+					unsigned short calculated_fixed=(2*esdelimsize)+(2*ln_term_sz)-sdelimsize;
+					do{
+						size_t dif;
 
-					next=(char*)memchr(text,a,size);
-					if(next==nullptr)break;
-					next++;dif=next-text;size-=dif;calculated_new_size+=dif;
-					if(size<=(sdelimsize-1))break;
-					cmp=memcmp(next,sdelimiter+1,sdelimsize-1);
-					text=next+(sdelimsize-1);dif=text-next;size-=dif;calculated_new_size+=dif;
-					if(cmp!=0)continue;
-					//calculated_new_size-=sdelimsize;//we are using another marker at view
+						next=(char*)memchr(text,a,size);
+						if(next==nullptr)break;
+						next++;dif=next-text;size-=dif;calculated_new_size+=dif;
+						if(size<=(sdelimsize-1))break;
+						cmp=memcmp(next,sdelimiter+1,sdelimsize-1);
+						text=next+(sdelimsize-1);dif=text-next;size-=dif;calculated_new_size+=dif;
+						if(cmp!=0)continue;
+						//calculated_new_size-=sdelimsize;//we are using another marker at view
 
-					next=(char*)memchr(text,a,size);
-					*next='\0';
-					int f=open(text,O_RDONLY);
-					if(f==-1){split_error_free(files);return false;}
-					files[explodes].file=f;
-					off_t sz=lseek(f,0,(SEEK_END));
-					if(sz==-1){split_error_free(files);return false;}
-					files[explodes].size=sz;
-					explodes++;
-					files[explodes].file=-1;
-					*next=a;
+						next=(char*)memchr(text,a,size);
+						*next='\0';
+						int f=open(text,O_RDONLY);
+						if(f==-1){split_error_free(files);return false;}
+						files[explodes].file=f;
+						off_t sz=lseek(f,0,(SEEK_END));
+						if(sz==-1){split_error_free(files);return false;}
+						files[explodes].size=sz;
+						explodes++;
+						files[explodes].file=-1;
+						*next=a;
 
-					dif=next-text;
-					text=next+sdelimsize;
-					size-=dif+sdelimsize;
-					calculated_new_size+=dif+sz+calculated_fixed;
-				}while(true);
-				calculated_new_size+=size;
+						dif=next-text;
+						text=next+sdelimsize;
+						size-=dif+sdelimsize;
+						calculated_new_size+=dif+sz+calculated_fixed;
+					}while(true);
+					calculated_new_size+=size;
 
-				char* newtext=(char*)malloc(calculated_new_size);
-				if(newtext==nullptr){filesfree(files);return false;}
+					char* newtext=(char*)malloc(calculated_new_size);
+					if(newtext==nullptr){filesfree(files);return false;}
 
-				//substitutions
-				text=*p_text;size=*p_size;explodes=0;
-				char*cursor=newtext;
-				do{
-					next=(char*)memchr(text,a,size);
-					if(next==nullptr)break;
-					split_add(&text,next,&cursor,&size);
-
-					if(size<=sdelimsize)break;
-					cmp=memcmp(next+1,sdelimiter+1,sdelimsize-1);
-					next+=sdelimsize;
-					if(cmp!=0){
+					//substitutions
+					text=*p_text;size=*p_size;explodes=0;
+					char*cursor=newtext;
+					do{
+						next=(char*)memchr(text,a,size);
+						if(next==nullptr)break;
 						split_add(&text,next,&cursor,&size);
-						continue;
-					}
 
-					//escape
-					memcpy(cursor,esdelimiter,esdelimsize);cursor+=esdelimsize;
-					//delim
-					//split_add(&text,next,&cursor,&size);
-					size-=next-text;text=next;
+						if(size<=sdelimsize)break;
+						cmp=memcmp(next+1,sdelimiter+1,sdelimsize-1);
+						next+=sdelimsize;
+						if(cmp!=0){
+							split_add(&text,next,&cursor,&size);
+							continue;
+						}
 
-					//file
-					next=(char*)memchr(text,a,size);
-					split_add(&text,next,&cursor,&size);
+						//escape
+						memcpy(cursor,esdelimiter,esdelimsize);cursor+=esdelimsize;
+						//delim
+						//split_add(&text,next,&cursor,&size);
+						size-=next-text;text=next;
 
-					//ln_term
-					memcpy(cursor,ln_term,ln_term_sz);cursor+=ln_term_sz;
+						//file
+						next=(char*)memchr(text,a,size);
+						split_add(&text,next,&cursor,&size);
 
-					//content
-					int f=files[explodes].file;
-					lseek(f,0,(SEEK_SET));//was at size tell
-					#pragma GCC diagnostic push
-					#pragma GCC diagnostic ignored "-Wunused-result"
-					read(f,cursor,files[explodes].size);//can close now but is extra code
-					#pragma GCC diagnostic pop
-					cursor+=files[explodes].size;
-					explodes++;
+						//ln_term
+						memcpy(cursor,ln_term,ln_term_sz);cursor+=ln_term_sz;
 
-					//ln_term
-					memcpy(cursor,ln_term,ln_term_sz);cursor+=ln_term_sz;
+						//content
+						int f=files[explodes].file;
+						lseek(f,0,(SEEK_SET));//was at size tell
+						#pragma GCC diagnostic push
+						#pragma GCC diagnostic ignored "-Wunused-result"
+						read(f,cursor,files[explodes].size);//can close now but is extra code
+						#pragma GCC diagnostic pop
+						cursor+=files[explodes].size;
+						explodes++;
 
-					//escape
-					memcpy(cursor,esdelimiter,esdelimsize);cursor+=esdelimsize;
-					//delim
-					next+=sdelimsize;
-					//split_add(&text,next,&cursor,&size);
-					size-=next-text;text=next;
-				}while(true);
-				memcpy(cursor,text,size);
+						//ln_term
+						memcpy(cursor,ln_term,ln_term_sz);cursor+=ln_term_sz;
 
-				free(*p_text);
-				*p_text=newtext;*p_size=calculated_new_size;
-				filesfree(files);
-				return true;
+						//escape
+						memcpy(cursor,esdelimiter,esdelimsize);cursor+=esdelimsize;
+						//delim
+						next+=sdelimsize;
+						//split_add(&text,next,&cursor,&size);
+						size-=next-text;text=next;
+					}while(true);
+					memcpy(cursor,text,size);
+
+					free(*p_text);
+					*p_text=newtext;*p_size=calculated_new_size;
+					filesfree(files);
+					return true;
+				}
+				return false;
 			}
-			return false;
 		}
 	}
 	return true;
@@ -218,10 +222,15 @@ void split_writeprefs(int f){
 				if(write(f,esdelimiter,sz)==sz){
 					sz=strlen(split_out);
 					if(write(f,&sz,extlen_size)==extlen_size){
-						#pragma GCC diagnostic push
-						#pragma GCC diagnostic ignored "-Wunused-result"
-						write(f,split_out,sz);
-						#pragma GCC diagnostic pop
+						if(write(f,split_out,sz)==sz){
+							sz=strlen(split_extension);
+							if(write(f,&sz,extlen_size)==extlen_size){
+								#pragma GCC diagnostic push
+								#pragma GCC diagnostic ignored "-Wunused-result"
+								write(f,split_extension,sz);
+								#pragma GCC diagnostic pop
+							}
+						}
 					}
 				}
 			}
@@ -248,6 +257,15 @@ void split_readprefs(int f){
 									if(read(f,split_out_new,len)==len){
 										split_out_new[len]='\0';
 										split_out=split_out_new;
+										if(read(f,&len,extlen_size)==extlen_size){
+											split_extension_new=(char*)malloc(len+1);
+											if(split_extension_new!=nullptr){
+												if(read(f,split_extension_new,len)==len){
+													split_extension_new[len]='\0';
+													split_extension=split_extension_new;
+												}
+											}
+										}
 									}
 								}
 							}
@@ -265,6 +283,9 @@ void split_freeprefs(){
 			free(esdelimiter_new);
 			if(split_out_new!=nullptr){
 				free(split_out_new);
+				if(split_extension_new!=nullptr){
+					free(split_extension_new);
+				}
 			}
 		}
 	}

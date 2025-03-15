@@ -51,10 +51,11 @@
 
 #include"base.h"
 
+#define protocol_simple "%u"
 #ifdef PLATFORM64
 #define protocol "%lu"
 #else
-#define protocol "%u"
+#define protocol protocol_simple
 #endif
 
 #define err_len_min 2
@@ -151,6 +152,16 @@ static int wrt_simple_split(int f){
 	}
 	return 0;
 }
+static int wrt_simple(int f){
+	size_t n=rows_tot-1;
+	for(size_t i=0;i<n;i++){
+		row*r=&rows[i];
+		if(write(f,r->data,r->sz)!=r->sz)return 0;
+		if(write(f,ln_term,ln_term_sz)!=ln_term_sz)return 0;
+	}
+	if(write(f,rows[n].data,rows[n].sz)==rows[n].sz)return command_return_ok;
+	return 0;
+}
 //same
 static int wrt_split(char*filename){
 	if(split_write_init(filename)/*true*/){
@@ -169,14 +180,14 @@ static int wrt_split(char*filename){
 	return 0;
 }
 //same
-static int wrt(int f){
-	size_t n=rows_tot-1;
-	for(size_t i=0;i<n;i++){
-		row*r=&rows[i];
-		if(write(f,r->data,r->sz)!=r->sz)return 0;
-		if(write(f,ln_term,ln_term_sz)!=ln_term_sz)return 0;
+static int wrt(char*filename){
+	int f=open_or_new(filename);
+	if(f!=-1){
+		int r=wrt_simple(f);
+		close(f);
+		return r;
 	}
-	if(write(f,rows[n].data,rows[n].sz)==rows[n].sz)return command_return_ok;
+	default_error();
 	return 0;
 }
 static int bcdl(int y,int*p,char*input,int cursor){
@@ -260,19 +271,25 @@ int open_or_new(char*dest){
 	else f=open(dest,O_WRONLY|O_TRUNC);
 	return f;
 }
+bool is_extension_ok(char*extension,char*filename){//also filename to save restore files in a simple way
+	if(*extension!='\0'){//else all files
+		if(filename!=nullptr){//here is only the split_grab case
+			char*pos=strrchr(filename,'.');
+			if(pos!=nullptr){
+				pos++;
+				if(strcmp(pos,extension)==0)return true;
+			}
+		}
+		return false;
+	}
+	return true;
+}
 //command return
 int saving_base(char*dest){
 	if(splits_flag/*true*/){
-		return wrt_split(dest);
+		if(is_extension_ok(split_extension,dest)/*true*/)return wrt_split(dest);
 	}
-	int f=open_or_new(dest);
-	if(f!=-1){
-		int r=wrt(f);
-		close(f);
-		return r;
-	}
-	default_error();
-	return 0;
+	return wrt(dest);
 }
 //command return
 static int saving(){
@@ -817,9 +834,9 @@ static bool dos(WINDOW*w,eundo*un,size_t vl){
 }
 #define maxuint 10
 #define maxuint_nul maxuint+1
-static void undo_show(size_t n){
+static void undo_show(unsigned int n){
 	char nr[maxuint_nul];
-	int a=sprintf(nr,protocol,n);
+	int a=sprintf(nr,protocol_simple,n);
 	texter(nr);
 	undo_erase(a);
 	wnoutrefresh(stdscr);
@@ -1397,7 +1414,7 @@ bool is_dir(int fd){
 #define acall_size (1+2+2+2+2)
 #define acallu     "AFTERCALL"
 #define acall_size1 acall_size+1
-char*ocode_extension=(char*)"oc";// iso forbids
+char*ocode_extension=default_extension;
 
 size_t aftercall_find(){
 	for(size_t i=0;i<rows_tot;i++){
@@ -1430,12 +1447,7 @@ void aftercall_draw(WINDOW*w){
 }
 size_t init_aftercall(){
 	if(textfile!=nullptr){
-		if(*ocode_extension=='\0')return aftercall_find();//all files
-		char*pos=strrchr(textfile,'.');
-		if(pos!=nullptr){
-			pos++;
-			if(strcmp(pos,ocode_extension)==0)return aftercall_find();
-		}
+		if(is_extension_ok(ocode_extension,textfile)/*true*/)return aftercall_find();
 	}
 	return rows_tot;//still need a value
 }

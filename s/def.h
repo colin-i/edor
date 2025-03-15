@@ -13,6 +13,7 @@ extern size_t clue;
 
 //bar
 //split
+bool is_extension_ok(char*,char*);
 int open_or_new(char*);
 
 //sep

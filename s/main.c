@@ -35,7 +35,8 @@
 \nCtrl+n = disable/enable indentation\
 \nCtrl+t = enable/disable insensitive search\
 \nCtrl+a = enable/disable O language syntax; Alt+a = syntax rescan; Alt+A = change extension name (blank is all)\
-\nCtrl+j = enable/disable OA split syntax; Alt+j = change delimiter; Alt+J = change view delimiter; Alt+o = change splits folder\
+\nCtrl+j = enable/disable OA split syntax; Alt+j = change delimiter; Alt+J = change view delimiter\
+\n    Alt+o = change splits folder; Alt+O = change extension name for splits (blank is all)\
 \nCtrl+q = quit"
 
 #define is_main_c
@@ -2135,6 +2136,7 @@ static bool loopin(WINDOW*w){
 			else if(z=='o'){if(pref_change(w,&split_out,&split_out_new,false)/*true*/)return true;}
 			else if(z=='A'){if(pref_change(w,&ocode_extension,&ocode_extension_new,false)/*true*/)return true;}
 			else if(z=='J'){if(pref_change(w,&esdelimiter,&esdelimiter_new,true)/*true*/)return true;}//don't allow no size delimiters
+			else if(z=='O'){if(pref_change(w,&split_extension,&split_extension_new,false)/*true*/)return true;}
 		}else{
 			//QWERTyUioP
 			//ASdFGHJkl
@@ -2265,8 +2267,8 @@ static int normalize(char**c,size_t*size,size_t*r){
 	return ok;
 }
 //same as normalize
-static int normalize_split(char**c,size_t*s,size_t*r){
-	if(split_grab(c,s)/*true*/){//if at normalize will work also in open cutbufs but will error at explodes there(save cutbuf with explodes)
+static int normalize_split(char**c,size_t*s,size_t*r,char*argfile){
+	if(split_grab(c,s,argfile)/*true*/){//if at normalize will work also in open cutbufs but will error at explodes there(save cutbuf with explodes)
 		return normalize(c,s,r);
 	}
 	return 0;
@@ -2381,9 +2383,9 @@ static int startfile(char*argfile,int argc,char**argv,size_t*text_sz,bool no_fil
 				break;
 			}
 		}
-		return normalize_split(&text_init_b,text_sz,&rows_tot);
+		return normalize_split(&text_init_b,text_sz,&rows_tot,argfile);
 	}
-	if(normalize_split(&text_init_b,text_sz,&rows_tot)!=0)return 1;
+	if(normalize_split(&text_init_b,text_sz,&rows_tot,argfile)!=0)return 1;
 	return 0;
 }
 static bool help_init(char*f,size_t szf){
