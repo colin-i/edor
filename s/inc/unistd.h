@@ -1,26 +1,24 @@
 
-#if defined(is_main_c)||defined(is_bar_c)||defined(is_split_c)
+//#if defined(is_main_c)||defined(is_bar_c)||defined(is_split_c)
 typedef long int ssize_t;
-#endif
-
-#if defined(is_main_c)||defined(is_bar_c)
-#define F_OK 0
 //#include "inc/stddef.h"
 #ifdef __cplusplus
 extern "C" {
 #endif
 int access(const char*,int);
 int close(int);
+ssize_t write(int,const void*,size_t);
 #ifdef __cplusplus
 }
 #endif
-#endif
+//#endif
 
-#if defined(is_main_c)||defined(is_bar_c)||defined(is_split_c)
+#if defined(is_main_c)||defined(is_bar_c)
+#define F_OK 0
 #ifdef __cplusplus
 extern "C" {
 #endif
-ssize_t write(int,const void*,size_t);
+int close(int);
 #ifdef __cplusplus
 }
 #endif
@@ -40,12 +38,4 @@ ssize_t read(int,void*,size_t);
 #ifdef __cplusplus
 }
 #endif
-#endif
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-int close(int);
-#ifdef __cplusplus
-}
 #endif

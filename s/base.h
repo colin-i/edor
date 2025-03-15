@@ -87,6 +87,7 @@ bool titles(WINDOW*);
 
 //split
 //main
+bool split_conditions(char*);
 bool split_grab(char**,size_t*,char*);
 void split_writeprefs(int);
 void split_readprefs(int);

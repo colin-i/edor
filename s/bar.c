@@ -286,8 +286,8 @@ bool is_extension_ok(char*extension,char*filename){//also filename to save resto
 }
 //command return
 int saving_base(char*dest){
-	if(splits_flag/*true*/){
-		if(is_extension_ok(split_extension,dest)/*true*/)return wrt_split(dest);
+	if(split_conditions(dest)/*true*/){
+		return wrt_split(dest);
 	}
 	return wrt(dest);
 }
