@@ -115,7 +115,7 @@ bool split_grab(char**p_text,size_t*p_size,char*argfile){
 					//final size
 					size_t calculated_new_size=0;
 					text=*p_text;size=*p_size;
-					unsigned short calculated_fixed=(2*esdelimsize)+(2*ln_term_sz)-sdelimsize;
+					unsigned short calculated_fixed=(2*esdelimsize)+ln_term_sz-sdelimsize;
 					do{
 						size_t dif;
 
@@ -188,9 +188,6 @@ bool split_grab(char**p_text,size_t*p_size,char*argfile){
 						#pragma GCC diagnostic pop
 						cursor+=files[explodes].size;
 						explodes++;
-
-						//ln_term
-						memcpy(cursor,ln_term,ln_term_sz);cursor+=ln_term_sz;
 
 						//escape
 						memcpy(cursor,esdelimiter,esdelimsize);cursor+=esdelimsize;
@@ -336,7 +333,7 @@ bool swrite(int f,void*buf,unsigned int size){
 	return swrite_bad;
 }
 //true if ok
-static bool split_write_split(char*file,size_t start,size_t end,bool*majorerror){
+static bool split_write_split(char*file,size_t start,size_t end,unsigned int size,bool*majorerror){
 	int f=open_or_new(file);
 	if(f!=-1){
 		for(size_t k=start;k<end;k++){
@@ -345,8 +342,8 @@ static bool split_write_split(char*file,size_t start,size_t end,bool*majorerror)
 			if(swrite(f,r->data,sz)/*true*/){close(f);*majorerror=true;return false;}
 			if(swrite(f,ln_term,ln_term_sz)/*true*/){close(f);*majorerror=true;return false;}
 		}
-		row*r=&rows[end];unsigned int sz=r->sz;
-		if(swrite(f,r->data,sz)==swrite_ok){close(f);return true;}
+		row*r=&rows[end];
+		if(swrite(f,r->data,size)==swrite_ok){close(f);return true;}
 		close(f);*majorerror=true;return false;
 	}
 	clue=start;*majorerror=false;return false;
@@ -358,7 +355,7 @@ static bool split_write_orig(int orig_file,char*cursor,unsigned int size,bool*ma
 				return true;
 	*majorerror=true;return false;
 }
-//true if the row has split start syntax and a split end syntax exists
+//null or error
 const char* split_write(size_t*_index,int orig_file,unsigned int*_off,bool*majorerror){
 	size_t i=*_index;
 	row*rw=&rows[i];
@@ -370,15 +367,20 @@ const char* split_write(size_t*_index,int orig_file,unsigned int*_off,bool*major
 		size-=cursor-data;
 		if(size!=0){
 			i++;
-			for(size_t j=i+1;j<rows_tot;j++){//+1, if blank there is the empty row
-				if(memcmp((&rows[j])->data,esdelimiter,esdelimiter_size)==0){//fulldelim,fulldelim_size
-					*_index=j;*_off=esdelimiter_size;//fulldelim_size
+			for(size_t j=i;j<rows_tot;j++){
+				rw=&rows[j];
+				char*content=rw->data;
+				unsigned int sz=rw->sz;
+				char*marker=(char*)memmem(content,sz,esdelimiter,esdelimiter_size);//fulldelim,fulldelim_size
+				if(marker!=nullptr){
+					unsigned int part=marker-content;
+					*_index=j;*_off=part+esdelimiter_size;//fulldelim_size
 
 					if(swrite(orig_file,data,pointer-data)==swrite_ok){
 						//char aux=cursor[size];//also alloced rows have +1
 						cursor[size]='\0';//this is for unmodified where ln_term is there, for alloced is undefined there
 						//cursor[size]=aux;//is not important to have ln_term back there
-						if(split_write_split(cursor,i,j-1,majorerror)/*true*/)
+						if(split_write_split(cursor,i,j,part,majorerror)/*true*/)
 							{if(split_write_orig(orig_file,cursor,size,majorerror)/*true*/)return nullptr;}
 						else if(*majorerror==false)split_write_orig(orig_file,cursor,size,majorerror);
 					}else *majorerror=true;
