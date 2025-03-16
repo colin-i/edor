@@ -11,7 +11,7 @@ void mod_set_off_wrap();
 void mod_set_on();
 bool no_char(char);
 bool paste(size_t,size_t,size_t*,char*,size_t,size_t,bool);
-void pref_modify(char**,char**,bool,char*,size_t);
+void pref_modify(char**,char**,bool,char*,bar_byte);
 void printinverted(const char*s);
 void refreshrowsbot(WINDOW*,int,int);
 #define refreshrows(w,i) refreshrowsbot(w,i,getmaxy(w))

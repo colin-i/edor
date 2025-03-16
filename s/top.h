@@ -68,3 +68,6 @@ typedef struct{
 #define swrite_bad true
 
 #define default_extension (char*)"oc"
+
+#define bar_byte unsigned char
+#define bar_byte_plus short

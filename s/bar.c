@@ -72,10 +72,10 @@ static char input2[max_path_0];
 static char*input0=input1;
 static WINDOW*poswn;
 static char inputr[max_path_0];
-static size_t cursorr=0;
+static bar_byte cursorr=0;
 #define get_right getbegx(poswn)-1
 static char inputf[max_path_0];
-static int cursorf=0;
+static bar_byte cursorf=0;
 
 static int number2;//number is also negative
 static int number3;
@@ -191,12 +191,12 @@ static char wrt(char*filename){
 	default_error();
 	return 0;
 }
-static int bcdl(int y,int*p,char*input,int cursor){
+static bar_byte bcdl(int y,bar_byte*p,char*input,bar_byte cursor){
 	int x=getcurx(stdscr);
-	int pos=p[0];
+	bar_byte pos=p[0];
 	if(pos==0&&x==com_left)return cursor;
-	int of=x-com_left;
-	for(int i=pos+of;i<cursor;i++){
+	bar_byte of=x-com_left;
+	for(bar_byte i=pos+of;i<cursor;i++){
 		input[i-1]=input[i];
 	}
 	if(pos==0){
@@ -210,7 +210,7 @@ static int bcdl(int y,int*p,char*input,int cursor){
 		move(y,x);
 		return cursor-1;
 	}
-	pos--;int n=x-com_left;
+	pos--;bar_byte n=x-com_left;
 	if(pos==0)mvaddch(y,com_left-1,' ');
 	else if(n!=0)move(y,com_left);
 	addnstr(input+pos,n);
@@ -316,8 +316,9 @@ static char saves(){
 	}
 	return -1;
 }
-static void clear_com(int y,int sz,int pos,int cursor){
-	int len;if(pos!=0){
+static void clear_com(int y,int sz,bar_byte pos,bar_byte cursor){
+	bar_byte_plus len;//len will also clear left and right arrows
+	if(pos!=0){
 		move(y,com_left-1);
 		len=1+cursor-pos;sz++;
 	}
@@ -332,7 +333,7 @@ static void clear_com(int y,int sz,int pos,int cursor){
 		//memset(mapsel,' ',(size_t)sz+1);mapsel[sz+1]='\0';addstr(mapsel);
 	}
 	else{
-		for(int i=0;i<len;i++)
+		for(bar_byte_plus i=0;i<len;i++)
 			addch(' ');
 		//memset(mapsel,' ',(size_t)len);mapsel[len]='\0';addstr(mapsel);
 	}
@@ -363,18 +364,18 @@ char question(const char*q){
 	else if(ch=='n')return -1;
 	return 0;
 }
-static int del(int x,char*input,int cursor,int dif){
+static bar_byte del(bar_byte x,char*input,bar_byte cursor,int dif){
 	if(x==cursor)return cursor;
 	cursor--;
-	for(int i=x;i<cursor;i++){
+	for(bar_byte i=x;i<cursor;i++){
 		input[i]=input[i+1];
 	}
-	int f=x+dif;int r;
+	int f=x+dif;bar_byte r;
 	if(cursor<f)r=cursor;else r=f;
 	while(x<r){addch(input[x]);x++;}
-	if(cursor<f){
+	if(cursor<=f){//was <
 		addch(' ');
-	}else if(f==cursor)addch(' ');
+	}//else if(f==cursor)addch(' ');
 	return cursor;
 }
 
@@ -408,7 +409,7 @@ static int inputcmp(char*S1,size_t L1,size_t l2){
 	}
 	return -1;
 }
-static bool findingf(size_t cursor,size_t r,size_t c){
+static bool findingf(bar_byte cursor,size_t r,size_t c){
 	size_t i=ytext;
 	if(i+r>=rows_tot)i=0;
 	else{
@@ -457,7 +458,7 @@ static int inputrcmp(char*S1,size_t L1,size_t l2){
 	}
 	return -1;
 }
-static bool findingb(size_t cursor,size_t r,size_t c){
+static bool findingb(bar_byte cursor,size_t r,size_t c){
 	size_t i=ytext;
 	if(i+r>=rows_tot)i=rows_tot-1;
 	else{//safe when find first fails
@@ -483,7 +484,7 @@ static bool findingb(size_t cursor,size_t r,size_t c){
 		}else i--;
 	}
 }
-static bool finding(size_t cursor,size_t r,size_t c,bool f){
+static bool finding(bar_byte cursor,size_t r,size_t c,bool f){
 	if(cursor==0)return false;
 	if(f/*true*/)return findingf(cursor,r,c);
 	return findingb(cursor,r,c);
@@ -538,9 +539,9 @@ int centeringy(WINDOW*w){
 	refreshpage(w);
 	return hg;
 }
-static void colorfind(int a,int y,size_t pos,size_t sz){
+static void colorfind(int a,int y,bar_byte pos,bar_byte sz){
 	attrset(COLOR_PAIR(a));
-	mvaddnstr(y,com_left,inputf+pos,(int)sz);
+	mvaddnstr(y,com_left,inputf+pos,sz);
 	attrset(color_0);
 }
 static void replace_text_add(WINDOW*w,chtype c,int*rstart,int*rstop){
@@ -590,7 +591,7 @@ static bool replace_text(WINDOW*w,int yb,int xb,int rstart,int rstop){
 	}
 }
 //0/1
-static char go_to(int cursor){
+static char go_to(bar_byte cursor){
 	int i=0;size_t y;size_t x;
 	for(;;){
 		if(input0[i]==','){
@@ -723,7 +724,7 @@ void undo_free(){
 		free(undos);
 	}
 }
-static bool undo_add_replace(size_t cursor){
+static bool undo_add_replace(bar_byte cursor){
 	if(undo_expand()/*true*/){
 		char*d=(char*)malloc(1+sizeof(cursor)+cursor);
 		if(d!=nullptr){
@@ -920,7 +921,7 @@ void undo_loop(WINDOW*w){
 		else break;
 	}
 }
-static bool replace(size_t cursor){
+static bool replace(bar_byte cursor){
 	row*r=&rows[ytext];
 	if(cursorr>cursor)if(row_alloc(r,r->sz,cursorr-cursor,0)/*true*/)return true;
 	if(undo_add_replace(cursor)==false){
@@ -976,8 +977,8 @@ static void finds(bool phase,int number,int number_fix,char extra){//,bool*heade
 	wnoutrefresh(stdscr);
 }
 
-static bool delim_touch(size_t y1,size_t x1,size_t c){return ytext==y1&&(xtext==x1||(xtext<x1&&xtext+c>x1));}
-static bool delimiter(size_t y1,size_t x1,int y,size_t pos,size_t sz,size_t c,bool phase){
+static bool delim_touch(size_t y1,size_t x1,bar_byte c){return ytext==y1&&(xtext==x1||(xtext<x1&&xtext+c>x1));}
+static bool delimiter(size_t y1,size_t x1,int y,bar_byte pos,bar_byte sz,bar_byte c,bool phase){
 	if(delim_touch(y1,x1,c)/*true*/){
 		colorfind(color_b,y,pos,sz);
 		wnoutrefresh(stdscr);
@@ -993,7 +994,7 @@ static bool delimiter(size_t y1,size_t x1,int y,size_t pos,size_t sz,size_t c,bo
 #define quick_get(z) ((WINDOW**)((void*)z))[1]
 #define find_returner return a==KEY_RESIZE?-2:1;
 
-static void finds_total(int number,size_t y1,size_t x1,size_t xr,size_t xc,bool untouched,size_t cursor,WINDOW*w){
+static void finds_total(int number,size_t y1,size_t x1,size_t xr,size_t xc,bool untouched,bar_byte cursor,WINDOW*w){
 	//set a limit
 	const size_t max=100;
 	size_t n;
@@ -1034,7 +1035,7 @@ static void finds_total(int number,size_t y1,size_t x1,size_t xr,size_t xc,bool 
 }
 
 //1,0cancel,-2resz
-static char find_core(WINDOW*w,size_t cursor,int y,size_t pos,size_t sz){
+static char find_core(WINDOW*w,bar_byte cursor,int y,bar_byte pos,bar_byte sz){
 	size_t y1=ytext;size_t x1=xtext;
 
 	finds_total(0,ytext,xtext,0,0,true,cursor,w);
@@ -1125,7 +1126,7 @@ static char find_core(WINDOW*w,size_t cursor,int y,size_t pos,size_t sz){
 			wattrset(w,COLOR_PAIR(color_b));
 			int yb=getcury(w);int xb=getcurx(w);
 			int rstart=yb;int rstop=yb+1;
-			for(size_t i=0;i<cursorr;i++){
+			for(bar_byte i=0;i<cursorr;i++){
 				replace_text_add(w,inputr[i],&rstart,&rstop);
 			}
 			if(replace_text(w,yb,xb,rstart,rstop)/*true*/)return -2;
@@ -1159,7 +1160,7 @@ static char find_core(WINDOW*w,size_t cursor,int y,size_t pos,size_t sz){
 	}
 }
 //same
-static char find(char*z,size_t cursor,size_t pos,size_t visib,int y){
+static char find(char*z,bar_byte cursor,bar_byte pos,int visib,int y){
 	//warning: cast from 'char *' to 'size_t *' (aka 'unsigned int *') increases required alignment from 1 to 4
 	//warning: arithmetic on a pointer to void is a GNU extension
 	//z+=sizeof(void*);
@@ -1167,7 +1168,7 @@ static char find(char*z,size_t cursor,size_t pos,size_t visib,int y){
 	size_t xr=(size_t)getcury(w);
 	size_t xc=c_to_xc(getcurx(w),(int)xr);
 	//
-	size_t sz=cursor-pos;
+	bar_byte sz=cursor-pos;
 	if(sz>visib)sz=visib;
 	colorfind(color_a,y,pos,sz);
 	//
@@ -1182,7 +1183,7 @@ static char find(char*z,size_t cursor,size_t pos,size_t visib,int y){
 	}
 	find_returner
 }
-static void command_rewrite(int y,int x,int pos,char*input,int cursor,int visib){
+static void command_rewrite(int y,int x,int pos,char*input,bar_byte cursor,int visib){
 	if(pos!=0)mvaddch(y,com_left-1,'<');
 	else move(y,com_left);
 	int len=cursor-pos;
@@ -1200,7 +1201,7 @@ static int word_at_cursor(char*z){
 	if(x==sz)return 0;
 	char*d=rows[y].data;
 	if(is_word_char(d[x])==false){if(no_char(d[x])==false){*inputf=d[x];return 1;}return 0;}
-	int cursor=0;
+	bar_byte cursor=0;
 	if(*z==com_nr_findword){
 		size_t xpos=x;
 		while(xpos>0&&is_word_char(d[xpos-1])/*true*/)xpos--;
@@ -1225,8 +1226,8 @@ char command(comnrp_define comnrp){
 	int visib=rightexcl-com_left;
 	if(visib<2)return 0;//phisical visib is 1
 	bar_clear();
-	int y=getmaxy(stdscr)-1;int pos=0;
-	char*input;int cursor;bool is_find=*comnrp<=com_nr_find_numbers;
+	int y=getmaxy(stdscr)-1;bar_byte pos=0;
+	char*input;bar_byte cursor;bool is_find=*comnrp<=com_nr_find_numbers;
 	if(is_find/*true*/){
 		if(*comnrp==com_nr_findagain)cursor=cursorf;
 		else cursor=*comnrp>=com_nr_findword?word_at_cursor(comnrp):0;
@@ -1251,7 +1252,7 @@ char command(comnrp_define comnrp){
 			char comnr=comnrp[0];
 			if(is_find/*true*/){
 				int ifback=getcurx(stdscr);
-				r=find(comnrp,(size_t)cursor,(size_t)pos,(size_t)visib,y);
+				r=find(comnrp,cursor,pos,visib,y);
 				if(r==-2)break;
 				int dif=rightexcl-getbegx(poswn);
 				if(dif!=-1){
@@ -1311,7 +1312,9 @@ char command(comnrp_define comnrp){
 		}
 		else if(a==KEY_RIGHT){
 			int x=getcurx(stdscr);
-			if(x<right){if(x<com_left+cursor)move(y,x+1);}
+			if(x<right){
+				if((x-com_left+pos)<cursor)move(y,x+1);
+			}
 			else if(pos+visib<=cursor){
 				if(pos==0)mvaddch(y,com_left-1,'<');
 				else move(y,com_left);
@@ -1363,8 +1366,8 @@ char command(comnrp_define comnrp){
 				char ch=(char)a;
 				if(no_char(ch)==false){
 					int x=getcurx(stdscr);
-					int off=pos+(x-com_left);
-					for(int i=cursor;i>off;i--){
+					bar_byte off=pos+(x-com_left);
+					for(bar_byte i=cursor;i>off;i--){
 						input[i]=input[i-1];
 					}
 					input[off]=ch;
@@ -1375,7 +1378,7 @@ char command(comnrp_define comnrp){
 						pos++;
 						addnstr(input+pos,visib-1);
 					}else addch(ch);
-					int d=cursor-off;
+					bar_byte d=cursor-off;
 					if(d!=0){
 						int n=right-x;
 						if(dif!=0)x++;else n++;
