@@ -273,12 +273,10 @@ int open_or_new(char*dest){
 }
 bool is_extension_ok(char*extension,char*filename){//also filename to save restore files in a simple way
 	if(*extension!='\0'){//else all files
-		if(filename!=nullptr){//here is only the split_grab case
-			char*pos=strrchr(filename,'.');
-			if(pos!=nullptr){
-				pos++;
-				if(strcmp(pos,extension)==0)return true;
-			}
+		char*pos=strrchr(filename,'.');
+		if(pos!=nullptr){
+			pos++;
+			if(strcmp(pos,extension)==0)return true;
 		}
 		return false;
 	}
@@ -286,10 +284,12 @@ bool is_extension_ok(char*extension,char*filename){//also filename to save resto
 }
 //command return
 int saving_base(char*dest){
-	if(split_conditions(dest)/*true*/){
-		return wrt_split(dest);
+	char r=split_conditions(dest,false);
+	if(r!=0){
+		if(r==1)return wrt_split(dest);
+		return wrt(dest);
 	}
-	return wrt(dest);
+	return 0;
 }
 //command return
 static int saving(){
