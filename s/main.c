@@ -2268,7 +2268,7 @@ static int normalize(char**c,size_t*size,size_t*r){
 }
 //same as normalize
 static int normalize_split(char**c,size_t*s,size_t*r,char*argfile){
-	if(split_grab(c,s,argfile)/*true*/){//if at normalize will work also in open cutbufs but will error at explodes there(save cutbuf with explodes)
+	if(argfile==nullptr||split_grab(c,s,argfile)/*true*/){//if at normalize will work also in open cutbufs but will error at explodes there(save cutbuf with explodes)
 		return normalize(c,s,r);
 	}
 	return 0;

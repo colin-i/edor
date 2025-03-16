@@ -143,142 +143,139 @@ char split_conditions(char*filename,bool free_paths){
 
 //false on errors
 bool split_grab(char**p_text,size_t*p_size,char*argfile){
-	if(argfile!=nullptr){
-		char r=split_conditions(argfile,true);
-		if(r!=0){
-			if(r==1){
-				char*text;size_t size;int cmp;char*next;
-				char a=*sdelimiter;
-				unsigned char sdelimsize=strlen(sdelimiter);//at file read only one byte for size
-				unsigned char esdelimsize=strlen(esdelimiter);//same from preferences
+	char r=split_conditions(argfile,true);
+	if(r!=0){
+		if(r==1){
+			char*text;size_t size;int cmp;char*next;
+			char a=*sdelimiter;
+			unsigned char sdelimsize=strlen(sdelimiter);//at file read only one byte for size
+			unsigned char esdelimsize=strlen(esdelimiter);//same from preferences
 
-				//calculate number of explodes
-				size_t explodes=0;
-				text=*p_text;size=*p_size;
-				do{
-					next=(char*)memchr(text,a,size);
-					if(next==nullptr)break;
-					next++;size-=next-text;
-					if(size<=(sdelimsize-1))break;
-					cmp=memcmp(next,sdelimiter+1,sdelimsize-1);
-					text=next+(sdelimsize-1);size-=text-next;
-					if(cmp!=0)continue;
+			//calculate number of explodes
+			size_t explodes=0;
+			text=*p_text;size=*p_size;
+			do{
+				next=(char*)memchr(text,a,size);
+				if(next==nullptr)break;
+				next++;size-=next-text;
+				if(size<=(sdelimsize-1))break;
+				cmp=memcmp(next,sdelimiter+1,sdelimsize-1);
+				text=next+(sdelimsize-1);size-=text-next;
+				if(cmp!=0)continue;
 
-					next=(char*)memchr(text,a,size);
-					if(next==nullptr){split_error();return false;}
-					next++;size-=next-text;
-					if(size<=(sdelimsize-1)){split_error();return false;}
-					cmp=memcmp(next,sdelimiter+1,sdelimsize-1);
-					if(cmp!=0){split_error();return false;}//it looks like the delimiter chars can't be in filename chars
-					text=next+(sdelimsize-1);size-=text-next;
+				next=(char*)memchr(text,a,size);
+				if(next==nullptr){split_error();return false;}
+				next++;size-=next-text;
+				if(size<=(sdelimsize-1)){split_error();return false;}
+				cmp=memcmp(next,sdelimiter+1,sdelimsize-1);
+				if(cmp!=0){split_error();return false;}//it looks like the delimiter chars can't be in filename chars
+				text=next+(sdelimsize-1);size-=text-next;
 
-					explodes++;
-				}while(true);
-				if(explodes!=0){
-					filedata*files=(filedata*)malloc(sizeof(filedata)*(explodes+1));//+1 because decided to not global store number of explodes
-					if(files!=nullptr){
-						files[0].file=-1;
-						explodes=0;
+				explodes++;
+			}while(true);
+			if(explodes!=0){
+				filedata*files=(filedata*)malloc(sizeof(filedata)*(explodes+1));//+1 because decided to not global store number of explodes
+				if(files!=nullptr){
+					files[0].file=-1;
+					explodes=0;
 
-						//final size
-						size_t calculated_new_size=0;
-						text=*p_text;size=*p_size;
-						unsigned short calculated_fixed=(2*esdelimsize)+ln_term_sz-sdelimsize;
-						do{
-							size_t dif;
+					//final size
+					size_t calculated_new_size=0;
+					text=*p_text;size=*p_size;
+					unsigned short calculated_fixed=(2*esdelimsize)+ln_term_sz-sdelimsize;
+					do{
+						size_t dif;
 
-							next=(char*)memchr(text,a,size);
-							if(next==nullptr)break;
-							next++;dif=next-text;size-=dif;calculated_new_size+=dif;
-							if(size<=(sdelimsize-1))break;
-							cmp=memcmp(next,sdelimiter+1,sdelimsize-1);
-							text=next+(sdelimsize-1);dif=text-next;size-=dif;calculated_new_size+=dif;
-							if(cmp!=0)continue;
-							//calculated_new_size-=sdelimsize;//we are using another marker at view
+						next=(char*)memchr(text,a,size);
+						if(next==nullptr)break;
+						next++;dif=next-text;size-=dif;calculated_new_size+=dif;
+						if(size<=(sdelimsize-1))break;
+						cmp=memcmp(next,sdelimiter+1,sdelimsize-1);
+						text=next+(sdelimsize-1);dif=text-next;size-=dif;calculated_new_size+=dif;
+						if(cmp!=0)continue;
+						//calculated_new_size-=sdelimsize;//we are using another marker at view
 
-							next=(char*)memchr(text,a,size);
-							*next='\0';
-							int f=open(text,O_RDONLY);
-							if(f==-1){split_error_free(files);return false;}
-							files[explodes].file=f;
-							off_t sz=lseek(f,0,(SEEK_END));
-							if(sz==-1){split_error_free(files);return false;}
-							files[explodes].size=sz;
-							explodes++;
-							files[explodes].file=-1;
-							*next=a;
+						next=(char*)memchr(text,a,size);
+						*next='\0';
+						int f=open(text,O_RDONLY);
+						if(f==-1){split_error_free(files);return false;}
+						files[explodes].file=f;
+						off_t sz=lseek(f,0,(SEEK_END));
+						if(sz==-1){split_error_free(files);return false;}
+						files[explodes].size=sz;
+						explodes++;
+						files[explodes].file=-1;
+						*next=a;
 
-							dif=next-text;
-							text=next+sdelimsize;
-							size-=dif+sdelimsize;
-							calculated_new_size+=dif+sz+calculated_fixed;
-						}while(true);
-						calculated_new_size+=size;
+						dif=next-text;
+						text=next+sdelimsize;
+						size-=dif+sdelimsize;
+						calculated_new_size+=dif+sz+calculated_fixed;
+					}while(true);
+					calculated_new_size+=size;
 
-						char* newtext=(char*)malloc(calculated_new_size);
-						if(newtext==nullptr){filesfree(files);return false;}
+					char* newtext=(char*)malloc(calculated_new_size);
+					if(newtext==nullptr){filesfree(files);return false;}
 
-						//substitutions
-						text=*p_text;size=*p_size;explodes=0;
-						char*cursor=newtext;
-						do{
-							next=(char*)memchr(text,a,size);
-							if(next==nullptr)break;
+					//substitutions
+					text=*p_text;size=*p_size;explodes=0;
+					char*cursor=newtext;
+					do{
+						next=(char*)memchr(text,a,size);
+						if(next==nullptr)break;
+						split_add(&text,next,&cursor,&size);
+
+						if(size<=sdelimsize)break;
+						cmp=memcmp(next+1,sdelimiter+1,sdelimsize-1);
+						next+=sdelimsize;
+						if(cmp!=0){
 							split_add(&text,next,&cursor,&size);
+							continue;
+						}
 
-							if(size<=sdelimsize)break;
-							cmp=memcmp(next+1,sdelimiter+1,sdelimsize-1);
-							next+=sdelimsize;
-							if(cmp!=0){
-								split_add(&text,next,&cursor,&size);
-								continue;
-							}
+						//escape
+						memcpy(cursor,esdelimiter,esdelimsize);cursor+=esdelimsize;
+						//delim
+						//split_add(&text,next,&cursor,&size);
+						size-=next-text;text=next;
 
-							//escape
-							memcpy(cursor,esdelimiter,esdelimsize);cursor+=esdelimsize;
-							//delim
-							//split_add(&text,next,&cursor,&size);
-							size-=next-text;text=next;
+						//file
+						next=(char*)memchr(text,a,size);
+						split_add(&text,next,&cursor,&size);
 
-							//file
-							next=(char*)memchr(text,a,size);
-							split_add(&text,next,&cursor,&size);
+						//ln_term
+						memcpy(cursor,ln_term,ln_term_sz);cursor+=ln_term_sz;
 
-							//ln_term
-							memcpy(cursor,ln_term,ln_term_sz);cursor+=ln_term_sz;
+						//content
+						int f=files[explodes].file;
+						lseek(f,0,(SEEK_SET));//was at size tell
+						#pragma GCC diagnostic push
+						#pragma GCC diagnostic ignored "-Wunused-result"
+						read(f,cursor,files[explodes].size);//can close now but is extra code
+						#pragma GCC diagnostic pop
+						cursor+=files[explodes].size;
+						explodes++;
 
-							//content
-							int f=files[explodes].file;
-							lseek(f,0,(SEEK_SET));//was at size tell
-							#pragma GCC diagnostic push
-							#pragma GCC diagnostic ignored "-Wunused-result"
-							read(f,cursor,files[explodes].size);//can close now but is extra code
-							#pragma GCC diagnostic pop
-							cursor+=files[explodes].size;
-							explodes++;
+						//escape
+						memcpy(cursor,esdelimiter,esdelimsize);cursor+=esdelimsize;
+						//delim
+						next+=sdelimsize;
+						//split_add(&text,next,&cursor,&size);
+						size-=next-text;text=next;
+					}while(true);
+					memcpy(cursor,text,size);
 
-							//escape
-							memcpy(cursor,esdelimiter,esdelimsize);cursor+=esdelimsize;
-							//delim
-							next+=sdelimsize;
-							//split_add(&text,next,&cursor,&size);
-							size-=next-text;text=next;
-						}while(true);
-						memcpy(cursor,text,size);
-
-						free(*p_text);
-						*p_text=newtext;*p_size=calculated_new_size;
-						filesfree(files);
-						return true;
-					}
-					return false;
+					free(*p_text);
+					*p_text=newtext;*p_size=calculated_new_size;
+					filesfree(files);
+					return true;
 				}
+				return false;
 			}
-			return true;
 		}
-		return false;
+		return true;
 	}
-	return true;
+	return false;
 }
 
 void split_writeprefs(int f){
@@ -380,7 +377,7 @@ bool split_write_init(char*orig_filename){
 		}while(true);
 		size_t size=split_out_path1-split_out_path3+1;
 		split_out_size2-=ancestors_diff;
-		char*a=realloc(split_out_alloc2,split_out_size2+size);
+		char*a=(char*)realloc(split_out_alloc2,split_out_size2+size);
 		if(a!=nullptr){
 			memcpy(a+split_out_size2,split_out_path3,size);
 			free(split_out_alloc1);
