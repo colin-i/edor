@@ -30,15 +30,15 @@ void fixed_x(size_t,size_t*,int,int);
 void visual(char);
 void fixed_yx(size_t*,size_t*,int,int);
 //tw,tit
-int movment(int,WINDOW*);
+char movment(int,WINDOW*);
 
 //bar
 //main
 void bar_init(void);
-int save(void);
-int saving_base(char*);
-int question(const char*);
-int command(char*);
+char save(void);
+char saving_base(char*);
+char question(const char*);
+char command(char*);
 #define centering2(w,prw,pxc,right) position(0,0);centering3(w,prw,pxc,right);
 #define centering(w,prw,pxc) centering2(w,prw,pxc,false)
 #define centering_simple(w) centering(w,nullptr,nullptr)

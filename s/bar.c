@@ -139,7 +139,7 @@ static bool wrt_loop_split(int f,size_t n,unsigned int*_off,bool*no_errors){
 	return true;
 }
 //command return
-static int wrt_simple_split(int f){
+static char wrt_simple_split(int f){
 	size_t n=rows_tot-1;
 	unsigned int off=0;
 	bool no_errors=true;
@@ -152,7 +152,8 @@ static int wrt_simple_split(int f){
 	}
 	return 0;
 }
-static int wrt_simple(int f){
+//same
+static char wrt_simple(int f){
 	size_t n=rows_tot-1;
 	for(size_t i=0;i<n;i++){
 		row*r=&rows[i];
@@ -163,9 +164,9 @@ static int wrt_simple(int f){
 	return 0;
 }
 //same
-static int wrt_split(char*filename){
+static char wrt_split(char*filename){
 	if(split_write_init(filename)/*true*/){
-		int a;
+		char a;
 		int f=open_or_new(filename);
 		if(f!=-1){
 			a=wrt_simple_split(f);
@@ -180,10 +181,10 @@ static int wrt_split(char*filename){
 	return 0;
 }
 //same
-static int wrt(char*filename){
+static char wrt(char*filename){
 	int f=open_or_new(filename);
 	if(f!=-1){
-		int r=wrt_simple(f);
+		char r=wrt_simple(f);
 		close(f);
 		return r;
 	}
@@ -283,7 +284,7 @@ bool is_extension_ok(char*extension,char*filename){//also filename to save resto
 	return true;
 }
 //command return
-int saving_base(char*dest){
+char saving_base(char*dest){
 	char r=split_conditions(dest,false);
 	if(r!=0){
 		if(r==1)return wrt_split(dest);
@@ -292,7 +293,7 @@ int saving_base(char*dest){
 	return 0;
 }
 //command return
-static int saving(){
+static char saving(){
 	return saving_base(textfile);
 }
 static void inputpath(){
@@ -307,7 +308,7 @@ static void inputpath(){
 	//good for other commands that are not storing the result
 }
 //-1exist,0er,1ok
-static int saves(){
+static char saves(){
 	if(access(input0,F_OK)==-1){
 		inputpath();
 		//new_f=true;
@@ -346,7 +347,7 @@ void texter_macro(const char*t){
 }
 
 //1/0/-1 -2
-int question(const char*q){
+char question(const char*q){
 	//if(com_left+sz>getmaxx(stdscr))return 1;
 	int y=getmaxy(stdscr)-1;
 	mvaddstr(y,com_left,q);
@@ -588,7 +589,8 @@ static bool replace_text(WINDOW*w,int yb,int xb,int rstart,int rstop){
 		}
 	}
 }
-static int go_to(int cursor){
+//0/1
+static char go_to(int cursor){
 	int i=0;size_t y;size_t x;
 	for(;;){
 		if(input0[i]==','){
@@ -613,7 +615,7 @@ static int go_to(int cursor){
 	}
 	return 0;
 }
-int save(){
+char save(){
 	if(textfile!=nullptr){
 		return saving();
 	}
@@ -1032,7 +1034,7 @@ static void finds_total(int number,size_t y1,size_t x1,size_t xr,size_t xc,bool 
 }
 
 //1,0cancel,-2resz
-static int find_core(WINDOW*w,size_t cursor,int y,size_t pos,size_t sz){
+static char find_core(WINDOW*w,size_t cursor,int y,size_t pos,size_t sz){
 	size_t y1=ytext;size_t x1=xtext;
 
 	finds_total(0,ytext,xtext,0,0,true,cursor,w);
@@ -1157,7 +1159,7 @@ static int find_core(WINDOW*w,size_t cursor,int y,size_t pos,size_t sz){
 	}
 }
 //same
-static int find(char*z,size_t cursor,size_t pos,size_t visib,int y){
+static char find(char*z,size_t cursor,size_t pos,size_t visib,int y){
 	//warning: cast from 'char *' to 'size_t *' (aka 'unsigned int *') increases required alignment from 1 to 4
 	//warning: arithmetic on a pointer to void is a GNU extension
 	//z+=sizeof(void*);
@@ -1170,7 +1172,7 @@ static int find(char*z,size_t cursor,size_t pos,size_t visib,int y){
 	colorfind(color_a,y,pos,sz);
 	//
 	if(finding(cursor,xr,xc,true)/*true*/){
-		int r=find_core(w,cursor,y,pos,sz);
+		char r=find_core(w,cursor,y,pos,sz);
 		finds_clean();
 		return r;
 	}
@@ -1217,7 +1219,7 @@ static int word_at_cursor(char*z){
 }
 
 //-2resize,-1no/quit,0er/fals,1ok
-int command(comnrp_define comnrp){
+char command(comnrp_define comnrp){
 	int rightexcl=get_right;
 	int right=rightexcl-1;
 	int visib=rightexcl-com_left;
@@ -1243,7 +1245,7 @@ int command(comnrp_define comnrp){
 	else{
 		command_rewrite(y,com_left+(cursor<visib?cursor:0),0,input,cursor,visib);
 	}
-	int r;for(;;){
+	char r;for(;;){
 		int a=getch();
 		if(a==Char_Return){
 			char comnr=comnrp[0];

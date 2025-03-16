@@ -144,7 +144,7 @@ bool text_wrap(WINDOW*w){
 		wmove(w,r,xc_to_c(x,r));
 
 		//loop
-		int z;
+		char z;
 		do{
 			int b=wgetch(w);
 			z=movment(b,w);

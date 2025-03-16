@@ -735,7 +735,7 @@ static void right_move(WINDOW*w,bool(*f)(char)){
 |BUTTON3_CLICKED|BUTTON3_PRESSED|BUTTON3_DOUBLE_CLICKED|BUTTON3_TRIPLE_CLICKED)
 
 //1resize,0diff key,-1processed
-int movment(int c,WINDOW*w){
+char movment(int c,WINDOW*w){
 	if(c==KEY_MOUSE){
 		MEVENT e;
 		getmouse(&e);//==OK is when mousemask is 0, but then nothing at getch
@@ -1917,7 +1917,7 @@ static bool visual_mode(WINDOW*w,bool v_l){
 	}
 	printsel(w,ybsel,xbsel,yesel,xesel,true);
 	wmove(w,rw,cl);
-	int z;
+	char z;
 	do{
 		int b=wgetch(w);
 		size_t ycare=ytext;size_t xcare=xtext;
@@ -1974,7 +1974,7 @@ static bool visual_mode(WINDOW*w,bool v_l){
 #define quick_pack(nr,w) comnrp_define args[2];((comnrp_define)args)[0]=nr;args[1]=(comnrp_define)w;
 static bool find_mode(int nr,WINDOW*w){
 	quick_pack((long)nr,w)
-	int r=command((comnrp_define)args);
+	char r=command((comnrp_define)args);
 	if(r==-2)return true;
 	else if(r!=0){
 		wmove(w,getcury(w),getcurx(w));//at 0 (false not err) will remain on the bar
@@ -1982,7 +1982,7 @@ static bool find_mode(int nr,WINDOW*w){
 	return false;
 }
 static bool goto_mode(char*args,WINDOW*w){
-	int r=command(args);
+	char r=command(args);
 	if(r==1){
 		centering_simple(w)
 	}
@@ -1992,7 +1992,7 @@ static bool goto_mode(char*args,WINDOW*w){
 }
 static bool savetofile(WINDOW*w,bool has_file){
 	char*d=textfile;
-	int ret;
+	char ret;
 	if(has_file){
 		ret=save();
 	}else{char aa=com_nr_save;ret=command(&aa);}
@@ -2071,7 +2071,7 @@ void pref_modify(char**pref_orig,char**pref_buf,bool sizedonly,char*newinput,siz
 static bool pref_change(WINDOW*w,char**pref_orig,char**pref_buf,bool sizedonly){
 	extdata d={pref_orig,pref_buf,sizedonly};
 	quick_pack(com_nr_ext,&d)
-	int nr=command((char*)args);
+	char nr=command((char*)args);
 	if(nr>-2){
 		wmove(w,getcury(w),getcurx(w));//ok/quit/err
 		return false;
@@ -2105,7 +2105,7 @@ static bool loopin(WINDOW*w){
 		}
 		wtimeout(w,-1);
 
-		int a=movment(c,w);
+		char a=movment(c,w);
 		if(a==1)return true;
 		if(a!=0){
 			if(visual_bool/*true*/){
@@ -2164,7 +2164,7 @@ static bool loopin(WINDOW*w){
 			}else if(strcmp(s,"^Q")==0){
 				if(mod_flag==false){
 					bar_clear();//errors
-					int q=question("And save");
+					char q=question("And save");
 					if(q==1){
 						q=save();
 						if(q==0)err_set(w);
@@ -2231,8 +2231,8 @@ static bool loopin(WINDOW*w){
 	}
 }
 //-1 to normalize, 0 errors, 1 ok
-static int normalize(char**c,size_t*size,size_t*r){
-	int ok=0;
+static char normalize(char**c,size_t*size,size_t*r){
+	char ok=0;
 	char*text_w=c[0];
 	size_t sz=size[0];
 	char*norm=(char*)malloc(2*sz+1); //+1, there are many curses addstr
@@ -2267,7 +2267,7 @@ static int normalize(char**c,size_t*size,size_t*r){
 	return ok;
 }
 //same as normalize
-static int normalize_split(char**c,size_t*s,size_t*r,char*argfile){
+static char normalize_split(char**c,size_t*s,size_t*r,char*argfile){
 	if(argfile==nullptr||split_grab(c,s,argfile)/*true*/){//if at normalize will work also in open cutbufs but will error at explodes there(save cutbuf with explodes)
 		return normalize(c,s,r);
 	}
@@ -2354,7 +2354,7 @@ static bool valid_ln_term(int argc,char**argv,bool*not_forced){
 	return false;
 }
 //same as normalize
-static int startfile(char*argfile,int argc,char**argv,size_t*text_sz,bool no_file,bool no_input,bool not_forced){
+static char startfile(char*argfile,int argc,char**argv,size_t*text_sz,bool no_file,bool no_input,bool not_forced){
 	if(no_file==false)if(grab_file(argfile,text_sz)/*true*/)return 0;
 	if(no_input==false){
 		if(no_file/*true*/){
@@ -2697,7 +2697,7 @@ static void action_go(int argc,char**argv,char*cutbuf_file,char*argfile){
 	fds[0].fd = known_stdin;
 	fds[0].events = POLLIN;
 	bool no_input=poll(fds, 1, 0)<1;
-	int ok=0;
+	char ok=0;
 	if(no_file/*true*/&&no_input/*true*/){
 		text_init_b=(char*)malloc(1);
 		if(text_init_b!=nullptr){

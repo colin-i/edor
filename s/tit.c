@@ -90,7 +90,7 @@ bool titles(WINDOW*w){
 
 		//loop
 		char color=color_0;
-		int z;
+		char z;
 		do{
 			int b=wgetch(w);
 			z=movment(b,w);
