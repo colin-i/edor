@@ -1447,8 +1447,9 @@ static size_t pasting(row*d,size_t y,row_dword x,row_dword*xe,char*buf,size_t bu
 		}
 		//last
 		l=buf_sz-sz;
-		row_dword sizen=l+szr;
+		size_t sizen=l+szr;
 		row_dword spc_sz=row_pad_sz(sizen);
+		if(sizen>spc_sz)return max;//here something big will stop(example at a big cutbuf)
 		char*rn=(char*)malloc(spc_sz);
 		if(rn==nullptr)return max;
 		memcpy(rn,buf+sz,l);
