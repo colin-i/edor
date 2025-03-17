@@ -2,7 +2,7 @@
 //main
 //bar
 int c_to_xc(int,int);
-void cpymembuf(size_t,size_t,size_t,size_t,char*);
+void cpymembuf(size_t,row_dword,size_t,row_dword,char*);
 void deleting(size_t,size_t,size_t,size_t);
 bool deleting_init(size_t,size_t,size_t,size_t);
 void editing_rebase();
@@ -10,15 +10,15 @@ void mod_set_off();
 void mod_set_off_wrap();
 void mod_set_on();
 bool no_char(char);
-bool paste(size_t,size_t,size_t*,char*,size_t,size_t,bool);
+bool paste(size_t,row_dword,row_dword*,char*,size_t,size_t,bool);
 void pref_modify(char**,char**,bool,char*,bar_byte);
 void printinverted(const char*s);
 void refreshrowsbot(WINDOW*,int,int);
 #define refreshrows(w,i) refreshrowsbot(w,i,getmaxy(w))
 void restore_rebase();
 bool row_alloc(row*,size_t,size_t,size_t);
-void row_set(row*,size_t,size_t,size_t,const char*);
-size_t sizemembuf(size_t,size_t,size_t,size_t);
+void row_set(row*,row_dword,row_dword,row_dword,const char*);
+size_t sizemembuf(size_t,row_dword,size_t,row_dword);
 void vis(char,WINDOW*);
 //tw
 int xc_to_c(size_t,int);
@@ -45,17 +45,17 @@ command_char command(char*);
 WINDOW*position_init(void);
 void position(int,int);
 void position_reset(void);
-bool undo_add(size_t,size_t,size_t,size_t);
-bool undo_add_del(size_t,size_t,size_t,size_t);
+bool undo_add(size_t,row_dword,size_t,row_dword);
+bool undo_add_del(size_t,row_dword,size_t,row_dword);
 bool undo_add_ind(size_t,size_t);
 bool undo_add_ind_del(size_t,size_t);
 void undo_free(void);
 void undo(WINDOW*);
 void redo(WINDOW*);
 void undo_save(void);
-bool undo_type(size_t,size_t,size_t,size_t);
-bool undo_bcsp(size_t,size_t,size_t,size_t);
-bool undo_delk(size_t,size_t,size_t,size_t);
+bool undo_type(size_t,row_dword,size_t,row_dword);
+bool undo_bcsp(size_t,row_dword,size_t,row_dword);
+bool undo_delk(size_t,row_dword,size_t,row_dword);
 void undo_loop(WINDOW*);
 bool new_visual(char*);
 bool is_dir(int);

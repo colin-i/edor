@@ -858,7 +858,7 @@ movement_char movment(int c,WINDOW*w){
 	}
 	return -1;
 }
-size_t sizemembuf(size_t ybsel,size_t xbsel,size_t yesel,size_t xesel){
+size_t sizemembuf(size_t ybsel,row_dword xbsel,size_t yesel,row_dword xesel){
 	if(ybsel==yesel)return xesel-xbsel;
 	size_t size=rows[ybsel].sz-xbsel+ln_term_sz;
 	for(size_t i=ybsel+1;i<yesel;i++){
@@ -866,7 +866,7 @@ size_t sizemembuf(size_t ybsel,size_t xbsel,size_t yesel,size_t xesel){
 	}
 	return size+xesel;
 }
-void cpymembuf(size_t ybsel,size_t xbsel,size_t yesel,size_t xesel,char*buf){
+void cpymembuf(size_t ybsel,row_dword xbsel,size_t yesel,row_dword xesel,char*buf){
 	row*b=&rows[ybsel];
 	if(ybsel==yesel){
 		memcpy(buf,b->data+xbsel,xesel-xbsel);
@@ -890,7 +890,7 @@ static bool writemembuf(size_t ybsel,size_t xbsel,size_t yesel,size_t xesel){
 	fixmembuf(&yesel,&xesel);
 	if(xesel==rows[yesel].sz){if(yesel<rows_tot-1){yesel++;xesel=0;}}
 	else xesel++;
-	size_t size=sizemembuf(ybsel,xbsel,yesel,xesel);
+	row_dword size=sizemembuf(ybsel,xbsel,yesel,xesel);
 	if(cutbuf_spc<size){
 		void*v=realloc(cutbuf,size);
 		if(v==nullptr)return false;
@@ -1137,9 +1137,9 @@ static void text_free(size_t b,size_t e){
 		if(d<text_init_b||text_init_e<=d)free(d);//the check is if the text was not modified from the start in this case will be free at exit(all initial lines)
 	}
 }
-static size_t row_pad_sz(size_t sz){
+static row_dword row_pad_sz(row_dword sz){
 	sz++;//[i]=0;addstr;=aux
-	size_t dif=sz&row_pad;
+	char dif=sz&row_pad;
 	if(dif!=0)return sz+((dif^row_pad)+1);
 	return sz;
 }
@@ -1147,7 +1147,7 @@ bool row_alloc(row*rw,size_t l,size_t c,size_t r){
 	size_t sz=l+c+r;
 	if(sz>=rw->spc){//[i]=0;addstr;=aux
 		char*src=rw->data;char*dst;
-		size_t size=row_pad_sz(sz);
+		row_dword size=row_pad_sz(sz);
 		if(text_init_b<=src&&src<text_init_e){
 			dst=(char*)malloc(size);
 			if(dst==nullptr)return true;
@@ -1163,7 +1163,7 @@ bool row_alloc(row*rw,size_t l,size_t c,size_t r){
 	}//else dst=src;
 	return false;
 }
-void row_set(row*rw,size_t l,size_t c,size_t r,const char*mid){
+void row_set(row*rw,row_dword l,row_dword c,row_dword r,const char*mid){
 	char*d=rw->data;
 	size_t j=l+c;size_t i=j+r;row_dword k=rw->sz;
 	rw->sz=i;
@@ -1415,10 +1415,10 @@ static void rows_insert(row*d,size_t sz,size_t off){
 		if(aftercall>=(off-1))aftercall+=sz;  //example enter at 0,0 off will be 1
 	}
 }
-static size_t pasting(row*d,size_t y,size_t x,size_t*xe,char*buf,size_t buf_sz,size_t buf_r,bool fromcopy){
+static size_t pasting(row*d,size_t y,row_dword x,row_dword*xe,char*buf,size_t buf_sz,size_t buf_r,bool fromcopy){
 	bool one=buf_r==1;
 	size_t szc;size_t sz1r;size_t l;
-	size_t szr=rows[y].sz-x;
+	row_dword szr=rows[y].sz-x;
 	size_t max=buf_r-1;
 	if(one/*true*/){
 		szc=buf_sz;sz1r=szr;
@@ -1433,9 +1433,9 @@ static size_t pasting(row*d,size_t y,size_t x,size_t*xe,char*buf,size_t buf_sz,s
 		//inter
 		for(size_t i=0;i<n;i++){
 			char*b=memtrm(a)+ln_term_sz;
-			size_t ln=(size_t)(b-a);
+			size_t ln=b-a;
 			size_t len=ln-ln_term_sz;
-			size_t spc_sz=row_pad_sz(len);
+			row_dword spc_sz=row_pad_sz(len);
 			void*v=malloc(spc_sz);
 			if(v==nullptr)return i+1;
 			memcpy(v,buf+sz,len);
@@ -1447,8 +1447,8 @@ static size_t pasting(row*d,size_t y,size_t x,size_t*xe,char*buf,size_t buf_sz,s
 		}
 		//last
 		l=buf_sz-sz;
-		size_t sizen=l+szr;
-		size_t spc_sz=row_pad_sz(sizen);
+		row_dword sizen=l+szr;
+		row_dword spc_sz=row_pad_sz(sizen);
 		char*rn=(char*)malloc(spc_sz);
 		if(rn==nullptr)return max;
 		memcpy(rn,buf+sz,l);
@@ -1468,7 +1468,7 @@ static size_t pasting(row*d,size_t y,size_t x,size_t*xe,char*buf,size_t buf_sz,s
 	}
 	return buf_r;
 }
-bool paste(size_t y,size_t x,size_t*xe,char*buf,size_t buf_sz,size_t buf_r,bool fromcopy){
+bool paste(size_t y,row_dword x,row_dword*xe,char*buf,size_t buf_sz,size_t buf_r,bool fromcopy){
 	row*d;
 	if(buf_r>1){d=(row*)malloc((buf_r-1)*sizeof(row));
 		if(d==nullptr)return false;}
@@ -1487,7 +1487,7 @@ static void past(WINDOW*w){
 		int r=getcury(w);
 		size_t y;row_dword x;
 		fixed_yx(&y,&x,r,getcurx(w));
-		size_t xe;
+		row_dword xe;
 		if(paste(y,x,&xe,cutbuf,cutbuf_sz,cutbuf_r,true)/*true*/){
 			pasted(y-ytext,xe,w);
 			mod_set_off_wrap();
@@ -1670,7 +1670,7 @@ static bool bcsp(size_t y,size_t x,int*rw,int*cl,WINDOW*w){
 	}
 	return true;
 }
-static bool enter(size_t y,size_t x,int*r,int*c,WINDOW*w){
+static bool enter(size_t y,row_dword x,int*r,int*c,WINDOW*w){
 	if(rows_expand(1)/*true*/)return true;
 	char*b=rows[y].data;
 	char*d=b;
@@ -1678,10 +1678,10 @@ static bool enter(size_t y,size_t x,int*r,int*c,WINDOW*w){
 		char*e=b+x;
 		while(d<e&&d[0]=='\t')d++;
 	}
-	size_t tb=(size_t)(d-b);
-	size_t s=rows[y].sz-x;
-	size_t sze=tb+s;
-	size_t spc=row_pad_sz(sze);
+	row_dword tb=d-b;
+	row_dword s=rows[y].sz-x;
+	row_dword sze=tb+s;
+	row_dword spc=row_pad_sz(sze);
 	char*v=(char*)malloc(spc);
 	if(v==nullptr)return true;
 	if(undo_add(y,x,y+1,tb)==false){
