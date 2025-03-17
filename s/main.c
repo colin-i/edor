@@ -1143,11 +1143,12 @@ static row_dword row_pad_sz(row_dword sz){
 	if(dif!=0)return sz+((dif^row_pad)+1);
 	return sz;
 }
-bool row_alloc(row*rw,size_t l,size_t c,size_t r){
+bool row_alloc(row*rw,row_dword l,size_t c,row_dword r){//c at pasting is coming from cutbuf
 	size_t sz=l+c+r;
 	if(sz>=rw->spc){//[i]=0;addstr;=aux
 		char*src=rw->data;char*dst;
 		row_dword size=row_pad_sz(sz);
+		if(sz>size)return true;//this and another safety like this, for segmentations 
 		if(text_init_b<=src&&src<text_init_e){
 			dst=(char*)malloc(size);
 			if(dst==nullptr)return true;
@@ -1343,17 +1344,17 @@ void deleting(size_t ybsel,size_t xbsel,size_t yesel,size_t xesel){
 		row_del(ybsel+1,yesel,-1);
 	}
 }
-bool deleting_init(size_t ybsel,size_t xbsel,size_t yesel,size_t xesel){
+bool deleting_init(size_t ybsel,row_dword xbsel,size_t yesel,row_dword xesel){
 	if(ybsel!=yesel){
-		size_t se=rows[yesel].sz-xesel;
-		size_t sb=rows[ybsel].sz-xbsel;
+		row_dword se=rows[yesel].sz-xesel;
+		row_dword sb=rows[ybsel].sz-xbsel;
 		if(se>sb){//need deleting part at undo
 			return row_alloc(&rows[ybsel],rows[ybsel].sz,se-sb,0);
 		}
 	}
 	return false;
 }
-static bool deletin(size_t ybsel,size_t xbsel,size_t yesel,size_t xesel,int*rw,int*cl,WINDOW*w,bool many){
+static bool deletin(size_t ybsel,row_dword xbsel,size_t yesel,row_dword xesel,int*rw,int*cl,WINDOW*w,bool many){
 	if(deleting_init(ybsel,xbsel,yesel,xesel)==false){
 		if(undo_add_del(ybsel,xbsel,yesel,xesel)==false){
 			deleting(ybsel,xbsel,yesel,xesel);
@@ -1417,8 +1418,8 @@ static void rows_insert(row*d,size_t sz,size_t off){
 }
 static size_t pasting(row*d,size_t y,row_dword x,row_dword*xe,char*buf,size_t buf_sz,size_t buf_r,bool fromcopy){
 	bool one=buf_r==1;
-	size_t szc;size_t sz1r;size_t l;
-	row_dword szr=rows[y].sz-x;
+	size_t szc;size_t l;
+	row_dword sz1r;row_dword szr=rows[y].sz-x;
 	size_t max=buf_r-1;
 	if(one/*true*/){
 		szc=buf_sz;sz1r=szr;
@@ -1563,7 +1564,7 @@ static void rowfixdel(WINDOW*w,int r,int c,row*rw,size_t i){
 	}
 	x_right[r]=mx!=0;
 }
-static bool del_key(size_t y,size_t x,int r,int*cc,WINDOW*w,bool reverse){
+static bool del_key(size_t y,row_dword x,int r,int*cc,WINDOW*w,bool reverse){
 	row*r1=&rows[y];int maxx=getmaxx(w);int c=*cc;
 	int margin_val=c+view_margin;
 	bool margin=margin_val>maxx;
@@ -1610,7 +1611,7 @@ static bool del_key(size_t y,size_t x,int r,int*cc,WINDOW*w,bool reverse){
 	return true;
 }
 #define delete_key(y,x,r,cc,w) del_key(y,x,r,cc,w,false)
-static bool bcsp(size_t y,size_t x,int*rw,int*cl,WINDOW*w){
+static bool bcsp(size_t y,row_dword x,int*rw,int*cl,WINDOW*w){
 	int c=cl[0];
 	if(xtext==0&&c==0){
 		if(y==0)return true;//to not continue

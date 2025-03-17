@@ -753,10 +753,10 @@ static bool undo_replace(eundo*un,char*data,size_t yb,row_dword xb,row_dword xe,
 	row_dword*sz_p=(row_dword*)((void*)&data[1]);
 	row_dword sz2=sz_p[0];
 	row*r=&rows[yb];
-	int memdif=(int)(sz2-xe);
+	long memdif=(long)sz2-xe;//is big only if is a long write at replace. strange is that at char the cast is not required
 	row_dword sz=r->sz;
-	if(memdif>0){
-		if(row_alloc(r,sz,(size_t)memdif,0)/*true*/)return true;
+	if(memdif>0){//here will be row_dword at max
+		if(row_alloc(r,sz,memdif,0)/*true*/)return true;
 	}
 	else if(xe>sz2&&is_undo/*true*/){
 		data=(char*)realloc(data,1+sizeof(row_dword)+xe);
@@ -765,12 +765,12 @@ static bool undo_replace(eundo*un,char*data,size_t yb,row_dword xb,row_dword xe,
 	}
 	char*a=&r->data[xb];
 	char*b=(char*)(sz_p+1);
-	if(memdif>0){
+	if(memdif>0){//here will be row_dword at max
 		for(size_t i=0;i<xe;i++){
 			char c=a[i];a[i]=b[i];b[i]=c;
 		}
 		row_dword left=xb+xe;
-		row_set(r,left,(size_t)memdif,sz-left,&b[xe]);
+		row_set(r,left,memdif,sz-left,&b[xe]);
 	}else{
 		for(size_t i=0;i<sz2;i++){
 			char c=a[i];a[i]=b[i];b[i]=c;

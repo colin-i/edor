@@ -4,7 +4,7 @@
 int c_to_xc(int,int);
 void cpymembuf(size_t,row_dword,size_t,row_dword,char*);
 void deleting(size_t,size_t,size_t,size_t);
-bool deleting_init(size_t,size_t,size_t,size_t);
+bool deleting_init(size_t,row_dword,size_t,row_dword);
 void editing_rebase();
 void mod_set_off();
 void mod_set_off_wrap();
@@ -16,7 +16,7 @@ void printinverted(const char*s);
 void refreshrowsbot(WINDOW*,int,int);
 #define refreshrows(w,i) refreshrowsbot(w,i,getmaxy(w))
 void restore_rebase();
-bool row_alloc(row*,size_t,size_t,size_t);
+bool row_alloc(row*,row_dword,size_t,row_dword);
 void row_set(row*,row_dword,row_dword,row_dword,const char*);
 size_t sizemembuf(size_t,row_dword,size_t,row_dword);
 void vis(char,WINDOW*);
