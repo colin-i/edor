@@ -1148,7 +1148,7 @@ bool row_alloc(row*rw,row_dword l,size_t c,row_dword r){//c at pasting is coming
 	if(sz>=rw->spc){//[i]=0;addstr;=aux
 		char*src=rw->data;char*dst;
 		row_dword size=row_pad_sz(sz);
-		if(sz>size)return true;//this and another safety like this, for segmentations 
+		if(sz>size)return true;//this and another safety like this, for segmentations
 		if(text_init_b<=src&&src<text_init_e){
 			dst=(char*)malloc(size);
 			if(dst==nullptr)return true;
