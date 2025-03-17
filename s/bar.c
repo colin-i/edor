@@ -139,7 +139,7 @@ static bool wrt_loop_split(int f,size_t n,unsigned int*_off,bool*no_errors){
 	return true;
 }
 //command return
-static char wrt_simple_split(int f){
+static command_char wrt_simple_split(int f){
 	size_t n=rows_tot-1;
 	unsigned int off=0;
 	bool no_errors=true;
@@ -153,7 +153,7 @@ static char wrt_simple_split(int f){
 	return 0;
 }
 //same
-static char wrt_simple(int f){
+static command_char wrt_simple(int f){
 	size_t n=rows_tot-1;
 	for(size_t i=0;i<n;i++){
 		row*r=&rows[i];
@@ -164,9 +164,9 @@ static char wrt_simple(int f){
 	return 0;
 }
 //same
-static char wrt_split(char*filename){
+static command_char wrt_split(char*filename){
 	if(split_write_init(filename)/*true*/){
-		char a;
+		command_char a;
 		int f=open_or_new(filename);
 		if(f!=-1){
 			a=wrt_simple_split(f);
@@ -181,10 +181,10 @@ static char wrt_split(char*filename){
 	return 0;
 }
 //same
-static char wrt(char*filename){
+static command_char wrt(char*filename){
 	int f=open_or_new(filename);
 	if(f!=-1){
-		char r=wrt_simple(f);
+		command_char r=wrt_simple(f);
 		close(f);
 		return r;
 	}
@@ -252,9 +252,18 @@ void err_set(WINDOW*w){
 		wmove(w,getcury(w),getcurx(w));//newpath+save
 	}
 }
-void bar_char(char c,WINDOW*w){
+//also test double chars
+bool bar_char(char c,WINDOW*w,bool singlechar){
 	mvaddch(getmaxy(stdscr)-1,com_left,c);
+	bool s=getcurx(stdscr)==com_left+1;//some ctrl like h will not write, will say com_left-1
+	if(s/*true*/){
+		if(singlechar==false){
+			attrset(color_0);
+			addch(' ');
+		}
+	}
 	wnoutrefresh(stdscr);wmove(w,getcury(w),getcurx(w));//refresh() is moving down
+	return s;
 }
 
 int open_new(char*path){
@@ -284,8 +293,8 @@ bool is_extension_ok(char*extension,char*filename){//also filename to save resto
 	return true;
 }
 //command return
-char saving_base(char*dest){
-	char r=split_conditions(dest,false);
+command_char saving_base(char*dest){
+	command_char r=split_conditions(dest,false);
 	if(r!=0){
 		if(r==1)return wrt_split(dest);
 		return wrt(dest);
@@ -293,7 +302,7 @@ char saving_base(char*dest){
 	return 0;
 }
 //command return
-static char saving(){
+static command_char saving(){
 	return saving_base(textfile);
 }
 static void inputpath(){
@@ -307,8 +316,8 @@ static void inputpath(){
 	else input0=input1;
 	//good for other commands that are not storing the result
 }
-//-1exist,0er,1ok
-static char saves(){
+//-1exist,0er,1ok and also mix with command returns
+static command_char saves(){
 	if(access(input0,F_OK)==-1){
 		inputpath();
 		//new_f=true;
@@ -347,8 +356,8 @@ void texter_macro(const char*t){
 	texter(t);
 }
 
-//1/0/-1 -2
-char question(const char*q){
+//1/0/-1 -2  //return at command
+command_char question(const char*q){
 	//if(com_left+sz>getmaxx(stdscr))return 1;
 	int y=getmaxy(stdscr)-1;
 	mvaddstr(y,com_left,q);
@@ -426,7 +435,7 @@ static bool findingf(bar_byte cursor,size_t r,size_t c){
 	size_t e=rows_tot;
 	for(;;){
 		int a=inputcmp(rows[i].data,rows[i].sz,cursor);
-		if(a>=0){xtext=(size_t)a;ytext=i;return true;}
+		if(a>=0){xtext=a;ytext=i;return true;}
 		i++;
 		if(i==e){
 			if(e==rows_tot){
@@ -466,7 +475,7 @@ static bool findingb(bar_byte cursor,size_t r,size_t c){
 		c+=xtext;
 		if(c<rows[i].sz){
 			int n=inputrcmp(rows[i].data,c,cursor);
-			if(n>=0){xtext=(size_t)n;ytext=i;return true;}
+			if(n>=0){xtext=n;ytext=i;return true;}
 			if(i==0)i=rows_tot-1;
 			else i--;
 		}
@@ -475,7 +484,7 @@ static bool findingb(bar_byte cursor,size_t r,size_t c){
 	size_t e=0;
 	for(;;){
 		int a=inputrcmp(rows[i].data,rows[i].sz,cursor);
-		if(a>=0){xtext=(size_t)a;ytext=i;return true;}
+		if(a>=0){xtext=a;ytext=i;return true;}
 		if(i==e){
 			if(e==0){
 				if(b==rows_tot-1)return false;
@@ -510,17 +519,17 @@ void position(int rw,int cl){
 	size_t y=ytext+(size_t)rw;size_t x;
 	if(y>=rows_tot){y=rows_tot-1;x=rows[y].sz;}
 	else{
-		x=xtext+c_to_xc(cl,rw);
+		x=(size_t)xtext+c_to_xc(cl,rw);
 		if(x>rows[y].sz)x=rows[y].sz;
 	}
 	position_core(y,x);
 }
-void centering3(WINDOW*w,size_t*prw,size_t*pxc,bool right){
+void centering3(WINDOW*w,size_t*prw,row_dword*pxc,bool right){
 	int mx=getmaxx(w);
 	int wd=mx/3;
 	if(right/*true*/)wd=mx-wd;
 	int c=0;char*d=rows[ytext].data;
-	size_t xc=xtext;
+	row_dword xc=xtext;
 	do{
 		if(xtext==0)break;
 		xtext--;
@@ -590,8 +599,8 @@ static bool replace_text(WINDOW*w,int yb,int xb,int rstart,int rstop){
 		}
 	}
 }
-//0/1
-static char go_to(bar_byte cursor){
+//0/1  not signed but will return at command
+static command_char go_to(bar_byte cursor){
 	int i=0;size_t y;size_t x;
 	for(;;){
 		if(input0[i]==','){
@@ -616,7 +625,7 @@ static char go_to(bar_byte cursor){
 	}
 	return 0;
 }
-char save(){
+command_char save(){
 	if(textfile!=nullptr){
 		return saving();
 	}
@@ -744,7 +753,7 @@ static bool undo_replace(eundo*un,char*data,size_t yb,size_t xb,size_t xe,bool i
 	size_t sz2=sz_p[0];
 	row*r=&rows[yb];
 	int memdif=(int)(sz2-xe);
-	size_t sz=r->sz;
+	row_dword sz=r->sz;
 	if(memdif>0){
 		if(row_alloc(r,sz,(size_t)memdif,0)/*true*/)return true;
 	}
@@ -994,7 +1003,7 @@ static bool delimiter(size_t y1,size_t x1,int y,bar_byte pos,bar_byte sz,bar_byt
 #define quick_get(z) ((WINDOW**)((void*)z))[1]
 #define find_returner return a==KEY_RESIZE?-2:1;
 
-static void finds_total(int number,size_t y1,size_t x1,size_t xr,size_t xc,bool untouched,bar_byte cursor,WINDOW*w){
+static void finds_total(int number,size_t y1,row_dword x1,size_t xr,row_dword xc,bool untouched,bar_byte cursor,WINDOW*w){
 	//set a limit
 	const size_t max=100;
 	size_t n;
@@ -1035,8 +1044,8 @@ static void finds_total(int number,size_t y1,size_t x1,size_t xr,size_t xc,bool 
 }
 
 //1,0cancel,-2resz
-static char find_core(WINDOW*w,bar_byte cursor,int y,bar_byte pos,bar_byte sz){
-	size_t y1=ytext;size_t x1=xtext;
+static command_char find_core(WINDOW*w,bar_byte cursor,int y,bar_byte pos,bar_byte sz){
+	size_t y1=ytext;row_dword x1=xtext;
 
 	finds_total(0,ytext,xtext,0,0,true,cursor,w);
 	ytext=y1;xtext=x1;
@@ -1047,7 +1056,7 @@ static char find_core(WINDOW*w,bar_byte cursor,int y,bar_byte pos,bar_byte sz){
 	bool forward=true;
 	bool phase=false;
 	wnoutrefresh(stdscr);
-	size_t xr;size_t xc;
+	size_t xr;row_dword xc;
 	centering(w,&xr,&xc)
 	bool untouched=true;bool delimiter_touched=false;
 	char prev_key=' ';
@@ -1070,7 +1079,7 @@ static char find_core(WINDOW*w,bar_byte cursor,int y,bar_byte pos,bar_byte sz){
 			}
 			forward=false;
 		}else if(a==KEY_LEFT){
-			size_t iferrory=ytext;size_t iferrorx=xtext;
+			size_t iferrory=ytext;row_dword iferrorx=xtext;
 			if(number3!=getmaxx(stdscr)){//in second case this can be if total is requested
 				finds_big_clean();//wnoutrefresh when not on delimiter
 			}
@@ -1116,7 +1125,7 @@ static char find_core(WINDOW*w,bar_byte cursor,int y,bar_byte pos,bar_byte sz){
 		}else if(a==KEY_RIGHT){
 			if(number2==0){//only when not knowing the total
 				if(delimiter_touched==false){//to omit last replace return if that can happen at this point
-					size_t storeytext=ytext;size_t storextext=xtext;
+					size_t storeytext=ytext;row_dword storextext=xtext;
 					finds_total(number,y1,x1,xr,xc,untouched,cursor,w);
 					ytext=storeytext;xtext=storextext;
 				}
@@ -1160,7 +1169,7 @@ static char find_core(WINDOW*w,bar_byte cursor,int y,bar_byte pos,bar_byte sz){
 	}
 }
 //same
-static char find(char*z,bar_byte cursor,bar_byte pos,int visib,int y){
+static command_char find(char*z,bar_byte cursor,bar_byte pos,int visib,int y){
 	//warning: cast from 'char *' to 'size_t *' (aka 'unsigned int *') increases required alignment from 1 to 4
 	//warning: arithmetic on a pointer to void is a GNU extension
 	//z+=sizeof(void*);
@@ -1195,7 +1204,7 @@ static void command_rewrite(int y,int x,int pos,char*input,bar_byte cursor,int v
 }
 static int word_at_cursor(char*z){
 	WINDOW*w=quick_get(z);
-	size_t y;size_t x;
+	size_t y;row_dword x;
 	fixed_yx(&y,&x,getcury(w),getcurx(w));
 	size_t sz=rows[y].sz;
 	if(x==sz)return 0;
@@ -1220,7 +1229,7 @@ static int word_at_cursor(char*z){
 }
 
 //-2resize,-1no/quit,0er/fals,1ok
-char command(comnrp_define comnrp){
+command_char command(comnrp_define comnrp){
 	int rightexcl=get_right;
 	int right=rightexcl-1;
 	int visib=rightexcl-com_left;
@@ -1246,7 +1255,7 @@ char command(comnrp_define comnrp){
 	else{
 		command_rewrite(y,com_left+(cursor<visib?cursor:0),0,input,cursor,visib);
 	}
-	char r;for(;;){
+	command_char r;for(;;){
 		int a=getch();
 		if(a==Char_Return){
 			char comnr=comnrp[0];
@@ -1274,7 +1283,7 @@ char command(comnrp_define comnrp){
 			}else if(comnr==com_nr_save){
 				input[cursor]='\0';
 				r=saves();
-				if(r==-1){
+				if(r==command_processed){
 					int x=getcurx(stdscr);
 					clear_com(y,visib,pos,cursor);
 					r=question("Overwrite");
@@ -1424,7 +1433,7 @@ char*ocode_extension=default_extension;
 size_t aftercall_find(){
 	for(size_t i=0;i<rows_tot;i++){
 		row*r=&rows[i];
-		size_t sz=r->sz;
+		row_dword sz=r->sz;
 		char*data=r->data;
 
 		//first must skip spaces

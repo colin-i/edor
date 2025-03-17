@@ -29,7 +29,7 @@
 \n    other key to return\
 \nCtrl+u = undo; Alt+u = undo mode: left=undo,right=redo,other key to return\
 \nCtrl+r = redo\
-\nCtrl+h = titles (movement, Enter at done, other keys to search)\
+\nCtrl+h = titles (movement, Enter at done, other keys to search, ctrl+q)\
 \nCtrl+w = text wrapping (movement. another key to return)\
 \nCtrl+e = enable/disable internal mouse/touch\
 \nCtrl+n = disable/enable indentation\
@@ -189,7 +189,7 @@ char*textfile=nullptr;
 row*rows=nullptr;
 size_t rows_tot=1;
 size_t ytext=0;
-size_t xtext=0;
+row_dword xtext=0;//and what about when xtext + xc goes size_t ? is ok, nothing is lost, tested, (size_t)xtext cast is same without cast, but is recommended
 bool mod_flag=true;
 bool ocompiler_flag=false;
 size_t aftercall;
@@ -252,7 +252,7 @@ bool no_char(char z){return z<32||z>=127;}
 static size_t tab_grow(WINDOW*w,char*a,size_t sz,int*ptr){
 	int c=0;int cr=0;
 	int max=getmaxx(w);
-	size_t i=xtext;size_t j=i;
+	size_t i=(size_t)xtext;size_t j=i;
 	for(;i<sz&&cr<max;i++){
 		cr++;
 		char z=a[i];
@@ -289,14 +289,14 @@ static void printsyntax(int pair,int y){
 	mvwaddch(syntaxcontent,y,0,' ');
 }
 void refreshrowsbot(WINDOW*w,int i,int maxy){
-	size_t maxx=xtext+(size_t)getmaxx(w);
+	size_t maxx=(size_t)xtext+getmaxx(w);
 	do{
 		size_t j=ytext+(size_t)i;
 		int*ptr=&tabs[tabs_rsz*i];ptr[0]=0;
 		wmove(w,i,0);
 		char at_left=at_content_nomark;char at_right=at_content_nomark;
 		if(j<rows_tot){
-			size_t sz=rows[j].sz;
+			row_dword sz=rows[j].sz;
 			if(xtext>0)if(sz>0)at_left=at_left_mark;//there is text at left
 
 			size_t maxsz=sz>maxx?maxx:sz;
@@ -571,25 +571,25 @@ static void srmove(WINDOW*w,int x,bool back){
 static int endmv(WINDOW*w,size_t r,bool minusone){
 	size_t sz=rows[r].sz;
 	if(minusone/*true*/&&sz>0)sz--;
-	if(xtext>=sz){xtext=sz;return 0;}
+	if(xtext>=sz){xtext=sz;return 0;}//here xtext is not adjusted, is normal
 	char*b=rows[r].data;
 	char*s=b+sz;
 	int n=getmaxx(w)-1;int m=0;
 	do{
 		s--;m+=s[0]=='\t'?tab_sz:1;
-		if((size_t)(s-b)==xtext)break;
+		if((s-b)==xtext)break;
 	}while(m<n);
 	if(m>n){
 		s++;m-=tab_sz;
 	}
-	xtext=(size_t)(s-b);
+	xtext=(s-b);
 	return m;
 }
 #define end(w,r) endmv(w,r,false)
 static void endmov(WINDOW*w,bool minusone){
 	int y=getcury(w);
 	size_t r=ytext+(size_t)y;
-	size_t xcare=xtext;
+	row_dword xcare=xtext;
 	int x;if(r<rows_tot)x=endmv(w,r,minusone);
 	else{xtext=0;x=0;}
 	if(xtext!=xcare)refreshpage(w);
@@ -624,7 +624,7 @@ int xc_to_c(size_t col,int r){
 	}
 	return(int)col;
 }
-size_t c_to_xc(int c,int r){
+int c_to_xc(int c,int r){
 	int*p=&tabs[tabs_rsz*r];
 	int n=p[0];int x=c;
 	for(int i=0;i<n;i++){
@@ -633,7 +633,7 @@ size_t c_to_xc(int c,int r){
 		if((p[0]+(tab_sz-1))<c)x-=tab_sz-1;
 		else break;
 	}
-	return (size_t)x;
+	return x;
 }
 
 static void fixmembuf(size_t*y,size_t*x){
@@ -642,18 +642,26 @@ static void fixmembuf(size_t*y,size_t*x){
 		x[0]=rows[y[0]].sz;
 		return;
 	}
-	size_t sz=rows[y[0]].sz;
+	row_dword sz=rows[y[0]].sz;
 	if(x[0]>sz)x[0]=sz;
 }
-void fixed_yx(size_t*y,size_t*x,int r,int c){
+static bool fixed_y(size_t*y,row_dword*x,int r){
 	*y=ytext+(size_t)r;
-	*x=xtext+c_to_xc(c,r);
-	fixmembuf(y,x);
+	if(*y>=rows_tot){
+		*y=rows_tot-1;
+		*x=rows[*y].sz;
+		return false;
+	}
+	return true;
 }
-void fixed_x(size_t y,size_t*x,int r,int c){
-	*x=xtext+c_to_xc(c,r);
-	size_t sz=rows[y].sz;
-	if(*x>sz)*x=sz;
+void fixed_x(size_t y,row_dword*x,int r,int c){
+	size_t xc=(size_t)xtext+c_to_xc(c,r);
+	row_dword sz=rows[y].sz;
+	if(xc>sz)*x=sz;
+	else *x=xc;
+}
+void fixed_yx(size_t*y,row_dword*x,int r,int c){
+	if(fixed_y(y,x,r)/*true*/)fixed_x(*y,x,r,c);
 }
 
 static bool is_wordchar(char a){
@@ -670,7 +678,7 @@ static void left(WINDOW*w,int c){
 static void left_move(WINDOW*w,bool(*f)(char)){
 	int r=getcury(w);
 	int c=getcurx(w);
-	size_t y;size_t x;
+	size_t y;row_dword x;
 	fixed_yx(&y,&x,r,c);
 	size_t sz=rows[y].sz;
 	char*d=rows[y].data;
@@ -705,7 +713,7 @@ static size_t right_long(size_t x,char*d,size_t sz,bool(*f)(char)){
 static void right_move(WINDOW*w,bool(*f)(char)){
 	int r=getcury(w);
 	int c=getcurx(w);
-	size_t y;size_t x;
+	size_t y;row_dword x;
 	fixed_yx(&y,&x,r,c);
 	size_t sz=rows[y].sz;
 	char*d=rows[y].data;
@@ -735,7 +743,7 @@ static void right_move(WINDOW*w,bool(*f)(char)){
 |BUTTON3_CLICKED|BUTTON3_PRESSED|BUTTON3_DOUBLE_CLICKED|BUTTON3_TRIPLE_CLICKED)
 
 //1resize,0diff key,-1processed
-char movment(int c,WINDOW*w){
+movement_char movment(int c,WINDOW*w){
 	if(c==KEY_MOUSE){
 		MEVENT e;
 		getmouse(&e);//==OK is when mousemask is 0, but then nothing at getch
@@ -796,7 +804,7 @@ char movment(int c,WINDOW*w){
 		int y=getcury(w);
 		int x=getcurx(w);
 		size_t r=ytext+(size_t)y;
-		size_t xcare=xtext;
+		row_dword xcare=xtext;
 		if(r<rows_tot)endmv(w,r,false);
 		else xtext=0;
 		if(xtext!=xcare)refreshpage(w);
@@ -815,7 +823,7 @@ char movment(int c,WINDOW*w){
 		else if(strcmp(s,"kHOM3")==0){
 			int y=getcury(w);
 			size_t r=ytext+(size_t)y;
-			size_t xcare=xtext;
+			row_dword xcare=xtext;
 			int x;if(r<rows_tot)x=home(w,r);
 			else{xtext=0;x=0;}
 			if(xcare!=xtext)refreshpage(w);
@@ -832,7 +840,7 @@ char movment(int c,WINDOW*w){
 			}
 			wmove(w,0,0);
 		}else if(strcmp(s,"kEND5")==0){
-			bool ycare;size_t xcare=xtext;
+			bool ycare;row_dword xcare=xtext;
 			int val=(int)rows_tot-getmaxy(w);
 			if((int)ytext<val){ytext=(size_t)val;ycare=true;}
 			else ycare=false;
@@ -864,12 +872,12 @@ void cpymembuf(size_t ybsel,size_t xbsel,size_t yesel,size_t xesel,char*buf){
 		memcpy(buf,b->data+xbsel,xesel-xbsel);
 		return;
 	}
-	size_t sz1=b->sz-xbsel;
+	row_dword sz1=b->sz-xbsel;
 	memcpy(buf,b->data+xbsel,sz1);
 	memcpy(buf+sz1,ln_term,ln_term_sz);
-	size_t sz=sz1+ln_term_sz;
+	row_dword sz=sz1+ln_term_sz;
 	for(size_t i=ybsel+1;i<yesel;i++){
-		size_t s=rows[i].sz;
+		row_dword s=rows[i].sz;
 		memcpy(buf+sz,rows[i].data,s);
 		sz+=s;
 		memcpy(buf+sz,ln_term,ln_term_sz);
@@ -895,7 +903,7 @@ static bool writemembuf(size_t ybsel,size_t xbsel,size_t yesel,size_t xesel){
 static int mid(int r,int max){
 	size_t y=ytext+(size_t)r;
 	if(y<rows_tot){
-		size_t sz=rows[y].sz;
+		row_dword sz=rows[y].sz;
 		if(sz<xtext)return 0;
 		sz-=xtext;
 		int w=tabs[r*tabs_rsz]*(tab_sz-1)+(int)sz;
@@ -941,11 +949,11 @@ static void sel(WINDOW*w,int c1,int c2,int rb,int cb,int re,int ce){
 }
 static size_t v_l_x(size_t y,size_t x,size_t rmax,WINDOW*w){
 	if(y<rmax){
-		size_t ok=xtext+(size_t)getmaxx(w)-1;
+		size_t ok=(size_t)xtext+getmaxx(w)-1;
 		if(ok<rows[y].sz)return rows[y].sz;
 		return ok;
 	}else if(y==rmax){
-		size_t sz=rows[y].sz;
+		row_dword sz=rows[y].sz;
 		if(sz!=0&&x<sz-1)return sz-1;
 	}
 	return x;
@@ -960,8 +968,8 @@ static void setmembuf(size_t y,size_t x,bool*orig,size_t*yb,size_t*xb,size_t*ye,
 			}else{
 				if(y<rmax&&x>rows[y].sz)x=rows[y].sz;
 				if(yb[0]<rmax&&xb[0]==rows[yb[0]].sz){
-					size_t max=(size_t)getmaxx(w)-1;
-					if(rows[yb[0]].sz<xtext+max)xb[0]=xtext+max;
+					int max=getmaxx(w)-1;
+					if(rows[yb[0]].sz<(size_t)xtext+max)xb[0]=(size_t)xtext+max;
 				}
 			}
 			ye[0]=yb[0];yb[0]=y;
@@ -970,13 +978,13 @@ static void setmembuf(size_t y,size_t x,bool*orig,size_t*yb,size_t*xb,size_t*ye,
 		}
 		else if(y>yb[0]||xb[0]<=x){
 			if(v_l/*true*/)x=v_l_x(y,x,rmax,w);
-			else if(y<rmax&&x>=rows[y].sz)x=xtext+(size_t)getmaxx(w)-1;
+			else if(y<rmax&&x>=rows[y].sz)x=(size_t)xtext+getmaxx(w)-1;
 			ye[0]=y;xe[0]=x;
 		}
 		else{
 			if(yb[0]<rmax&&xb[0]==rows[yb[0]].sz){
 				size_t max=(size_t)getmaxx(w)-1;
-				if(rows[yb[0]].sz<xtext+max)xb[0]=xtext+max;
+				if(rows[yb[0]].sz<(size_t)xtext+max)xb[0]=(size_t)xtext+max;
 			}
 			ye[0]=yb[0];
 			xe[0]=xb[0];xb[0]=x;
@@ -989,7 +997,7 @@ static void setmembuf(size_t y,size_t x,bool*orig,size_t*yb,size_t*xb,size_t*ye,
 				x=v_l_x(y,x,rmax,w);}
 			else{
 				if(ye[0]<rmax&&xe[0]>rows[ye[0]].sz)xe[0]=rows[ye[0]].sz;
-				if(y<rmax&&x>=rows[y].sz)x=xtext+(size_t)getmaxx(w)-1;}
+				if(y<rmax&&x>=rows[y].sz)x=(size_t)xtext+getmaxx(w)-1;}
 			yb[0]=ye[0];ye[0]=y;
 			xb[0]=xe[0];xe[0]=x;
 			orig[0]=true;
@@ -998,13 +1006,13 @@ static void setmembuf(size_t y,size_t x,bool*orig,size_t*yb,size_t*xb,size_t*ye,
 			if(v_l/*true*/){if(y<=rmax)x=0;}
 			else if(y<rmax&&x>rows[y].sz)x=rows[y].sz;
 			if(ye[0]<rmax&&xe[0]>=rows[ye[0]].sz){
-				size_t max=(size_t)getmaxx(w)-1;
-				if(rows[ye[0]].sz<xtext+max)xe[0]=xtext+max;
+				int max=getmaxx(w)-1;
+				if(rows[ye[0]].sz<(size_t)xtext+max)xe[0]=(size_t)xtext+max;
 			}
 			yb[0]=y;xb[0]=x;
 		}
 		else if(xe[0]<x){
-			if(y<rmax&&x>=rows[y].sz)x=xtext+(size_t)getmaxx(w)-1;
+			if(y<rmax&&x>=rows[y].sz)x=(size_t)xtext+getmaxx(w)-1;
 			yb[0]=ye[0];
 			xb[0]=xe[0];xe[0]=x;
 			orig[0]=true;
@@ -1050,7 +1058,7 @@ static void printsel(WINDOW*w,size_t ybsel,size_t xbsel,size_t yesel,size_t xese
 	else{
 		rb=(int)(ybsel-ytext);
 		if(xbsel<=xtext)cb=0;
-		else if(xbsel<=xtext+c_to_xc(cright,rb))cb=xc_to_c(xbsel-xtext,rb);
+		else if(xbsel<=(size_t)xtext+c_to_xc(cright,rb))cb=xc_to_c(xbsel-xtext,rb);
 		else{rb++;cb=0;}
 	}
 	int re;int ce;
@@ -1060,7 +1068,7 @@ static void printsel(WINDOW*w,size_t ybsel,size_t xbsel,size_t yesel,size_t xese
 		re=rdown;ce=cright;}
 	else{
 		re=(int)(yesel-ytext);
-		if(xtext+c_to_xc(cright,re)<=xesel)ce=cright;
+		if((size_t)xtext+c_to_xc(cright,re)<=xesel)ce=cright;
 		else if(xtext<=xesel)ce=xc_to_c(xesel-xtext,re);
 		else{re--;ce=cright;}
 	}
@@ -1090,9 +1098,9 @@ static void refreshrowscond(WINDOW*w,size_t y,size_t x,size_t r,size_t n){
 	else refreshrowsbot(w,(int)r,n!=0?getmaxy(w):(int)r+1);
 }
 static void pasted(size_t r,size_t x,WINDOW*w){
-	size_t z1=ytext;size_t z2=xtext;size_t z3=r;
+	size_t z1=ytext;row_dword z2=xtext;size_t z3=r;
 	size_t rws=cutbuf_r-1;
-	r+=rws;size_t maxy=(size_t)getmaxy(w);
+	r+=rws;int maxy=getmaxy(w);
 	if(maxy<=r){
 		ytext+=r-maxy+1;
 		r=maxy-1;
@@ -1109,7 +1117,7 @@ static void pasted(size_t r,size_t x,WINDOW*w){
 			if(b==s)break;
 		}while(c<maxx);
 		if(c>maxx){s++;c-=tab_sz;}
-		xtext=(size_t)(s-d);
+		xtext=(s-d);
 	}
 	refreshrowscond(w,z1,z2,z3,rws);
 	wmove(w,(int)r,c);
@@ -1157,7 +1165,7 @@ bool row_alloc(row*rw,size_t l,size_t c,size_t r){
 }
 void row_set(row*rw,size_t l,size_t c,size_t r,const char*mid){
 	char*d=rw->data;
-	size_t j=l+c;size_t i=j+r;size_t k=rw->sz;
+	size_t j=l+c;size_t i=j+r;row_dword k=rw->sz;
 	rw->sz=i;
 	while(j<i){
 		i--;k--;d[i]=d[k];
@@ -1323,7 +1331,7 @@ void editing_rebase(){
 void deleting(size_t ybsel,size_t xbsel,size_t yesel,size_t xesel){
 	row*r1=&rows[ybsel];
 	if(ybsel==yesel){
-		size_t sz=r1->sz;
+		row_dword sz=r1->sz;
 		size_t dif=xesel-xbsel;
 		char*d=rows[ybsel].data;
 		for(size_t i=xesel;i<sz;i++){
@@ -1349,7 +1357,7 @@ static bool deletin(size_t ybsel,size_t xbsel,size_t yesel,size_t xesel,int*rw,i
 	if(deleting_init(ybsel,xbsel,yesel,xesel)==false){
 		if(undo_add_del(ybsel,xbsel,yesel,xesel)==false){
 			deleting(ybsel,xbsel,yesel,xesel);
-			size_t z1=ytext;size_t z2=xtext;
+			size_t z1=ytext;row_dword z2=xtext;
 			deleted(ybsel,xbsel,rw,cl,w);
 			refreshrowscond(w,z1,z2,ybsel-ytext,many);
 			return true;
@@ -1375,7 +1383,7 @@ static bool delet(size_t ybsel,size_t xbsel,size_t yesel,size_t xesel,int*rw,int
 	size_t yend=yesel;
 	size_t rend=rows_tot;
 	size_t wasy=ytext;
-	size_t wasx=xtext;
+	row_dword wasx=xtext;
 	bool b=deleti(ybsel,xbsel,yesel,xesel,rw,cl,w);
 	//unselect all
 	if(yend>=rend&&wasy==ytext&&wasx==xtext){
@@ -1477,7 +1485,7 @@ bool paste(size_t y,size_t x,size_t*xe,char*buf,size_t buf_sz,size_t buf_r,bool 
 static void past(WINDOW*w){
 	if(cutbuf_sz!=0){
 		int r=getcury(w);
-		size_t y;size_t x;
+		size_t y;row_dword x;
 		fixed_yx(&y,&x,r,getcurx(w));
 		size_t xe;
 		if(paste(y,x,&xe,cutbuf,cutbuf_sz,cutbuf_r,true)/*true*/){
@@ -1537,7 +1545,7 @@ static void rowfixdel(WINDOW*w,int r,int c,row*rw,size_t i){
 	char*d=rw->data;
 	int*t=&tabs[tabs_rsz*r];
 	int a=t[0]+1;
-	size_t mx=rw->sz;
+	row_dword mx=rw->sz;
 	while(i<mx){
 		char ch=d[i];
 		if(ch!='\t'){
@@ -1564,7 +1572,7 @@ static bool del_key(size_t y,size_t x,int r,int*cc,WINDOW*w,bool reverse){
 		}
 		refreshpage(w);*cc=c;
 	}
-	size_t sz=r1->sz;
+	row_dword sz=r1->sz;
 	if(x==sz){
 		size_t yy=y+1;
 		if(yy==rows_tot){
@@ -1608,8 +1616,8 @@ static bool bcsp(size_t y,size_t x,int*rw,int*cl,WINDOW*w){
 		size_t yy=y-1;
 		row*r0=&rows[yy];
 		row*r1=&rows[y];
-		size_t sz0=r0->sz;
-		size_t xx=xtext;c=end(w,yy);
+		row_dword sz0=r0->sz;
+		row_dword xx=xtext;c=end(w,yy);
 		if(row_alloc(r0,sz0,r1->sz,0)==false){
 			if(undo_add_del(yy,sz0,y,0)==false){
 				row_set(r0,sz0,r1->sz,0,r1->data);
@@ -1634,7 +1642,7 @@ static bool bcsp(size_t y,size_t x,int*rw,int*cl,WINDOW*w){
 	}
 	if(undo_bcsp(y,x-1,y,x)==false){
 		row*r=&rows[y];
-		char*data=r->data;size_t sz=r->sz;
+		char*data=r->data;row_dword sz=r->sz;
 		c-=data[x-1]=='\t'?tab_sz:1;
 		for(size_t i=x;i<sz;i++){
 			data[i-1]=data[i];
@@ -1716,13 +1724,13 @@ static bool enter(size_t y,size_t x,int*r,int*c,WINDOW*w){
 	return true;
 }
 #define multidel(fn,r,x,y,cl,rw,w)\
-	char*d=r->data;size_t sz=r->sz;\
+	char*d=r->data;row_dword sz=r->sz;\
 	if(right_short(fn,x,d,sz)){if(delete_key(y,x,rw,&cl,w)/*true*/)return;}\
 	else if(deletin(y,x,y,right_long(x,d,sz,fn)+1,&rw,&cl,w,false)==false)return;
 static void type(int cr,WINDOW*w){
 	int cl=getcurx(w);
 	int rwnr=getcury(w);
-	size_t x=xtext+c_to_xc(cl,rwnr);
+	size_t x=(size_t)xtext+c_to_xc(cl,rwnr);
 	size_t y=ytext+(size_t)rwnr;
 	size_t xx=x;fixmembuf(&y,&x);
 	row*r=&rows[y];
@@ -1838,7 +1846,7 @@ static void indent(bool b,size_t ybsel,size_t*xbsel,size_t yesel,size_t*xesel,WI
 		if(something/*true*/){
 			if(undo_add_ind_del(ybsel,ye)/*true*/)return;
 			for(size_t i=ybsel;i<ye;i++){
-				row*r=&rows[i];size_t sz=r->sz;
+				row*r=&rows[i];row_dword sz=r->sz;
 				if(sz!=0){
 					char*d=r->data;
 					for(size_t j=1;j<sz;j++)d[j-1]=d[j];
@@ -1897,11 +1905,11 @@ static bool visual_mode(WINDOW*w,bool v_l){
 	if(v_l/*true*/){
 		if(ybsel<rmax){
 			xbsel=0;
-			xesel=xtext+(size_t)getmaxx(w)-1;
+			xesel=(size_t)xtext+getmaxx(w)-1;
 			if(xesel<rows[yesel].sz)xesel=rows[yesel].sz;
 		}
 		else{
-			xesel=xtext+(size_t)cl;
+			xesel=(size_t)xtext+cl;
 			if(ybsel==rmax){
 				xbsel=0;
 				size_t sz=rows[yesel].sz;
@@ -1909,18 +1917,18 @@ static bool visual_mode(WINDOW*w,bool v_l){
 			}else xbsel=xesel;
 		}
 	}else{
-		xbsel=xtext+c_to_xc(cl,rw);xesel=xbsel;
+		xbsel=(size_t)xtext+c_to_xc(cl,rw);xesel=xbsel;
 		if(yesel<rmax&&xesel>=rows[yesel].sz){
 			xbsel=rows[ybsel].sz;
-			xesel=xtext+(size_t)getmaxx(w)-1;
+			xesel=(size_t)xtext+getmaxx(w)-1;
 		}
 	}
 	printsel(w,ybsel,xbsel,yesel,xesel,true);
 	wmove(w,rw,cl);
-	char z;
+	movement_char z;
 	do{
 		int b=wgetch(w);
-		size_t ycare=ytext;size_t xcare=xtext;
+		size_t ycare=ytext;row_dword xcare=xtext;
 		z=movment(b,w);
 		if(z==1)return true;
 		else{
@@ -1962,7 +1970,7 @@ static bool visual_mode(WINDOW*w,bool v_l){
 				}
 			}else{
 				position(getcury(w),getcurx(w));
-				size_t y=ytext+(size_t)r;size_t x=xtext+c_to_xc(c,r);
+				size_t y=ytext+(size_t)r;size_t x=(size_t)xtext+c_to_xc(c,r);
 				setmembuf(y,x,&orig,&ybsel,&xbsel,&yesel,&xesel,w,v_l);
 				printsel(w,ybsel,xbsel,yesel,xesel,ytext!=ycare||xtext!=xcare);
 			}
@@ -1974,7 +1982,7 @@ static bool visual_mode(WINDOW*w,bool v_l){
 #define quick_pack(nr,w) comnrp_define args[2];((comnrp_define)args)[0]=nr;args[1]=(comnrp_define)w;
 static bool find_mode(int nr,WINDOW*w){
 	quick_pack((long)nr,w)
-	char r=command((comnrp_define)args);
+	command_char r=command((comnrp_define)args);
 	if(r==-2)return true;
 	else if(r!=0){
 		wmove(w,getcury(w),getcurx(w));//at 0 (false not err) will remain on the bar
@@ -1982,7 +1990,7 @@ static bool find_mode(int nr,WINDOW*w){
 	return false;
 }
 static bool goto_mode(char*args,WINDOW*w){
-	char r=command(args);
+	command_char r=command(args);
 	if(r==1){
 		centering_simple(w)
 	}
@@ -1992,7 +2000,7 @@ static bool goto_mode(char*args,WINDOW*w){
 }
 static bool savetofile(WINDOW*w,bool has_file){
 	char*d=textfile;
-	char ret;
+	command_char ret;
 	if(has_file){
 		ret=save();
 	}else{char aa=com_nr_save;ret=command(&aa);}
@@ -2071,7 +2079,7 @@ void pref_modify(char**pref_orig,char**pref_buf,bool sizedonly,char*newinput,bar
 static bool pref_change(WINDOW*w,char**pref_orig,char**pref_buf,bool sizedonly){
 	extdata d={pref_orig,pref_buf,sizedonly};
 	quick_pack(com_nr_ext,&d)
-	char nr=command((char*)args);
+	command_char nr=command((char*)args);
 	if(nr>-2){
 		wmove(w,getcury(w),getcurx(w));//ok/quit/err
 		return false;
@@ -2105,7 +2113,7 @@ static bool loopin(WINDOW*w){
 		}
 		wtimeout(w,-1);
 
-		char a=movment(c,w);
+		movement_char a=movment(c,w);
 		if(a==1)return true;
 		if(a!=0){
 			if(visual_bool/*true*/){
@@ -2164,7 +2172,7 @@ static bool loopin(WINDOW*w){
 			}else if(strcmp(s,"^Q")==0){
 				if(mod_flag==false){
 					bar_clear();//errors
-					char q=question("And save");
+					command_char q=question("And save");
 					if(q==1){
 						q=save();
 						if(q==0)err_set(w);
@@ -2231,8 +2239,8 @@ static bool loopin(WINDOW*w){
 	}
 }
 //-1 to normalize, 0 errors, 1 ok
-static char normalize(char**c,size_t*size,size_t*r){
-	char ok=0;
+static normalize_char normalize(char**c,size_t*size,size_t*r){
+	normalize_char ok=0;
 	char*text_w=c[0];
 	size_t sz=size[0];
 	char*norm=(char*)malloc(2*sz+1); //+1, there are many curses addstr
@@ -2267,7 +2275,7 @@ static char normalize(char**c,size_t*size,size_t*r){
 	return ok;
 }
 //same as normalize
-static char normalize_split(char**c,size_t*s,size_t*r,char*argfile){
+static normalize_char normalize_split(char**c,size_t*s,size_t*r,char*argfile){
 	if(argfile==nullptr||split_grab(c,s,argfile)/*true*/){//if at normalize will work also in open cutbufs but will error at explodes there(save cutbuf with explodes)
 		return normalize(c,s,r);
 	}
@@ -2279,13 +2287,13 @@ static void rows_init(size_t size){
 	z->data=text_init_b;size_t sz;
 	char*a=text_init_b;
 	for(size_t i=1;i<rows_tot;i++){
-		sz=(size_t)(memtrm(a)-a);
+		sz=memtrm(a)-a;
 		z->sz=sz;z->spc=0;
 		a+=sz+ln_term_sz;
 		z=&rows[i];
 		z->data=a;
 	}
-	z->sz=(size_t)(b-a);z->spc=0;
+	z->sz=b-a;z->spc=0;
 	rows_spc=rows_tot;
 }
 static bool grab_file(char*f,size_t*text_sz){
@@ -2354,7 +2362,7 @@ static bool valid_ln_term(int argc,char**argv,bool*not_forced){
 	return false;
 }
 //same as normalize
-static char startfile(char*argfile,int argc,char**argv,size_t*text_sz,bool no_file,bool no_input,bool not_forced){
+static normalize_char startfile(char*argfile,int argc,char**argv,size_t*text_sz,bool no_file,bool no_input,bool not_forced){
 	if(no_file==false)if(grab_file(argfile,text_sz)/*true*/)return 0;
 	if(no_input==false){
 		if(no_file/*true*/){
@@ -2697,7 +2705,7 @@ static void action_go(int argc,char**argv,char*cutbuf_file,char*argfile){
 	fds[0].fd = known_stdin;
 	fds[0].events = POLLIN;
 	bool no_input=poll(fds, 1, 0)<1;
-	char ok=0;
+	normalize_char ok=0;
 	if(no_file/*true*/&&no_input/*true*/){
 		text_init_b=(char*)malloc(1);
 		if(text_init_b!=nullptr){

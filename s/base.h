@@ -1,7 +1,7 @@
 
 //main
 //bar
-size_t c_to_xc(int,int);
+int c_to_xc(int,int);
 void cpymembuf(size_t,size_t,size_t,size_t,char*);
 void deleting(size_t,size_t,size_t,size_t);
 bool deleting_init(size_t,size_t,size_t,size_t);
@@ -23,22 +23,22 @@ void vis(char,WINDOW*);
 //tw
 int xc_to_c(size_t,int);
 //tit
-void fixed_x(size_t,size_t*,int,int);
+void fixed_x(size_t,row_dword*,int,int);
 //bar,tit
 #define refreshpage(w) refreshrows(w,0)
 //bar,tw,tit
 void visual(char);
-void fixed_yx(size_t*,size_t*,int,int);
+void fixed_yx(size_t*,row_dword*,int,int);
 //tw,tit
-char movment(int,WINDOW*);
+command_char movment(int,WINDOW*);
 
 //bar
 //main
 void bar_init(void);
-char save(void);
-char saving_base(char*);
-char question(const char*);
-char command(char*);
+command_char save(void);
+command_char saving_base(char*);
+command_char question(const char*);
+command_char command(char*);
 #define centering2(w,prw,pxc,right) position(0,0);centering3(w,prw,pxc,right);
 #define centering(w,prw,pxc) centering2(w,prw,pxc,false)
 #define centering_simple(w) centering(w,nullptr,nullptr)
@@ -67,9 +67,9 @@ void aftercall_draw(WINDOW*);
 size_t init_aftercall();
 //tw
 void position_core(size_t,size_t);
-void centering3(WINDOW*,size_t*,size_t*,bool);
+void centering3(WINDOW*,size_t*,row_dword*,bool);
 //tit
-void bar_char(char,WINDOW*);
+bool bar_char(char,WINDOW*,bool);
 //main,tit
 bool bar_clear(void);
 //tw,tit
@@ -106,7 +106,7 @@ extern bool insensitive;
 extern char*ocode_extension;
 //bar,tw,tit
 extern size_t ytext;
-extern size_t xtext;
+extern row_dword xtext;
 //tw,tit
 extern bool ocompiler_flag;
 extern size_t aftercall;

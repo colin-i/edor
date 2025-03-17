@@ -17,10 +17,14 @@ enum{false=0!=0,true=1==1};
 #include "null.h"
 #endif
 
+#define bar_byte unsigned char
+#define bar_byte_plus short
+#define row_dword unsigned int
+
 typedef struct{
 	char*data;
-	unsigned int spc;//at row_alloc(type,undo,...),pasting,enter, must be +1 for curses addstr and at split where right part is the file name
-	unsigned int sz;
+	row_dword spc;//at row_alloc(type,undo,...),pasting,enter, must be +1 for curses addstr and at split where right part is the file name
+	row_dword sz;//at memtrm to work more to avoid 64 bit rows?
 }row;
 //typedef struct {}rowwrap;
 
@@ -53,6 +57,11 @@ typedef struct{
 #define max_path_0 max_path+1
 
 #define command_return_ok 1
+#define command_processed -1 //(char)-1 but there is at least a r> comparation
+#define command_char signed char
+
+#define movement_char signed char
+#define normalize_char signed char
 
 #define comnrp_define char*
 
@@ -68,6 +77,3 @@ typedef struct{
 #define swrite_bad true
 
 #define default_extension (char*)"oc"
-
-#define bar_byte unsigned char
-#define bar_byte_plus short

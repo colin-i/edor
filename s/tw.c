@@ -24,7 +24,7 @@
 
 typedef struct{
 	size_t ytext;
-	size_t xtext;
+	row_dword xtext;
 }rowwrap;//is used as an array allocated, to combine need to add this at row, memory waste
 
 row*rowswrap;
@@ -57,7 +57,7 @@ bool text_wrap(WINDOW*w){
 		row*r=&rows[i];
 		if(r->sz==0)n++;
 		else{
-			unsigned int sz=r->sz;
+			row_dword sz=r->sz;
 
 			//add tabs
 			char*s=r->data;
@@ -79,12 +79,12 @@ bool text_wrap(WINDOW*w){
 		rowwrap*rowswrap_add=(rowwrap*)(&rowswrap[n]);
 
 		//non-wrapped x,y
-		size_t realy;size_t realx;
+		size_t realy;row_dword realx;
 		fixed_yx(&realy,&realx,getcury(w),getcurx(w));
 		//and to stay in wrapped view
 		if(realx==rows[realy].sz&&realx!=0)realx--;
 
-		size_t y,x;
+		size_t y;row_dword x;
 		size_t j=0;
 		for(size_t i=0;i<rows_tot;i++){
 			if(i==realy){
@@ -144,7 +144,7 @@ bool text_wrap(WINDOW*w){
 		wmove(w,r,xc_to_c(x,r));
 
 		//loop
-		char z;
+		movement_char z;
 		do{
 			int b=wgetch(w);
 			z=movment(b,w);

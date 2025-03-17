@@ -49,17 +49,17 @@ char*split_extension_new=nullptr;
 
 //char*fulldelim;
 //unsigned short fulldelim_size;
-unsigned char sdelimiter_size;
-unsigned char esdelimiter_size;
+static unsigned char sdelimiter_size;
+static unsigned char esdelimiter_size;
 
-char*split_out_alloc1;
-char*split_out_alloc2;
-char*split_out_path1;
-char*split_out_path2;
-char*split_out_path3;
-char*split_out_path4;
-unsigned char split_out_size1;
-size_t split_out_size2;
+static char*split_out_alloc1;
+static char*split_out_alloc2;
+static char*split_out_path1;
+static char*split_out_path2;
+static char*split_out_path3;
+static char*split_out_path4;
+static unsigned char split_out_size1;
+static size_t split_out_size2;
 
 static int split_out_file;
 

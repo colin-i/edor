@@ -27,10 +27,11 @@
 
 #include "base.h"
 
-static void titcolor(char b,char*color,WINDOW*w){
-	bar_char(b,w);
+static bool titcolor(char b,char*color,WINDOW*w,bool singlechar){
+	singlechar=bar_char(b,w,singlechar);
 	if(*color==color_0)*color=color_a;else *color=color_0;
 	attrset(COLOR_PAIR(*color));
+	return singlechar;
 }
 
 bool titles(WINDOW*w){
@@ -76,7 +77,7 @@ bool titles(WINDOW*w){
 			}
 		}
 
-		size_t orig_ytext;size_t orig_xtext;
+		size_t orig_ytext;row_dword orig_xtext;
 		fixed_yx(&orig_ytext,&orig_xtext,getcury(w),getcurx(w));
 
 		rows=rowswrap;rows_tot=n;
@@ -90,12 +91,12 @@ bool titles(WINDOW*w){
 
 		//loop
 		char color=color_0;
-		char z;
+		movement_char z;bool singlechar=true;
 		do{
 			int b=wgetch(w);
 			z=movment(b,w);
 			if(z==1){extra_unlock(orig_ytext,orig_xtext,w);return true;}
-			else if(z==-1)continue;
+			else if(z==command_processed)continue;
 			int r=getcury(w);
 			size_t y=ytext+r;
 			if(b==Char_Return){
@@ -104,12 +105,14 @@ bool titles(WINDOW*w){
 				}
 				break;
 			}
+			if(strcmp(keyname(b),"^Q")==0)break;
+
 			//find next row start same as [0,x)+b and wmove there
-			titcolor(b,&color,w);
+			singlechar=titcolor(b,&color,w,singlechar);
 			if(y<rows_tot){
 				row*rw=&rows[y];
 				char*data=rw->data;
-				size_t sz;
+				row_dword sz;
 				int c=getcurx(w);
 				fixed_x(y,&sz,r,c);
 				y++;
@@ -130,7 +133,7 @@ bool titles(WINDOW*w){
 		}while(true);
 
 		if(color!=color_0)attrset(color_0);//reset back
-		bar_char(' ',w);//and clear, can set new_v or err for later clear but is extra
+		bar_char(' ',w,singlechar);//and clear, can set new_v or err for later clear but is extra
 		visual(' ');
 		extra_unlock(orig_ytext,orig_xtext,w);
 	}
