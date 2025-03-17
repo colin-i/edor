@@ -10,7 +10,7 @@ size_t strlen(const char*);
 #endif
 #endif
 
-#if defined(is_main_c)||defined(is_bar_c)
+#if defined(is_main_c)||defined(is_bar_c)||defined(is_tit_c)
 #ifdef __cplusplus
 extern "C" {
 #endif

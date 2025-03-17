@@ -23,7 +23,6 @@ int waddch(WINDOW*,const chtype);
 int mvaddch(int,int,const chtype);
 int mvwaddch(WINDOW*,int,int,const chtype);
 int addstr(const char*);
-const char*keyname(int);
 int wnoutrefresh(WINDOW*);
 int wattrset(WINDOW*,int);
 WINDOW*newwin(int,int,int,int);
@@ -32,6 +31,7 @@ int getmaxx(const WINDOW*);
 //main/bar/tit
 int attrset(int);
 int COLOR_PAIR(int);
+const char*keyname(int);
 //main/bar/tw/tit
 int getcurx(const WINDOW*);
 int getcury(const WINDOW*);

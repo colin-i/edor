@@ -44,6 +44,6 @@ else
 	grep --color "${a}" mk
 fi
 
-make -f mk
+./mh
 
 if [ -n "${2}" ]; then rm mk; fi
