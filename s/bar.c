@@ -83,9 +83,9 @@ static int fprevnumber;
 
 typedef struct{
 size_t yb;
-size_t xb;
+row_dword xb;
 size_t ye;
-size_t xe;
+row_dword xe;
 char*data;}eundo;
 static eundo*undos=nullptr;
 static size_t undos_tot=0;
