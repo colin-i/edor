@@ -1427,14 +1427,14 @@ static size_t pasting(row*d,size_t y,row_dword x,row_dword*xe,char*buf,size_t bu
 	else{
 		char*a=memtrm(buf)+ln_term_sz;
 		sz1r=0;
-		size_t sz=(size_t)(a-buf);
+		size_t sz=a-buf;
 		szc=sz-ln_term_sz;
 		size_t n=max-1;
 		//inter
 		for(size_t i=0;i<n;i++){
 			char*b=memtrm(a)+ln_term_sz;
 			size_t ln=b-a;
-			size_t len=ln-ln_term_sz;
+			row_dword len=ln-ln_term_sz;//this will not stop at something big but will trunc
 			row_dword spc_sz=row_pad_sz(len);
 			void*v=malloc(spc_sz);
 			if(v==nullptr)return i+1;
