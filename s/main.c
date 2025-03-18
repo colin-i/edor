@@ -183,6 +183,11 @@ static void __attribute__((noreturn)) signalHandler(int sig,siginfo_t *info,void
 #define ignored 0
 #define no_clue (size_t)-1
 
+#define normalize_yes -1
+#define normalize_err 0
+#define normalize_ok 1
+#define normalize_char signed char
+
 char ln_term[3]="\n";
 size_t ln_term_sz=1;
 char*textfile=nullptr;
@@ -812,7 +817,7 @@ movement_char movment(int c,WINDOW*w){
 	}else if(c==KEY_SR)vu1move(w,getcury(w));
 	else if(c==KEY_SF)vd1move(w,getcury(w));
 	else if(c==KEY_RESIZE){
-		return 1;
+		return movement_resize;
 	}
 	else{
 		const char*s=keyname(c);
@@ -854,9 +859,9 @@ movement_char movment(int c,WINDOW*w){
 		else if(strcmp(s,"kDN6")==0)vdNmove(w,getcury(w),ctrl_jump);
 		else if(strcmp(s,"kUP4")==0)vuNmove(w,getcury(w),alt_jump);
 		else if(strcmp(s,"kDN4")==0)vdNmove(w,getcury(w),alt_jump);
-		else return 0;
+		else return movement_diffkey;
 	}
-	return -1;
+	return movement_processed;
 }
 size_t sizemembuf(size_t ybsel,row_dword xbsel,size_t yesel,row_dword xesel){
 	if(ybsel==yesel)return xesel-xbsel;
@@ -1284,13 +1289,13 @@ static void hardtime_resolve_returner(WINDOW*w){//argument for errors
 			//set restore file path
 			if(restorefile_path(textfile)/*true*/){
 				//save at path
-				if(saving_base(restorefile_buf)==command_return_ok){
+				if(saving_base(restorefile_buf)==command_ok){
 					restorefile=restorefile_buf;
 					restore_visual();
 				}else err_set(w);
 			}
 		}else{
-			if(saving_base(restorefile)==command_return_ok)restore_visual();
+			if(saving_base(restorefile)==command_ok)restore_visual();
 			else err_set(w);
 		}
 	}
@@ -1932,10 +1937,10 @@ static bool visual_mode(WINDOW*w,bool v_l){
 		int b=wgetch(w);
 		size_t ycare=ytext;row_dword xcare=xtext;
 		z=movment(b,w);
-		if(z==1)return true;
+		if(z==movement_resize)return true;
 		else{
 			int r=getcury(w);int c=getcurx(w);
-			if(z==0){
+			if(z==movement_diffkey){
 				if(b=='I'){z=-1;indent(true,ybsel,&xbsel,yesel,&xesel,w);}
 				else if(b=='U'){
 					z=-1;
@@ -1970,7 +1975,7 @@ static bool visual_mode(WINDOW*w,bool v_l){
 					}
 					visual(v);
 				}
-			}else{
+			}else{//movement_processed
 				position(getcury(w),getcurx(w));
 				size_t y=ytext+(size_t)r;size_t x=(size_t)xtext+c_to_xc(c,r);
 				setmembuf(y,x,&orig,&ybsel,&xbsel,&yesel,&xesel,w,v_l);
@@ -1978,25 +1983,26 @@ static bool visual_mode(WINDOW*w,bool v_l){
 			}
 			wmove(w,r,c);
 		}
-	}while(z!=0);
+	}while(z!=movement_diffkey);
 	return false;
 }
 #define quick_pack(nr,w) comnrp_define args[2];((comnrp_define)args)[0]=nr;args[1]=(comnrp_define)w;
 static bool find_mode(int nr,WINDOW*w){
 	quick_pack((long)nr,w)
 	command_char r=command((comnrp_define)args);
-	if(r==-2)return true;
-	else if(r!=0){
-		wmove(w,getcury(w),getcurx(w));//at 0 (false not err) will remain on the bar
-	}
+	if(r==command_resize)return true;
+	//if(r==command_no){//only at quit from the bar, but at command_ok also to update stdscr, and at command_false visib<2 at finds
+	//	only at first command_false visib<2 is extra, to find that will be extra in extra
+	wmove(w,getcury(w),getcurx(w));
+	//}
 	return false;
 }
 static bool goto_mode(char*args,WINDOW*w){
 	command_char r=command(args);
-	if(r==1){
+	if(r==command_ok){
 		centering_simple(w)
 	}
-	else if(r>-2)wmove(w,getcury(w),getcurx(w));//-1 quit and 0 err
+	else if(r>command_resize)wmove(w,getcury(w),getcurx(w));//-1 quit and 0 nothing
 	return true;//-2
 	//return false;
 }
@@ -2006,8 +2012,8 @@ static bool savetofile(WINDOW*w,bool has_file){
 	if(has_file){
 		ret=save();
 	}else{char aa=com_nr_save;ret=command(&aa);}
-	if(ret!=0){
-		if(ret==1){
+	if(ret!=command_false){
+		if(ret==command_ok){
 			if(d!=textfile){
 				//text_file=textfile;//now is a title
 				topspace_clear();
@@ -2024,7 +2030,7 @@ static bool savetofile(WINDOW*w,bool has_file){
 			mod_set_on();
 			undo_save();
 		}
-		else if(ret==-2)return true;
+		else if(ret==command_resize)return true;
 	}else err_set(w);
 	wmove(w,getcury(w),getcurx(w));
 	return false;
@@ -2082,7 +2088,7 @@ static bool pref_change(WINDOW*w,char**pref_orig,char**pref_buf,bool sizedonly){
 	extdata d={pref_orig,pref_buf,sizedonly};
 	quick_pack(com_nr_ext,&d)
 	command_char nr=command((char*)args);
-	if(nr>-2){
+	if(nr>command_resize){
 		wmove(w,getcury(w),getcurx(w));//ok/quit/err
 		return false;
 	}
@@ -2116,9 +2122,9 @@ static bool loopin(WINDOW*w){
 		wtimeout(w,-1);
 
 		movement_char a=movment(c,w);
-		if(a==1)return true;
-		if(a!=0){
-			if(visual_bool/*true*/){
+		if(a==movement_resize)return true;
+		if(a!=movement_diffkey){
+			if(visual_bool/*true*/){//here only when C at visual
 				visual_bool=false;
 				visual(' ');
 			}else if(bar_clear()/*true*/)wnoutrefresh(stdscr);
@@ -2175,12 +2181,12 @@ static bool loopin(WINDOW*w){
 				if(mod_flag==false){
 					bar_clear();//errors
 					command_char q=question("And save");
-					if(q==1){
+					if(q==command_ok){
 						q=save();
-						if(q==0)err_set(w);
+						if(q==command_false)err_set(w);
 					}
-					if(q==-2)return true;
-					else if(q==0){
+					if(q==command_resize)return true;
+					else if(q==command_false){
 						wnoutrefresh(stdscr);
 						wmove(w,getcury(w),getcurx(w));
 						continue;
@@ -2242,31 +2248,31 @@ static bool loopin(WINDOW*w){
 }
 //-1 to normalize, 0 errors, 1 ok
 static normalize_char normalize(char**c,size_t*size,size_t*r){
-	normalize_char ok=0;
+	normalize_char ok=normalize_err;
 	char*text_w=c[0];
 	size_t sz=size[0];
 	char*norm=(char*)malloc(2*sz+1); //+1, there are many curses addstr
 	if(norm!=nullptr){
-		size_t j=0;ok=1;
+		size_t j=0;ok=normalize_ok;
 		for(size_t i=0;i<sz;i++){
 			char a=text_w[i];
 			if(a=='\n'){
 				r[0]++;
 				if(ln_term_sz==2){
-					norm[j]='\r';j++;ok=-1;
+					norm[j]='\r';j++;ok=normalize_yes;
 				}
-				else if(ln_term[0]=='\r'){a='\r';ok=-1;}
+				else if(ln_term[0]=='\r'){a='\r';ok=normalize_yes;}
 			}else if(a=='\r'){
 				r[0]++;
 				if(ln_term_sz==2){
 					if(((i+1)<sz)&&text_w[i+1]=='\n'){
 						norm[j]=a;j++;i++;
 						a='\n';}
-					else{norm[j]=a;j++;a='\n';ok=-1;}
+					else{norm[j]=a;j++;a='\n';ok=normalize_yes;}
 				}
 				else if(ln_term[0]=='\n'){
 					if(((i+1)<sz)&&text_w[i+1]=='\n')i++;
-					a='\n';ok=-1;
+					a='\n';ok=normalize_yes;
 				}
 			}
 			norm[j]=a;j++;
@@ -2281,7 +2287,7 @@ static normalize_char normalize_split(char**c,size_t*s,size_t*r,char*argfile){
 	if(argfile==nullptr||split_grab(c,s,argfile)/*true*/){//if at normalize will work also in open cutbufs but will error at explodes there(save cutbuf with explodes)
 		return normalize(c,s,r);
 	}
-	return 0;
+	return normalize_err;
 }
 static void rows_init(size_t size){
 	char*b=&text_init_b[size];
@@ -2365,15 +2371,15 @@ static bool valid_ln_term(int argc,char**argv,bool*not_forced){
 }
 //same as normalize
 static normalize_char startfile(char*argfile,int argc,char**argv,size_t*text_sz,bool no_file,bool no_input,bool not_forced){
-	if(no_file==false)if(grab_file(argfile,text_sz)/*true*/)return 0;
+	if(no_file==false)if(grab_file(argfile,text_sz)/*true*/)return normalize_err;
 	if(no_input==false){
 		if(no_file/*true*/){
 			text_init_b=(char*)malloc(1);//1 is for some systems that at malloc(0) are returning null
-			if(text_init_b==nullptr)return 0;
+			if(text_init_b==nullptr)return normalize_err;
 			*text_sz=0;
 		}
 		//else will be appended to existing file
-		if(grab_input(text_sz)/*true*/)return 0;
+		if(grab_input(text_sz)/*true*/)return normalize_err;
 	}
 
 	if(not_forced/*true*/){
@@ -2395,8 +2401,8 @@ static normalize_char startfile(char*argfile,int argc,char**argv,size_t*text_sz,
 		}
 		return normalize_split(&text_init_b,text_sz,&rows_tot,argfile);
 	}
-	if(normalize_split(&text_init_b,text_sz,&rows_tot,argfile)!=0)return 1;
-	return 0;
+	if(normalize_split(&text_init_b,text_sz,&rows_tot,argfile)!=normalize_err)return normalize_ok;
+	return normalize_err;
 }
 static bool help_init(char*f,size_t szf){
 	size_t sz1=sizeof(hel1)-1;
@@ -2427,7 +2433,7 @@ static void getfilebuf(char*cutbuf_file){//,size_t off){
 			if(v!=nullptr){
 				lseek(f,0,SEEK_SET);
 				cutbuf_sz=(size_t)read(f,v,sz);
-				if(normalize(&v,&cutbuf_sz,&cutbuf_r)!=0){
+				if(normalize(&v,&cutbuf_sz,&cutbuf_r)!=normalize_err){
 					cutbuf=v;cutbuf_spc=cutbuf_sz;
 				}else free(v);
 			}
@@ -2723,8 +2729,8 @@ static void action_go(int argc,char**argv,char*cutbuf_file,char*argfile){
 		}
 	}else{
 		ok=startfile(argfile,argc,argv,&text_sz,no_file,no_input,not_forced);
-		if(ok!=0){
-			if(ok<1){
+		if(ok!=normalize_err){
+			if(ok==normalize_yes){
 				//entering \r in printf at %s will return to the start
 				const char*a;const char*b;
 				if(ln_term[0]=='\r'){
@@ -2732,20 +2738,20 @@ static void action_go(int argc,char**argv,char*cutbuf_file,char*argfile){
 					if(ln_term[1]=='\n')b="\\n";else b="";
 				}else{a="n";b="";}
 				printf("Normalize line endings to \\%s%s? Y/n\n",a,b);
-				if(get_answer('n')/*true*/)ok=0;
+				if(get_answer('n')/*true*/)ok=normalize_err;
 			}
-			if(ok!=0){
+			if(ok!=normalize_err){
 				rows=(row*)malloc(rows_tot*sizeof(row));
 				if(rows!=nullptr){
 					rows_init(text_sz);
 					textfile=argfile;
 					text_init_e=text_init_b+text_sz+1;
 				}
-				else ok=0;
+				else ok=normalize_err;
 			}
 		}
 	}
-	if(ok!=0){
+	if(ok!=normalize_err){
 		WINDOW*w1=initscr();
 		if(w1!=nullptr){
 			if(cutbuf_file[0]!='\0')getfilebuf(cutbuf_file);//this is here,not after cutbuf_file path is set,but after line termination is final

@@ -95,8 +95,8 @@ bool titles(WINDOW*w){
 		do{
 			int b=wgetch(w);
 			z=movment(b,w);
-			if(z==1){extra_unlock(orig_ytext,orig_xtext,w);return true;}
-			else if(z==command_processed)continue;
+			if(z==movement_resize){extra_unlock(orig_ytext,orig_xtext,w);return true;}
+			else if(z==movement_processed)continue;
 			int r=getcury(w);
 			size_t y=ytext+r;
 			if(b==Char_Return){

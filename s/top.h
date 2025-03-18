@@ -56,12 +56,21 @@ typedef struct{
 #define max_path 0xff
 #define max_path_0 max_path+1
 
-#define command_return_ok 1
-#define command_processed -1 //(char)-1 but there is at least a r> comparation
+#define command_resize -2
+#define command_no -1 //(char)-1 but there is at least a r> comparation
+#define command_false 0
+#define command_ok 1
 #define command_char signed char
 
+#define movement_processed -1
+#define movement_diffkey 0
+#define movement_resize 1
 #define movement_char signed char
-#define normalize_char signed char
+
+#define split_no -1
+#define split_err 0
+#define split_yes 1
+#define split_char signed char
 
 #define comnrp_define char*
 

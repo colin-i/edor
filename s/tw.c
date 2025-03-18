@@ -148,11 +148,11 @@ bool text_wrap(WINDOW*w){
 		do{
 			int b=wgetch(w);
 			z=movment(b,w);
-			if(z==1){extra_unlock(rowswrap_add[y].ytext,rowswrap_add[y].xtext+x,w);return true;}
+			if(z==movement_resize){extra_unlock(rowswrap_add[y].ytext,rowswrap_add[y].xtext+x,w);return true;}
 
 			fixed_yx(&y,&x,getcury(w),getcurx(w));
 			position_core(rowswrap_add[y].ytext,rowswrap_add[y].xtext+x);
-		}while(z!=0);
+		}while(z!=movement_diffkey);
 
 		visual(' ');
 		extra_unlock(rowswrap_add[y].ytext,rowswrap_add[y].xtext+x,w);

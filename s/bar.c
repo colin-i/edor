@@ -147,22 +147,22 @@ static command_char wrt_simple_split(int f){
 	if(wrt_loop_split(f,n,&off,&no_errors)/*true*/){
 		if(swrite(f,rows[n].data+off,rows[n].sz-off)==swrite_ok){
 			if(no_errors/*true*/){
-				return command_return_ok;
+				return command_ok;
 			}
 		}
 	}
-	return 0;
+	return command_false;
 }
 //same
 static command_char wrt_simple(int f){
 	size_t n=rows_tot-1;
 	for(size_t i=0;i<n;i++){
 		row*r=&rows[i];
-		if(write(f,r->data,r->sz)!=r->sz)return 0;
-		if(write(f,ln_term,ln_term_sz)!=ln_term_sz)return 0;
+		if(write(f,r->data,r->sz)!=r->sz)return command_false;
+		if(write(f,ln_term,ln_term_sz)!=ln_term_sz)return command_false;
 	}
-	if(write(f,rows[n].data,rows[n].sz)==rows[n].sz)return command_return_ok;
-	return 0;
+	if(write(f,rows[n].data,rows[n].sz)==rows[n].sz)return command_ok;
+	return command_false;
 }
 //same
 static command_char wrt_split(char*filename){
@@ -179,7 +179,7 @@ static command_char wrt_split(char*filename){
 		return a;
 	}
 	print_error((char*)"Error at split init");
-	return 0;
+	return command_false;
 }
 //same
 static command_char wrt(char*filename){
@@ -190,7 +190,7 @@ static command_char wrt(char*filename){
 		return r;
 	}
 	default_error();
-	return 0;
+	return command_false;
 }
 static bar_byte bcdl(int y,bar_byte*p,char*input,bar_byte cursor){
 	int x=getcurx(stdscr);
@@ -295,12 +295,12 @@ bool is_extension_ok(char*extension,char*filename){//also filename to save resto
 }
 //command return
 command_char saving_base(char*dest){
-	command_char r=split_conditions(dest,false);
-	if(r!=0){
-		if(r==1)return wrt_split(dest);
+	split_char r=split_conditions(dest,false);
+	if(r!=split_err){
+		if(r==split_yes)return wrt_split(dest);
 		return wrt(dest);
 	}
-	return 0;
+	return command_false;
 }
 //command return
 static command_char saving(){
@@ -324,7 +324,7 @@ static command_char saves(){
 		//new_f=true;
 		return saving();
 	}
-	return -1;
+	return command_no;
 }
 static void clear_com(int y,int sz,bar_byte pos,bar_byte cursor){
 	bar_byte_plus len;//len will also clear left and right arrows
@@ -364,15 +364,15 @@ command_char question(const char*q){
 	mvaddstr(y,com_left,q);
 	addstr(quest_ex_s);
 	int ch=getch();
-	if(ch==KEY_RESIZE)return -2;
+	if(ch==KEY_RESIZE)return command_resize;
 	move(y,com_left);
 	int sz=(int)(strlen(q)+sizeof(quest_ex_s)-1);
 	for(int i=0;i<sz;i++)
 		addch(' ');
 	//memset(mapsel,' ',sz);mapsel[sz]='\0';mvaddstr(y,com_left,mapsel);
-	if(ch=='y')return 1;
-	else if(ch=='n')return -1;
-	return 0;
+	if(ch=='y')return command_ok;
+	else if(ch=='n')return command_no;
+	return command_false;
 }
 static bar_byte del(bar_byte x,char*input,bar_byte cursor,int dif){
 	if(x==cursor)return cursor;
@@ -622,9 +622,9 @@ static command_char go_to(bar_byte cursor){
 		x--;if(x>rows[ytext].sz)
 			xtext=rows[ytext].sz;
 		else xtext=x;
-		return 1;
+		return command_ok;
 	}
-	return 0;
+	return command_false;
 }
 command_char save(){
 	if(textfile!=nullptr){
@@ -1002,7 +1002,7 @@ static bool delimiter(size_t y1,size_t x1,int y,bar_byte pos,bar_byte sz,bar_byt
 }
 
 #define quick_get(z) ((WINDOW**)((void*)z))[1]
-#define find_returner return a==KEY_RESIZE?-2:1;
+#define find_returner return a==KEY_RESIZE?command_resize:command_ok;
 
 static void finds_total(int number,size_t y1,row_dword x1,size_t xr,row_dword xc,bool untouched,bar_byte cursor,WINDOW*w){
 	//set a limit
@@ -1115,14 +1115,14 @@ static command_char find_core(WINDOW*w,bar_byte cursor,int y,bar_byte pos,bar_by
 				else{centering(w,&xr,&xc)}
 				continue;
 			}
-			return 1;
+			return command_ok;
 		}else if(a=='r'){
 			cursorr=0;wattrset(w,COLOR_PAIR(color_b));
 			int rstart=getcury(w);
-			if(replace_text(w,rstart,getcurx(w),rstart,rstart+1)/*true*/)return -2;
+			if(replace_text(w,rstart,getcurx(w),rstart,rstart+1)/*true*/)return command_resize;
 			continue;
 		}else if(a=='c'){
-			return 0;
+			return command_false;
 		}else if(a==KEY_RIGHT){
 			if(number2==0){//only when not knowing the total
 				if(delimiter_touched==false){//to omit last replace return if that can happen at this point
@@ -1139,14 +1139,14 @@ static command_char find_core(WINDOW*w,bar_byte cursor,int y,bar_byte pos,bar_by
 			for(bar_byte i=0;i<cursorr;i++){
 				replace_text_add(w,inputr[i],&rstart,&rstop);
 			}
-			if(replace_text(w,yb,xb,rstart,rstop)/*true*/)return -2;
+			if(replace_text(w,yb,xb,rstart,rstop)/*true*/)return command_resize;
 			continue;
 		}else{
 			find_returner
 		}
 		if(finding(cursor,xr,xc,forward)==false){
 			//was last replace
-			return 1;
+			return command_ok;
 		}
 		phase=delimiter(y1,x1,y,pos,sz,cursor,phase);
 
@@ -1189,7 +1189,7 @@ static command_char find(char*z,bar_byte cursor,bar_byte pos,int visib,int y){
 	}
 	int a=getch();
 	if(a=='c'){
-		return 0;
+		return command_false;
 	}
 	find_returner
 }
@@ -1234,7 +1234,7 @@ command_char command(comnrp_define comnrp){
 	int rightexcl=get_right;
 	int right=rightexcl-1;
 	int visib=rightexcl-com_left;
-	if(visib<2)return 0;//phisical visib is 1
+	if(visib<2)return command_false;//phisical visib is 1
 	bar_clear();
 	int y=getmaxy(stdscr)-1;bar_byte pos=0;
 	char*input;bar_byte cursor;bool is_find=*comnrp<=com_nr_find_numbers;
@@ -1263,14 +1263,14 @@ command_char command(comnrp_define comnrp){
 			if(is_find/*true*/){
 				int ifback=getcurx(stdscr);
 				r=find(comnrp,cursor,pos,visib,y);
-				if(r==-2)break;
+				if(r==command_resize)break;
 				int dif=rightexcl-getbegx(poswn);
-				if(dif!=-1){
+				if(dif!=-1){//here when finding far away and position window is growing too much
 					right-=dif+1;rightexcl=right+1;
 					visib=rightexcl-com_left;
 					if(visib<2)break;
 				}
-				if(r==0){
+				if(r==command_false){
 					//the text was highlighted
 					//but can be increased
 					//can be resized big,resized small
@@ -1284,18 +1284,18 @@ command_char command(comnrp_define comnrp){
 			}else if(comnr==com_nr_save){
 				input[cursor]='\0';
 				r=saves();
-				if(r==command_processed){
+				if(r==command_no){
 					int x=getcurx(stdscr);
 					clear_com(y,visib,pos,cursor);
 					r=question("Overwrite");
-					if(r==1){
+					if(r==command_ok){
 						inputpath();
 						//new_f=false;
 						r=saving();
-					}else if(r==0){
+					}else if(r==command_false){
 						command_rewrite(y,x,pos,input0,cursor,visib);
 						continue;
-					}else if(r==-2)return -2;
+					}else if(r==command_resize)return command_resize;
 					wnoutrefresh(stdscr);
 					return r;
 				}
@@ -1304,7 +1304,7 @@ command_char command(comnrp_define comnrp){
 				//((void(*)(char*,unsigned long int))(((comnrp_define*)comnrp)[1]))(input,cursor);
 				extdata*d=((extdata**)comnrp)[1];
 				pref_modify(d->orig,d->buf,d->sizedonly,input,cursor);
-				r=1;
+				r=command_ok;
 			}
 			break;
 		}
@@ -1368,10 +1368,10 @@ command_char command(comnrp_define comnrp){
 			cursor=del(x-com_left+pos,input,cursor,rightexcl-x);
 			move(y,x);
 		}
-		else if(a==KEY_RESIZE){r=-2;break;}
+		else if(a==KEY_RESIZE){r=command_resize;break;}
 		else{
 			const char*s=keyname(a);
-			if(strcmp(s,"^Q")==0){r=-1;break;}
+			if(strcmp(s,"^Q")==0){r=command_no;break;}
 			if(cursor!=max_path){
 				char ch=(char)a;
 				if(no_char(ch)==false){
@@ -1403,7 +1403,7 @@ command_char command(comnrp_define comnrp){
 			}
 		}
 	}
-	if(r!=-2){
+	if(r!=command_resize){
 		clear_com(y,visib,pos,cursor);
 		wnoutrefresh(stdscr);
 	}

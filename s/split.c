@@ -86,7 +86,7 @@ static void split_add(char**text,char*next,char**newtext,size_t*remaining_size){
 }
 
 //-1 no, 0 errors, 1 yes the split_out is at realpath dirname or in an ancestor folder
-static char split_conditions_out(char*filename,bool free_paths){
+static split_char split_conditions_out(char*filename,bool free_paths){
 	if(*split_out!='\0'){
 		split_out_alloc1=realpath(filename,nullptr);
 		if(split_out_alloc1!=nullptr){
@@ -120,39 +120,39 @@ static char split_conditions_out(char*filename,bool free_paths){
 										free(split_out_alloc1);
 										free(split_out_alloc2);
 									}
-									return 1;
+									return split_yes;
 								}
 								split_out_path2=split_out_path4;//this is for split write to not loop again there
 							}
 							split_out_path4--;
 						}
 						free(split_out_alloc1);free(split_out_alloc2);
-						return -1;
+						return split_no;
 					}
 					free(split_out_alloc1);
-					return 0;
+					return split_err;
 				}
 			}
 			free(split_out_alloc1);
 		}
-		return 0;
+		return split_err;
 	}
-	return -1;
+	return split_no;
 }
-char split_conditions(char*filename,bool free_paths){
+split_char split_conditions(char*filename,bool free_paths){
 	if(splits_flag/*true*/){
 		if(is_extension_ok(split_extension,filename)/*true*/){
 			return split_conditions_out(filename,free_paths);
 		}
 	}
-	return -1;
+	return split_no;
 }
 
 //false on errors
 bool split_grab(char**p_text,size_t*p_size,char*argfile){
-	char r=split_conditions(argfile,true);
-	if(r!=0){
-		if(r==1){
+	split_char r=split_conditions(argfile,true);
+	if(r!=split_err){
+		if(r==split_yes){
 			char*text;size_t size;int cmp;char*next;
 			char a=*sdelimiter;
 			unsigned char sdelimsize=strlen(sdelimiter);//at file read only one byte for size
