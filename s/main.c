@@ -29,7 +29,7 @@
 \n    other key to return\
 \nCtrl+u = undo; Alt+u = undo mode: left=undo,right=redo,other key to return\
 \nCtrl+r = redo\
-\nCtrl+h = titles (movement, Enter at done, other keys to search, ctrl+q)\
+\nCtrl+h = titles (movement, Enter at done, ctrl+q, other keys to search)\
 \nCtrl+w = text wrapping (movement. another key to return)\
 \nCtrl+e = enable/disable internal mouse/touch\
 \nCtrl+n = disable/enable indentation\
