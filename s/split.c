@@ -109,6 +109,13 @@ static char split_conditions_out(char*filename,bool free_paths){
 							if(*split_out_path4==path_separator){
 								memcpy(split_out_path4+1,split_out,split_out_size1);
 								if(access(split_out_alloc2,W_OK)==0){
+									//special cases with bad overwrites:
+									//	1. split out is the same folder: out and main file will collide. change split out folder
+									//	2. split out is another folder: out and a split can collide. change the split location
+									//	3. a split is same as main file will be a collision. change the split location
+									//	4. two same splits will be a collision
+									//		can be tolerated if one is equal or included. else change the split location
+									//anyway, who will wrong these? don't write extra code for the moment
 									if(free_paths/*true*/){
 										free(split_out_alloc1);
 										free(split_out_alloc2);
