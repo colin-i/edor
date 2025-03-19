@@ -37,6 +37,7 @@
 #include "def.h"
 
 bool splits_flag=false;
+split_char split_read_atstart=split_no;
 
 char*sdelimiter=(char*)"|||";// iso forbids
 char*esdelimiter=(char*)"///";
@@ -150,9 +151,9 @@ split_char split_conditions(char*filename,bool free_paths){
 
 //false on errors
 bool split_grab(char**p_text,size_t*p_size,char*argfile){
-	split_char r=split_conditions(argfile,true);
-	if(r!=split_err){
-		if(r==split_yes){
+	split_read_atstart=split_conditions(argfile,true);
+	if(split_read_atstart!=split_err){
+		if(split_read_atstart==split_yes){
 			char*text;size_t size;int cmp;char*next;
 			char a=*sdelimiter;
 			unsigned char sdelimsize=strlen(sdelimiter);//at file read only one byte for size

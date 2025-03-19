@@ -121,6 +121,7 @@ extern size_t store_aftercall;
 //split
 //main
 extern bool splits_flag;
+extern split_char split_read_atstart;
 extern char*sdelimiter;
 extern char*sdelimiter_new;
 extern char*esdelimiter;

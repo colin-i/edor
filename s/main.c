@@ -1094,8 +1094,10 @@ static void printsel(WINDOW*w,size_t ybsel,size_t xbsel,size_t yesel,size_t xese
 	_rb=rb;_cb=cb;
 	_re=re;_ce=ce;
 }
+#define visual_write_at(a,b) mvaddch(getmaxy(stdscr)-1,getmaxx(stdscr)-b,a);
+#define visual_write(a) visual_write_at(a,2)
 void visual(char a){
-	mvaddch(getmaxy(stdscr)-1,getmaxx(stdscr)-2,a);
+	visual_write(a)
 	wnoutrefresh(stdscr);
 }
 static void refreshrowscond(WINDOW*w,size_t y,size_t x,size_t r,size_t n){
@@ -1232,7 +1234,7 @@ static void easytime(){
 	hardtime=0;
 }
 static void mod_visual(chtype ch){
-	mvaddch(getmaxy(stdscr)-1,getmaxx(stdscr)-1,ch);
+	visual_write_at(ch,1)
 	wnoutrefresh(stdscr);
 }
 static void mod_set(bool flag,chtype ch){
@@ -2124,7 +2126,7 @@ static bool loopin(WINDOW*w){
 		movement_char a=movment(c,w);
 		if(a==movement_resize)return true;
 		if(a!=movement_diffkey){
-			if(visual_bool/*true*/){//here only when C at visual
+			if(visual_bool/*true*/){//here only when C/S at visual
 				visual_bool=false;
 				visual(' ');
 			}else if(bar_clear()/*true*/)wnoutrefresh(stdscr);
@@ -2133,26 +2135,30 @@ static bool loopin(WINDOW*w){
 			nodelay(w,true);
 			int z=wgetch(w);
 			nodelay(w,false);
-			if(z=='v'){if(visual_mode(w,true)/*true*/)return true;}
-			else if(z=='p'){
-				int y=getcury(w);
-				if(xtext!=0){xtext=0;refreshpage(w);}
-				wmove(w,y,0);past(w);
+			int y;bool b;
+			switch(z){ //reread from mem or a special register? gcc same as if-else, from mem
+				case 'v': if(visual_mode(w,true)/*true*/)return true;break;
+				case 'p':
+					y=getcury(w);
+					if(xtext!=0){xtext=0;refreshpage(w);}
+					wmove(w,y,0);past(w);
+					break;
+				case 'g':
+					quick_pack(com_nr_goto_alt,w)
+					if(goto_mode((char*)args,w)/*true*/)return true;
+					break;
+				case 'f':
+					if(find_mode(com_nr_findagain,w)/*true*/)return true;break;
+				case 'c': if(find_mode(com_nr_findwordfrom,w)/*true*/)return true;break;
+				case 'u': vis('U',w);undo_loop(w);vis(' ',w);break;
+				case 's': b=savetofile(w,false);if(b/*true*/)return true;break;
+				case 'a': aftercall=aftercall_find();aftercall_draw(w);break;
+				case 'j': if(pref_change(w,&sdelimiter,&sdelimiter_new,true)/*true*/)return true;break;           //don't allow no size delimiters
+				case 'o': if(pref_change(w,&split_out,&split_out_new,false)/*true*/)return true;break;
+				case 'A': if(pref_change(w,&ocode_extension,&ocode_extension_new,false)/*true*/)return true;break;
+				case 'J': if(pref_change(w,&esdelimiter,&esdelimiter_new,true)/*true*/)return true;break;         //don't allow no size delimiters
+				case 'O': if(pref_change(w,&split_extension,&split_extension_new,false)/*true*/)return true;//break;
 			}
-			else if(z=='g'){
-				quick_pack(com_nr_goto_alt,w)
-				if(goto_mode((char*)args,w)/*true*/)return true;
-			}
-			else if(z=='f'){if(find_mode(com_nr_findagain,w)/*true*/)return true;}
-			else if(z=='c'){if(find_mode(com_nr_findwordfrom,w)/*true*/)return true;}
-			else if(z=='u'){vis('U',w);undo_loop(w);vis(' ',w);}
-			else if(z=='s'){bool b=savetofile(w,false);if(b/*true*/)return true;}
-			else if(z=='a'){aftercall=aftercall_find();aftercall_draw(w);}
-			else if(z=='j'){if(pref_change(w,&sdelimiter,&sdelimiter_new,true)/*true*/)return true;}//don't allow no size delimiters
-			else if(z=='o'){if(pref_change(w,&split_out,&split_out_new,false)/*true*/)return true;}
-			else if(z=='A'){if(pref_change(w,&ocode_extension,&ocode_extension_new,false)/*true*/)return true;}
-			else if(z=='J'){if(pref_change(w,&esdelimiter,&esdelimiter_new,true)/*true*/)return true;}//don't allow no size delimiters
-			else if(z=='O'){if(pref_change(w,&split_extension,&split_extension_new,false)/*true*/)return true;}
 		}else{
 			//QWERTyUioP
 			//ASdFGHJkl
@@ -2574,9 +2580,15 @@ static void proced(char*cutbuf_file,WINDOW*w1){
 						if(r<=old_r)clrtoeol();//resize to up,is over text
 						//or =, clear bar,visual and saves
 						old_r=r;
+
+						if(split_read_atstart==split_yes){
+							visual_write('S')
+							split_read_atstart=split_no;
+							visual_bool=true;//to clear at a next key
+						}
 						if(mod_flag==false){
-							if(hardtime==0)restore_visual();
-							else mod_visual(modif_visual);
+							if(hardtime==0)restore_visual();//has wnoutrefresh(stdscr)
+							else mod_visual(modif_visual);//has wnoutrefresh(stdscr)
 						}
 						else wnoutrefresh(stdscr);
 
