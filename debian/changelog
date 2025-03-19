@@ -1,3 +1,9 @@
+edor (1-x60) focal; urgency=medium
+
+  * split out ancestors, and optimizations
+
+ -- bc <bc@bc-desktop>  Wed, 19 Mar 2025 09:51:07 +0200
+
 edor (1-x59) focal; urgency=medium
 
   * split extension and 1 ln_term
