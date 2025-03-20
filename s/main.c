@@ -2070,7 +2070,7 @@ static bool savetofile(WINDOW*w,bool has_file){
 				//	save a blank New Path
 				//	just save in case the file was erased
 				wnoutrefresh(stdscr);
-			}else{//attention to not write Saved and blind clean the * because curses will also clean the position
+			}else{//attention to not write Saved and blind clean the * because curses will also clean the position. because is another window?
 				mod_set(true,' ');
 			}
 
