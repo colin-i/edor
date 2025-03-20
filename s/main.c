@@ -253,6 +253,20 @@ static char at_left_mark='<';
 static char at_content_nomark=' ';
 static WINDOW*syntaxcontent=nullptr;
 
+static bool split_reminder=false;
+#define mouseevents_enabled 'E'
+#define mouseevents_disabled 'e'
+#define indent_enabled 'N'
+#define indent_disabled 'n'
+#define insensitive_enabled 'T'
+#define insensitive_disabled 't'
+#define ocompiler_enabled 'A'
+#define ocompiler_disabled 'a'
+#define splits_enabled 'J'
+#define splits_disabled 'j'
+#define splits_activated 'S'
+#define splits_deactivated 's'
+
 bool no_char(char z){return z<32||z>=127;}
 static size_t tab_grow(WINDOW*w,char*a,size_t sz,int*ptr){
 	int c=0;int cr=0;
@@ -480,12 +494,16 @@ static int helpshow(int n){
 		bool is_max=c==max;
 		if(newl/*true*/||helpend/*true*/||is_max/*true*/){
 			move(y,0);
-			int sum=i-j+cstart;
-			if(cstart!=0){addch(' ');cstart=0;}
+			//int sum=i-j+cstart;
+			if(cstart!=0){
+				addch(' ');//splitted rows still one space at right
+				cstart=0;
+			}
 			char aux=helptext[i];helptext[i]='\0';
 			addstr(&helptext[j]);
 			helptext[i]=aux;
-			if(sum<max)clrtoeol();
+			//old text seems to go anyway without this
+			//if(sum<max)clrtoeol();
 			y++;
 			if(getmaxy(stdscr)-3<y)break;
 			j=i;
@@ -496,8 +514,29 @@ static int helpshow(int n){
 			c=cstart;
 		}
 	}while(helpend==false);
-	helpposition();
+	int x=getcurx(stdscr);
+	if(x!=0)for(int i=max-x;i!=max;i++)addch(' ');
 	return y;
+}
+static void helpshowlastrow(int rw){
+	int i=3;//with respect to helpposition
+	move(rw,i);
+	char stats=6;
+	int max=getmaxx(stdscr)-stats;
+	while(i<max){
+		addch(' ');
+		i++;
+	}
+	addch(stored_mouse_mask!=0?mouseevents_enabled:mouseevents_disabled);//maybe on touchscreen tablet is dominant
+	addch(indent_flag/*true*/?indent_enabled:indent_disabled);
+	addch(insensitive/*true*/?insensitive_enabled:insensitive_disabled);
+	addch(ocompiler_flag/*true*/?ocompiler_enabled:ocompiler_disabled);//i'm using otoc with gdb for new code
+	addch(splits_flag/*true*/?splits_enabled:splits_disabled);
+	addch(split_reminder/*true*/?splits_activated:splits_deactivated);
+	//1@: else at my compilers, and also gcc, is faster: if is with new asm jump instruction. but still not counting on that and aspire to fast first
+	//is same asm speed with/without false, still why at two of these first is the beta?
+	//is beta at me, someone else can use this code. at me 1@ is ok for them.
+	helpposition();
 }
 static void hmove(int n){
 	if(helpend/*true*/&&(n>0))return;
@@ -505,6 +544,7 @@ static void hmove(int n){
 	if(n<0)return;
 	phelp=helpmanag(n);
 	helpshow(n);
+	helpposition();
 }
 static void topspace_clear(){
 	//first write is not here
@@ -2022,14 +2062,19 @@ static bool savetofile(WINDOW*w,bool has_file){
 				write_title();
 			}
 
-			if(mod_flag/*true*/){bar_clear();texter_macro("Saved");}//it is not my fault that the position is gone, all that is done is write Saved and blind clean the visual flag, curses is cleaning in between
-			//there are some cases here:
-			//	open with forced new line and save
-			//	open with std input and save
-			//	save a blank New Path
-			//	just save in case the file was erased
+			if(mod_flag/*true*/){
+				bar_clear();texter_macro("Saved");
+				//there are some cases here:
+				//	open with forced new line and save
+				//	open with std input and save
+				//	save a blank New Path
+				//	just save in case the file was erased
+				wnoutrefresh(stdscr);
+			}else{//attention to not write Saved and blind clean the * because curses will also clean the position
+				mod_set(true,' ');
+			}
 
-			mod_set_on();
+			easytime();
 			undo_save();
 		}
 		else if(ret==command_resize)return true;
@@ -2202,32 +2247,32 @@ static bool loopin(WINDOW*w){
 				return false;
 			}else if(strcmp(s,"^T")==0){
 				bool b;char c;
-				if(insensitive/*true*/){insensitive=false;c='t';}
-				else{insensitive=true;c='T';}
+				if(insensitive/*true*/){insensitive=false;c=insensitive_disabled;}
+				else{insensitive=true;c=insensitive_enabled;}
 				setprefs(mask_insensitive,insensitive);//here the bit is set on full insensitive search
 				vis(c,w);//is not showing on stdscr without wnoutrefresh(thisWindow)
 			}else if(strcmp(s,"^E")==0){
 				bool b;char c;
-				if(stored_mouse_mask==0){stored_mouse_mask=mousemask(ALL_MOUSE_EVENTS,nullptr);c='E';setprefs(mask_mouse,true);}
-				else{stored_mouse_mask=mousemask(0,nullptr);c='e';setprefs(mask_mouse,false);}
+				if(stored_mouse_mask==0){stored_mouse_mask=mousemask(ALL_MOUSE_EVENTS,nullptr);c=mouseevents_enabled;setprefs(mask_mouse,true);}
+				else{stored_mouse_mask=mousemask(0,nullptr);c=mouseevents_disabled;setprefs(mask_mouse,false);}
 				vis(c,w);
 			}else if(strcmp(s,"^N")==0){
 				char c;
-				if(indent_flag/*true*/){indent_flag=false;c='n';}
-				else{indent_flag=true;c='N';}
+				if(indent_flag/*true*/){indent_flag=false;c=indent_disabled;}
+				else{indent_flag=true;c=indent_enabled;}
 				setprefs(mask_indent,indent_flag);
 				vis(c,w);//is not showing on stdscr without wnoutrefresh(thisWindow)
 			}else if(strcmp(s,"^A")==0){
-				if(ocompiler_flag/*true*/){ocompiler_flag=false;c='a';}
-				else{ocompiler_flag=true;c='A';
+				if(ocompiler_flag/*true*/){ocompiler_flag=false;c=ocompiler_disabled;}
+				else{ocompiler_flag=true;c=ocompiler_enabled;
 					aftercall=aftercall_find();}
 				setprefs(mask_ocompiler,ocompiler_flag);
 				visual(c);//addch for more info, first to window, then wnoutrefresh to virtual, then doupdate to phisical
 				aftercall_draw(w);
 			}else if(strcmp(s,"^J")==0){//joins //alt j is set delimiter,alt J escape delimiter
 				char c;
-				if(splits_flag/*true*/){splits_flag=false;c='j';}
-				else{splits_flag=true;c='J';}
+				if(splits_flag/*true*/){splits_flag=false;c=splits_disabled;}
+				else{splits_flag=true;c=splits_enabled;}
 				setprefs(mask_splits,splits_flag);
 				vis(c,w);
 			}else if(strcmp(s,"^W")==0){if(text_wrap(w)/*true*/)return true;}
@@ -2241,7 +2286,7 @@ static bool loopin(WINDOW*w){
 				int i=helpshow(0);
 				int mx=getmaxy(stdscr)-2;
 				for(;i<mx;i++){move(i,0);clrtoeol();}
-				move(mx,3);clrtoeol();
+				helpshowlastrow(mx);
 				if(helpin(w)/*true*/){
 					ungetch(c);
 					return true;
@@ -2582,8 +2627,9 @@ static void proced(char*cutbuf_file,WINDOW*w1){
 						old_r=r;
 
 						if(split_read_atstart==split_yes){
-							visual_write('S')
-							split_read_atstart=split_no;
+							visual_write(splits_activated)
+							split_read_atstart=split_no;//on resize is ok to not print again, can use F1 to remember
+							split_reminder=true;
 							visual_bool=true;//to clear at a next key
 						}
 						if(mod_flag==false){
