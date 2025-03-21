@@ -1,4 +1,6 @@
 
 autoreconf -i && \
-pfx="--prefix=$PREFIX" ./cf && \
+if [ ! -e configure ]; then
+	pfx="--prefix=$PREFIX" ./cf
+fi && \
 make install
