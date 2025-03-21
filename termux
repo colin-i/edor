@@ -1,0 +1,4 @@
+
+autoreconf -i
+pfx="--prefix=$PREFIX" ./cf && \
+make install

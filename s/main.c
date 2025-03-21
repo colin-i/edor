@@ -220,6 +220,7 @@ static char editingfile_buf[max_path_0];
 static char editingfile_buf2[max_path_0];
 
 static mmask_t stored_mouse_mask=0;
+#define stored_mouse_mask_q stored_mouse_mask!=0
 static bool indent_flag=true;
 #define mask_size 1
 #define mask_nomask 0
@@ -527,7 +528,7 @@ static void helpshowlastrow(int rw){
 		addch(' ');
 		i++;
 	}
-	addch(stored_mouse_mask!=0?mouseevents_enabled:mouseevents_disabled);//maybe on touchscreen tablet is dominant
+	addch(stored_mouse_mask_q?mouseevents_enabled:mouseevents_disabled);//maybe on touchscreen tablet is dominant
 	addch(indent_flag/*true*/?indent_enabled:indent_disabled);
 	addch(insensitive/*true*/?insensitive_enabled:insensitive_disabled);
 	addch(ocompiler_flag/*true*/?ocompiler_enabled:ocompiler_disabled);//i'm using otoc with gdb for new code
@@ -2253,8 +2254,8 @@ static bool loopin(WINDOW*w){
 				vis(c,w);//is not showing on stdscr without wnoutrefresh(thisWindow)
 			}else if(strcmp(s,"^E")==0){
 				bool b;char c;
-				if(stored_mouse_mask==0){stored_mouse_mask=mousemask(ALL_MOUSE_EVENTS,nullptr);c=mouseevents_enabled;setprefs(mask_mouse,true);}
-				else{stored_mouse_mask=mousemask(0,nullptr);c=mouseevents_disabled;setprefs(mask_mouse,false);}
+				if(stored_mouse_mask_q){stored_mouse_mask=mousemask(0,nullptr);c=mouseevents_disabled;setprefs(mask_mouse,false);}
+				else{stored_mouse_mask=mousemask(ALL_MOUSE_EVENTS,nullptr);c=mouseevents_enabled;setprefs(mask_mouse,true);}
 				vis(c,w);
 			}else if(strcmp(s,"^N")==0){
 				char c;
@@ -2819,7 +2820,7 @@ static void action_go(int argc,char**argv,char*cutbuf_file,char*argfile){
 			//the only difference with ALL_..EVENTS is that we want to speed up and process all events here (if there is a curses implementation like that)
 			//this was default for android, but nowadays on desktop is not a default
 			//stored_mouse_mask=mousemask(ALL_MOUSE_EVENTS,nullptr);//for error, export TERM=vt100
-			if(stored_mouse_mask!=0)stored_mouse_mask=mousemask(ALL_MOUSE_EVENTS,nullptr);//must set it after initscr to work
+			if(stored_mouse_mask_q)stored_mouse_mask=mousemask(ALL_MOUSE_EVENTS,nullptr);//must set it after initscr to work
 
 			if(ocompiler_flag/*true*/){//this is here, in loop can be set if wanted with enable/disable and rescan keys
 				aftercall=init_aftercall();
