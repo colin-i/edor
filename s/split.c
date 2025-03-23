@@ -86,10 +86,40 @@ static void split_add(char**text,char*next,char**newtext,size_t*remaining_size){
 	*text+=dif;*newtext+=dif;*remaining_size-=dif;
 }
 
+static char* real_path(char*pathname){
+	char*a=realpath(pathname,nullptr);
+	if(a==nullptr){//is a New Path
+		size_t sz=strlen(pathname);
+		char*b=pathname+sz;
+		while(pathname!=b){
+			b--;
+			if(*b==path_separator){
+				*b='\0';
+				a=realpath(pathname,nullptr);
+				*b=path_separator;
+				if(a!=nullptr){
+					b++;
+					break;
+				}
+			}
+		}
+		if(a==nullptr){
+			a=realpath(".",nullptr);//realpath "" is (null)
+			if(a==nullptr)return nullptr;
+		}
+		size_t left=strlen(a);
+		size_t right=strlen(b)+1;
+		a=(char*)realloc(a,left+right);
+		if(a!=nullptr){
+			memcpy(a+left,b,right);
+		}
+	}
+	return a;
+}
 //-1 no, 0 errors, 1 yes the split_out is at realpath dirname or in an ancestor folder
 static split_char split_conditions_out(char*filename,bool free_paths){
 	if(*split_out!='\0'){
-		split_out_alloc1=realpath(filename,nullptr);
+		split_out_alloc1=real_path(filename);
 		if(split_out_alloc1!=nullptr){
 			size_t s=strlen(split_out_alloc1);
 			split_out_path1=split_out_alloc1+s;
