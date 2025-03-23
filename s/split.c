@@ -8,6 +8,16 @@
 
 #include "top.h" //bool,nullptr,etc
 
+#ifdef HAVE_FCNTL_H
+#include<fcntl.h>
+#else
+#include"inc/fcntl.h"
+#endif
+#ifdef HAVE_ERRNO_H
+#include<errno.h>
+#else
+#include"inc/split/errno.h"
+#endif
 #ifdef HAVE_STDIO_H
 #include<stdio.h>
 #else
@@ -27,11 +37,6 @@
 #include<unistd.h>
 #else
 #include"inc/split/unistd.h"
-#endif
-#ifdef HAVE_FCNTL_H
-#include<fcntl.h>
-#else
-#include"inc/fcntl.h"
 #endif
 
 #include "def.h"
@@ -88,7 +93,7 @@ static void split_add(char**text,char*next,char**newtext,size_t*remaining_size){
 
 static char* real_path(char*pathname){
 	char*a=realpath(pathname,nullptr);
-	if(a==nullptr){//is a New Path
+	if(a==nullptr&&errno==ENOENT){//is a New Path
 		size_t sz=strlen(pathname);
 		char*b=pathname+sz;
 		while(pathname!=b){
@@ -100,7 +105,7 @@ static char* real_path(char*pathname){
 				if(a!=nullptr){
 					b++;
 					break;
-				}
+				}else if(errno!=ENOENT)return nullptr;
 			}
 		}
 		if(a==nullptr){

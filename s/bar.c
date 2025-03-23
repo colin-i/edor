@@ -21,7 +21,7 @@
 #ifdef HAVE_ERRNO_H
 #include<errno.h>
 #else
-#include"inc/bar/errno.h"
+#include"inc/errno.h"
 #endif
 #ifdef HAVE_FCNTL_H
 #include<fcntl.h>
