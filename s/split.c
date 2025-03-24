@@ -170,7 +170,7 @@ static split_char split_conditions_out(char*filename,bool free_paths){
 				}
 			}
 			free(split_out_alloc1);
-		}
+		}else if(errno==EACCES)return split_no;
 		return split_err;
 	}
 	return split_no;
