@@ -2632,7 +2632,7 @@ static void proced(char*cutbuf_file,WINDOW*w1){
 
 						if(split_read_atstart==split_yes){
 							visual_write(splits_activated)
-							split_read_atstart=split_no;//on resize is ok to not print again, can use F1 to remember, maybe was an save as and will lie here then
+							split_read_atstart=split_no;//on resize is ok to not print again, can use F1 to remember, maybe was a save as and will lie here then
 							split_reminder=true;
 							//visual_bool=true;//to clear at a next key
 						}
