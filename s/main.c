@@ -232,7 +232,7 @@ static bool indent_flag=true;
 static char prefs_file[max_path_0]={'\0'};//only the first byte is set
 static char*ocode_extension_new=nullptr;
 
-static bool visual_bool=false;
+//static bool visual_bool=false;
 static char*cutbuf=nullptr;
 static size_t cutbuf_sz=0;
 static size_t cutbuf_spc=0;
@@ -1993,8 +1993,9 @@ static bool visual_mode(WINDOW*w,bool v_l){
 				}
 				else{
 					char v=' ';
-					visual_bool=b=='c';
-					if(visual_bool/*true*/){
+					//visual_bool=b=='c';
+					//if(visual_bool/*true*/){
+					if(b=='c'){
 						if(writemembuf(ybsel,xbsel,yesel,xesel)/*true*/){v='C';unsel(w);}
 					}else if(b=='d'){
 						if(delet(ybsel,xbsel,yesel,xesel,&r,&c,w)/*true*/)
@@ -2172,10 +2173,12 @@ static bool loopin(WINDOW*w){
 		movement_char a=movment(c,w);
 		if(a==movement_resize)return true;
 		if(a!=movement_diffkey){
-			if(visual_bool/*true*/){//here only when C/S at visual
-				visual_bool=false;
-				visual(' ');
-			}else if(bar_clear()/*true*/)wnoutrefresh(stdscr);
+			//if(visual_bool/*true*/){//here only when C/S at visual
+			//	visual_bool=false;
+			//	visual(' ');
+			//}
+			//else
+			if(bar_clear()/*true*/)wnoutrefresh(stdscr);
 			position(getcury(w),getcurx(w));
 		}else if(c==Char_Escape){
 			nodelay(w,true);
@@ -2629,9 +2632,9 @@ static void proced(char*cutbuf_file,WINDOW*w1){
 
 						if(split_read_atstart==split_yes){
 							visual_write(splits_activated)
-							split_read_atstart=split_no;//on resize is ok to not print again, can use F1 to remember
+							split_read_atstart=split_no;//on resize is ok to not print again, can use F1 to remember, maybe was an save as and will lie here then
 							split_reminder=true;
-							visual_bool=true;//to clear at a next key
+							//visual_bool=true;//to clear at a next key
 						}
 						if(mod_flag==false){
 							if(hardtime==0)restore_visual();//has wnoutrefresh(stdscr)
@@ -2729,6 +2732,8 @@ static bool get_answer(char switcher){
 	return a;
 }
 static void action_go(int argc,char**argv,char*cutbuf_file,char*argfile){
+	if(prefs_file[0]!='\0')getprefs();//split is first that depends on prefs
+
 	size_t text_sz;
 	bool not_forced=true;
 	bool no_file=argc==1;
@@ -2762,9 +2767,8 @@ static void action_go(int argc,char**argv,char*cutbuf_file,char*argfile){
 			}else editing_new();
 		}
 		if(valid_ln_term(argc,argv,&not_forced)/*true*/)return;
+		if(no_file/*true*/)split_read_atstart=split_conditions(argfile,true);//need regardless of input
 	}
-
-	if(prefs_file[0]!='\0')getprefs();//split is first that depends on prefs
 
 	struct pollfd fds[1];
 	//typedef struct __sFILE FILE;

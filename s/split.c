@@ -113,11 +113,16 @@ static char* real_path(char*pathname){
 			if(a==nullptr)return nullptr;
 		}
 		size_t left=strlen(a);
+		size_t left_and_center=left+1;
 		size_t right=strlen(b)+1;
-		a=(char*)realloc(a,left+right);
-		if(a!=nullptr){
-			memcpy(a+left,b,right);
+		char*c=(char*)realloc(a,left_and_center+right);
+		if(c!=nullptr){
+			c[left]=path_separator;
+			memcpy(c+left_and_center,b,right);
+			return c;
 		}
+		free(a);
+		return nullptr;
 	}
 	return a;
 }
