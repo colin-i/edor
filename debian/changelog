@@ -1,3 +1,9 @@
+edor (1-x64) focal; urgency=medium
+
+  * fix ^P
+
+ -- bc <bc@bc-desktop>  Sun, 30 Mar 2025 18:00:38 +0300
+
 edor (1-x63) focal; urgency=medium
 
   * fix split_conditions,visuals
