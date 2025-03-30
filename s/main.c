@@ -2209,7 +2209,7 @@ static bool loopin(WINDOW*w){
 				case 'P': if(pref_change(w,&split_extension,&split_extension_new,false)/*true*/)return true;//break;
 			}
 		}else{
-			//QWERTyUioP
+			//QWERTyUiOp - p alts are taken
 			//ASdFGHJkl
 			// zxCVbNm
 			// ^M is 13 that comes also at Enter, ^I is 9 that comes also at Tab
