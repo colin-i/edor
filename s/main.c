@@ -13,7 +13,7 @@
 \n    x = cut\
 \n    i = indent (I = flow indent)\
 \n    u = unindent (U = flow unindent)\
-\nCtrl+p = paste; Alt+p = paste at the beginning of the row\
+\nCtrl+o = paste; Alt+O = paste at the beginning of the row\
 \ncommand mode: left,right,home,end,ctrl+q\
 \nCtrl+s = save file; Alt+s = save file as...\
 \nCtrl+g = go to row[,column]; Alt+g = \"current_row,\" is entered\
@@ -36,7 +36,7 @@
 \nCtrl+t = enable/disable insensitive search\
 \nCtrl+a = enable/disable O language syntax; Alt+a = syntax rescan; Alt+A = change extension name (blank is all)\
 \nCtrl+j = enable/disable OA split syntax; Alt+j = change delimiter; Alt+J = change view delimiter\
-\n    Alt+o = change splits folder; Alt+O = change extension name for splits (blank is all)\
+\n    Alt+p = change splits folder; Alt+P = change extension name for splits (blank is all)\
 \nCtrl+q = quit"
 
 #define is_main_c
@@ -1141,7 +1141,7 @@ void visual(char a){
 	visual_write(a)
 	wnoutrefresh(stdscr);
 }
-static void refreshrowscond(WINDOW*w,size_t y,size_t x,size_t r,size_t n){
+static void refreshrowscond(WINDOW*w,size_t y,row_dword x,size_t r,size_t n){
 	if(y!=ytext||x!=xtext)refreshpage(w);
 	else refreshrowsbot(w,(int)r,n!=0?getmaxy(w):(int)r+1);
 }
@@ -2187,7 +2187,7 @@ static bool loopin(WINDOW*w){
 			int y;bool b;
 			switch(z){ //reread from mem or a special register? gcc same as if-else, from mem
 				case 'v': if(visual_mode(w,true)/*true*/)return true;break;
-				case 'p':
+				case 'o':
 					y=getcury(w);
 					if(xtext!=0){xtext=0;refreshpage(w);}
 					wmove(w,y,0);past(w);
@@ -2203,19 +2203,21 @@ static bool loopin(WINDOW*w){
 				case 's': b=savetofile(w,false);if(b/*true*/)return true;break;
 				case 'a': aftercall=aftercall_find();aftercall_draw(w);break;
 				case 'j': if(pref_change(w,&sdelimiter,&sdelimiter_new,true)/*true*/)return true;break;           //don't allow no size delimiters
-				case 'o': if(pref_change(w,&split_out,&split_out_new,false)/*true*/)return true;break;
+				case 'p': if(pref_change(w,&split_out,&split_out_new,false)/*true*/)return true;break;
 				case 'A': if(pref_change(w,&ocode_extension,&ocode_extension_new,false)/*true*/)return true;break;
 				case 'J': if(pref_change(w,&esdelimiter,&esdelimiter_new,true)/*true*/)return true;break;         //don't allow no size delimiters
-				case 'O': if(pref_change(w,&split_extension,&split_extension_new,false)/*true*/)return true;//break;
+				case 'P': if(pref_change(w,&split_extension,&split_extension_new,false)/*true*/)return true;//break;
 			}
 		}else{
 			//QWERTyUioP
 			//ASdFGHJkl
 			// zxCVbNm
+			// ^M is 13 that comes also at Enter, ^I is 9 that comes also at Tab
+			// ^P at docker, something is not ok with the redraw
 			const char*s=keyname(c);
 			if(strcmp(s,"^V")==0){
 				if(visual_mode(w,false)/*true*/)return true;
-			}else if(strcmp(s,"^P")==0)past(w);
+			}else if(strcmp(s,"^O")==0)past(w);
 			else if((strcmp(s,"^S")==0)){
 				bool b=savetofile(w,true);
 				if(b/*true*/)return true;
