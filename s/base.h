@@ -66,7 +66,7 @@ size_t aftercall_find();
 void aftercall_draw(WINDOW*);
 size_t init_aftercall();
 //tw
-void position_core(size_t,size_t);
+void position_core(size_t,row_dword);
 void centering3(WINDOW*,size_t*,row_dword*,bool);
 //tit
 bool bar_char(char,WINDOW*,bool);

@@ -24,16 +24,14 @@ if [ -n "${n}" ]; then #on c flags will be commented
 	echo ${b} | grep --color "USE_FS"
 	b=`echo ${b} | sed "s/-DUSE_FS=1//g"`
 fi
+if [ "${1}" = "1" ]; then #rare test, if wanting 32
+	echo ${b} | grep --color "\-DPLATFORM64=1"
+	b=`echo ${b} | sed "s/\-DPLATFORM64=1//g"`
+fi
 a=$(echo ${a} | sed 's/\\/\\\\/g')
 b=$(echo ${b} | sed 's/\\/\\\\/g')
 #
 sed -i "0,/^${a}/s/^${a}/${b}/" mk #is only one
-
-if [ "${1}" = "1" ]; then #rare test, if wanting 32
-	a="\-DPLATFORM64=1"
-	grep --color "${a}" mk
-	sed -i "s/${a}//g" mk
-fi
 
 cat mk | grep "^DEFS"
 

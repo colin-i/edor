@@ -499,9 +499,9 @@ static bool finding(bar_byte cursor,size_t r,size_t c,bool f){
 	if(f/*true*/)return findingf(cursor,r,c);
 	return findingb(cursor,r,c);
 }
-void position_core(size_t y,size_t x){
+void position_core(size_t y,row_dword x){
 	char posbuf[10+1+10+1];
-	int n=sprintf(posbuf,protocol "," protocol,y+1,x+1);
+	int n=sprintf(posbuf,protocol "," protocol_simple,y+1,x+1); //x+1? last is null, so is still at the limit
 	int dif=getmaxx(poswn)-n;
 	if(dif!=0){
 		if(dif>0){
