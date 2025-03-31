@@ -28,7 +28,6 @@ a=$(echo ${a} | sed 's/\\/\\\\/g')
 b=$(echo ${b} | sed 's/\\/\\\\/g')
 #
 sed -i "0,/^${a}/s/^${a}/${b}/" mk #is only one
-cat mk | grep "^DEFS"
 
 if [ "${1}" = "1" ]; then #rare test
 	a="\-DPLATFORM64=1"
@@ -38,7 +37,8 @@ if [ "${1}" = "1" ]; then #rare test
 	#and  if wanting 32
 fi
 
-echo
+cat mk | grep "^DEFS"
+
 ./mh
 
 if [ -n "${2}" ]; then rm mk; fi
