@@ -10,42 +10,32 @@ cp Makefile mk
 #c only headers \-DHAVE_STDBOOL_H=1
 #
 a=`grep "^DEFS =" mk`
-echo ${a} | grep --color "\-DHAVE_"
+echo ${a} | grep --color "HAVE"
 b=`echo ${a} | sed "s/-DHAVE_[^_]*_H=1//g; s/-DHAVE_[^_]*_[^_]*_H=1//g;"`
 #
+c="edor_CPPFLAGS ="
+n=`grep "^${c}" -n Makefile | grep -o "^[^:]*"`
+if [ -n "${n}" ]; then #on c flags will be commented
+	#here when cpp flags
+	grep --color "${c}" mk
+	sed -i "${n}s/.*/${c}/" mk
+	grep --color "${c}" mk
+
+	echo ${b} | grep --color "USE_FS"
+	b=`echo ${b} | sed "s/-DUSE_FS=1//g"`
+fi
 a=$(echo ${a} | sed 's/\\/\\\\/g')
 b=$(echo ${b} | sed 's/\\/\\\\/g')
 #
-sed -i "0,/^${a}/s/^${a}/${b}/" mk
+sed -i "0,/^${a}/s/^${a}/${b}/" mk #is only one
 cat mk | grep "^DEFS"
 
-if [ "${1}" = "1" ]; then
+if [ "${1}" = "1" ]; then #rare test
 	a="\-DPLATFORM64=1"
 	grep --color "${a}" mk
 	sed -i "s/${a}//g" mk
 	grep --color "${a}" mk
 	#and  if wanting 32
-fi
-
-a="edor_CPPFLAGS ="
-n=`grep "^${a}" -n Makefile | grep -o "^[^:]*"`
-if [ -n "${n}" ]; then
-	#here when cpp flags
-
-	grep --color "${a}" mk
-	sed -i "${n}s/.*/${a}/" mk
-	grep --color "${a}" mk
-
-	a="\-DUSE_FS=1"
-	grep --color "${a}" mk
-	sed -i "s/${a}//g" mk
-	grep --color "${a}" mk
-#else
-#	#c only headers
-#	a="\-DHAVE_STDBOOL_H=1"
-#	grep --color "${a}" mk
-#	sed -i "s/${a}//g" mk
-#	grep --color "${a}" mk
 fi
 
 ./mh
