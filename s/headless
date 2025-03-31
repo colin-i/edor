@@ -38,6 +38,7 @@ if [ "${1}" = "1" ]; then #rare test
 	#and  if wanting 32
 fi
 
+echo
 ./mh
 
 if [ -n "${2}" ]; then rm mk; fi
