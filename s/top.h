@@ -86,3 +86,10 @@ typedef struct{
 #define swrite_bad true
 
 #define default_extension (char*)"oc"
+
+#define protocol_simple "%u"
+#ifdef PLATFORM64
+#define protocol "%lu"
+#else
+#define protocol protocol_simple
+#endif

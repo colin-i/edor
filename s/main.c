@@ -2845,7 +2845,7 @@ static void action_go(int argc,char**argv,char*cutbuf_file,char*argfile){
 			}
 			endwin();
 
-			if(clue!=no_clue)printf("last row where was an error at split write was: %lu\n",clue);
+			if(clue!=no_clue)printf("last row where was an error at split write was: " protocol "\n",clue);
 			if(ocode_extension_new!=nullptr){
 				free(ocode_extension_new);//also need it at change for view what is was
 				split_freeprefs();

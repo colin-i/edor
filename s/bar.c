@@ -51,13 +51,6 @@
 
 #include"base.h"
 
-#define protocol_simple "%u"
-#ifdef PLATFORM64
-#define protocol "%lu"
-#else
-#define protocol protocol_simple
-#endif
-
 #define err_len_min 2
 
 bool insensitive=false;
