@@ -1,14 +1,12 @@
 SUBDIRS = s
 
+test:
+	z="$(SUBDIRS)"; \
+	for var in "$${z[@]}"; do \
+		cd $${var}; \
+		$(MAKE) $@; \
+		cd ..; \
+	done
+
 #here will add
 .PHONY: test
-test:
-	cp -r s test
-	cd test && make clean && /bin/bash ./headless
-	rm -r test #it is a mirror, who can use it instead of ./s ?
-
-#install-exec-local:
-#	if [ ! -e "`cat ./bash_home`/.@PROJ@info" ]; then cp "./.@PROJ@info" "`cat ./bash_home`/" --preserve=ownership; fi
-
-#uninstall-local:
-#	if [ -e "`cat ./bash_home`/.@PROJ@info" ]; then rm "`cat ./bash_home`/.@PROJ@info"; fi
