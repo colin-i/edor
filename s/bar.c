@@ -501,7 +501,7 @@ static bool finding(bar_byte cursor,size_t r,size_t c,bool f){
 }
 void position_core(size_t y,row_dword x){
 	char posbuf[10+1+10+1];
-	int n=sprintf(posbuf,protocol "," protocol_simple,y+1,x+1); //x+1? last is null, so is still at the limit
+	int n=sprintf(posbuf,protocol "," protocol_simple,y+1,x+1); //x+1? last is null, so is still at the limit, and if not modified? /0 is ok, if not can add ==0xff..ff then =0xff..fe
 	int dif=getmaxx(poswn)-n;
 	if(dif!=0){
 		if(dif>0){
