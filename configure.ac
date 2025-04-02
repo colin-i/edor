@@ -43,7 +43,7 @@ AS_IF([ [[ "$build_cpu" = "arm" ]] || [[ "$build_cpu" = "armv7l" ]] ],
   AC_MSG_RESULT([yes])
   AC_DEFINE(ARM7L, 1, [armv7l])
   AC_CHECK_HEADERS(dlfcn.h signal.h)
-  AC_CHECK_HEADERS(libunwind.h, [], [AC_SUBST(UNW, "-Wno-c++98-compat-pedantic")])
+#  AC_CHECK_HEADERS(libunwind.h, [], [AC_SUBST(UNW, "-Wno-c++98-compat-pedantic")]) #this was at "long long", more in inc/main/armv7l
 #not all platforms need these
   AC_SEARCH_LIBS([dladdr],[dl])
   AC_SEARCH_LIBS([_Uarm_init_local],[unwind-arm])

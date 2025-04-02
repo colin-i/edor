@@ -1,7 +1,12 @@
 
 //#if defined(is_main_c)||defined(is_bar_c)||defined(is_split_c)
-typedef long int ssize_t;
+#ifdef PLATFORM64
+	typedef long int ssize_t;
+#else
+	typedef int ssize_t;
+#endif
 //#include "inc/stddef.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
