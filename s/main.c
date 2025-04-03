@@ -1,6 +1,4 @@
 
-#include "main.h"
-
 #define is_main_c
 #ifdef HAVE_STDDEF_H
 #include<stddef.h>
@@ -9,6 +7,7 @@
 #endif
 
 #include "top.h"
+#include "main.h"
 
 #ifdef HAVE_CURSES_H
 #include<curses.h>
