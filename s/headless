@@ -35,6 +35,4 @@ sed -i "0,/^${a}/s/^${a}/${b}/" mk #is only one
 
 cat mk | grep "^DEFS"
 
-./mh
-
-if [ -n "${2}" ]; then rm mk; fi
+/bin/bash ./mh && if [ -n "${2}" ]; then rm mk; fi
