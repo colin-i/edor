@@ -65,11 +65,25 @@ wr_n "typedef struct{
 	unsigned short upos;
 }keys_struct;"
 
+search_pos () {
+	printf "$1+\\$(printf %o $2)"
+}
+
 _find_pos () { #letter=$1 ctrls=$2 alt=$3 bigalt=$4
 	wr "{(unsigned short[]){"
-	wr "0"
-	wr "},"
-	wr "0"
+	if [ ${2} -ne 0 ]; then
+		search_pos Ctrl ${1}
+	fi
+	if [ -n "${3}" ]; then
+		search_pos Alt ${1}
+	fi
+	wr "0},"
+	if [ -n "${4}" ]; then
+		nr=$(echo $1-32 | bc)
+		search_pos Alt ${nr}
+	fi #else
+		wr "0"
+	#fi
 	wr "}"
 }
 find_pos () {
@@ -79,25 +93,27 @@ find_pos () {
 
 wr "static keys_struct keys[]={"
 _find_pos 97 1 1 1                  #a
-for ((i=98;i<123;i++)) do
+i=98
+while [ $i -lt 123 ]; do
 	case $i in
-		99) find_pos $i 1 1 0;; #c
-		101) find_pos $i 1 0 0;;#e
-		102) find_pos $i 1 1 0;;#f
-		103) find_pos $i 1 1 0;;#g
-		104) find_pos $i 1 0 0;;#h
+		99) find_pos $i 1 1;;   #c
+		101) find_pos $i 1;;    #e
+		102) find_pos $i 1 1;;  #f
+		103) find_pos $i 1 1;;  #g
+		104) find_pos $i 1;;    #h
 		106) find_pos $i 1 1 1;;#j
-		110) find_pos $i 1 0 0;;#n
-		111) find_pos $i 1 1 0;;#o
+		110) find_pos $i 1;;    #n
+		111) find_pos $i 1 1;;  #o
 		112) find_pos $i 0 1 1;;#p
-		113) find_pos $i 3 0 0;;#q
-		114) find_pos $i 1 0 0;;#r
-		115) find_pos $i 1 1 0;;#s
-		116) find_pos $i 1 0 0;;#t
-		117) find_pos $i 1 1 0;;#u
-		118) find_pos $i 1 1 0;;#v
-		119) find_pos $i 1 0 0;;#w
+		113) find_pos $i 3;;    #q
+		114) find_pos $i 1;;    #r
+		115) find_pos $i 1 1;;  #s
+		116) find_pos $i 1;;    #t
+		117) find_pos $i 1 1;;  #u
+		118) find_pos $i 1 1;;  #v
+		119) find_pos $i 1;;    #w
 		*) wr ",{nullptr,0}";;
 	esac
+	i=$((i+1))
 done
 wr_n "};"
