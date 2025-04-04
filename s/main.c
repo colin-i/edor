@@ -2171,91 +2171,95 @@ static bool loopin(WINDOW*w){
 			}
 		}else{
 			const char*s=keyname(c);
-			if(strcmp(s,"^V")==0){
-				if(visual_mode(w,false)/*true*/)return true;
-			}else if(strcmp(s,"^O")==0)past(w);
-			else if((strcmp(s,"^S")==0)){
-				bool b=savetofile(w,true);
-				if(b/*true*/)return true;
-			}else if(strcmp(s,"^G")==0){
-				char aa=com_nr_goto;
-				if(goto_mode(&aa,w)/*true*/)return true;
-			}else if(strcmp(s,"^F")==0){
-				if(find_mode(com_nr_find,w)/*true*/)return true;
-			}else if(strcmp(s,"^C")==0){
-				if(find_mode(com_nr_findword,w)/*true*/)return true;
-			}else if(strcmp(s,"^U")==0){
-				undo(w);
-			}else if(strcmp(s,"^R")==0){
-				redo(w);
-			}else if(strcmp(s,"^H")==0){
-				if(titles(w)/*true*/)return true;
-			}else if(strcmp(s,"^Q")==0){
-				if(mod_flag==false){
-					bar_clear();//errors
-					command_char q=question("And save");
-					if(q==command_ok){
-						q=save();
-						if(q==command_false)err_set(w);
+			if(*s=='^'){//seems that all cases are ^ a letter \0
+				char chr=s[1];
+				if(chr=='V'){
+					if(visual_mode(w,false)/*true*/)return true;
+				}else if(chr=='O')past(w);
+				else if(chr=='S'){
+					bool b=savetofile(w,true);
+					if(b/*true*/)return true;
+				}else if(chr=='G'){
+					char aa=com_nr_goto;
+					if(goto_mode(&aa,w)/*true*/)return true;
+				}else if(chr=='F'){
+					if(find_mode(com_nr_find,w)/*true*/)return true;
+				}else if(chr=='C'){
+					if(find_mode(com_nr_findword,w)/*true*/)return true;
+				}else if(chr=='U'){
+					undo(w);
+				}else if(chr=='R'){
+					redo(w);
+				}else if(chr=='H'){
+					if(titles(w)/*true*/)return true;
+				}else if(chr=='Q'){
+					if(mod_flag==false){
+						bar_clear();//errors
+						command_char q=question("And save");
+						if(q==command_ok){
+							q=save();
+							if(q==command_false)err_set(w);
+						}
+						if(q==command_resize)return true;
+						else if(q==command_false){
+							wnoutrefresh(stdscr);
+							wmove(w,getcury(w),getcurx(w));
+							continue;
+						}
 					}
-					if(q==command_resize)return true;
-					else if(q==command_false){
-						wnoutrefresh(stdscr);
-						wmove(w,getcury(w),getcurx(w));
-						continue;
+					if(restorefile!=nullptr)unlink(restorefile);//here restorefile is deleted
+					return false;
+				}else if(chr=='T'){
+					bool b;char c;
+					if(insensitive/*true*/){insensitive=false;c=insensitive_disabled;}
+					else{insensitive=true;c=insensitive_enabled;}
+					setprefs(mask_insensitive,insensitive);//here the bit is set on full insensitive search
+					vis(c,w);//is not showing on stdscr without wnoutrefresh(thisWindow)
+				}else if(chr=='E'){
+					bool b;char c;
+					if(stored_mouse_mask_q){stored_mouse_mask=mousemask(0,nullptr);c=mouseevents_disabled;setprefs(mask_mouse,false);}
+					else{stored_mouse_mask=mousemask(ALL_MOUSE_EVENTS,nullptr);c=mouseevents_enabled;setprefs(mask_mouse,true);}
+					vis(c,w);
+				}else if(chr=='N'){
+					char c;
+					if(indent_flag/*true*/){indent_flag=false;c=indent_disabled;}
+					else{indent_flag=true;c=indent_enabled;}
+					setprefs(mask_indent,indent_flag);
+					vis(c,w);//is not showing on stdscr without wnoutrefresh(thisWindow)
+				}else if(chr=='A'){
+					if(ocompiler_flag/*true*/){ocompiler_flag=false;c=ocompiler_disabled;}
+					else{ocompiler_flag=true;c=ocompiler_enabled;
+						aftercall=aftercall_find();}
+					setprefs(mask_ocompiler,ocompiler_flag);
+					visual(c);//addch for more info, first to window, then wnoutrefresh to virtual, then doupdate to phisical
+					aftercall_draw(w);
+				}else if(chr=='J'){//joins //alt j is set delimiter,alt J escape delimiter
+					char c;
+					if(splits_flag/*true*/){splits_flag=false;c=splits_disabled;}
+					else{splits_flag=true;c=splits_enabled;}
+					setprefs(mask_splits,splits_flag);
+					vis(c,w);
+				}else if(chr=='W'){if(text_wrap(w)/*true*/)return true;}
+				else type(c,w);//enter tab, unknown ctrls
+			}else{
+				if(strcmp(s,"KEY_F(1)")==0){
+					int cy=getcury(w);int cx=getcurx(w);
+					phelp=0;
+					int i=helpshow(0);
+					int mx=getmaxy(stdscr)-2;
+					for(;i<mx;i++){move(i,0);clrtoeol();}
+					helpshowlastrow(mx);
+					if(helpin(w)/*true*/){
+						ungetch(c);
+						return true;
 					}
+					wmove(w,cy,cx);
 				}
-				if(restorefile!=nullptr)unlink(restorefile);//here restorefile is deleted
-				return false;
-			}else if(strcmp(s,"^T")==0){
-				bool b;char c;
-				if(insensitive/*true*/){insensitive=false;c=insensitive_disabled;}
-				else{insensitive=true;c=insensitive_enabled;}
-				setprefs(mask_insensitive,insensitive);//here the bit is set on full insensitive search
-				vis(c,w);//is not showing on stdscr without wnoutrefresh(thisWindow)
-			}else if(strcmp(s,"^E")==0){
-				bool b;char c;
-				if(stored_mouse_mask_q){stored_mouse_mask=mousemask(0,nullptr);c=mouseevents_disabled;setprefs(mask_mouse,false);}
-				else{stored_mouse_mask=mousemask(ALL_MOUSE_EVENTS,nullptr);c=mouseevents_enabled;setprefs(mask_mouse,true);}
-				vis(c,w);
-			}else if(strcmp(s,"^N")==0){
-				char c;
-				if(indent_flag/*true*/){indent_flag=false;c=indent_disabled;}
-				else{indent_flag=true;c=indent_enabled;}
-				setprefs(mask_indent,indent_flag);
-				vis(c,w);//is not showing on stdscr without wnoutrefresh(thisWindow)
-			}else if(strcmp(s,"^A")==0){
-				if(ocompiler_flag/*true*/){ocompiler_flag=false;c=ocompiler_disabled;}
-				else{ocompiler_flag=true;c=ocompiler_enabled;
-					aftercall=aftercall_find();}
-				setprefs(mask_ocompiler,ocompiler_flag);
-				visual(c);//addch for more info, first to window, then wnoutrefresh to virtual, then doupdate to phisical
-				aftercall_draw(w);
-			}else if(strcmp(s,"^J")==0){//joins //alt j is set delimiter,alt J escape delimiter
-				char c;
-				if(splits_flag/*true*/){splits_flag=false;c=splits_disabled;}
-				else{splits_flag=true;c=splits_enabled;}
-				setprefs(mask_splits,splits_flag);
-				vis(c,w);
-			}else if(strcmp(s,"^W")==0){if(text_wrap(w)/*true*/)return true;}
-
-			//i saw these only when mousemask is ALL_MOUSE_EVENTS : focus in, focus out
-			else if(strcmp(s,"kxIN")==0||strcmp(s,"kxOUT")==0){}
-
-			else if(strcmp(s,"KEY_F(1)")==0){
-				int cy=getcury(w);int cx=getcurx(w);
-				phelp=0;
-				int i=helpshow(0);
-				int mx=getmaxy(stdscr)-2;
-				for(;i<mx;i++){move(i,0);clrtoeol();}
-				helpshowlastrow(mx);
-				if(helpin(w)/*true*/){
-					ungetch(c);
-					return true;
-				}
-				wmove(w,cy,cx);
-			}else type(c,w);
-			//continue;
+				//i saw these only when mousemask is ALL_MOUSE_EVENTS : focus in, focus out
+				else if(strcmp(s,"kxIN")==0||strcmp(s,"kxOUT")==0){}
+				else type(c,w);
+				//continue;
+			}
 		}
 	}
 }

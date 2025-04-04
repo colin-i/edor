@@ -1,7 +1,6 @@
 #!/bin/bash
 
 f=main.h
-
 wr_n() {
 	echo "$@" >> ${f}
 }
@@ -50,7 +49,6 @@ text="\ncommand mode: left,right,home,end,Ctrl+q\
 \nCtrl+j = enable/disable OA split syntax; Alt+j = change delimiter; Alt+J = change view delimiter\
 \n    Alt+p = change splits folder; Alt+P = change extension name for splits (blank is all)\
 \nCtrl+q = quit\""
-
 wr_n "${text}"
 
 exit
@@ -65,25 +63,32 @@ wr_n "typedef struct{
 	unsigned short upos;
 }keys_struct;"
 
+textsed="$(echo "${text}" | sed "s/\\\n/n/g; s/\\\\\"/\"/g")"  # replace \n to n and \\\" to \"(this will go " at grep). \ at endings are 0
 search_pos () {
-	printf "$1+\\$(printf %o $2)"
+	wr ${3}
+	txt=$(printf "$1+\\$(printf %o $2)")
+	p=$(echo "${textsed}" | grep -b -o ${txt} | cut -d':' -f1)
+	p=$(echo ${p} | sed "s/ /,/g") #if at previous then will have to split on new lines, less portable
+	wr ${p}
 }
 
 _find_pos () { #letter=$1 ctrls=$2 alt=$3 bigalt=$4
 	wr "{(unsigned short[]){"
+	e=
 	if [ ${2} -ne 0 ]; then
 		search_pos Ctrl ${1}
+		e=,
 	fi
 	if [ -n "${3}" ]; then
-		search_pos Alt ${1}
+		search_pos Alt ${1} ${e}
 	fi
-	wr "0},"
+	wr "},"
 	if [ -n "${4}" ]; then
 		nr=$(echo $1-32 | bc)
 		search_pos Alt ${nr}
-	fi #else
+	else
 		wr "0"
-	#fi
+	fi
 	wr "}"
 }
 find_pos () {
