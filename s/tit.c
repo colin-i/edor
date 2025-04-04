@@ -109,7 +109,7 @@ bool titles(WINDOW*w){
 			if(b==Char_Return){
 				if(y<rows_tot){
 					orig_ytext=yvals[y];
-					orig_xtext=0;//or fixed_x(y,&orig_xtext,r,getcurx(w)) but is not important and is a 50/50 case 
+					orig_xtext=0;//or fixed_x(y,&orig_xtext,r,getcurx(w)) but is not important and is a 50/50 case
 				}
 				break;
 			}
