@@ -33,10 +33,18 @@ static bool titcolor(char b,char*color,WINDOW*w,bool singlechar){
 	attrset(COLOR_PAIR(*color));
 	return singlechar;
 }
+static size_t n;static size_t*yvals;
+static void position_translated(WINDOW*w){
+	if(n!=0){//at no titles
+		size_t y;row_dword x;
+		fixed_yx(&y,&x,getcury(w),getcurx(w));
+		position_core(yvals[y],x);
+	}
+}
 
 bool titles(WINDOW*w){
 	//calculate rows required
-	size_t n=0;
+	n=0;
 	for(size_t i=0;i<rows_tot;i++){
 		row*r=&rows[i];
 		if(r->sz>1){
@@ -58,7 +66,9 @@ bool titles(WINDOW*w){
 			store_aftercall=aftercall;
 		}
 
-		size_t m=0;size_t*yvals=(size_t*)&rowswrap[n];
+		//only if wanting to stay where it is now
+		//size_t ytext_dif=~0;size_t near_ytext=0;size_t near_ytext_translated=0;
+		size_t m=0;yvals=(size_t*)&rowswrap[n];
 		for(size_t i=0;m!=n;i++){
 			row*r=&rows[i];
 			if(r->sz>1){
@@ -71,6 +81,10 @@ bool titles(WINDOW*w){
 						rw->sz=r->sz;
 						if(i>=aftercall)aftercall=m;// else let to be old rows_tot value? it looks ok knowing is comparing with a bigger rows_tot
 						yvals[m]=i;
+						//size_t dif=i>ytext?i-ytext:ytext-i;
+						//if(dif<ytext_dif){
+						//	dif=ytext_dif;near_ytext=i;near_ytext_translated=m;
+						//}
 						m++;
 					}
 				}
@@ -81,16 +95,15 @@ bool titles(WINDOW*w){
 		fixed_yx(&orig_ytext,&orig_xtext,getcury(w),getcurx(w));
 
 		rows=rowswrap;rows_tot=n;
-		ytext=0;xtext=0;
+		ytext=0;//ytext=near_ytext_translated;
+		xtext=0;
 
 		//visual
 		bar_clear();
 		visual('H');
 		refreshpage(w);//visual shows now only with this
 		wmove(w,0,0);  //                        or this
-		if(rows_tot!=0){
-			position_core(yvals[0],0);
-		}
+		position_translated(w);//position_core(near_ytext,0);
 
 		//loop
 		char color=color_0;
@@ -100,8 +113,7 @@ bool titles(WINDOW*w){
 			z=movment(b,w);
 			if(z==movement_resize){extra_unlock(orig_ytext,orig_xtext,w);return true;}
 			else if(z==movement_processed){
-				fixed_yx(&y,&x,getcury(w),getcurx(w));
-				position_core(yvals[y],x);
+				position_translated(w);
 				continue;
 			}
 			int r=getcury(w);
@@ -146,7 +158,7 @@ bool titles(WINDOW*w){
 		bar_char(' ',w,singlechar);//and clear, can set new_v or err for later clear but is extra
 		visual(' ');
 		extra_unlock(orig_ytext,orig_xtext,w);//here xtext to be what was Enter selected now
-		position_core(orig_ytext,0);
+		position_core(orig_ytext,orig_xtext);
 	}
 
 	return false;
