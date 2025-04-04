@@ -7,6 +7,13 @@ wr_n() {
 wr () {
 	echo -n "$@" >> ${f}
 }
+wr2_n() {
+	buf="${buf}$@
+"
+}
+wr2 () {
+	buf="${buf}$@"
+}
 
 echo "#define hel1 \"USAGE\n\"" > ${f}
 wr "#define hel2 \" [filepath [line_termination: rn/r/n]]\
@@ -58,67 +65,71 @@ exit
 # ^M is 13 that comes also at Enter, ^I is 9 that comes also at Tab
 # ^P at docker, something is not ok with the redraw
 
-wr_n "typedef struct{
+wr2_n "typedef struct{
 	unsigned short*pos;
 	unsigned short upos;
 }keys_struct;"
 
 textsed="$(echo "${text}" | sed "s/\\\n/n/g; s/\\\\\"/\"/g")"  # replace \n to n and \\\" to \"(this will go " at grep). \ at endings are 0
 search_pos () {
-	wr ${3}
+	wr2 ${3}
 	txt=$(printf "$1+\\$(printf %o $2)")
 	p=$(echo "${textsed}" | grep -b -o ${txt} | cut -d':' -f1)
 	p=$(echo ${p} | sed "s/ /,/g") #if at previous then will have to split on new lines, less portable
-	wr ${p}
+	wr2 ${p}
 }
 
-_find_pos () { #letter=$1 ctrls=$2 alt=$3 bigalt=$4
-	wr "{(unsigned short[]){"
+_find_pos () { #name=$1 letter=$2 ctrls=$3 alt=$4 bigalt=$5
+	wr2 "{(unsigned short[]){"
 	e=
-	if [ ${2} -ne 0 ]; then
-		search_pos Ctrl ${1}
+	if [ ${3} -ne 0 ]; then
+		wr "static char key_${1}=$(echo ${2}-32 | bc);"
+		search_pos Ctrl ${2}
 		e=,
 	fi
-	if [ -n "${3}" ]; then
-		search_pos Alt ${1} ${e}
-	fi
-	wr "},"
 	if [ -n "${4}" ]; then
-		nr=$(echo $1-32 | bc)
+		search_pos Alt ${2} ${e}
+	fi
+	wr2 "},"
+	if [ -n "${5}" ]; then
+		nr=$(echo ${2}-32 | bc)
 		search_pos Alt ${nr}
 	else
-		wr "0"
+		wr2 "0"
 	fi
-	wr "}"
+	wr2 "}"
 }
 find_pos () {
-	wr ","
-	_find_pos $1 $2 $3 $4
+	wr2 ","
+	_find_pos $1 $2 $3 $4 $5
 }
 
-wr "static keys_struct keys[]={"
-_find_pos 97 1 1 1                  #a
+wr2 "static keys_struct keys[]={"
+_find_pos ocomp 97 1 1 1                    #a
 i=98
 while [ $i -lt 123 ]; do
 	case $i in
-		99) find_pos $i 1 1;;   #c
-		101) find_pos $i 1;;    #e
-		102) find_pos $i 1 1;;  #f
-		103) find_pos $i 1 1;;  #g
-		104) find_pos $i 1;;    #h
-		106) find_pos $i 1 1 1;;#j
-		110) find_pos $i 1;;    #n
-		111) find_pos $i 1 1;;  #o
-		112) find_pos $i 0 1 1;;#p
-		113) find_pos $i 3;;    #q
-		114) find_pos $i 1;;    #r
-		115) find_pos $i 1 1;;  #s
-		116) find_pos $i 1;;    #t
-		117) find_pos $i 1 1;;  #u
-		118) find_pos $i 1 1;;  #v
-		119) find_pos $i 1;;    #w
-		*) wr ",{nullptr,0}";;
+		99) find_pos findword $i 1 1;;  #c
+		101) find_pos mouse $i 1;;      #e
+		102) find_pos find $i 1 1;;     #f
+		103) find_pos goto $i 1 1;;     #g
+		104) find_pos titles $i 1;;     #h
+		106) find_pos actswf $i 1 1 1;; #j
+		110) find_pos indents $i 1;;    #n
+		111) find_pos paste $i 1 1;;    #o
+		112) find_pos actswf2 $i 0 1 1;;#p
+		113) find_pos quit $i 3;;       #q
+		114) find_pos redo $i 1;;       #r
+		115) find_pos save $i 1 1;;     #s
+		116) find_pos insens $i 1;;     #t
+		117) find_pos undo $i 1 1;;     #u
+		118) find_pos visual $i 1 1;;   #v
+		119) find_pos wrap $i 1;;       #w
+		*) wr2 ",{nullptr,0}";;
 	esac
 	i=$((i+1))
 done
-wr_n "};"
+wr2_n "};"
+wr_n ""
+
+wr "${buf}"

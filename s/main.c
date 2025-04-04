@@ -522,20 +522,23 @@ static bool helpin(WINDOW*w){
 	int c;
 	do{
 		c=getch();
-		if(c==KEY_MOUSE){
-			MEVENT e;
-			getmouse(&e);
-			if((e.bstate&BUTTON4_PRESSED)!=0)hmove(-1);
-			else
-		#ifdef BUTTON5_PRESSED
-			if((e.bstate&BUTTON5_PRESSED)!=0)
-		#else
-			if(e.bstate==0)     // at wheel down (libncurses5 at bionic)
-		#endif
-			hmove(1);
-		}else if(c==KEY_DOWN)hmove(1);
-		else if(c==KEY_UP)hmove(-1);
-		else if(c==KEY_RESIZE)return true;
+		switch(c){//reread from mem or a special register? gcc same as if-else, from mem
+			case KEY_MOUSE:
+				MEVENT e;
+				getmouse(&e);
+				if((e.bstate&BUTTON4_PRESSED)!=0)hmove(-1);
+				else
+			#ifdef BUTTON5_PRESSED
+				if((e.bstate&BUTTON5_PRESSED)!=0)
+			#else
+				if(e.bstate==0)     // at wheel down (libncurses5 at bionic)
+			#endif
+				hmove(1);
+				break;
+			case KEY_DOWN: hmove(1);break;
+			case KEY_UP: hmove(-1);break;
+			case KEY_RESIZE: return true;
+		}
 	}while(c!='q');
 	//helpclear();wnoutrefresh(stdscr);
 
@@ -2146,29 +2149,24 @@ static bool loopin(WINDOW*w){
 			int z=wgetch(w);
 			nodelay(w,false);
 			int y;bool b;
-			switch(z){ //reread from mem or a special register? gcc same as if-else, from mem
-				case 'v': if(visual_mode(w,true)/*true*/)return true;break;
-				case 'o':
-					y=getcury(w);
-					if(xtext!=0){xtext=0;refreshpage(w);}
-					wmove(w,y,0);past(w);
-					break;
-				case 'g':
-					quick_pack(com_nr_goto_alt,w)
-					if(goto_mode((char*)args,w)/*true*/)return true;
-					break;
-				case 'f':
-					if(find_mode(com_nr_findagain,w)/*true*/)return true;break;
-				case 'c': if(find_mode(com_nr_findwordfrom,w)/*true*/)return true;break;
-				case 'u': vis('U',w);undo_loop(w);vis(' ',w);break;
-				case 's': b=savetofile(w,false);if(b/*true*/)return true;break;
-				case 'a': aftercall=aftercall_find();aftercall_draw(w);break;
-				case 'j': if(pref_change(w,&sdelimiter,&sdelimiter_new,true)/*true*/)return true;break;           //don't allow no size delimiters
-				case 'p': if(pref_change(w,&split_out,&split_out_new,false)/*true*/)return true;break;
-				case 'A': if(pref_change(w,&ocode_extension,&ocode_extension_new,false)/*true*/)return true;break;
-				case 'J': if(pref_change(w,&esdelimiter,&esdelimiter_new,true)/*true*/)return true;break;         //don't allow no size delimiters
-				case 'P': if(pref_change(w,&split_extension,&split_extension_new,false)/*true*/)return true;//break;
-			}
+			if(z=='v'){if(visual_mode(w,true)/*true*/)return true;}
+			else if(z=='o'){
+				y=getcury(w);
+				if(xtext!=0){xtext=0;refreshpage(w);}
+				wmove(w,y,0);past(w);
+			}else if(z=='g'){
+				quick_pack(com_nr_goto_alt,w)
+				if(goto_mode((char*)args,w)/*true*/)return true;
+			}else if(z=='f'){if(find_mode(com_nr_findagain,w)/*true*/)return true;}
+			else if(z=='c'){if(find_mode(com_nr_findwordfrom,w)/*true*/)return true;}
+			else if(z=='u'){vis('U',w);undo_loop(w);vis(' ',w);}
+			else if(z=='s'){b=savetofile(w,false);if(b/*true*/)return true;}
+			else if(z=='a'){aftercall=aftercall_find();aftercall_draw(w);}
+			else if(z=='j'){if(pref_change(w,&sdelimiter,&sdelimiter_new,true)/*true*/)return true;}           //don't allow no size delimiters
+			else if(z=='p'){if(pref_change(w,&split_out,&split_out_new,false)/*true*/)return true;}
+			else if(z=='A'){if(pref_change(w,&ocode_extension,&ocode_extension_new,false)/*true*/)return true;}
+			else if(z=='J'){if(pref_change(w,&esdelimiter,&esdelimiter_new,true)/*true*/)return true;}         //don't allow no size delimiters
+			else if(z=='P'){if(pref_change(w,&split_extension,&split_extension_new,false)/*true*/)return true;}
 		}else{
 			const char*s=keyname(c);
 			if(*s=='^'){//seems that all cases are ^ a letter \0
