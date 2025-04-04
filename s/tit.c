@@ -56,7 +56,7 @@ bool titles(WINDOW*w){
 		}
 	}
 
-	size_t nn=n==0?1:n;//to fast position_core
+	size_t nn=n==0?1:n;//to fast position_core, and is good to not malloc(0)
 	rowswrap=(row*)malloc((nn*sizeof(row))+(nn*sizeof(size_t)));//same hack as tw.c, extra alloc to free once
 	if(rowswrap!=nullptr){
 		store_rows=rows;

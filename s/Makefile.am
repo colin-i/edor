@@ -17,7 +17,7 @@ CLEANFILES += main.h
 test: $(BUILT_SOURCES)
 	flag=`echo "${DEFS}" | grep -o "\-DARM7L=1"`; \
 	flag2=`echo "${DEFS}" | grep -o "\-DPLATFORM64=1"`; \
-	text="$(CC) ${CFLAGS} $${flag} $${flag2} -I. ${edor_SOURCES} ${edor_LDADD} ${LIBS} -o ${bin_PROGRAMS}t"; \
+	text="$(CC) $${flag} $${flag2} -I. ${edor_SOURCES} ${edor_LDADD} ${LIBS} -o ${bin_PROGRAMS}t"; \
 	echo $${text}; \
 	$${text}
 #clean: #here, unlike .PHONY, will overwrite the clean rule
