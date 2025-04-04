@@ -1364,7 +1364,7 @@ command_char command(comnrp_define comnrp){
 		else if(a==KEY_RESIZE){r=command_resize;break;}
 		else{
 			const char*s=keyname(a);
-			if(strcmp(s,"^Q")==0){r=command_no;break;}
+			if(*s==Char_Ctrl&&s[1]=='Q'){r=command_no;break;}
 			if(cursor!=max_path){
 				char ch=(char)a;
 				if(no_char(ch)==false){

@@ -34,7 +34,10 @@ typedef struct{
 	bool sizedonly;
 }extdata;
 
-#define Char_Return 0xd
+#define Char_Return 0xd  //main bar tit
+#define Char_Escape 0x1b //main
+#define Char_Ctrl 0x5e   //main bar tit
+
 #define row_pad 0xF
 #define tab_sz 6
 //can be 127(ascii Delete) or 263, note: Ctrl+h generates 263

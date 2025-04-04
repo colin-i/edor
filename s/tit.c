@@ -88,24 +88,33 @@ bool titles(WINDOW*w){
 		visual('H');
 		refreshpage(w);//visual shows now only with this
 		wmove(w,0,0);  //                        or this
+		if(rows_tot!=0){
+			position_core(yvals[0],0);
+		}
 
 		//loop
 		char color=color_0;
 		movement_char z;bool singlechar=true;
 		do{
-			int b=wgetch(w);
+			int b=wgetch(w);size_t y;row_dword x;
 			z=movment(b,w);
 			if(z==movement_resize){extra_unlock(orig_ytext,orig_xtext,w);return true;}
-			else if(z==movement_processed)continue;
+			else if(z==movement_processed){
+				fixed_yx(&y,&x,getcury(w),getcurx(w));
+				position_core(yvals[y],x);
+				continue;
+			}
 			int r=getcury(w);
-			size_t y=ytext+r;
+			y=ytext+r;
 			if(b==Char_Return){
 				if(y<rows_tot){
 					orig_ytext=yvals[y];
+					orig_xtext=0;//or fixed_x(y,&orig_xtext,r,getcurx(w)) but is not important and is a 50/50 case 
 				}
 				break;
 			}
-			if(strcmp(keyname(b),"^Q")==0)break;
+			const char*kname=keyname(b);
+			if(*kname==Char_Ctrl&&kname[1]=='Q')break;
 
 			//find next row start same as [0,x)+b and wmove there
 			singlechar=titcolor(b,&color,w,singlechar);
@@ -123,6 +132,7 @@ bool titles(WINDOW*w){
 							if(rw2->data[sz]==b){
 								ytext=y;
 								wmove(w,centeringy(w),c);
+								position_core(yvals[y],sz);
 								break;
 							}
 						}
@@ -135,7 +145,8 @@ bool titles(WINDOW*w){
 		if(color!=color_0)attrset(color_0);//reset back
 		bar_char(' ',w,singlechar);//and clear, can set new_v or err for later clear but is extra
 		visual(' ');
-		extra_unlock(orig_ytext,orig_xtext,w);
+		extra_unlock(orig_ytext,orig_xtext,w);//here xtext to be what was Enter selected now
+		position_core(orig_ytext,0);
 	}
 
 	return false;

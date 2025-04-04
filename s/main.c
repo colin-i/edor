@@ -161,7 +161,6 @@ bool ocompiler_flag=false;
 size_t aftercall;
 size_t clue=no_clue;
 
-#define Char_Escape 27
 static char*mapsel=nullptr;
 //static char*text_file=nullptr;
 static size_t rows_spc=1;//at rows_expand
@@ -2169,7 +2168,7 @@ static bool loopin(WINDOW*w){
 			else if(z=='P'){if(pref_change(w,&split_extension,&split_extension_new,false)/*true*/)return true;}
 		}else{
 			const char*s=keyname(c);
-			if(*s=='^'){//seems that all cases are ^ a letter \0
+			if(*s==Char_Ctrl){//seems that all cases are ^ a letter \0
 				char chr=s[1];
 				if(chr=='V'){
 					if(visual_mode(w,false)/*true*/)return true;
@@ -2238,7 +2237,7 @@ static bool loopin(WINDOW*w){
 					setprefs(mask_splits,splits_flag);
 					vis(c,w);
 				}else if(chr=='W'){if(text_wrap(w)/*true*/)return true;}
-				else type(c,w);//enter tab, unknown ctrls
+				else type(c,w);//enter, tab, ^, unknown ctrls
 			}else{
 				if(strcmp(s,"KEY_F(1)")==0){
 					int cy=getcury(w);int cx=getcurx(w);
