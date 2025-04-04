@@ -1,1 +1,1 @@
-make -f mk ${extraflags}
+make -f mk AM_MAKEFLAGS="-f mk" ${extraflags}

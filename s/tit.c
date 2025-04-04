@@ -33,18 +33,16 @@ static bool titcolor(char b,char*color,WINDOW*w,bool singlechar){
 	attrset(COLOR_PAIR(*color));
 	return singlechar;
 }
-static size_t n;static size_t*yvals;
+static size_t*yvals;
 static void position_translated(WINDOW*w){
-	if(n!=0){//at no titles
-		size_t y;row_dword x;
-		fixed_yx(&y,&x,getcury(w),getcurx(w));
-		position_core(yvals[y],x);
-	}
+	size_t y;row_dword x;
+	fixed_yx(&y,&x,getcury(w),getcurx(w));
+	position_core(yvals[y],x);
 }
 
 bool titles(WINDOW*w){
 	//calculate rows required
-	n=0;
+	size_t n=0;
 	for(size_t i=0;i<rows_tot;i++){
 		row*r=&rows[i];
 		if(r->sz>1){
@@ -58,7 +56,8 @@ bool titles(WINDOW*w){
 		}
 	}
 
-	rowswrap=(row*)malloc((n*sizeof(row))+(n*sizeof(size_t)));//same hack as tw.c, extra alloc to free once
+	size_t nn=n==0?1:n;//to fast position_core
+	rowswrap=(row*)malloc((nn*sizeof(row))+(nn*sizeof(size_t)));//same hack as tw.c, extra alloc to free once
 	if(rowswrap!=nullptr){
 		store_rows=rows;
 		store_rows_tot=rows_tot;
@@ -66,35 +65,43 @@ bool titles(WINDOW*w){
 			store_aftercall=aftercall;
 		}
 
-		//only if wanting to stay where it is now, but we are not searching backward at the moment, so it is a 50/50 case
+		//only if wanting to stay where it is now, but we are not searching from start at the moment, so it is a 50/50 case
 		//size_t ytext_dif=~0;size_t near_ytext=0;size_t near_ytext_translated=0;
-		size_t m=0;yvals=(size_t*)&rowswrap[n];
-		for(size_t i=0;m!=n;i++){
-			row*r=&rows[i];
-			if(r->sz>1){
-				char*s=r->data;
-				if(*s!='\t'&&*s!=' '){
-					s+=r->sz-1;
-					if(*s=='{'||*s==')'){
-						row*rw=&rowswrap[m];
-						rw->data=r->data;
-						rw->sz=r->sz;
-						if(i>=aftercall)aftercall=m;// else let to be old rows_tot value? it looks ok knowing is comparing with a bigger rows_tot
-						yvals[m]=i;
-						//size_t dif=i>ytext?i-ytext:ytext-i;
-						//if(dif<ytext_dif){
-						//	dif=ytext_dif;near_ytext=i;near_ytext_translated=m;
-						//}
-						m++;
-					}
-				}
-			}
-		}
-
+		size_t m=0;yvals=(size_t*)&rowswrap[nn];
 		size_t orig_ytext;row_dword orig_xtext;
 		fixed_yx(&orig_ytext,&orig_xtext,getcury(w),getcurx(w));
 
-		rows=rowswrap;rows_tot=n;
+		if(n!=0){
+			for(size_t i=0;m!=n;i++){
+				row*r=&rows[i];
+				if(r->sz>1){
+					char*s=r->data;
+					if(*s!='\t'&&*s!=' '){
+						s+=r->sz-1;
+						if(*s=='{'||*s==')'){
+							row*rw=&rowswrap[m];
+							rw->data=r->data;
+							rw->sz=r->sz;
+							if(i>=aftercall)aftercall=m;// else let to be old rows_tot value? it looks ok knowing is comparing with a bigger rows_tot
+							yvals[m]=i;
+							//size_t dif=i>ytext?i-ytext:ytext-i;
+							//if(dif<ytext_dif){
+							//	dif=ytext_dif;near_ytext=i;near_ytext_translated=m;
+							//}
+							m++;
+						}
+					}
+				}
+			}
+			rows_tot=n;
+		}else{
+			row*rw=&rowswrap[0];
+			rw->sz=0;
+			*yvals=0;
+			rows_tot=1;
+		}
+
+		rows=rowswrap;
 		ytext=0;//ytext=near_ytext_translated;
 		xtext=0;
 
