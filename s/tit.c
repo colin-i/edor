@@ -66,7 +66,7 @@ bool titles(WINDOW*w){
 			store_aftercall=aftercall;
 		}
 
-		//only if wanting to stay where it is now
+		//only if wanting to stay where it is now, but we are not searching backward at the moment, so it is a 50/50 case
 		//size_t ytext_dif=~0;size_t near_ytext=0;size_t near_ytext_translated=0;
 		size_t m=0;yvals=(size_t*)&rowswrap[n];
 		for(size_t i=0;m!=n;i++){
@@ -109,7 +109,7 @@ bool titles(WINDOW*w){
 		char color=color_0;
 		movement_char z;bool singlechar=true;
 		do{
-			int b=wgetch(w);size_t y;row_dword x;
+			int b=wgetch(w);
 			z=movment(b,w);
 			if(z==movement_resize){extra_unlock(orig_ytext,orig_xtext,w);return true;}
 			else if(z==movement_processed){
@@ -117,7 +117,7 @@ bool titles(WINDOW*w){
 				continue;
 			}
 			int r=getcury(w);
-			y=ytext+r;
+			size_t y=ytext+r;
 			if(b==Char_Return){
 				if(y<rows_tot){
 					orig_ytext=yvals[y];
