@@ -13,7 +13,7 @@ wr4_n() { buf3="${buf3}$@
 "; }
 wr4 () { buf3="${buf3}$@"; }
 
-printf '%s' "#define hel1 \"USAGE\n\""  > ${f}; echo >> ${f}
+printf '%s\n' "#define hel1 \"USAGE\n\"" > ${f}
 d2="#define hel2 \" [filepath [line_termination: rn/r/n]]\
 \n      --remove-config      Remove configuration files.\
 \nINPUT\
