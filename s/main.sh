@@ -15,7 +15,9 @@ wr2 () {
 	buf="${buf}$@"
 }
 
-echo "#define hel1 \"USAGE\n\"" > ${f}
+d1="#define hel1 \\\"USAGE\n\\\""
+
+wr_n "${d1}"  > ${f}
 wr "#define hel2 \" [filepath [line_termination: rn/r/n]]\
 \n      --remove-config      Remove configuration files.\
 \nINPUT\
@@ -71,12 +73,17 @@ wr2_n "typedef struct{
 }keys_struct;"
 
 textsed="$(echo "${text}" | sed "s/\\\n/n/g; s/\\\\\"/\"/g")"  # replace \n to n and \\\" to \"(this will go " at grep). \ at endings are 0
+d1s="$(echo -n "${d1}" | sed "s/\\\n/n/g; s/\\\\\"/\"/g" | wc -c)"
 search_pos () {
 	wr2 ${3}
 	txt=$(printf "$1+\\$(printf %o $2)")
-	p=$(echo "${textsed}" | grep -b -o ${txt} | cut -d':' -f1)
-	p=$(echo ${p} | sed "s/ /,/g") #if at previous then will have to split on new lines, less portable
-	wr2 ${p}
+	p=$(echo "${textsed}" | grep -b -o ${txt} | cut -d':' -f1 )
+	a=
+	for nr in ${p}; do
+		nr=$(echo ${d1s}+${nr} | bc)
+		wr2 "${a}${nr}"
+		if [ -z "${a}" ]; then a=","; fi
+	done
 }
 
 _find_pos () { #name=$1 letter=$2 ctrls=$3 alt=$4 bigalt=$5
