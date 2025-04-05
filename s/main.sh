@@ -14,6 +14,13 @@ wr2_n() {
 wr2 () {
 	buf="${buf}$@"
 }
+wr3_n() {
+	buf2="${buf2}$@
+"
+}
+wr3 () {
+	buf2="${buf2}$@"
+}
 
 echo "#define hel1 \"USAGE\n\""  > ${f}
 d2="#define hel2 \" [filepath [line_termination: rn/r/n]]\
@@ -27,6 +34,7 @@ d2="#define hel2 \" [filepath [line_termination: rn/r/n]]\
 wr "${d2}"
 d2s="$(echo -n "${d2}" | sed "s/\\\n/n/g" | wc -c)" #more at second sed of this kind, if here was \\\" was another command
 fix_s="$(echo ${d2s}+5 | bc)"
+fix_s2="$(echo ${fix_s}+1 | bc)"
 
 text="\ncommand mode: left,right,home,end,Ctrl+q\
 \nCtrl+v = visual mode; Alt+v = visual line mode\
@@ -61,7 +69,7 @@ text="\ncommand mode: left,right,home,end,Ctrl+q\
 \nCtrl+q = quit\""
 wr_n "${text}"
 
-
+exit
 #QWERTyUiOp - p alts are taken
 #ASdFGHJkl
 # zxCVbNm
@@ -80,7 +88,7 @@ search_pos () {
 	p=$(echo "${textsed}" | grep -b -o ${txt} | cut -d':' -f1 )
 	a=
 	for nr in ${p}; do
-		nr=$(echo ${fix_s}+${nr}$(if [ -n "$4" ]; then echo +$4; fi) | bc)
+		nr=$(echo $(if [ -n "$4" ]; then echo -n ${fix_s2}; else echo -n ${fix_s}; fi)+${nr} | bc)
 		wr2 "${a}${nr}"
 		if [ -z "${a}" ]; then a=","; fi
 	done
@@ -105,13 +113,16 @@ _find_pos () { #name=$1 letter=$2 ctrls=$3 alt=$4 bigalt=$5
 		wr2 "0"
 	fi
 	wr2 "}"
+	wr3 $2
 }
 find_pos () {
 	wr2 ","
+	wr3 ","
 	_find_pos $1 $2 $3 $4 $5
 }
 
 wr2 "static keys_struct keys[]={"
+wr3 "static char keys_row[]={"
 _find_pos ocomp 97 1 1 1                    #a
 i=98
 while [ $i -lt 123 ]; do
@@ -137,6 +148,8 @@ while [ $i -lt 123 ]; do
 	i=$((i+1))
 done
 wr2_n "};"
+wr3_n "};"
 wr_n ""
 
 wr "${buf}"
+wr "${buf2}"
