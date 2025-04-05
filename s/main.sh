@@ -15,10 +15,8 @@ wr2 () {
 	buf="${buf}$@"
 }
 
-d1="#define hel1 \\\"USAGE\n\\\""
-
-wr_n "${d1}"  > ${f}
-wr "#define hel2 \" [filepath [line_termination: rn/r/n]]\
+echo "#define hel1 \"USAGE\n\""  > ${f}
+d2="#define hel2 \" [filepath [line_termination: rn/r/n]]\
 \n      --remove-config      Remove configuration files.\
 \nINPUT\
 \nthis help: q(uit),up/down,mouse/touch V.scroll\
@@ -26,6 +24,9 @@ wr "#define hel2 \" [filepath [line_termination: rn/r/n]]\
 \n    [Ctrl/Alt/Shift +]arrows/home/end/del,page up,page down,backspace,enter\
 \n    p.s.: Ctrl+ left/right/del breaks at white-spaces and (),[]{}\
 \n    mouse/touch Click and V.scroll"
+wr "${d2}"
+d2s="$(echo -n "${d2}" | sed "s/\\\n/n/g" | wc -c)" #more at second sed of this kind, if here was \\\" was another command
+fix_s="$(echo ${d2s}+5 | bc)"
 
 text="\ncommand mode: left,right,home,end,Ctrl+q\
 \nCtrl+v = visual mode; Alt+v = visual line mode\
@@ -60,7 +61,7 @@ text="\ncommand mode: left,right,home,end,Ctrl+q\
 \nCtrl+q = quit\""
 wr_n "${text}"
 
-exit
+
 #QWERTyUiOp - p alts are taken
 #ASdFGHJkl
 # zxCVbNm
@@ -73,14 +74,13 @@ wr2_n "typedef struct{
 }keys_struct;"
 
 textsed="$(echo "${text}" | sed "s/\\\n/n/g; s/\\\\\"/\"/g")"  # replace \n to n and \\\" to \"(this will go " at grep). \ at endings are 0
-d1s="$(echo -n "${d1}" | sed "s/\\\n/n/g; s/\\\\\"/\"/g" | wc -c)"
 search_pos () {
 	wr2 ${3}
 	txt=$(printf "$1+\\$(printf %o $2)")
 	p=$(echo "${textsed}" | grep -b -o ${txt} | cut -d':' -f1 )
 	a=
 	for nr in ${p}; do
-		nr=$(echo ${d1s}+${nr} | bc)
+		nr=$(echo ${fix_s}+${nr}$(if [ -n "$4" ]; then echo +$4; fi) | bc)
 		wr2 "${a}${nr}"
 		if [ -z "${a}" ]; then a=","; fi
 	done
@@ -91,7 +91,7 @@ _find_pos () { #name=$1 letter=$2 ctrls=$3 alt=$4 bigalt=$5
 	e=
 	if [ ${3} -ne 0 ]; then
 		wr "static char key_${1}=$(echo ${2}-32 | bc);"
-		search_pos Ctrl ${2}
+		search_pos Ctrl ${2} "" 1
 		e=,
 	fi
 	if [ -n "${4}" ]; then
