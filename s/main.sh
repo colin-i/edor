@@ -1,28 +1,19 @@
 #!/bin/bash
 
 f=main.h
-wr_n() {
-	echo "$@" >> ${f}
-}
-wr () {
-	echo -n "$@" >> ${f}
-}
-wr2_n() {
-	buf="${buf}$@
-"
-}
-wr2 () {
-	buf="${buf}$@"
-}
-wr3_n() {
-	buf2="${buf2}$@
-"
-}
-wr3 () {
-	buf2="${buf2}$@"
-}
+wr_n() { printf '%s' "$@" >> ${f}; echo >> ${f}; }
+wr () { printf '%s' "$@" >> ${f}; }
+wr2_n() { buf="${buf}$@
+"; }
+wr2 () { buf="${buf}$@"; }
+wr3_n() { buf2="${buf2}$@
+"; }
+wr3 () { buf2="${buf2}$@"; }
+wr4_n() { buf3="${buf3}$@
+"; }
+wr4 () { buf3="${buf3}$@"; }
 
-echo "#define hel1 \"USAGE\n\""  > ${f}
+printf '%s' "#define hel1 \"USAGE\n\""  > ${f}; echo >> ${f}
 d2="#define hel2 \" [filepath [line_termination: rn/r/n]]\
 \n      --remove-config      Remove configuration files.\
 \nINPUT\
@@ -33,7 +24,7 @@ d2="#define hel2 \" [filepath [line_termination: rn/r/n]]\
 \n    mouse/touch Click and V.scroll"
 wr "${d2}"
 d2s="$(echo -n "${d2}" | sed "s/\\\n/n/g" | wc -c)" #more at second sed of this kind, if here was \\\" was another command
-fix_s="$(echo ${d2s}+5 | bc)"
+fix_s="$(echo ${d2s}+4 | bc)"
 fix_s2="$(echo ${fix_s}+1 | bc)"
 
 text="\ncommand mode: left,right,home,end,Ctrl+q\
@@ -82,6 +73,7 @@ wr2_n "typedef struct{
 }keys_struct;"
 
 textsed="$(echo "${text}" | sed "s/\\\n/n/g; s/\\\\\"/\"/g")"  # replace \n to n and \\\" to \"(this will go " at grep). \ at endings are 0
+#sh will not see that \n but will cut ok
 search_pos () {
 	wr2 ${3}
 	txt=$(printf "$1+\\$(printf %o $2)")
@@ -112,17 +104,16 @@ _find_pos () { #name=$1 letter=$2 ctrls=$3 alt=$4 bigalt=$5
 	else
 		wr2 "0"
 	fi
-	wr2 "}"
-	wr3 $2
+	wr2 "}"; wr3 $2; wr4 "{nullptr,0}"
 }
 find_pos () {
-	wr2 ","
-	wr3 ","
+	wr2 ","; wr3 ","; wr4 ","
 	_find_pos $1 $2 $3 $4 $5
 }
 
 wr2 "static keys_struct keys[]={"
 wr3 "static char keys_row[]={"
+wr4 "static keys_struct keys_frompref[]={"
 _find_pos ocomp 97 1 1 1                    #a
 i=98
 while [ $i -lt 123 ]; do
@@ -143,13 +134,10 @@ while [ $i -lt 123 ]; do
 		117) find_pos undo $i 1 1;;     #u
 		118) find_pos visual $i 1 1;;   #v
 		119) find_pos wrap $i 1;;       #w
-		*) wr2 ",{nullptr,0}";;
+		*) wr2 ",{nullptr,0}"; wr4 ",{nullptr,0}";;
 	esac
 	i=$((i+1))
 done
-wr2_n "};"
-wr3_n "};"
-wr_n ""
+wr2_n "};"; wr3_n "};"; wr4_n "};"; wr_n ""
 
-wr "${buf}"
-wr "${buf2}"
+wr "${buf}"; wr "${buf2}"; wr "${buf3}"
