@@ -1,2 +1,2 @@
 
-extraflags="CFLAGS=-g" ./mh
+extraflags="CFLAGS=-g" ./mh "$@"

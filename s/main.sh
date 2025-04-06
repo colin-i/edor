@@ -5,7 +5,7 @@ level_names=1
 level_pref_wr=2
 level_pref_rd=3
 level_map=4
-if [ -z "${level}" ]; then level=${level_help}; fi
+if [ -z "${level}" ]; then level=${level_names}; fi
 
 f=main.h
 wr_n() { printf '%s' "$@" >> ${f}; echo >> ${f}; }
@@ -91,13 +91,14 @@ search_pos () {
 	done
 }
 
-nothing="{nullptr,0,0}"
+nothing="{nullptr,0,0,nullptr}"
 
 _find_pos () { #name=$1 letter=$2 ctrls=$3 alt=$4 bigalt=$5
+	if [ -z "${is_extern}" ]; then wr "static "; fi
+	wr "char key_${1}=$(echo ${2}-32 | bc);"
 	wr2 "{(unsigned short[]){"
 	e=
 	if [ ${3} -ne 0 ]; then
-		wr "static char key_${1}=$(echo ${2}-32 | bc);"
 		search_pos Ctrl ${2} "" 1
 		e=,
 	fi
@@ -111,7 +112,7 @@ _find_pos () { #name=$1 letter=$2 ctrls=$3 alt=$4 bigalt=$5
 	else
 		wr2 "0"
 	fi
-	wr2 ",${number_of_keys}}"
+	wr2 ",${number_of_keys},&key_${1}}"
 	wr3 $2; wr4 "${nothing}"
 	number_of_keys=$((number_of_keys+1))
 }
@@ -124,31 +125,32 @@ number_of_keys=0
 wr2 "static keys_struct keys[]={"
 wr3 "static char keys_row[]={"
 wr4 "static keys_struct keys_frompref[]={"
-_find_pos ocomp 97 1 1 1                    #a
+_find_pos ocomp 97 1 1 1                         #a
 i=98
 while [ $i -lt 123 ]; do
 	case $i in
-		99) find_pos findword $i 1 1;;  #c
-		101) find_pos mouse $i 1;;      #e
-		102) find_pos find $i 1 1;;     #f
-		103) find_pos goto $i 1 1;;     #g
-		104) find_pos titles $i 1;;     #h
-		106) find_pos actswf $i 1 1 1;; #j
-		110) find_pos indents $i 1;;    #n
-		111) find_pos paste $i 1 1;;    #o
-		112) find_pos actswf2 $i 0 1 1;;#p
-		113) find_pos quit $i 3;;       #q
-		114) find_pos redo $i 1;;       #r
-		115) find_pos save $i 1 1;;     #s
-		116) find_pos insens $i 1;;     #t
-		117) find_pos undo $i 1 1;;     #u
-		118) find_pos visual $i 1 1;;   #v
-		119) find_pos wrap $i 1;;       #w
+		99) find_pos findword $i 1 1;;       #c
+		101) find_pos mouse $i 1;;           #e
+		102) find_pos find $i 1 1;;          #f
+		103) find_pos goto $i 1 1;;          #g
+		104) find_pos titles $i 1;;          #h
+		106) find_pos actswf $i 1 1 1;;      #j
+		110) find_pos indents $i 1;;         #n
+		111) find_pos paste $i 1 1;;         #o
+		112) find_pos actswf2 $i 0 1 1;;     #p
+		113) is_extern=x find_pos quit $i 3;;#q
+		114) find_pos redo $i 1;;            #r
+		115) find_pos save $i 1 1;;          #s
+		116) find_pos insens $i 1;;          #t
+		117) find_pos undo $i 1 1;;          #u
+		118) find_pos visual $i 1 1;;        #v
+		119) find_pos wrap $i 1;;            #w
 		*) wr2 ",${nothing}"; wr4 ",${nothing}";;
 	esac
 	i=$((i+1))
 done
 wr2_n "};"; wr3_n "};"; wr4_n "};"; wr_n ""
+wr_n "#define A_to_a 0x20"
 
 if [ ${level} -ge ${level_pref_wr} ]; then
 	wr "${buf2}"
@@ -157,6 +159,7 @@ wr_n "typedef struct{
 	unsigned short*pos;
 	unsigned short upos;
 	char key_index;
+	char* key_location;
 }keys_struct;"
 		wr_n "#define number_of_keys ${number_of_keys}"
 		wr_n "static char keys_row_frompref[number_of_keys];"

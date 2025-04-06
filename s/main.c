@@ -2148,48 +2148,48 @@ static bool loopin(WINDOW*w){
 			int z=wgetch(w);
 			nodelay(w,false);
 			int y;bool b;
-			if(z=='v'){if(visual_mode(w,true)/*true*/)return true;}
-			else if(z=='o'){
+			if(z==(key_visual+A_to_a)){if(visual_mode(w,true)/*true*/)return true;}
+			else if(z==(key_paste+A_to_a)){
 				y=getcury(w);
 				if(xtext!=0){xtext=0;refreshpage(w);}
 				wmove(w,y,0);past(w);
-			}else if(z=='g'){
+			}else if(z==(key_goto+A_to_a)){
 				quick_pack(com_nr_goto_alt,w)
 				if(goto_mode((char*)args,w)/*true*/)return true;
-			}else if(z=='f'){if(find_mode(com_nr_findagain,w)/*true*/)return true;}
-			else if(z=='c'){if(find_mode(com_nr_findwordfrom,w)/*true*/)return true;}
-			else if(z=='u'){vis('U',w);undo_loop(w);vis(' ',w);}
-			else if(z=='s'){b=savetofile(w,false);if(b/*true*/)return true;}
-			else if(z=='a'){aftercall=aftercall_find();aftercall_draw(w);}
-			else if(z=='j'){if(pref_change(w,&sdelimiter,&sdelimiter_new,true)/*true*/)return true;}           //don't allow no size delimiters
-			else if(z=='p'){if(pref_change(w,&split_out,&split_out_new,false)/*true*/)return true;}
-			else if(z=='A'){if(pref_change(w,&ocode_extension,&ocode_extension_new,false)/*true*/)return true;}
-			else if(z=='J'){if(pref_change(w,&esdelimiter,&esdelimiter_new,true)/*true*/)return true;}         //don't allow no size delimiters
-			else if(z=='P'){if(pref_change(w,&split_extension,&split_extension_new,false)/*true*/)return true;}
+			}else if(z==(key_find+A_to_a)){if(find_mode(com_nr_findagain,w)/*true*/)return true;}
+			else if(z==(key_findword+A_to_a)){if(find_mode(com_nr_findwordfrom,w)/*true*/)return true;}
+			else if(z==(key_undo+A_to_a)){vis('U',w);undo_loop(w);vis(' ',w);}
+			else if(z==(key_save+A_to_a)){b=savetofile(w,false);if(b/*true*/)return true;}
+			else if(z==(key_ocomp+A_to_a)){aftercall=aftercall_find();aftercall_draw(w);}
+			else if(z==(key_actswf+A_to_a)){if(pref_change(w,&sdelimiter,&sdelimiter_new,true)/*true*/)return true;}           //don't allow no size delimiters
+			else if(z==(key_actswf2+A_to_a)){if(pref_change(w,&split_out,&split_out_new,false)/*true*/)return true;}
+			else if(z==key_ocomp){if(pref_change(w,&ocode_extension,&ocode_extension_new,false)/*true*/)return true;}
+			else if(z==key_actswf){if(pref_change(w,&esdelimiter,&esdelimiter_new,true)/*true*/)return true;}         //don't allow no size delimiters
+			else if(z==key_actswf2){if(pref_change(w,&split_extension,&split_extension_new,false)/*true*/)return true;}
 		}else{
 			const char*s=keyname(c);
 			if(*s==Char_Ctrl){//seems that all cases are ^ a letter \0
 				char chr=s[1];
-				if(chr=='V'){
+				if(chr==key_visual){
 					if(visual_mode(w,false)/*true*/)return true;
-				}else if(chr=='O')past(w);
-				else if(chr=='S'){
+				}else if(chr==key_paste)past(w);
+				else if(chr==key_save){
 					bool b=savetofile(w,true);
 					if(b/*true*/)return true;
-				}else if(chr=='G'){
+				}else if(chr==key_goto){
 					char aa=com_nr_goto;
 					if(goto_mode(&aa,w)/*true*/)return true;
-				}else if(chr=='F'){
+				}else if(chr==key_find){
 					if(find_mode(com_nr_find,w)/*true*/)return true;
-				}else if(chr=='C'){
+				}else if(chr==key_findword){
 					if(find_mode(com_nr_findword,w)/*true*/)return true;
-				}else if(chr=='U'){
+				}else if(chr==key_undo){
 					undo(w);
-				}else if(chr=='R'){
+				}else if(chr==key_redo){
 					redo(w);
-				}else if(chr=='H'){
+				}else if(chr==key_titles){
 					if(titles(w)/*true*/)return true;
-				}else if(chr=='Q'){
+				}else if(chr==key_quit){
 					if(mod_flag==false){
 						bar_clear();//errors
 						command_char q=question("And save");
@@ -2206,37 +2206,37 @@ static bool loopin(WINDOW*w){
 					}
 					if(restorefile!=nullptr)unlink(restorefile);//here restorefile is deleted
 					return false;
-				}else if(chr=='T'){
+				}else if(chr==key_insens){
 					bool b;char c;
 					if(insensitive/*true*/){insensitive=false;c=insensitive_disabled;}
 					else{insensitive=true;c=insensitive_enabled;}
 					setprefs(mask_insensitive,insensitive);//here the bit is set on full insensitive search
 					vis(c,w);//is not showing on stdscr without wnoutrefresh(thisWindow)
-				}else if(chr=='E'){
+				}else if(chr==key_mouse){
 					bool b;char c;
 					if(stored_mouse_mask_q){stored_mouse_mask=mousemask(0,nullptr);c=mouseevents_disabled;setprefs(mask_mouse,false);}
 					else{stored_mouse_mask=mousemask(ALL_MOUSE_EVENTS,nullptr);c=mouseevents_enabled;setprefs(mask_mouse,true);}
 					vis(c,w);
-				}else if(chr=='N'){
+				}else if(chr==key_indents){
 					char c;
 					if(indent_flag/*true*/){indent_flag=false;c=indent_disabled;}
 					else{indent_flag=true;c=indent_enabled;}
 					setprefs(mask_indent,indent_flag);
 					vis(c,w);//is not showing on stdscr without wnoutrefresh(thisWindow)
-				}else if(chr=='A'){
+				}else if(chr==key_ocomp){
 					if(ocompiler_flag/*true*/){ocompiler_flag=false;c=ocompiler_disabled;}
 					else{ocompiler_flag=true;c=ocompiler_enabled;
 						aftercall=aftercall_find();}
 					setprefs(mask_ocompiler,ocompiler_flag);
 					visual(c);//addch for more info, first to window, then wnoutrefresh to virtual, then doupdate to phisical
 					aftercall_draw(w);
-				}else if(chr=='J'){//joins //alt j is set delimiter,alt J escape delimiter
+				}else if(chr==key_actswf){//joins //alt j is set delimiter,alt J escape delimiter
 					char c;
 					if(splits_flag/*true*/){splits_flag=false;c=splits_disabled;}
 					else{splits_flag=true;c=splits_enabled;}
 					setprefs(mask_splits,splits_flag);
 					vis(c,w);
-				}else if(chr=='W'){if(text_wrap(w)/*true*/)return true;}
+				}else if(chr==key_wrap){if(text_wrap(w)/*true*/)return true;}
 				else type(c,w);//enter, tab, ^, unknown ctrls
 			}else{
 				if(strcmp(s,"KEY_F(1)")==0){

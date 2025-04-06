@@ -133,7 +133,7 @@ bool titles(WINDOW*w){
 				break;
 			}
 			const char*kname=keyname(b);
-			if(*kname==Char_Ctrl&&kname[1]=='Q')break;
+			if(*kname==Char_Ctrl&&kname[1]==key_quit)break;
 
 			//find next row start same as [0,x)+b and wmove there
 			singlechar=titcolor(b,&color,w,singlechar);

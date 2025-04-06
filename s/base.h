@@ -104,6 +104,8 @@ extern char*textfile;
 extern bool mod_flag;
 extern bool insensitive;
 extern char*ocode_extension;
+//bar,tit
+extern char key_quit;
 //bar,tw,tit
 extern size_t ytext;
 extern row_dword xtext;
