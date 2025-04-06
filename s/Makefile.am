@@ -24,7 +24,10 @@ test: $(BUILT_SOURCES)
 #	rm -f ${bin_PROGRAMS}t
 
 main.h: main.sh
-	$(SHELL) ./main.sh
+	if [ -n "${RUN__SHELL}" ]; then ${RUN__SHELL} ./main.sh; \
+	else $(SHELL) ./main.sh; fi
+#or @RUN__SHELL@ but is not rerunable
+#else in case ${SHELL} was "" and make is coming with a $(SHELL)
 
 #here will add
 .PHONY: test

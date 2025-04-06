@@ -13,6 +13,7 @@ AC_ARG_ENABLE(cpp,
   AS_HELP_STRING([--enable-cpp],[enable cpp, default: yes]),
   [case "${enableval}" in yes) cpp=true ;; no) cpp=false ;; *) AC_MSG_ERROR([bad value ${enableval} for --enable-cpp]) ;; esac],
   [cpp=true])
+
 AM_CONDITIONAL(CPP, test x"${cpp}" = x"true")
 
 # Check for CFLAGS
@@ -105,11 +106,38 @@ test "x${enable_cflags_setting}" = xyes && CFLAGS="-O3 -s"
 #                                                  -O1
 #O3 is not removing symbols
 
-# Checks for library functions.
-
 AM_INIT_AUTOMAKE
 
 AC_CONFIG_FILES([Makefile s/Makefile])
+
+AC_MSG_CHECKING([shell])
+AS_IF([ [[ -n "$(test x"${SHELL}" != x"/bin/bash" && echo x)" ]] && [[ -n "$(test x"${SHELL}" != x"/bin/sh" && echo x)" ]] ],
+	[
+		AS_IF([ $(test -x /bin/bash) ],
+			[
+				AC_SUBST([RUN__SHELL], "/bin/bash")
+				AC_MSG_RESULT([set /bin/bash])
+			],
+			[
+				AS_IF([ $(test -x /bin/sh) ],
+					[
+						AC_SUBST([RUN__SHELL], "/bin/sh")
+						AC_MSG_RESULT([set /bin/sh])
+					],
+					[
+						AC_SUBST([RUN__SHELL], "${SHELL}")
+						AC_MSG_RESULT([is ${SHELL}])
+					]
+				)
+			]
+		)
+	],
+	[
+		#RUN__SHELL = "${SHELL}" is not enough
+		AC_SUBST([RUN__SHELL], "${SHELL}")
+		AC_MSG_RESULT([ok ${SHELL}])
+	]
+)
 
 AC_OUTPUT
 
