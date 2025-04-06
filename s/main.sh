@@ -1,5 +1,12 @@
 #!/bin/bash
 
+level_help=0
+level_names=1
+level_pref_wr=2
+level_pref_rd=3
+level_map=4
+if [ -z "${level}" ]; then level=${level_help}; fi
+
 f=main.h
 wr_n() { printf '%s' "$@" >> ${f}; echo >> ${f}; }
 wr () { printf '%s' "$@" >> ${f}; }
@@ -60,17 +67,15 @@ text="\ncommand mode: left,right,home,end,Ctrl+q\
 \nCtrl+q = quit\""
 wr_n "${text}"
 
-exit
+if [ ${level} -eq ${level_help} ]; then
+	exit 0
+fi
+
 #QWERTyUiOp - p alts are taken
 #ASdFGHJkl
 # zxCVbNm
 # ^M is 13 that comes also at Enter, ^I is 9 that comes also at Tab
 # ^P at docker, something is not ok with the redraw
-
-wr2_n "typedef struct{
-	unsigned short*pos;
-	unsigned short upos;
-}keys_struct;"
 
 textsed="$(echo "${text}" | sed "s/\\\n/n/g; s/\\\\\"/\"/g")"  # replace \n to n and \\\" to \"(this will go " at grep). \ at endings are 0
 #sh will not see that \n but will cut ok
@@ -85,6 +90,8 @@ search_pos () {
 		if [ -z "${a}" ]; then a=","; fi
 	done
 }
+
+nothing="{nullptr,0,0}"
 
 _find_pos () { #name=$1 letter=$2 ctrls=$3 alt=$4 bigalt=$5
 	wr2 "{(unsigned short[]){"
@@ -104,13 +111,16 @@ _find_pos () { #name=$1 letter=$2 ctrls=$3 alt=$4 bigalt=$5
 	else
 		wr2 "0"
 	fi
-	wr2 "}"; wr3 $2; wr4 "{nullptr,0}"
+	wr2 ",${number_of_keys}}"
+	wr3 $2; wr4 "${nothing}"
+	number_of_keys=$((number_of_keys+1))
 }
 find_pos () {
 	wr2 ","; wr3 ","; wr4 ","
 	_find_pos $1 $2 $3 $4 $5
 }
 
+number_of_keys=0
 wr2 "static keys_struct keys[]={"
 wr3 "static char keys_row[]={"
 wr4 "static keys_struct keys_frompref[]={"
@@ -134,10 +144,25 @@ while [ $i -lt 123 ]; do
 		117) find_pos undo $i 1 1;;     #u
 		118) find_pos visual $i 1 1;;   #v
 		119) find_pos wrap $i 1;;       #w
-		*) wr2 ",{nullptr,0}"; wr4 ",{nullptr,0}";;
+		*) wr2 ",${nothing}"; wr4 ",${nothing}";;
 	esac
 	i=$((i+1))
 done
 wr2_n "};"; wr3_n "};"; wr4_n "};"; wr_n ""
 
-wr "${buf}"; wr "${buf2}"; wr "${buf3}"
+if [ ${level} -ge ${level_pref_wr} ]; then
+	wr "${buf2}"
+	if [ ${level} -ge ${level_pref_rd} ]; then
+wr_n "typedef struct{
+	unsigned short*pos;
+	unsigned short upos;
+	char key_index;
+}keys_struct;"
+		wr_n "#define number_of_keys ${number_of_keys}"
+		wr_n "static char keys_row_frompref[number_of_keys];"
+		if [ ${level} -ge ${level_map} ]; then
+			wr "${buf3}"
+			wr "${buf}"
+		fi
+	fi
+fi
