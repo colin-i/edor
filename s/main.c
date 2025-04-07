@@ -1994,6 +1994,7 @@ static bool visual_mode(WINDOW*w,bool v_l){
 	return false;
 }
 #define quick_pack(nr,w) comnrp_define args[2];((comnrp_define)args)[0]=nr;args[1]=(comnrp_define)w;
+#define quick_pack3(nr,fn,w) comnrp_define args[3];((comnrp_define)args)[0]=nr;args[1]=(comnrp_define)fn;args[2]=(comnrp_define)w;
 static bool find_mode(int nr,WINDOW*w){
 	quick_pack((long)nr,w)
 	command_char r=command((comnrp_define)args);
@@ -2052,7 +2053,12 @@ static void writeprefs(int f,char mask){
 		unsigned char sz=strlen(ocode_extension);//at prefs one byte is taken, and also input has 255 max
 		if(write(f,&sz,extlen_size)==extlen_size){
 			if(write(f,ocode_extension,sz)==sz){
-				split_writeprefs(f);
+				if(split_writeprefs(f)/*true*/){
+					#pragma GCC diagnostic push
+					#pragma GCC diagnostic ignored "-Wunused-result"
+					write(f,keys_row,number_of_keys);
+					#pragma GCC diagnostic pop
+				}
 			}
 		}
 	}
@@ -2154,7 +2160,7 @@ static bool loopin(WINDOW*w){
 				if(xtext!=0){xtext=0;refreshpage(w);}
 				wmove(w,y,0);past(w);
 			}else if(z==(key_goto+A_to_a)){
-				quick_pack(com_nr_goto_alt,w)
+				quick_pack3(com_nr_goto_alt,go_to,w)
 				if(goto_mode((char*)args,w)/*true*/)return true;
 			}else if(z==(key_find+A_to_a)){if(find_mode(com_nr_findagain,w)/*true*/)return true;}
 			else if(z==(key_findword+A_to_a)){if(find_mode(com_nr_findwordfrom,w)/*true*/)return true;}
@@ -2177,8 +2183,9 @@ static bool loopin(WINDOW*w){
 					bool b=savetofile(w,true);
 					if(b/*true*/)return true;
 				}else if(chr==key_goto){
-					char aa=com_nr_goto;
-					if(goto_mode(&aa,w)/*true*/)return true;
+					//char aa=com_nr_goto;&aa
+					quick_pack(com_nr_goto,go_to)
+					if(goto_mode((char*)args,w)/*true*/)return true;
 				}else if(chr==key_find){
 					if(find_mode(com_nr_find,w)/*true*/)return true;
 				}else if(chr==key_findword){
@@ -2369,6 +2376,40 @@ static bool grab_input(size_t*text_sz){
 	return true;//it was a problem at input, not sure if was here, anyway here is easy to force with sudo chmod 600 /dev/tty
 }
 
+static void changekey(char i){
+	keys_struct*k=&keys[i];
+	char newkey=i+_0_to_A;
+	*(k->key_location)=newkey;
+	char pos_total=k->pos_total;
+	if(pos_total!=0){
+		unsigned short* pos=k->pos;
+		for(int j=0;j<pos_total;j++){
+			keys_helptext[pos[j]]=newkey+A_to_a;
+		}
+	}
+	unsigned short upos=k->upos;
+	if(upos!=0){
+		keys_helptext[upos]=newkey;
+	}
+}
+static void getkeys(){
+	for(char i=0;i<number_of_keys;i++){
+		unsigned char ix=keys_row_frompref[i];
+		if(ix>key_last_index)return;
+		if(keys_frompref[ix].key_location!=nullptr)return;
+		char ix_orig=keys_row_orig[i];
+		memcpy(&keys_frompref[ix],&keys_orig[ix_orig],sizeof(keys_struct));
+	}
+	keys=keys_frompref;
+	keys_row=keys_row_frompref;
+	for(char i=0;i<number_of_keys;i++){
+		char ix=keys_row[i];
+		if(keys_row_orig[i]!=ix){
+			changekey(ix);
+		}
+	}
+}
+
 static bool valid_ln_term(int argc,char**argv,bool*not_forced){
 	if(argc==3){
 		char*input_term=argv[2];
@@ -2426,7 +2467,8 @@ static bool help_init(char*f,size_t szf){
 		helptext=a;
 		memcpy(a,hel1,sz1);
 		a+=sz1;memcpy(a,f,szf);
-		memcpy(a+szf,hel2,sz2);
+		keys_helptext=a+szf;
+		memcpy(keys_helptext,hel2,sz2);
 		return true;
 	}
 	return false;
@@ -2472,7 +2514,11 @@ static void getprefs(){
 					if(read(f,ocode_extension_new,len)==len){
 						ocode_extension=ocode_extension_new;
 						ocode_extension[len]='\0';
-						split_readprefs(f);
+						if(split_readprefs(f)/*true*/){
+							if(read(f,keys_row_frompref,number_of_keys)==number_of_keys){
+								getkeys();
+							}
+						}
 					}
 				}
 			}

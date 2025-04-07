@@ -1,11 +1,11 @@
-#!/bin/bash
+#!/bin/sh
 
 level_help=0
 level_names=1
 level_pref_wr=2
 level_pref_rd=3
 level_map=4
-if [ -z "${level}" ]; then level=${level_names}; fi
+if [ -z "${level}" ]; then level=${level_map}; fi
 
 f=main.h
 wr_n() { printf '%s' "$@" >> ${f}; echo >> ${f}; }
@@ -21,7 +21,8 @@ wr4_n() { buf3="${buf3}$@
 wr4 () { buf3="${buf3}$@"; }
 
 printf '%s\n' "#define hel1 \"USAGE\n\"" > ${f}
-d2="#define hel2 \" [filepath [line_termination: rn/r/n]]\
+wr "#define hel2 \""
+d2=" [filepath [line_termination: rn/r/n]]\
 \n      --remove-config      Remove configuration files.\
 \nINPUT\
 \nthis help: q(uit),up/down,mouse/touch V.scroll\
@@ -88,16 +89,18 @@ search_pos () {
 		nr=$(echo $(if [ -n "$4" ]; then echo -n ${fix_s2}; else echo -n ${fix_s}; fi)+${nr} | bc)
 		wr2 "${a}${nr}"
 		if [ -z "${a}" ]; then a=","; fi
+		z=$((z+1))
 	done
 }
 
-nothing="{nullptr,0,0,nullptr}"
+nothing="{nullptr,nullptr,0,0,0}"
 
 _find_pos () { #name=$1 letter=$2 ctrls=$3 alt=$4 bigalt=$5
 	if [ -z "${is_extern}" ]; then wr "static "; fi
 	wr "char key_${1}=$(echo ${2}-32 | bc);"
-	wr2 "{(unsigned short[]){"
+	wr2 "{&key_${1},(unsigned short[]){"
 	e=
+	z=0
 	if [ ${3} -ne 0 ]; then
 		search_pos Ctrl ${2} "" 1
 		e=,
@@ -105,15 +108,15 @@ _find_pos () { #name=$1 letter=$2 ctrls=$3 alt=$4 bigalt=$5
 	if [ -n "${4}" ]; then
 		search_pos Alt ${2} ${e}
 	fi
-	wr2 "},"
+	wr2 "},$z,"
 	if [ -n "${5}" ]; then
 		nr=$(echo ${2}-32 | bc)
 		search_pos Alt ${nr}
 	else
 		wr2 "0"
 	fi
-	wr2 ",${number_of_keys},&key_${1}}"
-	wr3 $2; wr4 "${nothing}"
+	wr2 ",${number_of_keys}}"
+	wr3 $((${2}-97)); wr4 "${nothing}"
 	number_of_keys=$((number_of_keys+1))
 }
 find_pos () {
@@ -122,8 +125,8 @@ find_pos () {
 }
 
 number_of_keys=0
-wr2 "static keys_struct keys[]={"
-wr3 "static char keys_row[]={"
+wr2 "static keys_struct keys_orig[]={"
+wr3 "static char keys_row_orig[]={"
 wr4 "static keys_struct keys_frompref[]={"
 _find_pos ocomp 97 1 1 1                         #a
 i=98
@@ -145,6 +148,7 @@ while [ $i -lt 123 ]; do
 		117) find_pos undo $i 1 1;;          #u
 		118) find_pos visual $i 1 1;;        #v
 		119) find_pos wrap $i 1;;            #w
+		#122                                 #z
 		*) wr2 ",${nothing}"; wr4 ",${nothing}";;
 	esac
 	i=$((i+1))
@@ -154,18 +158,24 @@ wr_n "#define A_to_a 0x20"
 
 if [ ${level} -ge ${level_pref_wr} ]; then
 	wr "${buf2}"
+	wr_n "static char* keys_row=keys_row_orig;"
+	wr_n "#define number_of_keys ${number_of_keys}"
 	if [ ${level} -ge ${level_pref_rd} ]; then
 wr_n "typedef struct{
+	char* key_location;
 	unsigned short*pos;
+	char pos_total;
 	unsigned short upos;
 	char key_index;
-	char* key_location;
 }keys_struct;"
-		wr_n "#define number_of_keys ${number_of_keys}"
 		wr_n "static char keys_row_frompref[number_of_keys];"
 		if [ ${level} -ge ${level_map} ]; then
 			wr "${buf3}"
 			wr "${buf}"
+			wr_n "static keys_struct*keys=keys_orig;"
+			wr_n "static char*keys_helptext;"
+			wr_n "#define key_last_index $((122-97))"
+			wr_n "#define _0_to_A 0x41"
 		fi
 	fi
 fi

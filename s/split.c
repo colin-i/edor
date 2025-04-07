@@ -326,7 +326,7 @@ bool split_grab(char**p_text,size_t*p_size,char*argfile){
 	return false;
 }
 
-void split_writeprefs(int f){
+bool split_writeprefs(int f){
 	unsigned char sz=strlen(sdelimiter);
 	if(write(f,&sz,extlen_size)==extlen_size){
 		if(write(f,sdelimiter,sz)==sz){
@@ -338,10 +338,9 @@ void split_writeprefs(int f){
 						if(write(f,split_out,sz)==sz){
 							sz=strlen(split_extension);
 							if(write(f,&sz,extlen_size)==extlen_size){
-								#pragma GCC diagnostic push
-								#pragma GCC diagnostic ignored "-Wunused-result"
-								write(f,split_extension,sz);
-								#pragma GCC diagnostic pop
+								if(write(f,split_extension,sz)==sz){
+									return true;
+								}
 							}
 						}
 					}
@@ -349,8 +348,9 @@ void split_writeprefs(int f){
 			}
 		}
 	}
+	return false;
 }
-void split_readprefs(int f){
+bool split_readprefs(int f){
 	unsigned char len;
 	if(read(f,&len,extlen_size)==extlen_size){
 		sdelimiter_new=(char*)malloc(len+1);
@@ -376,6 +376,7 @@ void split_readprefs(int f){
 												if(read(f,split_extension_new,len)==len){
 													split_extension_new[len]='\0';
 													split_extension=split_extension_new;
+													return true;
 												}
 											}
 										}
@@ -388,6 +389,7 @@ void split_readprefs(int f){
 			}
 		}
 	}
+	return false;
 }
 void split_freeprefs(){
 	if(sdelimiter_new!=nullptr){

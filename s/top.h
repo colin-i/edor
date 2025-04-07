@@ -50,7 +50,7 @@ typedef struct{
 	#define com_nr_find_numbers com_nr_findwordfrom
 #define com_nr_goto 4
 #define com_nr_goto_alt 5
-	#define com_nr_goto_numbers com_nr_goto_alt
+	#define com_nr_passcursor_numbers com_nr_goto_alt
 #define com_nr_save 6
 #define com_nr_ext 7
 

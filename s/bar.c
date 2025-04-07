@@ -594,7 +594,7 @@ static bool replace_text(WINDOW*w,int yb,int xb,int rstart,int rstop){
 	}
 }
 //0/1  not signed but will return at command
-static command_char go_to(bar_byte cursor){
+command_char go_to(bar_byte cursor){
 	int i=0;size_t y;size_t x;
 	for(;;){
 		if(input0[i]==','){
@@ -995,6 +995,7 @@ static bool delimiter(size_t y1,size_t x1,int y,bar_byte pos,bar_byte sz,bar_byt
 }
 
 #define quick_get(z) ((WINDOW**)((void*)z))[1]
+#define quick_get3(z) ((WINDOW**)((void*)z))[2]
 #define find_returner return a==KEY_RESIZE?command_resize:command_ok;
 
 static void finds_total(int number,size_t y1,row_dword x1,size_t xr,row_dword xc,bool untouched,bar_byte cursor,WINDOW*w){
@@ -1238,7 +1239,7 @@ command_char command(comnrp_define comnrp){
 	}else{
 		input=input0;
 		if(*comnrp==com_nr_goto_alt)cursor=sprintf(input,protocol ",",1+ytext
-			+(size_t)getcury(quick_get(comnrp)));
+			+(size_t)getcury(quick_get3(comnrp)));
 		else if(*comnrp==com_nr_ext){
 			extdata*d=((extdata**)comnrp)[1];
 			cursor=sprintf(input,"%s",(d->orig)[0]);//on prefs is len<=0xff and max_path_0 is 0x100
@@ -1271,9 +1272,9 @@ command_char command(comnrp_define comnrp){
 					command_rewrite(y,ifback>right?right:ifback,pos,inputf,cursor,visib);
 					continue;
 				}
-			}else if(comnr<=com_nr_goto_numbers){
+			}else if(comnr<=com_nr_passcursor_numbers){
 				input[cursor]='\0';
-				r=go_to(cursor);
+				r=((command_char(*)(bar_byte))(((comnrp_define*)comnrp)[1]))(cursor);
 			}else if(comnr==com_nr_save){
 				input[cursor]='\0';
 				r=saves();

@@ -42,6 +42,7 @@ command_char command(char*);
 #define centering2(w,prw,pxc,right) position(0,0);centering3(w,prw,pxc,right);
 #define centering(w,prw,pxc) centering2(w,prw,pxc,false)
 #define centering_simple(w) centering(w,nullptr,nullptr)
+command_char go_to(bar_byte);
 WINDOW*position_init(void);
 void position(int,int);
 void position_reset(void);
@@ -89,8 +90,8 @@ bool titles(WINDOW*);
 //main
 char split_conditions(char*,bool);
 bool split_grab(char**,size_t*,char*);
-void split_writeprefs(int);
-void split_readprefs(int);
+bool split_writeprefs(int);
+bool split_readprefs(int);
 void split_freeprefs();
 bool split_write_init(char*);
 char* split_write(size_t*,int,unsigned int*,bool*);
