@@ -2053,10 +2053,14 @@ static void writeprefs(int f,char mask){
 		if(write(f,&sz,extlen_size)==extlen_size){
 			if(write(f,ocode_extension,sz)==sz){
 				if(split_writeprefs(f)/*true*/){
-					#pragma GCC diagnostic push
-					#pragma GCC diagnostic ignored "-Wunused-result"
-					write(f,keys_row,number_of_keys);
-					#pragma GCC diagnostic pop
+					char k=0;
+					if(memcmp(keys_row,keys_row_orig,number_of_keys)!=0)k=number_of_keys;
+					if(write(f,&k,sizeof(char))==sizeof(char)){
+						#pragma GCC diagnostic push
+						#pragma GCC diagnostic ignored "-Wunused-result"
+						write(f,keys_row,k);
+						#pragma GCC diagnostic pop
+					}
 				}
 			}
 		}
@@ -2395,10 +2399,16 @@ static bool grab_input(size_t*text_sz){
 	return true;//it was a problem at input, not sure if was here, anyway here is easy to force with sudo chmod 600 /dev/tty
 }
 
-static void getkeys(){
+static void getkeys(char kp){
 	for(char i=0;i<number_of_keys;i++){
-		unsigned char ix=keys_row_frompref[i];
-		if(ix>key_last_index)return;
+		unsigned char ix;//this is unsigned because is unknown read
+		if(i<kp){
+			ix=keys_row_frompref[i];
+			if(ix>key_last_index)return;
+		}else{//this is very safety if adding new keys and will write 0 at no changes that can be ok on many users pref files and one program
+			ix=keys_row_orig[i];
+			keys_row_frompref[i]=ix;
+		}
 		if(keys_frompref[ix].key_location!=nullptr)return;
 		char ix_orig=keys_row_orig[i];
 		memcpy(&keys_frompref[ix],&keys_orig[ix_orig],sizeof(key_struct));
@@ -2518,8 +2528,13 @@ static void getprefs(){
 						ocode_extension=ocode_extension_new;
 						ocode_extension[len]='\0';
 						if(split_readprefs(f)/*true*/){
-							if(read(f,keys_row_frompref,number_of_keys)==number_of_keys){
-								getkeys();
+							unsigned char k;
+							if(read(f,&k,sizeof(char))==sizeof(char)){
+								if(k<=number_of_keys){
+									if(read(f,keys_row_frompref,k)==k){
+										getkeys(k);
+									}
+								}
 							}
 						}
 					}

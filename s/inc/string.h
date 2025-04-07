@@ -30,21 +30,21 @@ void*memcpy(void*,const void*,size_t);
 #endif
 #endif
 
-#if defined(is_bar_c)||defined(is_sep_c)
+#if defined(is_main_c)||defined(is_tit_c)||defined(is_split_c)
 #ifdef __cplusplus
 extern "C" {
 #endif
-char*strrchr(const char*,int);
+int memcmp(void*,void*,size_t);
 #ifdef __cplusplus
 }
 #endif
 #endif
 
-#if defined(is_tit_c)||defined(is_split_c)
+#if defined(is_bar_c)||defined(is_sep_c)
 #ifdef __cplusplus
 extern "C" {
 #endif
-int memcmp(void*,void*,size_t);
+char*strrchr(const char*,int);
 #ifdef __cplusplus
 }
 #endif
