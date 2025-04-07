@@ -65,6 +65,7 @@ text="\ncommand mode: left,right,home,end,Ctrl+q\
 \nCtrl+a = enable/disable O language syntax; Alt+a = syntax rescan; Alt+A = change extension name (blank is all)\
 \nCtrl+j = enable/disable OA split syntax; Alt+j = change delimiter; Alt+J = change view delimiter\
 \n    Alt+p = change splits folder; Alt+P = change extension name for splits (blank is all)\
+\nCtrl+z = switch keys, applies to Ctrl and lower/upper Alt (example: az , a becomes z and z becomes a)\
 \nCtrl+q = quit\""
 wr_n "${text}"
 
@@ -72,9 +73,9 @@ if [ ${level} -eq ${level_help} ]; then
 	exit 0
 fi
 
-#QWERTyUiOp - p alts are taken
-#ASdFGHJkl
-# zxCVbNm
+#QWERT U O y   ip, p alts are taken
+#AS FGHJ   dkl
+# Z CV N   zb  m
 # ^M is 13 that comes also at Enter, ^I is 9 that comes also at Tab
 # ^P at docker, something is not ok with the redraw
 
@@ -125,9 +126,9 @@ find_pos () {
 }
 
 number_of_keys=0
-wr2 "static keys_struct keys_orig[]={"
+wr2 "static key_struct keys_orig[]={"
 wr3 "static char keys_row_orig[]={"
-wr4 "static keys_struct keys_frompref[]={"
+wr4 "static key_struct keys_frompref[]={"
 _find_pos ocomp 97 1 1 1                         #a
 i=98
 while [ $i -lt 123 ]; do
@@ -148,7 +149,7 @@ while [ $i -lt 123 ]; do
 		117) find_pos undo $i 1 1;;          #u
 		118) find_pos visual $i 1 1;;        #v
 		119) find_pos wrap $i 1;;            #w
-		#122                                 #z
+		122) find_pos swkey $i 1;;           #z
 		*) wr2 ",${nothing}"; wr4 ",${nothing}";;
 	esac
 	i=$((i+1))
@@ -158,21 +159,14 @@ wr_n "#define A_to_a 0x20"
 
 if [ ${level} -ge ${level_pref_wr} ]; then
 	wr "${buf2}"
-	wr_n "static char* keys_row=keys_row_orig;"
+	wr_n "char* keys_row=keys_row_orig;"
 	wr_n "#define number_of_keys ${number_of_keys}"
 	if [ ${level} -ge ${level_pref_rd} ]; then
-wr_n "typedef struct{
-	char* key_location;
-	unsigned short*pos;
-	char pos_total;
-	unsigned short upos;
-	char key_index;
-}keys_struct;"
 		wr_n "static char keys_row_frompref[number_of_keys];"
 		if [ ${level} -ge ${level_map} ]; then
 			wr "${buf3}"
 			wr "${buf}"
-			wr_n "static keys_struct*keys=keys_orig;"
+			wr_n "key_struct*keys=keys_orig;"
 			wr_n "static char*keys_helptext;"
 			wr_n "#define key_last_index $((122-97))"
 			wr_n "#define _0_to_A 0x41"

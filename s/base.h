@@ -2,6 +2,7 @@
 //main
 //bar
 int c_to_xc(int,int);
+void changekey(char);
 void cpymembuf(size_t,row_dword,size_t,row_dword,char*);
 void deleting(size_t,size_t,size_t,size_t);
 bool deleting_init(size_t,row_dword,size_t,row_dword);
@@ -16,8 +17,12 @@ void printinverted(const char*s);
 void refreshrowsbot(WINDOW*,int,int);
 #define refreshrows(w,i) refreshrowsbot(w,i,getmaxy(w))
 void restore_rebase();
+#define mask_nomask 0
+#define ignored 0
+#define rewriteprefs setprefs(mask_nomask,ignored)
 bool row_alloc(row*,row_dword,size_t,row_dword);
 void row_set(row*,row_dword,row_dword,row_dword,const char*);
+void setprefs(int,bool);
 size_t sizemembuf(size_t,row_dword,size_t,row_dword);
 void vis(char,WINDOW*);
 //tw
@@ -38,6 +43,7 @@ void bar_init(void);
 command_char save(void);
 command_char saving_base(char*);
 command_char question(const char*);
+command_char change_key(bar_byte);
 command_char command(char*);
 #define centering2(w,prw,pxc,right) position(0,0);centering3(w,prw,pxc,right);
 #define centering(w,prw,pxc) centering2(w,prw,pxc,false)
@@ -105,6 +111,8 @@ extern char*textfile;
 extern bool mod_flag;
 extern bool insensitive;
 extern char*ocode_extension;
+extern key_struct*keys;
+extern char*keys_row;
 //bar,tit
 extern char key_quit;
 //bar,tw,tit

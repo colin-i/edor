@@ -593,6 +593,7 @@ static bool replace_text(WINDOW*w,int yb,int xb,int rstart,int rstop){
 		}
 	}
 }
+
 //0/1  not signed but will return at command
 command_char go_to(bar_byte cursor){
 	int i=0;size_t y;size_t x;
@@ -619,6 +620,33 @@ command_char go_to(bar_byte cursor){
 	}
 	return command_false;
 }
+static void set_key(key_struct*from,char to){
+	memcpy(&keys[to],from,sizeof(key_struct));
+	if(keys[to].key_location!=nullptr){
+		char ix=keys[to].index;keys_row[ix]=to;
+		changekey(to);
+	}
+}
+#define is_a_z(p) input0[p]>='a'&&input0[p]<='z'
+//same as goto
+command_char change_key(bar_byte cursor){
+	if(is_a_z(0)){
+		if(is_a_z(1)){
+			if(input0[2]=='\0'){
+				char from=*input0-'a';
+				char to=input0[1]-'a';
+				key_struct aux;
+				memcpy(&aux,&keys[to],sizeof(key_struct));
+				set_key(&keys[from],to);
+				set_key(&aux,from);
+				rewriteprefs;
+				return command_ok;
+			}
+		}
+	}
+	return command_false;
+}
+
 command_char save(){
 	if(textfile!=nullptr){
 		return saving();

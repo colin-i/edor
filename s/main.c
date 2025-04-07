@@ -141,7 +141,6 @@ static void __attribute__((noreturn)) signalHandler(int sig,siginfo_t *info,void
 
 #include"base.h"
 
-#define ignored 0
 #define no_clue (size_t)-1
 
 #define normalize_yes -1
@@ -183,7 +182,7 @@ static mmask_t stored_mouse_mask=0;
 #define stored_mouse_mask_q stored_mouse_mask!=0
 static bool indent_flag=true;
 #define mask_size 1
-#define mask_nomask 0
+//#define mask_nomask 0
 #define mask_mouse 1
 #define mask_indent 2
 #define mask_insensitive 4
@@ -2064,9 +2063,9 @@ static void writeprefs(int f,char mask){
 	}
 	close(f);
 }
-static void setprefs(int flag,bool set){
+void setprefs(int flag,bool set){
 	if(prefs_file[0]!='\0'){
-		//can use O_RDWR and lseek SEEK_SET
+		//can use O_RDWR and lseek SEEK_SET and ftruncate(newsize)
 		int f=open(prefs_file,O_RDONLY);
 		if(f!=-1){
 			char mask;
@@ -2100,7 +2099,7 @@ void pref_modify(char**pref_orig,char**pref_buf,bool sizedonly,char*newinput,bar
 	memcpy(*pref_buf,newinput,cursor);
 	(*pref_buf)[cursor]='\0';
 	*pref_orig=*pref_buf;//at start extension_new is not 100%
-	setprefs(mask_nomask,ignored);
+	rewriteprefs;
 }
 static bool pref_change(WINDOW*w,char**pref_orig,char**pref_buf,bool sizedonly){
 	extdata d={pref_orig,pref_buf,sizedonly};
@@ -2111,6 +2110,23 @@ static bool pref_change(WINDOW*w,char**pref_orig,char**pref_buf,bool sizedonly){
 		return false;
 	}
 	return true;
+}
+
+void changekey(char i){
+	key_struct*k=&keys[i];
+	char newkey=i+_0_to_A;
+	*(k->key_location)=newkey;
+	char pos_total=k->pos_total;
+	if(pos_total!=0){
+		unsigned short* pos=k->pos;
+		for(int j=0;j<pos_total;j++){
+			keys_helptext[pos[j]]=newkey+A_to_a;
+		}
+	}
+	unsigned short upos=k->upos;
+	if(upos!=0){
+		keys_helptext[upos]=newkey;
+	}
 }
 
 static time_t guardian=0;
@@ -2183,7 +2199,6 @@ static bool loopin(WINDOW*w){
 					bool b=savetofile(w,true);
 					if(b/*true*/)return true;
 				}else if(chr==key_goto){
-					//char aa=com_nr_goto;&aa
 					quick_pack(com_nr_goto,go_to)
 					if(goto_mode((char*)args,w)/*true*/)return true;
 				}else if(chr==key_find){
@@ -2244,7 +2259,11 @@ static bool loopin(WINDOW*w){
 					setprefs(mask_splits,splits_flag);
 					vis(c,w);
 				}else if(chr==key_wrap){if(text_wrap(w)/*true*/)return true;}
-				else type(c,w);//enter, tab, ^, unknown ctrls
+				else if(chr==key_swkey){
+					quick_pack(com_nr_swkey,change_key)
+					if(command((char*)args)==command_resize)return true;
+					wmove(w,getcury(w),getcurx(w));
+				}else type(c,w);//enter, tab, ^, unknown ctrls
 			}else{
 				if(strcmp(s,"KEY_F(1)")==0){
 					int cy=getcury(w);int cx=getcurx(w);
@@ -2376,29 +2395,13 @@ static bool grab_input(size_t*text_sz){
 	return true;//it was a problem at input, not sure if was here, anyway here is easy to force with sudo chmod 600 /dev/tty
 }
 
-static void changekey(char i){
-	keys_struct*k=&keys[i];
-	char newkey=i+_0_to_A;
-	*(k->key_location)=newkey;
-	char pos_total=k->pos_total;
-	if(pos_total!=0){
-		unsigned short* pos=k->pos;
-		for(int j=0;j<pos_total;j++){
-			keys_helptext[pos[j]]=newkey+A_to_a;
-		}
-	}
-	unsigned short upos=k->upos;
-	if(upos!=0){
-		keys_helptext[upos]=newkey;
-	}
-}
 static void getkeys(){
 	for(char i=0;i<number_of_keys;i++){
 		unsigned char ix=keys_row_frompref[i];
 		if(ix>key_last_index)return;
 		if(keys_frompref[ix].key_location!=nullptr)return;
 		char ix_orig=keys_row_orig[i];
-		memcpy(&keys_frompref[ix],&keys_orig[ix_orig],sizeof(keys_struct));
+		memcpy(&keys_frompref[ix],&keys_orig[ix_orig],sizeof(key_struct));
 	}
 	keys=keys_frompref;
 	keys_row=keys_row_frompref;

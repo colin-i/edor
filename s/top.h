@@ -50,9 +50,10 @@ typedef struct{
 	#define com_nr_find_numbers com_nr_findwordfrom
 #define com_nr_goto 4
 #define com_nr_goto_alt 5
-	#define com_nr_passcursor_numbers com_nr_goto_alt
-#define com_nr_save 6
-#define com_nr_ext 7
+#define com_nr_swkey 6
+	#define com_nr_passcursor_numbers com_nr_swkey
+#define com_nr_save 7
+#define com_nr_ext 8
 
 #define is_word_char(a) ('0'<=a&&(a<='9'||('A'<=a&&(a<='Z'||(a=='_'||('a'<=a&&a<='z'))))))
 
@@ -96,3 +97,12 @@ typedef struct{
 #else
 #define protocol protocol_simple
 #endif
+
+//main,bar
+typedef struct{
+	char* key_location;
+	unsigned short*pos;
+	char pos_total;
+	unsigned short upos;
+	char index;
+}key_struct;
