@@ -2405,9 +2405,9 @@ static void getkeys(char kp){
 		if(i<kp){
 			ix=keys_row_frompref[i];
 			if(ix>key_last_index)return;
-		}else{//this is very safety if adding new keys and will write 0 at no changes that can be ok on many users pref files and one program
+		}else{//this is very safe for when adding new keys and will write 0 at no changes that can be ok on many users pref files and one program
 			ix=keys_row_orig[i];
-			keys_row_frompref[i]=ix;
+			//keys_row_frompref[i]=ix; is already at define time
 		}
 		if(keys_frompref[ix].key_location!=nullptr)return;
 		char ix_orig=keys_row_orig[i];

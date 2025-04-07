@@ -65,7 +65,7 @@ text="\ncommand mode: left,right,home,end,Ctrl+q\
 \nCtrl+a = enable/disable O language syntax; Alt+a = syntax rescan; Alt+A = change extension name (blank is all)\
 \nCtrl+j = enable/disable OA split syntax; Alt+j = change delimiter; Alt+J = change view delimiter\
 \n    Alt+p = change splits folder; Alt+P = change extension name for splits (blank is all)\
-\nCtrl+z = switch keys, applies to Ctrl and lower/upper Alt (example: az , a becomes z and z becomes a)\
+\nCtrl+z = switch keys, applies to Ctrl and lower/upper Alt (example: az , +a becomes +z and +z becomes +a)\
 \nCtrl+q = quit\""
 wr_n "${text}"
 
@@ -127,9 +127,6 @@ find_pos () {
 }
 
 number_of_keys=0
-wr2 "static key_struct keys_orig[]={"
-wr3 "static char keys_row_orig[]={"
-wr4 "static key_struct keys_frompref[]={"
 _find_pos                 ocomp            97 1 1 1   #a
 i=98
 while [ $i -lt 123 ]; do
@@ -155,22 +152,22 @@ while [ $i -lt 123 ]; do
 	esac
 	i=$((i+1))
 done
-wr2_n "};"; wr3_n "};"; wr4_n "};"; wr_n ""
-wr_n "#define A_to_a 0x20"
+wr_n ""
 
+wr_n "#define A_to_a 0x20"
 if [ ${level} -ge ${level_pref_wr} ]; then
-	wr "${buf2}"
+	wr_n "static char keys_row_orig[]={${buf2}};"
 	wr_n "char* keys_row=keys_row_orig;"
-	wr_n "#define number_of_keys ${number_of_keys}"
 	if [ ${level} -ge ${level_pref_rd} ]; then
-		wr_n "static char keys_row_frompref[number_of_keys];"
+		wr_n "static char keys_row_frompref[]={${buf2}};"
 		if [ ${level} -ge ${level_map} ]; then
-			wr "${buf3}"
-			wr "${buf}"
+			wr_n "static key_struct keys_frompref[]={${buf3}};"  #important to define same here and not at runtime
+			wr_n "static key_struct keys_orig[]={${buf}};"
 			wr_n "key_struct*keys=keys_orig;"
 			wr_n "static char*keys_helptext;"
 			wr_n "#define key_last_index $((122-97))"
 			wr_n "#define _0_to_A 0x41"
+			wr_n "#define number_of_keys ${number_of_keys}"
 		fi
 	fi
 fi
