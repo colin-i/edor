@@ -1,3 +1,9 @@
+edor (1-x68) focal; urgency=medium
+
+  * fix Error: PC not allowed in register list
+
+ -- bc <bc@bc-desktop>  Wed, 09 Apr 2025 19:33:43 +0300
+
 edor (1-x67) focal; urgency=medium
 
   * fix armhf
