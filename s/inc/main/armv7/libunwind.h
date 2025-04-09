@@ -60,7 +60,7 @@ extern "C" {
 #endif
 
 //int unw_getcontext(unw_context_t *);
-#define unw_tdep_getcontext(uc) ({ unw_tdep_context_t *unw_ctx = (uc); register unsigned long *r0 __asm__ ("r0"); unsigned long *unw_base = unw_ctx->regs; __asm__ __volatile__ ( "mov r0, #0\n" "stmia %[base], {r0-r15}\n" "nop\n" : [r0] "=r" (r0) : [base] "r" (unw_base) : "memory"); (int)r0; })
+#define unw_tdep_getcontext(uc) ({ unw_tdep_context_t *unw_ctx = (uc); register unsigned long *r0 __asm__ ("r0"); unsigned long *unw_base = unw_ctx->regs; __asm__ __volatile__ ( ".align 2\n" "bx pc\n" "nop\n" ".code 32\n" "mov r0, #0\n" "stmia %[base], {r0-r14}\n" "adr r0, ret%=+1\n" "str r0, [%[base], #60]\n" "orr r0, pc, #1\n" "bx r0\n" ".code 16\n" "mov r0, #0\n" "ret%=:\n" : [r0] "=r" (r0) : [base] "r" (unw_base) : "memory", "cc"); (int)r0; })
 #define unw_getcontext unw_tdep_getcontext
 
 int _Uarm_init_local(unw_cursor_t *, unw_context_t *);
