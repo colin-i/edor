@@ -520,23 +520,20 @@ static bool helpin(WINDOW*w){
 	int c;
 	do{
 		c=getch();
-		switch(c){//reread from mem or a special register? gcc same as if-else, from mem
-			case KEY_MOUSE:
-				MEVENT e;
-				getmouse(&e);
-				if((e.bstate&BUTTON4_PRESSED)!=0)hmove(-1);
-				else
-			#ifdef BUTTON5_PRESSED
-				if((e.bstate&BUTTON5_PRESSED)!=0)
-			#else
-				if(e.bstate==0)     // at wheel down (libncurses5 at bionic)
-			#endif
-				hmove(1);
-				break;
-			case KEY_DOWN: hmove(1);break;
-			case KEY_UP: hmove(-1);break;
-			case KEY_RESIZE: return true;
-		}
+		if(c==KEY_MOUSE){
+			MEVENT e;//switch case? a label can only be part of a statement and a declaration is not a statement
+			getmouse(&e);
+			if((e.bstate&BUTTON4_PRESSED)!=0)hmove(-1);
+			else
+		#ifdef BUTTON5_PRESSED
+			if((e.bstate&BUTTON5_PRESSED)!=0)
+		#else
+			if(e.bstate==0)     // at wheel down (libncurses5 at bionic)
+		#endif
+			hmove(1);
+		}else if(c==KEY_DOWN){hmove(1);}
+		else if(c==KEY_UP){hmove(-1);}
+		else if(c==KEY_RESIZE){return true;}
 	}while(c!='q');
 	//helpclear();wnoutrefresh(stdscr);
 

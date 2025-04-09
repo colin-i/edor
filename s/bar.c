@@ -947,9 +947,14 @@ bool undo_delk(size_t yb,row_dword xb,size_t ye,row_dword xe){
 void undo_loop(WINDOW*w){
 	for(;;){
 		int c=wgetch(w);
-		if(c==KEY_LEFT)undo(w);
-		else if(c==KEY_RIGHT)redo(w);
-		else break;
+		switch(c){//reread from mem or a special register? gcc same as if-else, from mem
+			case KEY_LEFT:
+				undo(w);break;
+			case KEY_RIGHT:
+				redo(w);break;
+			default:
+				return;
+		}
 	}
 }
 static bool replace(bar_byte cursor){
