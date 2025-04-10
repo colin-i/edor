@@ -100,7 +100,7 @@ bool split_writeprefs(int);
 bool split_readprefs(int);
 void split_freeprefs();
 bool split_write_init(char*);
-char* split_write(size_t*,int,unsigned int*,bool*);
+const char* split_write(size_t*,int,unsigned int*,bool*);
 void split_write_free();
 //bar
 bool swrite(int,void*,unsigned int);

@@ -115,9 +115,9 @@ static bool wrt_loop_split(int f,size_t n,unsigned int*_off,bool*no_errors){
 		size_t m=i;
 		do{
 			i=m;
-			char*errors=split_write(&m,f,_off,&majorerror);
+			const char*errors=split_write(&m,f,_off,&majorerror);
 			if(errors!=nullptr){
-				print_error(errors);
+				print_error((char*)errors);
 				if(majorerror/*true*/)return false;
 				*no_errors=false;
 			}
