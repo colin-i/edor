@@ -1,0 +1,28 @@
+
+on:
+ workflow_dispatch:
+
+jobs:
+  archbuild:
+    runs-on: ubuntu-latest
+    container: archlinux:latest
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v3
+    - name: build
+      run: |
+        f=/bin/makepkg
+        n=`grep "^catastrophic" -n $f | grep -o "^[^:]*"`
+        n=$((n+1))
+        sed -i "${n}s/.*//" $f
+        name=`cat debian/changelog | head -1 | grep -o ^[^\ ]*`
+        pacman -Sy --noconfirm --needed git base-devel
+        git clone -n --depth=1 --filter=tree:0 https://github.com/colin-i/pkgbuilds
+        #--filter in git-rev-list
+        cd pkgbuilds
+        git sparse-checkout set --no-cone /${name}
+        git checkout
+        cd ${name}
+        makepkg -s --noconfirm OPTIONS=-debug
+        ls
