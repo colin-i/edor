@@ -13,6 +13,7 @@ jobs:
     - name: build
       run: |
         f=/bin/makepkg
+        grep "^catastrophic" -n $f -A 1
         n=`grep "^catastrophic" -n $f | grep -o "^[^:]*"`
         n=$((n+1))
         sed -i "${n}s/.*//" $f
