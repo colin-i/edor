@@ -1,0 +1,38 @@
+
+on:
+ workflow_dispatch:
+env:
+ #for upload
+ GITHUB_TOKEN: ${{ secrets.PAT }}
+
+jobs:
+  archarmbuild:
+    runs-on: ubuntu-24.04-arm
+    container: image0/archarm:latest
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v3
+    - name: build
+      run: |
+        name=`cat debian/changelog | head -1 | grep -o ^[^\ ]*`
+        git clone -n --depth=1 --filter=tree:0 https://github.com/colin-i/pkgbuilds
+        cd pkgbuilds
+        git sparse-checkout set --no-cone /${name}
+        git checkout
+        cd ${name}
+        makepkg --noconfirm
+        ls
+        nm=`ls | grep ".*\.xz$" | grep -v debug`
+        nm2=`echo ${nm} | sed s/-any/-arch-aarch64/`
+        mv ${nm} ../../${nm2}
+        echo "file=${nm2}" >> $GITHUB_ENV
+        wget https://github.com/colin-i/test/releases/download/1.5/${name} -O 1.txt
+        echo "up_url=`cat 1.txt`" >> $GITHUB_ENV
+    - name: Upload Release Asset
+      uses: actions/upload-release-asset@v1
+      with:
+        upload_url: ${{ env.up_url }}
+        asset_path: ./${{ env.file }}
+        asset_name: ${{ env.file }}
+        asset_content_type: application/zstd
