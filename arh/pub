@@ -16,7 +16,8 @@ validatelog=x ~/test/pub pkg appimage rpm rel && \
 ~/test/uprpm && \
 ~/test/upapp && \
 ~/test/pkg/upon && \
-~/test/pub upapp uponpkg && \
+~/test/pkg/onab && \
+~/test/pub upapp uponpkg pkgarm && \
 ~/test/pub2 && \
 ~/test/publp2 && \
 ~/test/lp && \
