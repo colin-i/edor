@@ -1,0 +1,34 @@
+
+on:
+ workflow_dispatch:
+
+env:
+ #for gh and upload
+ GITHUB_TOKEN: ${{ secrets.PAT }}
+
+jobs:
+ uopbuild:
+  runs-on: ubuntu-latest
+  steps:
+   - uses: actions/checkout@v3
+   - name: Run a multi-line script
+     run: |
+      name=`cat debian/changelog | head -1 | grep -o ^[^\ ]*`
+      wget https://github.com/colin-i/test/releases/download/1.5/${name} -O 1.txt
+      echo "up_url=`cat 1.txt`" >> $GITHUB_ENV
+      id=$(gh run list --workflow=pkg.yml -b $(git rev-parse --abbrev-ref HEAD) | cut -f7 | head -1)
+      repo_at_gh=`cat debian/control | grep "^Homepage" | grep -o [^/]*$`
+      url=`gh api -H "Accept: application/vnd.github.v3+json" /repos/colin-i/${repo_at_gh}/actions/runs/${id}/artifacts | jq ".artifacts[0].archive_download_url"`
+      url=${url:1:-1}
+      echo ${url}
+      curl -L -H "Authorization: token ${{ secrets.PAT }}" ${url} --output a.zip
+      file=`unzip -l a.zip | sed -n 4p | tr -s ' ' | cut -d ' ' -f5`
+      unzip ./a.zip
+      echo "file=${file}" >> $GITHUB_ENV
+   - name: Upload Release Asset
+     uses: actions/upload-release-asset@v1
+     with:
+      upload_url: ${{ env.up_url }}
+      asset_path: ./${{ env.file }}
+      asset_name: ${{ env.file }}
+      asset_content_type: application/zstd

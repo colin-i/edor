@@ -13,8 +13,9 @@ jobs:
     - name: build
       run: |
         f=/bin/makepkg
-        grep "^catastrophic" -n $f -A 1
-        n=`grep "^catastrophic" -n $f | grep -o "^[^:]*"`
+        e="catastrophic damage"
+        grep "^$e" -n $f -B 1 -A 1
+        n=`grep "^$e" -n $f | grep -o "^[^:]*"`
         n=$((n+1))
         sed -i "${n}s/.*//" $f
         name=`cat debian/changelog | head -1 | grep -o ^[^\ ]*`
@@ -25,5 +26,14 @@ jobs:
         git sparse-checkout set --no-cone /${name}
         git checkout
         cd ${name}
-        makepkg -s --noconfirm OPTIONS=-debug
+        makepkg -s --noconfirm
         ls
+        nm=`ls | grep ".*\.zst$" | grep -v debug`
+        nm2=`echo ${nm} | sed s/-any/-arch-x86_64/`
+        mv ${nm} ../../${nm2}
+        echo "file=${nm2}" >> $GITHUB_ENV
+    - name: artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: pkg
+        path: ./${{ env.file }}
