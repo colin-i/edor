@@ -21,7 +21,7 @@ jobs:
         git sparse-checkout set --no-cone /${name}
         git checkout
         cd ${name}
-        makepkg --noconfirm
+        makepkg
         ls
         nm=`ls | grep ".*\.xz$" | grep -v debug`
         nm2=`echo ${nm} | sed s/-any/-arch-aarch64/`
