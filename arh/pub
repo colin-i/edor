@@ -8,16 +8,15 @@ last=$(curl https://api.github.com/repos/colin-i/$(cat debian/changelog | head -
 ~/test/publp && \
 ~/test/ai && \
 ~/test/rpm && \
-~/test/pkg/onb && \
 ~/test/del && \
 ~/test/rel && \
-validatelog=x ~/test/pub pkg appimage rpm rel && \
+~/test/pub appimage rpm rel && \
 ~/test/rerpm && \
 ~/test/uprpm && \
 ~/test/upapp && \
-~/test/pkg/upon && \
+~/test/pkg/onb && \
 ~/test/pkg/onab && \
-~/test/pub upapp uponpkg pkgarm && \
+~/test/pub upapp pkg pkgarm && \
 ~/test/pub2 && \
 ~/test/publp2 && \
 ~/test/lp && \

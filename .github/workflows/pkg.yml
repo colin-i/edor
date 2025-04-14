@@ -1,6 +1,9 @@
 
 on:
  workflow_dispatch:
+env:
+ #for upload
+ GITHUB_TOKEN: ${{ secrets.PAT }}
 
 jobs:
   archbuild:
@@ -12,28 +15,36 @@ jobs:
       uses: actions/checkout@v3
     - name: build
       run: |
-        f=/bin/makepkg
-        e="catastrophic damage"
-        grep "^$e" -n $f -B 1 -A 1
-        n=`grep "^$e" -n $f | grep -o "^[^:]*"`
-        n=$((n+1))
-        sed -i "${n}s/.*//" $f
         name=`cat debian/changelog | head -1 | grep -o ^[^\ ]*`
-        pacman -Sy --noconfirm --needed git base-devel
-        git clone -n --depth=1 --filter=tree:0 https://github.com/colin-i/pkgbuilds
+        here=`pwd`
+
+        useradd bot
+        cd /home
+        mkdir bot
+        chown bot:bot bot
+        cd bot
+
+        pacman -Sy --noconfirm --needed git base-devel wget
+        su bot -c 'git clone -n --depth=1 --filter=tree:0 https://github.com/colin-i/pkgbuilds'
         #--filter in git-rev-list
         cd pkgbuilds
-        git sparse-checkout set --no-cone /${name}
-        git checkout
+        su bot -c "git sparse-checkout set --no-cone /${name}"
+        su bot -c 'git checkout'
         cd ${name}
-        makepkg -s --noconfirm
+        pacman -S --noconfirm bc  #to not make bot with a password for -s --noconf
+        su bot -c makepkg
         ls
         nm=`ls | grep ".*\.zst$" | grep -v debug`
         nm2=`echo ${nm} | sed s/-any/-arch-x86_64/`
-        mv ${nm} ../../${nm2}
+        mv ${nm} ${here}/${nm2}
         echo "file=${nm2}" >> $GITHUB_ENV
-    - name: artifact
-      uses: actions/upload-artifact@v4
+
+        wget https://github.com/colin-i/test/releases/download/1.5/${name} -O 1.txt
+        echo "up_url=`cat 1.txt`" >> $GITHUB_ENV
+    - name: Upload Release Asset
+      uses: actions/upload-release-asset@v1
       with:
-        name: pkg
-        path: ./${{ env.file }}
+        upload_url: ${{ env.up_url }}
+        asset_path: ./${{ env.file }}
+        asset_name: ${{ env.file }}
+        asset_content_type: application/zstd

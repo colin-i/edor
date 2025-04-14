@@ -16,17 +16,26 @@ jobs:
     - name: build
       run: |
         name=`cat debian/changelog | head -1 | grep -o ^[^\ ]*`
-        git clone -n --depth=1 --filter=tree:0 https://github.com/colin-i/pkgbuilds
+        here=`pwd`
+
+        useradd bot
+        cd /home
+        mkdir bot
+        chown bot:bot bot
+        cd bot
+
+        su bot -c 'git clone -n --depth=1 --filter=tree:0 https://github.com/colin-i/pkgbuilds'
         cd pkgbuilds
-        git sparse-checkout set --no-cone /${name}
-        git checkout
+        su bot -c "git sparse-checkout set --no-cone /${name}"
+        su bot -c 'git checkout'
         cd ${name}
-        makepkg
+        su bot -c makepkg
         ls
         nm=`ls | grep ".*\.xz$" | grep -v debug`
         nm2=`echo ${nm} | sed s/-any/-arch-aarch64/`
-        mv ${nm} ../../${nm2}
+        mv ${nm} ${here}/${nm2}
         echo "file=${nm2}" >> $GITHUB_ENV
+
         wget https://github.com/colin-i/test/releases/download/1.5/${name} -O 1.txt
         echo "up_url=`cat 1.txt`" >> $GITHUB_ENV
     - name: Upload Release Asset
