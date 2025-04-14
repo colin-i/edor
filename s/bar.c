@@ -121,10 +121,10 @@ static bool wrt_loop_split(int f,size_t n,unsigned int*_off,bool*no_errors){
 				if(majorerror/*true*/)return false;
 				*no_errors=false;
 			}
-			if(m==n)return true;//last row can also be blank
+			if(m==n)return true;//there are no possible splits on one row. last row can also be blank
 		}while(m!=i);
 		row*r=&rows[i];
-		if(*_off!=0){
+		if(*_off!=0){//write rest of the line after split end
 			if(swrite(f,r->data+*_off,r->sz-*_off)/*true*/)return false;
 			*_off=0;
 		}else if(swrite(f,r->data,r->sz)/*true*/)return false;
@@ -138,7 +138,10 @@ static command_char wrt_simple_split(int f){
 	unsigned int off=0;
 	bool no_errors=true;
 	if(wrt_loop_split(f,n,&off,&no_errors)/*true*/){
-		if(swrite(f,rows[n].data+off,rows[n].sz-off)==swrite_ok){
+		swrite_char b;
+		if(off==0)b=swrite(f,rows[n].data,rows[n].sz);//here if else because of filewhites_write
+		else b=swrite(f,rows[n].data+off,rows[n].sz-off);
+		if(b==swrite_ok){
 			if(no_errors/*true*/){
 				return command_ok;
 			}

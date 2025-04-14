@@ -214,7 +214,7 @@ bool split_grab(char**p_text,size_t*p_size,char*argfile){
 				next=(char*)memchr(text,a,size);
 				if(next==nullptr){split_error();return false;}
 				next++;size-=next-text;
-				if(size<=(sdelimsize-1)){split_error();return false;}
+				if(size<(sdelimsize-1)){split_error();return false;} //can be equal and is last char of the file
 				cmp=memcmp(next,sdelimiter+1,sdelimsize-1);
 				if(cmp!=0){split_error();return false;}//it looks like the delimiter chars can't be in filename chars
 				text=next+(sdelimsize-1);size-=text-next;
@@ -411,57 +411,72 @@ bool split_write_init(char*orig_filename){
 	sdelimiter_size=strlen(sdelimiter);
 	esdelimiter_size=strlen(esdelimiter);
 	//unsigned char s2=strlen(esdelimiter);fulldelim_size=sdelimiter_size+s2;fulldelim=(char*)malloc(fulldelim_size);if(fulldelim!=nullptr){memcpy(fulldelim,esdelimiter,s2);memcpy(fulldelim+s2,sdelimiter,sdelimiter_size);
-	if(*split_out!='\0'){
-		size_t ancestors_diff=split_out_path2-split_out_path4;
-		split_out_path2=split_out_alloc1+(split_out_path2-split_out_alloc2);
-		split_out_path4+=split_out_size1;
-		do{
-			*split_out_path4=path_separator;
-			split_out_path2++;split_out_path4++;
-			if(split_out_path2==split_out_path3)break;
-			char*a=split_out_path2;
-			do{a++;}while(*a!=path_separator);
-			size_t sz=a-split_out_path2;
-			memcpy(split_out_path4,split_out_path2,sz);
-			split_out_path2+=sz;split_out_path4+=sz;
-		}while(true);
-		size_t size=split_out_path1-split_out_path3+1;
-		split_out_size2-=ancestors_diff;
-		char*a=(char*)realloc(split_out_alloc2,split_out_size2+size);
-		if(a!=nullptr){
-			memcpy(a+split_out_size2,split_out_path3,size);
-			free(split_out_alloc1);
-			split_out_file=open_or_new(a);
-			free(a);
-			if(split_out_file!=-1){
-				return true;
-			}
-			return false;
+
+	//if(*split_out!='\0'){//this can't be, here is after a split_yes that is only at end of split_conditions_out, where this is
+	size_t ancestors_diff=split_out_path2-split_out_path4;
+	split_out_path2=split_out_alloc1+(split_out_path2-split_out_alloc2);
+	split_out_path4+=split_out_size1;
+	do{
+		*split_out_path4=path_separator;
+		split_out_path2++;split_out_path4++;
+		if(split_out_path2==split_out_path3)break;
+		char*a=split_out_path2;
+		do{a++;}while(*a!=path_separator);
+		size_t sz=a-split_out_path2;
+		memcpy(split_out_path4,split_out_path2,sz);
+		split_out_path2+=sz;split_out_path4+=sz;
+	}while(true);
+	size_t size=split_out_path1-split_out_path3+1;
+	split_out_size2-=ancestors_diff;
+	char*a=(char*)realloc(split_out_alloc2,split_out_size2+size);
+	if(a!=nullptr){
+		memcpy(a+split_out_size2,split_out_path3,size);
+		free(split_out_alloc1);
+		split_out_file=open_or_new(a);
+		free(a);
+		if(split_out_file!=-1){
+			return true;
 		}
-		free(split_out_alloc1);free(split_out_alloc2);
 		return false;
 	}
-	return true;
+	free(split_out_alloc1);free(split_out_alloc2);
+	return false;
+	//}//return true;
 }
 void split_write_free(){
 	//free(fulldelim);
-	if(*split_out!='\0'){
-		close(split_out_file);
-	}
+	//if(*split_out!='\0'){//this can't be. is only after a successful split_write_init
+	close(split_out_file);
+	//}
 }
 
-bool swrite(int f,void*buf,unsigned int size){
+swrite_char swrite(int f,void*buf,row_dword size){
 	if(write(f,buf,size)==size){
-		if(*split_out!='\0'){
-			if(write(split_out_file,buf,size)==size){
-				return swrite_ok;
-			}
-			return swrite_bad;
+		//if(*split_out!='\0'){//this can't be, all swrites are in split way
+		if(write(split_out_file,buf,size)==size){
+			return swrite_ok;
 		}
-		return swrite_ok;
+		//return swrite_bad;
+		//}//return swrite_ok;
 	}
 	return swrite_bad;
 }
+//swrite_char swwrite(int f,void*buf,row_dword size){
+//	if(filewhites_bool/*true*/){
+//		char*b=(char*)buf;
+//		char*last=b+size;
+//		while(b!=last&&*b!='\t')b++;//0 size is ok
+//		if(b!=buf){
+//			rowd_dword i=b-buf;
+//			size-=i;
+//			char w=' ';
+//			while(i!=0){swrite(f,&w,1);i--;}
+//			buf=b;
+//		}
+//	}
+//	return swrite(f,buf,size);
+//}
+
 //true if ok
 static bool split_write_split(char*file,size_t start,size_t end,unsigned int size,bool*majorerror){
 	int f=open_or_new(file);

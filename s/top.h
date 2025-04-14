@@ -88,6 +88,7 @@ typedef struct{
 
 #define swrite_ok false
 #define swrite_bad true
+#define swrite_char bool
 
 #define default_extension (char*)"oc"
 
