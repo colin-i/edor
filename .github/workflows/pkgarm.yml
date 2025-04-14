@@ -39,4 +39,4 @@ jobs:
         upload_url: ${{ env.up_url }}
         asset_path: ./${{ env.file }}
         asset_name: ${{ env.file }}
-        asset_content_type: application/zstd
+        asset_content_type: application/x-xz
