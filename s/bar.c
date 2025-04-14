@@ -291,9 +291,9 @@ bool is_extension_ok(char*extension,char*filename){//also filename to save resto
 }
 //command return
 command_char saving_base(char*dest){
-	split_char r=split_conditions(dest,false);
-	if(r!=split_err){
-		if(r==split_yes)return wrt_split(dest);
+	split_reminder_c=split_conditions(dest,false);
+	if(split_reminder_c!=split_err){
+		if(split_reminder_c>=split_yes_mixless)return wrt_split(dest);
 		return wrt(dest);
 	}
 	return command_false;

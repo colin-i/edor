@@ -42,7 +42,7 @@
 #include "def.h"
 
 bool splits_flag=false;
-split_char split_read_atstart=split_no;
+split_char split_reminder_c=split_no;
 
 char*sdelimiter=(char*)"|||";// iso forbids
 char*esdelimiter=(char*)"///";
@@ -126,7 +126,7 @@ static char* real_path(char*pathname){
 	}
 	return a;
 }
-//-1 no, 0 errors, 1 yes the split_out is at realpath dirname or in an ancestor folder
+//0 errors, 1 yes no mix, 2 yes and mix the split_out is at realpath dirname or in an ancestor folder
 static split_char split_conditions_out(char*filename,bool free_paths){
 	if(*split_out!='\0'){
 		split_out_alloc1=real_path(filename);
@@ -161,24 +161,24 @@ static split_char split_conditions_out(char*filename,bool free_paths){
 										free(split_out_alloc1);
 										free(split_out_alloc2);
 									}
-									return split_yes;
+									return split_yes_mix;
 								}
 								split_out_path2=split_out_path4;//this is for split write to not loop again there
 							}
 							split_out_path4--;
 						}
 						free(split_out_alloc1);free(split_out_alloc2);
-						return split_no;
+						return split_yes_mixless;
 					}
 					free(split_out_alloc1);
 					return split_err;
 				}
 			}
 			free(split_out_alloc1);
-		}else if(errno==EACCES)return split_no;
+		}else if(errno==EACCES)return split_yes_mixless;
 		return split_err;
 	}
-	return split_no;
+	return split_yes_mixless;
 }
 split_char split_conditions(char*filename,bool free_paths){
 	if(splits_flag/*true*/){
@@ -190,10 +190,9 @@ split_char split_conditions(char*filename,bool free_paths){
 }
 
 //false on errors
-bool split_grab(char**p_text,size_t*p_size,char*argfile){
-	split_read_atstart=split_conditions(argfile,true);
-	if(split_read_atstart!=split_err){
-		if(split_read_atstart==split_yes){
+bool split_grab(char**p_text,size_t*p_size){
+	if(split_reminder_c!=split_err){
+		if(split_reminder_c!=split_no){// yes_mixless or yes_mix
 			char*text;size_t size;int cmp;char*next;
 			char a=*sdelimiter;
 			unsigned char sdelimsize=strlen(sdelimiter);//at file read only one byte for size
@@ -412,52 +411,54 @@ bool split_write_init(char*orig_filename){
 	esdelimiter_size=strlen(esdelimiter);
 	//unsigned char s2=strlen(esdelimiter);fulldelim_size=sdelimiter_size+s2;fulldelim=(char*)malloc(fulldelim_size);if(fulldelim!=nullptr){memcpy(fulldelim,esdelimiter,s2);memcpy(fulldelim+s2,sdelimiter,sdelimiter_size);
 
-	//if(*split_out!='\0'){//this can't be, here is after a split_yes that is only at end of split_conditions_out, where this is
-	size_t ancestors_diff=split_out_path2-split_out_path4;
-	split_out_path2=split_out_alloc1+(split_out_path2-split_out_alloc2);
-	split_out_path4+=split_out_size1;
-	do{
-		*split_out_path4=path_separator;
-		split_out_path2++;split_out_path4++;
-		if(split_out_path2==split_out_path3)break;
-		char*a=split_out_path2;
-		do{a++;}while(*a!=path_separator);
-		size_t sz=a-split_out_path2;
-		memcpy(split_out_path4,split_out_path2,sz);
-		split_out_path2+=sz;split_out_path4+=sz;
-	}while(true);
-	size_t size=split_out_path1-split_out_path3+1;
-	split_out_size2-=ancestors_diff;
-	char*a=(char*)realloc(split_out_alloc2,split_out_size2+size);
-	if(a!=nullptr){
-		memcpy(a+split_out_size2,split_out_path3,size);
-		free(split_out_alloc1);
-		split_out_file=open_or_new(a);
-		free(a);
-		if(split_out_file!=-1){
-			return true;
+	if(split_reminder_c==split_yes_mix){
+		size_t ancestors_diff=split_out_path2-split_out_path4;
+		split_out_path2=split_out_alloc1+(split_out_path2-split_out_alloc2);
+		split_out_path4+=split_out_size1;
+		do{
+			*split_out_path4=path_separator;
+			split_out_path2++;split_out_path4++;
+			if(split_out_path2==split_out_path3)break;
+			char*a=split_out_path2;
+			do{a++;}while(*a!=path_separator);
+			size_t sz=a-split_out_path2;
+			memcpy(split_out_path4,split_out_path2,sz);
+			split_out_path2+=sz;split_out_path4+=sz;
+		}while(true);
+		size_t size=split_out_path1-split_out_path3+1;
+		split_out_size2-=ancestors_diff;
+		char*a=(char*)realloc(split_out_alloc2,split_out_size2+size);
+		if(a!=nullptr){
+			memcpy(a+split_out_size2,split_out_path3,size);
+			free(split_out_alloc1);
+			split_out_file=open_or_new(a);
+			free(a);
+			if(split_out_file!=-1){
+				return true;
+			}
+			return false;
 		}
+		free(split_out_alloc1);free(split_out_alloc2);
 		return false;
 	}
-	free(split_out_alloc1);free(split_out_alloc2);
-	return false;
-	//}//return true;
+	return true;
 }
 void split_write_free(){
 	//free(fulldelim);
-	//if(*split_out!='\0'){//this can't be. is only after a successful split_write_init
-	close(split_out_file);
-	//}
+	if(split_reminder_c==split_yes_mix){
+		close(split_out_file);
+	}
 }
 
 swrite_char swrite(int f,void*buf,row_dword size){
 	if(write(f,buf,size)==size){
-		//if(*split_out!='\0'){//this can't be, all swrites are in split way
-		if(write(split_out_file,buf,size)==size){
-			return swrite_ok;
+		if(split_reminder_c==split_yes_mix){
+			if(write(split_out_file,buf,size)==size){
+				return swrite_ok;
+			}
+			return swrite_bad;
 		}
-		//return swrite_bad;
-		//}//return swrite_ok;
+		return swrite_ok;
 	}
 	return swrite_bad;
 }

@@ -213,7 +213,6 @@ static char at_left_mark='<';
 static char at_content_nomark=' ';
 static WINDOW*syntaxcontent=nullptr;
 
-static bool split_reminder=false;
 #define mouseevents_enabled 'E'
 #define mouseevents_disabled 'e'
 #define indent_enabled 'N'
@@ -492,7 +491,7 @@ static void helpshowlastrow(int rw){
 	addch(insensitive/*true*/?insensitive_enabled:insensitive_disabled);
 	addch(ocompiler_flag/*true*/?ocompiler_enabled:ocompiler_disabled);//i'm using otoc with gdb for new code
 	addch(splits_flag/*true*/?splits_enabled:splits_disabled);
-	addch(split_reminder/*true*/?splits_activated:splits_deactivated);
+	addch(split_reminder_c>=split_yes_mixless?splits_activated:splits_deactivated);
 	//1@: else at my compilers, and also gcc, is faster: if is with new asm jump instruction. but still not counting on that and aspire to fast first
 	//is same asm speed with/without false, still why at two of these first is the beta?
 	//is beta at me, someone else can use this code. at me 1@ is ok for them.
@@ -2325,7 +2324,7 @@ static normalize_char normalize(char**c,size_t*size,size_t*r){
 }
 //same as normalize
 static normalize_char normalize_split(char**c,size_t*s,size_t*r,char*argfile){
-	if(argfile==nullptr||split_grab(c,s,argfile)/*true*/){//if at normalize will work also in open cutbufs but will error at explodes there(save cutbuf with explodes)
+	if(argfile==nullptr||split_grab(c,s)/*true*/){//if at normalize will work also in open cutbufs but will error at explodes there(save cutbuf with explodes)
 		//filewhites_atread(*c,*s);
 		return normalize(c,s,r);
 	}
@@ -2651,10 +2650,8 @@ static void proced(char*cutbuf_file,WINDOW*w1){
 						//or =, clear bar,visual and saves
 						old_r=r;
 
-						if(split_read_atstart==split_yes){
+						if(split_reminder_c>=split_yes_mixless){
 							visual_write(splits_activated)
-							split_read_atstart=split_no;//on resize is ok to not print again, can use F1 to remember, maybe was a save as and will lie here then
-							split_reminder=true;
 							//visual_bool=true;//to clear at a next key
 						}
 						if(mod_flag==false){
@@ -2788,7 +2785,8 @@ static void action_go(int argc,char**argv,char*cutbuf_file,char*argfile){
 			}else editing_new();
 		}
 		if(valid_ln_term(argc,argv,&not_forced)/*true*/)return;
-		if(no_file/*true*/)split_read_atstart=split_conditions(argfile,true);//need regardless of input
+		//if(no_file/*true*/)
+		split_reminder_c=split_conditions(argfile,true);//if or if not the file exists
 	}
 
 	struct pollfd fds[1];

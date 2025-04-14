@@ -95,7 +95,7 @@ bool titles(WINDOW*);
 //split
 //main
 char split_conditions(char*,bool);
-bool split_grab(char**,size_t*,char*);
+bool split_grab(char**,size_t*);
 bool split_writeprefs(int);
 bool split_readprefs(int);
 void split_freeprefs();
@@ -132,7 +132,7 @@ extern size_t store_aftercall;
 //split
 //main
 extern bool splits_flag;
-extern split_char split_read_atstart;
+extern split_char split_reminder_c;
 extern char*sdelimiter;
 extern char*sdelimiter_new;
 extern char*esdelimiter;

@@ -73,7 +73,8 @@ typedef struct{
 
 #define split_no -1
 #define split_err 0
-#define split_yes 1
+#define split_yes_mixless 1
+#define split_yes_mix 2
 #define split_char signed char
 
 #define comnrp_define char*

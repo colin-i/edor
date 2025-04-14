@@ -64,7 +64,7 @@ text="\ncommand mode: left,right,home,end,Ctrl+q\
 \nCtrl+t = enable/disable insensitive search\
 \nCtrl+a = enable/disable O language syntax; Alt+a = syntax rescan; Alt+A = change extension name (blank is all)\
 \nCtrl+j = enable/disable OA split syntax; Alt+j = change delimiter; Alt+J = change view delimiter\
-\n    Alt+p = change splits folder; Alt+P = change extension name for splits (blank is all)\
+\n    Alt+p = change splits folder (blank is mixless); Alt+P = change extension name for splits (blank is all)\
 \nCtrl+z = switch keys, applies to Ctrl and lower/upper Alt (example: az , +a becomes +z and +z becomes +a)\
 \nCtrl+q = quit\""
 wr_n "${text}"
