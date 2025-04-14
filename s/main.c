@@ -224,7 +224,7 @@ static WINDOW*syntaxcontent=nullptr;
 #define splits_enabled 'J'
 #define splits_disabled 'j'
 #define splits_activated 'S'
-#define splits_activated_mixless 's'
+#define splits_activated_mixless 'h'
 #define splits_deactivated '_'
 
 bool no_char(char z){return z<32||z>=127;}
