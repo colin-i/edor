@@ -50,7 +50,7 @@ char* sdelimiter_new=nullptr;
 char* esdelimiter_new=nullptr;
 char*split_out=(char*)"osrc";
 char*split_out_new=nullptr;
-char*split_extension=default_extension;
+char*split_extension=(char*)"oac";
 char*split_extension_new=nullptr;
 
 //char*fulldelim;
@@ -425,11 +425,14 @@ bool split_write_init(char*orig_filename){
 			memcpy(split_out_path4,split_out_path2,sz);
 			split_out_path2+=sz;split_out_path4+=sz;
 		}while(true);
-		size_t size=split_out_path1-split_out_path3+1;
+		size_t size=split_out_path1-split_out_path3;// +1 will be with the existent null
+		const char outext[]=".out";
+		size_t sizeplusoutext=size+sizeof(outext);
 		split_out_size2-=ancestors_diff;
-		char*a=(char*)realloc(split_out_alloc2,split_out_size2+size);
+		char*a=(char*)realloc(split_out_alloc2,split_out_size2+sizeplusoutext);
 		if(a!=nullptr){
 			memcpy(a+split_out_size2,split_out_path3,size);
+			memcpy(a+split_out_size2+size,outext,sizeof(outext));
 			free(split_out_alloc1);
 			split_out_file=open_or_new(a);
 			free(a);

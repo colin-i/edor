@@ -1459,7 +1459,7 @@ bool is_dir(int fd){
 #define acall_size (1+2+2+2+2)
 #define acallu     "AFTERCALL"
 #define acall_size1 acall_size+1
-char*ocode_extension=default_extension;
+char*ocode_extension=(char*)"oc";
 
 size_t aftercall_find(){
 	for(size_t i=0;i<rows_tot;i++){
