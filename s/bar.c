@@ -293,6 +293,7 @@ bool is_extension_ok(char*extension,char*filename){//also filename to save resto
 command_char saving_base(char*dest){
 	split_reminder_c=split_conditions(dest,false);
 	if(split_reminder_c!=split_err){
+		//filewhites_reminder=filewhites_flag&&is_extension_ok(filewhites_extension,dest);
 		if(split_reminder_c>=split_yes_mixless)return wrt_split(dest);
 		return wrt(dest);
 	}

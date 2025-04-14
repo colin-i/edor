@@ -2183,11 +2183,12 @@ static bool loopin(WINDOW*w){
 			else if(z==(key_undo+A_to_a)){vis('U',w);undo_loop(w);vis(' ',w);}
 			else if(z==(key_save+A_to_a)){b=savetofile(w,false);if(b/*true*/)return true;}
 			else if(z==(key_ocomp+A_to_a)){aftercall=aftercall_find();aftercall_draw(w);}
-			else if(z==(key_actswf+A_to_a)){if(pref_change(w,&sdelimiter,&sdelimiter_new,true)/*true*/)return true;}           //don't allow no size delimiters
+			else if(z==(key_actswf+A_to_a)){if(pref_change(w,&sdelimiter,&sdelimiter_new,true)/*true*/)return true;}    //don't allow no size delimiters
 			else if(z==(key_actswf2+A_to_a)){if(pref_change(w,&split_out,&split_out_new,false)/*true*/)return true;}
 			else if(z==key_ocomp){if(pref_change(w,&ocode_extension,&ocode_extension_new,false)/*true*/)return true;}
-			else if(z==key_actswf){if(pref_change(w,&esdelimiter,&esdelimiter_new,true)/*true*/)return true;}         //don't allow no size delimiters
+			else if(z==key_actswf){if(pref_change(w,&esdelimiter,&esdelimiter_new,true)/*true*/)return true;}           //don't allow no size delimiters
 			else if(z==key_actswf2){if(pref_change(w,&split_extension,&split_extension_new,false)/*true*/)return true;}
+//			else if(z==key_whites+A_to_a){if(pref_change(w,&filewhites_extension,&filewhites_extension_new,false)/*true*/)return true;}
 		}else{
 			const char*s=keyname(c);
 			if(*s==Char_Ctrl){//seems that all cases are ^ a letter \0
@@ -2258,6 +2259,12 @@ static bool loopin(WINDOW*w){
 					else{splits_flag=true;c=splits_enabled;}
 					setprefs(mask_splits,splits_flag);
 					vis(c,w);
+//				}else if(chr==key_whites){
+//					char c;
+//					if(filewhites_flag/*true*/){filewhites_flag=false;c=filewhites_disabled;}
+//					else{filewhites_flag=true;c=filewhites_enabled;}
+//					setprefs(mask_filewhites,filewhites_flag);
+//					vis(c,w);
 				}else if(chr==key_wrap){if(text_wrap(w)/*true*/)return true;}
 				else if(chr==key_swkey){
 					quick_pack(com_nr_swkey,change_key)
@@ -2325,7 +2332,6 @@ static normalize_char normalize(char**c,size_t*size,size_t*r){
 //same as normalize
 static normalize_char normalize_split(char**c,size_t*s,size_t*r,char*argfile){
 	if(argfile==nullptr||split_grab(c,s)/*true*/){//if at normalize will work also in open cutbufs but will error at explodes there(save cutbuf with explodes)
-		//filewhites_atread(*c,*s);
 		return normalize(c,s,r);
 	}
 	return normalize_err;
@@ -2749,6 +2755,20 @@ static bool get_answer(char switcher){
 	while(c!='\n')c=getchar();
 	return a;
 }
+
+//static void filewhites_read(){
+//	for(size_t i=0;i<rows_tot;i++){
+//		row*r=&rows[i];
+//		char*d=r->data;
+//		void*last=d+r->sz;
+//		while(d!=last){
+//			if(*d!=' ')break;
+//			*d='\t';
+//			d++;
+//		}
+//	}
+//}
+
 static void action_go(int argc,char**argv,char*cutbuf_file,char*argfile){
 	if(prefs_file[0]!='\0')getprefs();//split is first that depends on prefs
 
@@ -2826,6 +2846,7 @@ static void action_go(int argc,char**argv,char*cutbuf_file,char*argfile){
 				rows=(row*)malloc(rows_tot*sizeof(row));
 				if(rows!=nullptr){
 					rows_init(text_sz);
+					//if(argfile!=nullptr)if(filewhites_flag/*true*/)if(is_extension_ok(filewhites_extension,argfile))filewhites_read();
 					textfile=argfile;
 					text_init_e=text_init_b+text_sz+1;
 				}

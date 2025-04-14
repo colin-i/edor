@@ -466,7 +466,7 @@ swrite_char swrite(int f,void*buf,row_dword size){
 	return swrite_bad;
 }
 //swrite_char swwrite(int f,void*buf,row_dword size){
-//	if(filewhites_bool/*true*/){
+//	if(filewhites_reminder/*true*/){
 //		char*b=(char*)buf;
 //		char*last=b+size;
 //		while(b!=last&&*b!='\t')b++;//0 size is ok
@@ -478,6 +478,10 @@ swrite_char swrite(int f,void*buf,row_dword size){
 //			buf=b;
 //		}
 //	}
+//	return swrite(f,buf,size);
+//}
+//static swrite_char swwrite_if(int f,void*buf,row_dword size,row_dword off){
+//	if(off==0)return swwrite(f,buf,size);
 //	return swrite(f,buf,size);
 //}
 
@@ -505,7 +509,7 @@ static bool split_write_orig(int orig_file,char*cursor,unsigned int size,bool*ma
 	*majorerror=true;return false;
 }
 //null or error
-const char* split_write(size_t*_index,int orig_file,unsigned int*_off,bool*majorerror){
+const char* split_write(size_t*_index,int orig_file,row_dword*_off,bool*majorerror){
 	size_t i=*_index;
 	row*rw=&rows[i];
 	char*data=rw->data+*_off;
