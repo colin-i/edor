@@ -224,7 +224,8 @@ static WINDOW*syntaxcontent=nullptr;
 #define splits_enabled 'J'
 #define splits_disabled 'j'
 #define splits_activated 'S'
-#define splits_deactivated 's'
+#define splits_activated_mixless 's'
+#define splits_deactivated '_'
 
 bool no_char(char z){return z<32||z>=127;}
 static size_t tab_grow(WINDOW*w,char*a,size_t sz,int*ptr){
@@ -491,7 +492,7 @@ static void helpshowlastrow(int rw){
 	addch(insensitive/*true*/?insensitive_enabled:insensitive_disabled);
 	addch(ocompiler_flag/*true*/?ocompiler_enabled:ocompiler_disabled);//i'm using otoc with gdb for new code
 	addch(splits_flag/*true*/?splits_enabled:splits_disabled);
-	addch(split_reminder_c>=split_yes_mixless?splits_activated:splits_deactivated);
+	addch(split_reminder_c>=split_yes_mixless?(split_reminder_c==split_yes_mix?splits_activated:splits_activated_mixless):splits_deactivated);
 	//1@: else at my compilers, and also gcc, is faster: if is with new asm jump instruction. but still not counting on that and aspire to fast first
 	//is same asm speed with/without false, still why at two of these first is the beta?
 	//is beta at me, someone else can use this code. at me 1@ is ok for them.
@@ -2657,7 +2658,10 @@ static void proced(char*cutbuf_file,WINDOW*w1){
 						old_r=r;
 
 						if(split_reminder_c>=split_yes_mixless){
-							visual_write(splits_activated)
+							if(split_reminder_c>=split_yes_mix)
+								visual_write(splits_activated)
+							else
+								visual_write(splits_activated_mixless)
 							//visual_bool=true;//to clear at a next key
 						}
 						if(mod_flag==false){
