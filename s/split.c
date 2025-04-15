@@ -457,21 +457,6 @@ swrite_char swrite(int f,void*buf,row_dword size){
 	}
 	return swrite_bad;
 }
-//swrite_char swwrite(int f,void*buf,row_dword size){
-//	if(filewhites_reminder/*true*/){
-//		char*b=(char*)buf;
-//		char*last=b+size;
-//		while(b!=last&&*b!='\t')b++;//0 size is ok
-//		if(b!=buf){
-//			rowd_dword i=b-buf;
-//			size-=i;
-//			char w=' ';
-//			while(i!=0){swrite(f,&w,1);i--;}
-//			buf=b;
-//		}
-//	}
-//	return swrite(f,buf,size);
-//}
 //static swrite_char swwrite_if(int f,void*buf,row_dword size,row_dword off){
 //	if(off==0)return swwrite(f,buf,size);
 //	return swrite(f,buf,size);
@@ -484,11 +469,11 @@ static bool split_write_split(char*file,size_t start,size_t end,unsigned int siz
 		for(size_t k=start;k<end;k++){
 			row*r=&rows[k];
 			unsigned int sz=r->sz;
-			if(swrite(f,r->data,sz)/*true*/){close(f);*majorerror=true;return false;}
+			if(wwrite(f,r->data,sz,swrite)/*true*/){close(f);*majorerror=true;return false;}
 			if(swrite(f,ln_term,ln_term_sz)/*true*/){close(f);*majorerror=true;return false;}
 		}
 		row*r=&rows[end];
-		if(swrite(f,r->data,size)==swrite_ok){close(f);return true;}
+		if(wwrite(f,r->data,size,swrite)==swrite_ok){close(f);return true;}
 		close(f);*majorerror=true;return false;
 	}
 	clue=start;*majorerror=false;return false;

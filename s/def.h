@@ -15,6 +15,7 @@ extern size_t clue;
 //split
 bool is_extension_ok(char*,char*);
 int open_or_new(char*);
+swrite_char wwrite(int,char*,row_dword,swrite_char(*)(int,void*,row_dword));
 
 //sep
 //main,split

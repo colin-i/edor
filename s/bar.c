@@ -153,11 +153,11 @@ static swrite_char awrite(int f,void*buf,row_dword size){
 	if(write(f,buf,size)==size)return swrite_ok;
 	return swrite_bad;
 }
-static swrite_char wwrite(int f,char*buf,row_dword size,swrite_char(*fn)(int,void*,row_dword)){
+swrite_char wwrite(int f,char*buf,row_dword size,swrite_char(*fn)(int,void*,row_dword)){
 	if(filewhites_reminder/*true*/){
 		char*b=(char*)buf;
 		char*last=b+size;
-		while(b!=last&&*b!='\t')b++;//0 size is ok
+		while(b!=last&&*b=='\t')b++;//0 size is ok
 		if(b!=buf){
 			row_dword i=b-buf;
 			size-=i;
