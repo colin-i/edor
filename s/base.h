@@ -103,7 +103,7 @@ bool split_write_init(char*);
 const char* split_write(size_t*,int,unsigned int*,bool*);
 void split_write_free();
 //bar
-bool swrite(int,void*,unsigned int);
+swrite_char swrite(int,void*,unsigned int);
 
 //main
 //bar

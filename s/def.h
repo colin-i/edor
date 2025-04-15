@@ -20,3 +20,7 @@ swrite_char wwrite(int,char*,row_dword,swrite_char(*)(int,void*,row_dword));
 //sep
 //main,split
 extern char path_separator;
+
+//split
+//bar
+#define swwrite(a,b,c) wwrite(a,b,c,swrite)

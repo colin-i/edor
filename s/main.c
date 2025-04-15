@@ -2902,7 +2902,6 @@ static void action_go(int argc,char**argv,char*cutbuf_file,char*argfile){
 			if(clue!=no_clue)printf("last row where was an error at split write was: " protocol "\n",clue);
 		}
 	}
-	freeprefs();
 	if(text_init_b!=nullptr){
 		if(rows!=nullptr){
 			text_free(0,rows_tot);
@@ -2911,6 +2910,7 @@ static void action_go(int argc,char**argv,char*cutbuf_file,char*argfile){
 		}
 		free(text_init_b);
 	}
+	freeprefs();
 }
 static void action(int argc,char**argv){
 	char cutbuf_file[max_path_0];

@@ -87,9 +87,9 @@ typedef struct{
 
 #define extlen_size 1
 
-#define swrite_ok false
-#define swrite_bad true
-#define swrite_char bool
+#define swrite_bad -1
+#define swrite_ok 0
+#define swrite_char char
 
 #define protocol_simple "%u"
 #ifdef PLATFORM64

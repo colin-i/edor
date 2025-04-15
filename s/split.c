@@ -457,10 +457,10 @@ swrite_char swrite(int f,void*buf,row_dword size){
 	}
 	return swrite_bad;
 }
-//static swrite_char swwrite_if(int f,void*buf,row_dword size,row_dword off){
-//	if(off==0)return swwrite(f,buf,size);
-//	return swrite(f,buf,size);
-//}
+static swrite_char swwrite_if(int f,void*buf,row_dword size,row_dword off){
+	if(off==0)return swwrite(f,buf,size);
+	return swrite(f,buf,size);
+}
 
 //true if ok
 static bool split_write_split(char*file,size_t start,size_t end,unsigned int size,bool*majorerror){
@@ -469,11 +469,11 @@ static bool split_write_split(char*file,size_t start,size_t end,unsigned int siz
 		for(size_t k=start;k<end;k++){
 			row*r=&rows[k];
 			unsigned int sz=r->sz;
-			if(wwrite(f,r->data,sz,swrite)/*true*/){close(f);*majorerror=true;return false;}
-			if(swrite(f,ln_term,ln_term_sz)/*true*/){close(f);*majorerror=true;return false;}
+			if(swwrite(f,r->data,sz)==swrite_bad){close(f);*majorerror=true;return false;}
+			if(swrite(f,ln_term,ln_term_sz)==swrite_bad){close(f);*majorerror=true;return false;}
 		}
 		row*r=&rows[end];
-		if(wwrite(f,r->data,size,swrite)==swrite_ok){close(f);return true;}
+		if(swwrite(f,r->data,size)==swrite_ok){close(f);return true;}
 		close(f);*majorerror=true;return false;
 	}
 	clue=start;*majorerror=false;return false;
@@ -503,10 +503,11 @@ const char* split_write(size_t*_index,int orig_file,row_dword*_off,bool*majorerr
 				unsigned int sz=rw->sz;
 				char*marker=(char*)memmem(content,sz,esdelimiter,esdelimiter_size);//fulldelim,fulldelim_size
 				if(marker!=nullptr){
-					unsigned int part=marker-content;
-					*_index=j;*_off=part+esdelimiter_size;//fulldelim_size
+					if(swwrite_if(orig_file,data,pointer-data,*_off)==swrite_ok){
+						unsigned int part=marker-content;
+						*_index=j;
+						*_off=part+esdelimiter_size;
 
-					if(swrite(orig_file,data,pointer-data)==swrite_ok){
 						//char aux=cursor[size];//also alloced rows have +1
 						cursor[size]='\0';//this is for unmodified where ln_term is there, for alloced is undefined there
 						//cursor[size]=aux;//is not important to have ln_term back there
