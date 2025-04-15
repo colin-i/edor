@@ -187,7 +187,8 @@ static bool indent_flag=true;
 #define mask_indent 2
 #define mask_insensitive 4
 #define mask_ocompiler 8
-#define mask_splits 16
+#define mask_splits 0x10
+#define mask_filewhites 0x20
 static char prefs_file[max_path_0]={'\0'};//only the first byte is set
 static char*ocode_extension_new=nullptr;
 
@@ -212,6 +213,9 @@ static char at_right_mark='>';
 static char at_left_mark='<';
 static char at_content_nomark=' ';
 static WINDOW*syntaxcontent=nullptr;
+bool filewhites_flag=false;
+char*filewhites_extension=(char*)"yml";
+static char*filewhites_extension_new=nullptr;
 
 #define mouseevents_enabled 'E'
 #define mouseevents_disabled 'e'
@@ -223,6 +227,8 @@ static WINDOW*syntaxcontent=nullptr;
 #define ocompiler_disabled 'a'
 #define splits_enabled 'J'
 #define splits_disabled 'j'
+#define filewhites_enabled 'Y'
+#define filewhites_disabled 'y'
 #define splits_activated 'S'
 #define splits_activated_mixless 'h'
 #define splits_deactivated '_'
@@ -2189,7 +2195,7 @@ static bool loopin(WINDOW*w){
 			else if(z==key_ocomp){if(pref_change(w,&ocode_extension,&ocode_extension_new,false)/*true*/)return true;}
 			else if(z==key_actswf){if(pref_change(w,&esdelimiter,&esdelimiter_new,true)/*true*/)return true;}           //don't allow no size delimiters
 			else if(z==key_actswf2){if(pref_change(w,&split_extension,&split_extension_new,false)/*true*/)return true;}
-//			else if(z==key_whites+A_to_a){if(pref_change(w,&filewhites_extension,&filewhites_extension_new,false)/*true*/)return true;}
+			else if(z==key_whites+A_to_a){if(pref_change(w,&filewhites_extension,&filewhites_extension_new,false)/*true*/)return true;}
 		}else{
 			const char*s=keyname(c);
 			if(*s==Char_Ctrl){//seems that all cases are ^ a letter \0
@@ -2260,12 +2266,12 @@ static bool loopin(WINDOW*w){
 					else{splits_flag=true;c=splits_enabled;}
 					setprefs(mask_splits,splits_flag);
 					vis(c,w);
-//				}else if(chr==key_whites){
-//					char c;
-//					if(filewhites_flag/*true*/){filewhites_flag=false;c=filewhites_disabled;}
-//					else{filewhites_flag=true;c=filewhites_enabled;}
-//					setprefs(mask_filewhites,filewhites_flag);
-//					vis(c,w);
+				}else if(chr==key_whites){
+					char c;
+					if(filewhites_flag/*true*/){filewhites_flag=false;c=filewhites_disabled;}
+					else{filewhites_flag=true;c=filewhites_enabled;}
+					setprefs(mask_filewhites,filewhites_flag);
+					vis(c,w);
 				}else if(chr==key_wrap){if(text_wrap(w)/*true*/)return true;}
 				else if(chr==key_swkey){
 					quick_pack(com_nr_swkey,change_key)
@@ -2524,6 +2530,7 @@ static void getprefs(){
 			if((mask&mask_insensitive)!=0)insensitive=true;
 			if((mask&mask_ocompiler)!=0)ocompiler_flag=true;
 			if((mask&mask_splits)!=0)splits_flag=true;
+			if((mask&mask_filewhites)!=0)filewhites_flag=true;
 			unsigned char len;
 			if(read(f,&len,extlen_size)==extlen_size){
 				ocode_extension_new=(char*)malloc(len+1);
@@ -2760,19 +2767,24 @@ static bool get_answer(char switcher){
 	return a;
 }
 
-//static void filewhites_read(){
-//	for(size_t i=0;i<rows_tot;i++){
-//		row*r=&rows[i];
-//		char*d=r->data;
-//		void*last=d+r->sz;
-//		while(d!=last){
-//			if(*d!=' ')break;
-//			*d='\t';
-//			d++;
-//		}
-//	}
-//}
+static void filewhites_read(){
+	for(size_t i=0;i<rows_tot;i++){
+		row*r=&rows[i];
+		char*d=r->data;
+		void*last=d+r->sz;
+		while(d!=last){
+			if(*d!=' ')break;
+			*d='\t';
+			d++;
+		}
+	}
+}
 
+static void freeprefs(){//these if are not from start , they can be when user decides to enter new prefs, and an alloc is there
+	if(ocode_extension_new!=nullptr)free(ocode_extension_new);//also need it at change for view what is was
+	split_freeprefs();
+	if(filewhites_extension_new!=nullptr)free(filewhites_extension_new);
+}
 static void action_go(int argc,char**argv,char*cutbuf_file,char*argfile){
 	if(prefs_file[0]!='\0')getprefs();//split is first that depends on prefs
 
@@ -2850,7 +2862,7 @@ static void action_go(int argc,char**argv,char*cutbuf_file,char*argfile){
 				rows=(row*)malloc(rows_tot*sizeof(row));
 				if(rows!=nullptr){
 					rows_init(text_sz);
-					//if(argfile!=nullptr)if(filewhites_flag/*true*/)if(is_extension_ok(filewhites_extension,argfile))filewhites_read();
+					if(argfile!=nullptr)if(filewhites_flag/*true*/)if(is_extension_ok(filewhites_extension,argfile))filewhites_read();
 					textfile=argfile;
 					text_init_e=text_init_b+text_sz+1;
 				}
@@ -2888,12 +2900,9 @@ static void action_go(int argc,char**argv,char*cutbuf_file,char*argfile){
 			endwin();
 
 			if(clue!=no_clue)printf("last row where was an error at split write was: " protocol "\n",clue);
-			if(ocode_extension_new!=nullptr){
-				free(ocode_extension_new);//also need it at change for view what is was
-				split_freeprefs();
-			}
 		}
 	}
+	freeprefs();
 	if(text_init_b!=nullptr){
 		if(rows!=nullptr){
 			text_free(0,rows_tot);

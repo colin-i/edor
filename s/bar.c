@@ -51,28 +51,27 @@
 
 #include"base.h"
 
-#define err_len_min 2
-
-bool insensitive=false;
-
-static int err_l=0;
 static char*err_s;
+static WINDOW*poswn;
+static int number2;//number is also negative
+static int number3;
+static int fprevnumber;
+static bool filewhites_reminder;//=false;
+
+#define err_len_min 2
+bool insensitive=false;
+static int err_l=0;
 #define b_inf_s "F1 for help"
 #define quest_ex_s "? y/C/n"
 static int com_left=sizeof(b_inf_s);
 static char input1[max_path_0];
 static char input2[max_path_0];
 static char*input0=input1;
-static WINDOW*poswn;
 static char inputr[max_path_0];
 static bar_byte cursorr=0;
 #define get_right getbegx(poswn)-1
 static char inputf[max_path_0];
 static bar_byte cursorf=0;
-
-static int number2;//number is also negative
-static int number3;
-static int fprevnumber;
 
 typedef struct{
 	size_t yb;
@@ -149,15 +148,40 @@ static command_char wrt_simple_split(int f){
 	}
 	return command_false;
 }
-//same
+
+static swrite_char awrite(int f,void*buf,row_dword size){
+	if(write(f,buf,size)==size)return swrite_ok;
+	return swrite_bad;
+}
+static swrite_char wwrite(int f,char*buf,row_dword size,swrite_char(*fn)(int,void*,row_dword)){
+	if(filewhites_reminder/*true*/){
+		char*b=(char*)buf;
+		char*last=b+size;
+		while(b!=last&&*b!='\t')b++;//0 size is ok
+		if(b!=buf){
+			row_dword i=b-buf;
+			size-=i;
+			char w=' ';
+			while(i!=0){
+				if(fn(f,&w,1)==swrite_bad)return swrite_bad;
+				i--;
+			}
+			buf=b;
+		}
+	}
+	return fn(f,buf,size);
+}
+
+
+//command return
 static command_char wrt_simple(int f){
 	size_t n=rows_tot-1;
 	for(size_t i=0;i<n;i++){
 		row*r=&rows[i];
-		if(write(f,r->data,r->sz)!=r->sz)return command_false;
+		if(wwrite(f,r->data,r->sz,awrite)==swrite_bad)return command_false;
 		if(write(f,ln_term,ln_term_sz)!=ln_term_sz)return command_false;
 	}
-	if(write(f,rows[n].data,rows[n].sz)==rows[n].sz)return command_ok;
+	if(wwrite(f,rows[n].data,rows[n].sz,awrite)==swrite_ok)return command_ok;
 	return command_false;
 }
 //same
@@ -293,7 +317,7 @@ bool is_extension_ok(char*extension,char*filename){//also filename to save resto
 command_char saving_base(char*dest){
 	split_reminder_c=split_conditions(dest,false);
 	if(split_reminder_c!=split_err){
-		//filewhites_reminder=filewhites_flag&&is_extension_ok(filewhites_extension,dest);
+		filewhites_reminder=filewhites_flag&&is_extension_ok(filewhites_extension,dest);
 		if(split_reminder_c>=split_yes_mixless)return wrt_split(dest);
 		return wrt(dest);
 	}

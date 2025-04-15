@@ -147,7 +147,7 @@ while [ $i -lt 123 ]; do
 		117) find_pos undo             $i 1 1;;   #u
 		118) find_pos visual           $i 1 1;;   #v
 		119) find_pos wrap             $i 1;;     #w
-#		121) find_pos whites          $i 0;;     #y
+		121) find_pos whites           $i 0;;     #y
 		122) find_pos swkey            $i 1;;     #z
 		*) wr2 ",${nothing}"; wr4 ",${nothing}";;
 	esac

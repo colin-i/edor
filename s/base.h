@@ -107,12 +107,14 @@ bool swrite(int,void*,unsigned int);
 
 //main
 //bar
-extern char*textfile;
-extern bool mod_flag;
+extern bool filewhites_flag;
+extern char*filewhites_extension;
 extern bool insensitive;
-extern char*ocode_extension;
 extern key_struct*keys;
 extern char*keys_row;
+extern bool mod_flag;
+extern char*ocode_extension;
+extern char*textfile;
 //bar,tit
 extern char key_quit;
 //bar,tw,tit

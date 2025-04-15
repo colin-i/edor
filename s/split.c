@@ -391,18 +391,10 @@ bool split_readprefs(int f){
 	return false;
 }
 void split_freeprefs(){
-	if(sdelimiter_new!=nullptr){
-		free(sdelimiter_new);
-		if(esdelimiter_new!=nullptr){
-			free(esdelimiter_new);
-			if(split_out_new!=nullptr){
-				free(split_out_new);
-				if(split_extension_new!=nullptr){
-					free(split_extension_new);
-				}
-			}
-		}
-	}
+	if(sdelimiter_new!=nullptr)free(sdelimiter_new);
+	if(esdelimiter_new!=nullptr)free(esdelimiter_new);
+	if(split_out_new!=nullptr)free(split_out_new);
+	if(split_extension_new!=nullptr)free(split_extension_new);
 }
 
 //true at ok
