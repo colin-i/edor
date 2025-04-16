@@ -73,7 +73,7 @@ if [ ${level} -eq ${level_help} ]; then
 	exit 0
 fi
 
-#QWERT U O y   ip
+#QWERTYU O     ip
 #AS FGHJ   dkl
 # Z CV N   xb  m
 # ^M is 13 that comes also at Enter, ^I is 9 that comes also at Tab
