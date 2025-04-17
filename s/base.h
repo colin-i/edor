@@ -26,20 +26,19 @@ void row_set(row*,row_dword,row_dword,row_dword,const char*);
 void setprefs(int,bool);
 size_t sizemembuf(size_t,row_dword,size_t,row_dword);
 void vis(char,WINDOW*);
+//bar,tw,tit
+void visual(char);
+void fixed_yx(size_t*,row_dword*,int,int);
+//bar,tit
+#define refreshpage(w) refreshrows(w,0)
 //tw
 int xc_to_c(size_t,int);
 //tw,tit
+command_char movment(int,WINDOW*);
 char orig_key(char,char);
 #define orig_upkey(a) orig_key(a,0)
 //tit
 void fixed_x(size_t,row_dword*,int,int);
-//bar,tit
-#define refreshpage(w) refreshrows(w,0)
-//bar,tw,tit
-void visual(char);
-void fixed_yx(size_t*,row_dword*,int,int);
-//tw,tit
-command_char movment(int,WINDOW*);
 
 //bar
 //main
@@ -120,11 +119,13 @@ extern char*keys_row;
 extern bool mod_flag;
 extern char*ocode_extension;
 extern char*textfile;
-//bar,tit
-extern char key_quit;
+//bar,tw
+extern char tab_sz;
 //bar,tw,tit
 extern size_t ytext;
 extern row_dword xtext;
+//bar,tit
+extern char key_quit;
 //tw
 extern char key_wrap;
 //tw,tit

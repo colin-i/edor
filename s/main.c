@@ -216,6 +216,7 @@ static WINDOW*syntaxcontent=nullptr;
 bool filewhites_flag=false;
 char*filewhites_extension=(char*)"yml";
 static char*filewhites_extension_new=nullptr;
+char tab_sz=6;
 
 #define splits_activated 'S'
 #define splits_activated_mixless 'h'
@@ -1724,7 +1725,7 @@ static bool enter(size_t y,row_dword x,int*r,int*c,WINDOW*w){
 					p--;
 				}
 				t[0]-=z-p;
-				c[0]=(int)(tb-xtext)*tab_sz;
+				c[0]=(tb-xtext)*tab_sz;
 
 				wclrtoeol(w);
 				no_content_at_right_if(row)
@@ -1734,7 +1735,7 @@ static bool enter(size_t y,row_dword x,int*r,int*c,WINDOW*w){
 				return false;
 			}
 		}
-		if(fix/*true*/)c[0]=(int)(tb-xtext)*tab_sz;
+		if(fix/*true*/)c[0]=(tb-xtext)*tab_sz;
 		else{xtext=tb;c[0]=0;}
 		refreshpage(w);
 		return false;

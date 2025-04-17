@@ -57,7 +57,7 @@ text="\ncommand mode: left,right,home,end,Ctrl+q\
 \n    other key to return\
 \nCtrl+u = undo; Alt+u = undo mode: left=undo,right=redo,other key to return\
 \nCtrl+r = redo\
-\nCtrl+h = titles (movement, Enter at done, Ctrl+q, other keys to search)\
+\nCtrl+l = titles (movement, Enter at done, Ctrl+q, other keys to search)\
 \nCtrl+w = text wrapping (movement. another key to return)\
 \nCtrl+e = enable/disable internal mouse/touch\
 \nCtrl+n = disable/enable indentation\
@@ -74,11 +74,12 @@ if [ ${level} -eq ${level_help} ]; then
 	exit 0
 fi
 
-#QWERTYU O     ip
-#AS FGHJ   dkl
-# Z CV N   xb  m
+#QWERTYU O    ip
+#AS FG J L dk h
+# Z CV N   xb m
 # ^M is 13 that comes also at Enter, ^I is 9 that comes also at Tab
 # ^P at docker, something is not ok with the redraw
+# ^H at termux is backspace
 # ^A in termux is from Ctrl+Alt+a
 
 textsed="$(echo "${text}" | sed "s/\\\n/n/g; s/\\\\\"/\"/g")"  # replace \n to n and \\\" to \"(this will go " at grep). \ at endings are 0
@@ -136,8 +137,8 @@ while [ $i -lt 123 ]; do
 		101) find_pos mouse              $i 1;;     #e
 		102) find_pos find               $i 1 1;;   #f
 		103) find_pos goto               $i 1 1;;   #g
-		104) is_extern=x find_pos titles $i 1;;     #h
 		106) find_pos actswf             $i 1 1 1;; #j
+		108) is_extern=x find_pos titles $i 1;;     #l
 		110) find_pos indents            $i 1;;     #n
 		111) find_pos paste              $i 1 1;;   #o
 		112) find_pos actswf2            $i 0 1 1;; #p

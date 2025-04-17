@@ -39,7 +39,6 @@ typedef struct{
 #define Char_Ctrl 0x5e   //main bar tit
 
 #define row_pad 0xF
-#define tab_sz 6
 //can be 127(ascii Delete) or 263, note: Ctrl+h generates 263
 #define is_KEY_BACKSPACE(a) a==KEY_BACKSPACE||a==0x7f
 
