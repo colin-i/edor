@@ -2536,9 +2536,9 @@ static void getfilebuf(char*cutbuf_file){//,size_t off){
 	}
 }
 static void getprefs(){
-	char mask;
 	int f=open(prefs_file,O_RDONLY);
 	if(f!=-1){
+		char mask;
 		if(read(f,&mask,mask_size)==mask_size){
 			if((mask&mask_mouse)!=0)stored_mouse_mask=~0;
 			if((mask&mask_indent)==0)indent_flag=false;
