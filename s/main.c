@@ -484,10 +484,18 @@ static int helpshow(int n){
 	if(x!=0)for(int i=max-x;i!=max;i++)addch(' ');
 	return y;
 }
+
+static char orig_key(char now_key,char mod){
+	key_struct*now=&keys[now_key-'A'];
+	char ix=now->index;
+	char orig=keys_row_orig[ix]+'A';
+	return orig+mod;
+}
+
 static void helpshowlastrow(int rw){
 	int i=3;//with respect to helpposition
 	move(rw,i);
-	char stats=6;
+	char stats=5+1+2;
 	int max=getmaxx(stdscr)-stats;
 	while(i<max){
 		addch(' ');
@@ -498,6 +506,8 @@ static void helpshowlastrow(int rw){
 	addch(insensitive/*true*/?insensitive_enabled:insensitive_disabled);
 	addch(ocompiler_flag/*true*/?ocompiler_enabled:ocompiler_disabled);//i'm using otoc with gdb for new code
 	addch(splits_flag/*true*/?splits_enabled:splits_disabled);
+	addch(filewhites_flag/*true*/?orig_key(key_whites,0):orig_key(key_whites,A_to_a));
+	addch(' ');
 	addch(split_reminder_c>=split_yes_mixless?(split_reminder_c==split_yes_mix?splits_activated:splits_activated_mixless):splits_deactivated);
 	//1@: else at my compilers, and also gcc, is faster: if is with new asm jump instruction. but still not counting on that and aspire to fast first
 	//is same asm speed with/without false, still why at two of these first is the beta?
@@ -2052,17 +2062,22 @@ static bool savetofile(WINDOW*w,bool has_file){
 }
 static void writeprefs(int f,char mask){
 	if(write(f,&mask,mask_size)==mask_size){
-		unsigned char sz=strlen(ocode_extension);//at prefs one byte is taken, and also input has 255 max
+		bar_byte sz=strlen(ocode_extension);//at prefs one byte is taken, and also input has 255 max
 		if(write(f,&sz,extlen_size)==extlen_size){
 			if(write(f,ocode_extension,sz)==sz){
 				if(split_writeprefs(f)/*true*/){
 					char k=0;
 					if(memcmp(keys_row,keys_row_orig,number_of_keys)!=0)k=number_of_keys;
 					if(write(f,&k,sizeof(char))==sizeof(char)){
-						#pragma GCC diagnostic push
-						#pragma GCC diagnostic ignored "-Wunused-result"
-						write(f,keys_row,k);
-						#pragma GCC diagnostic pop
+						if(write(f,keys_row,k)==k){
+							sz=strlen(filewhites_extension);
+							if(write(f,&sz,extlen_size)==extlen_size){
+								#pragma GCC diagnostic push
+								#pragma GCC diagnostic ignored "-Wunused-result"
+								write(f,filewhites_extension,sz);
+								#pragma GCC diagnostic pop
+							}
+						}
 					}
 				}
 			}
@@ -2531,7 +2546,7 @@ static void getprefs(){
 			if((mask&mask_ocompiler)!=0)ocompiler_flag=true;
 			if((mask&mask_splits)!=0)splits_flag=true;
 			if((mask&mask_filewhites)!=0)filewhites_flag=true;
-			unsigned char len;
+			bar_byte len;
 			if(read(f,&len,extlen_size)==extlen_size){
 				ocode_extension_new=(char*)malloc(len+1);
 				if(ocode_extension_new!=nullptr){
@@ -2539,11 +2554,17 @@ static void getprefs(){
 						ocode_extension=ocode_extension_new;
 						ocode_extension[len]='\0';
 						if(split_readprefs(f)/*true*/){
-							unsigned char k;
-							if(read(f,&k,sizeof(char))==sizeof(char)){
-								if(k<=number_of_keys){
-									if(read(f,keys_row_frompref,k)==k){
-										getkeys(k);
+							if(read(f,&len,sizeof(char))==sizeof(char)){
+								if(len<=number_of_keys){
+									if(read(f,keys_row_frompref,len)==len){
+										getkeys(len);
+										if(read(f,&len,sizeof(char))==sizeof(char)){
+											filewhites_extension_new=(char*)malloc(len+1);
+											if(read(f,filewhites_extension_new,len)==len){
+												filewhites_extension=filewhites_extension_new;
+												filewhites_extension[len]='\0';
+											}
+										}
 									}
 								}
 							}
@@ -2553,13 +2574,9 @@ static void getprefs(){
 			}
 		}
 		close(f);
-		return;
 	}
-	f=open_new(prefs_file);
-	if(f!=-1){
-		mask=mask_indent;
-		writeprefs(f,mask);
-	}
+	//is ok to have the default prefs always, even if is not popular, some features are good to be activated
+	//f=open_new(prefs_file);if(f!=-1){mask=mask_indent;writeprefs(f,mask);}
 }
 static bool help_cutbuffile_preffile(char*s,char*cutbuf_file){
 #if ((!defined(USE_FS)) && (!defined(USE__FS)))

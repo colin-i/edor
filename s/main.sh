@@ -62,9 +62,10 @@ text="\ncommand mode: left,right,home,end,Ctrl+q\
 \nCtrl+e = enable/disable internal mouse/touch\
 \nCtrl+n = disable/enable indentation\
 \nCtrl+t = enable/disable insensitive search\
-\nCtrl+a = enable/disable O language syntax; Alt+a = syntax rescan; Alt+A = change extension name (blank is all)\
+\nCtrl+a = enable/disable O language syntax; Alt+a = syntax rescan; Alt+A = change rule extension name (blank is all)\
 \nCtrl+j = enable/disable OA split syntax; Alt+j = change delimiter; Alt+J = change view delimiter\
-\n    Alt+p = change splits folder (blank is mixless); Alt+P = change extension name for splits (blank is all)\
+\n    Alt+p = change splits folder (blank is mixless); Alt+P = change rule extension name for splits (blank is all)\
+\nCtrl+y = enable/disable spaces->tabs indents at read, tabs->spaces at write; Alt+y = change rule extension name (blank is all)\
 \nCtrl+z = switch keys, applies to Ctrl and lower/upper Alt (example: az , +a becomes +z and +z becomes +a)\
 \nCtrl+q = quit\""
 wr_n "${text}"
@@ -147,7 +148,7 @@ while [ $i -lt 123 ]; do
 		117) find_pos undo             $i 1 1;;   #u
 		118) find_pos visual           $i 1 1;;   #v
 		119) find_pos wrap             $i 1;;     #w
-		121) find_pos whites           $i 0;;     #y
+		121) find_pos whites           $i 1 1;;   #y
 		122) find_pos swkey            $i 1;;     #z
 		*) wr2 ",${nothing}"; wr4 ",${nothing}";;
 	esac
