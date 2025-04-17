@@ -128,28 +128,28 @@ find_pos () {
 }
 
 number_of_keys=0
-_find_pos                 ocomp            97 1 1 1   #a
+_find_pos                 ocomp              97 1 1 1   #a
 i=98
 while [ $i -lt 123 ]; do
 	case $i in
-		99) find_pos findword          $i 1 1;;   #c
-		101) find_pos mouse            $i 1;;     #e
-		102) find_pos find             $i 1 1;;   #f
-		103) find_pos goto             $i 1 1;;   #g
-		104) find_pos titles           $i 1;;     #h
-		106) find_pos actswf           $i 1 1 1;; #j
-		110) find_pos indents          $i 1;;     #n
-		111) find_pos paste            $i 1 1;;   #o
-		112) find_pos actswf2          $i 0 1 1;; #p
-		113) is_extern=x find_pos quit $i 3;;     #q
-		114) find_pos redo             $i 1;;     #r
-		115) find_pos save             $i 1 1;;   #s
-		116) find_pos insens           $i 1;;     #t
-		117) find_pos undo             $i 1 1;;   #u
-		118) find_pos visual           $i 1 1;;   #v
-		119) find_pos wrap             $i 1;;     #w
-		121) find_pos whites           $i 1 1;;   #y
-		122) find_pos swkey            $i 1;;     #z
+		99) find_pos findword            $i 1 1;;   #c
+		101) find_pos mouse              $i 1;;     #e
+		102) find_pos find               $i 1 1;;   #f
+		103) find_pos goto               $i 1 1;;   #g
+		104) is_extern=x find_pos titles $i 1;;     #h
+		106) find_pos actswf             $i 1 1 1;; #j
+		110) find_pos indents            $i 1;;     #n
+		111) find_pos paste              $i 1 1;;   #o
+		112) find_pos actswf2            $i 0 1 1;; #p
+		113) is_extern=x find_pos quit   $i 3;;     #q
+		114) find_pos redo               $i 1;;     #r
+		115) is_extern=x find_pos save   $i 1 1;;   #s
+		116) find_pos insens             $i 1;;     #t
+		117) find_pos undo               $i 1 1;;   #u
+		118) find_pos visual             $i 1 1;;   #v
+		119) is_extern=x find_pos wrap   $i 1;;     #w
+		121) find_pos whites             $i 1 1;;   #y
+		122) find_pos swkey              $i 1;;     #z
 		*) wr2 ",${nothing}"; wr4 ",${nothing}";;
 	esac
 	i=$((i+1))

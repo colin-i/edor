@@ -473,14 +473,23 @@ static int helpshow(int n){
 	return y;
 }
 
-static char orig_key(char now_key,char mod){
+#define visual_write_at(a,b) mvaddch(getmaxy(stdscr)-1,getmaxx(stdscr)-b,a)
+#define visual_write(a) visual_write_at(a,2)
+void visual(char a){
+	visual_write(a);
+	wnoutrefresh(stdscr);
+}
+
+char orig_key(char now_key,char mod){
 	key_struct*now=&keys[now_key-'A'];
 	char ix=now->index;
 	char orig=keys_row_orig[ix]+'A';
 	return orig+mod;
 }
-#define orig_upkey(a) orig_key(a,0)
 #define orig_lowkey(a) orig_key(a,A_to_a)
+void orig_key_show(show_key_struct*s){
+	visual(orig_key(s->key,s->add));//it looks like only mvaddch is enough but at a command_rewrite(example Alt+g) will erase the cursor window if not calling wnoutrefresh now
+}
 
 static void helpshowlastrow(int rw){
 	int i=3;//with respect to helpposition
@@ -1100,12 +1109,6 @@ static void printsel(WINDOW*w,size_t ybsel,size_t xbsel,size_t yesel,size_t xese
 	_rb=rb;_cb=cb;
 	_re=re;_ce=ce;
 }
-#define visual_write_at(a,b) mvaddch(getmaxy(stdscr)-1,getmaxx(stdscr)-b,a);
-#define visual_write(a) visual_write_at(a,2)
-void visual(char a){
-	visual_write(a)
-	wnoutrefresh(stdscr);
-}
 static void refreshrowscond(WINDOW*w,size_t y,row_dword x,size_t r,size_t n){
 	if(y!=ytext||x!=xtext)refreshpage(w);
 	else refreshrowsbot(w,(int)r,n!=0?getmaxy(w):(int)r+1);
@@ -1240,7 +1243,7 @@ static void easytime(){
 	hardtime=0;
 }
 static void mod_visual(chtype ch){
-	visual_write_at(ch,1)
+	visual_write_at(ch,1);
 	wnoutrefresh(stdscr);
 }
 static void mod_set(bool flag,chtype ch){
@@ -1910,7 +1913,7 @@ static void indent(bool b,size_t ybsel,size_t*xbsel,size_t yesel,size_t*xesel,WI
 }
 //true resize
 static bool visual_mode(WINDOW*w,bool v_l){
-	visual('V');
+	visual(orig_upkey(key_visual));
 	int rw=getcury(w);int cl=getcurx(w);
 	size_t ybsel=ytext+(size_t)rw;
 	size_t yesel=ybsel;
@@ -1999,7 +2002,7 @@ static bool visual_mode(WINDOW*w,bool v_l){
 #define quick_pack3(nr,fn,w) comnrp_define args[3];((comnrp_define)args)[0]=nr;args[1]=(comnrp_define)fn;args[2]=(comnrp_define)w;
 static bool find_mode(int nr,WINDOW*w){
 	quick_pack((long)nr,w)
-	command_char r=command((comnrp_define)args);
+	command_char r=command((comnrp_define)args,&(show_key_struct){key_find,0});
 	if(r==command_resize)return true;
 	//if(r==command_no){//only at quit from the bar, but at command_ok also to update stdscr, and at command_false visib<2 at finds
 	//	only at first command_false visib<2 is extra, to find that will be extra in extra
@@ -2008,7 +2011,7 @@ static bool find_mode(int nr,WINDOW*w){
 	return false;
 }
 static bool goto_mode(char*args,WINDOW*w){
-	command_char r=command(args);
+	command_char r=command(args,&(show_key_struct){key_goto,0});
 	if(r==command_ok){
 		centering_simple(w)
 	}
@@ -2021,7 +2024,7 @@ static bool savetofile(WINDOW*w,bool has_file){
 	command_char ret;
 	if(has_file){
 		ret=save();
-	}else{char aa=com_nr_save;ret=command(&aa);}
+	}else{char aa=com_nr_save;ret=command(&aa,&(show_key_struct){key_save,0});}
 	if(ret!=command_false){
 		if(ret==command_ok){
 			if(d!=textfile){
@@ -2112,10 +2115,10 @@ void pref_modify(char**pref_orig,char**pref_buf,bool sizedonly,char*newinput,bar
 	*pref_orig=*pref_buf;//at start extension_new is not 100%
 	rewriteprefs;
 }
-static bool pref_change(WINDOW*w,char**pref_orig,char**pref_buf,bool sizedonly){
+static bool pref_change(WINDOW*w,char**pref_orig,char**pref_buf,bool sizedonly,char k,char add){
 	extdata d={pref_orig,pref_buf,sizedonly};
 	quick_pack(com_nr_ext,&d)
-	command_char nr=command((char*)args);
+	command_char nr=command((char*)args,&(show_key_struct){k,add});
 	if(nr>command_resize){
 		wmove(w,getcury(w),getcurx(w));//ok/quit/err
 		return false;
@@ -2194,12 +2197,12 @@ static bool loopin(WINDOW*w){
 			else if(z==(key_undo+A_to_a)){vis('U',w);undo_loop(w);vis(' ',w);}
 			else if(z==(key_save+A_to_a)){b=savetofile(w,false);if(b/*true*/)return true;}
 			else if(z==(key_ocomp+A_to_a)){aftercall=aftercall_find();aftercall_draw(w);}
-			else if(z==(key_actswf+A_to_a)){if(pref_change(w,&sdelimiter,&sdelimiter_new,true)/*true*/)return true;}    //don't allow no size delimiters
-			else if(z==(key_actswf2+A_to_a)){if(pref_change(w,&split_out,&split_out_new,false)/*true*/)return true;}
-			else if(z==key_ocomp){if(pref_change(w,&ocode_extension,&ocode_extension_new,false)/*true*/)return true;}
-			else if(z==key_actswf){if(pref_change(w,&esdelimiter,&esdelimiter_new,true)/*true*/)return true;}           //don't allow no size delimiters
-			else if(z==key_actswf2){if(pref_change(w,&split_extension,&split_extension_new,false)/*true*/)return true;}
-			else if(z==key_whites+A_to_a){if(pref_change(w,&filewhites_extension,&filewhites_extension_new,false)/*true*/)return true;}
+			else if(z==(key_actswf+A_to_a)){if(pref_change(w,&sdelimiter,&sdelimiter_new,true,key_actswf,A_to_a)/*true*/)return true;}//don't allow no size delimiters
+			else if(z==(key_actswf2+A_to_a)){if(pref_change(w,&split_out,&split_out_new,false,key_actswf2,A_to_a)/*true*/)return true;}
+			else if(z==key_whites+A_to_a){if(pref_change(w,&filewhites_extension,&filewhites_extension_new,false,key_whites,A_to_a)/*true*/)return true;}
+			else if(z==key_ocomp){if(pref_change(w,&ocode_extension,&ocode_extension_new,false,key_ocomp,0)/*true*/)return true;}
+			else if(z==key_actswf){if(pref_change(w,&esdelimiter,&esdelimiter_new,true,key_actswf,0)/*true*/)return true;}            //don't allow no size delimiters
+			else if(z==key_actswf2){if(pref_change(w,&split_extension,&split_extension_new,false,key_actswf2,0)/*true*/)return true;}
 		}else{
 			const char*s=keyname(c);
 			if(*s==Char_Ctrl){//seems that all cases are ^ a letter \0
@@ -2279,7 +2282,7 @@ static bool loopin(WINDOW*w){
 				}else if(chr==key_wrap){if(text_wrap(w)/*true*/)return true;}
 				else if(chr==key_swkey){
 					quick_pack(com_nr_swkey,change_key)
-					if(command((char*)args)==command_resize)return true;
+					if(command((char*)args,&(show_key_struct){key_swkey,0})==command_resize)return true;
 					wmove(w,getcury(w),getcurx(w));
 				}else type(c,w);//enter, tab, ^, unknown ctrls
 			}else{
@@ -2672,9 +2675,9 @@ static void proced(char*cutbuf_file,WINDOW*w1){
 
 						if(split_reminder_c>=split_yes_mixless){
 							if(split_reminder_c>=split_yes_mix)
-								visual_write(splits_activated)
+								visual_write(splits_activated);
 							else
-								visual_write(splits_activated_mixless)
+								visual_write(splits_activated_mixless);
 							//visual_bool=true;//to clear at a next key
 						}
 						if(mod_flag==false){

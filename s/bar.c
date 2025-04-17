@@ -680,7 +680,7 @@ command_char save(){
 		return saving();
 	}
 	char a=com_nr_save;
-	return command(&a);
+	return command(&a,&(show_key_struct){key_save,0});
 }
 WINDOW*position_init(){
 	poswn=newwin(1,3,0,0);
@@ -1285,7 +1285,7 @@ static int word_at_cursor(char*z){
 }
 
 //-2resize,-1no/quit,0er/fals,1ok
-command_char command(comnrp_define comnrp){
+command_char command(comnrp_define comnrp,show_key_struct*s){
 	int rightexcl=get_right;
 	int right=rightexcl-1;
 	int visib=rightexcl-com_left;
@@ -1307,6 +1307,7 @@ command_char command(comnrp_define comnrp){
 		}
 		else cursor=0;
 	}
+	orig_key_show(s);
 	if(cursor==0)move(y,com_left);
 	else{
 		command_rewrite(y,com_left+(cursor<visib?cursor:0),0,input,cursor,visib);
@@ -1459,6 +1460,9 @@ command_char command(comnrp_define comnrp){
 		}
 	}
 	if(r!=command_resize){
+		visual(' ');//i'm cleaning this because if wanting to change flags will be confused about the previous same flags
+		//again, same wnoutrefresh here, because if not, will erase position, example Alt+y Ctrl+q
+
 		clear_com(y,visib,pos,cursor);
 		wnoutrefresh(stdscr);
 	}

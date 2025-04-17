@@ -129,7 +129,7 @@ bool text_wrap(WINDOW*w){
 		if(yy<y)x-=rowswrap_add[y].xtext;//x is on a wrap part
 
 		//visual
-		visual('W');//without stdscr refresh is not ok
+		visual(orig_upkey(key_wrap));//without stdscr refresh is not ok
 
 		//tw store some variables
 		store_rows=rows;rows=rowswrap;

@@ -11,6 +11,7 @@ void mod_set_off();
 void mod_set_off_wrap();
 void mod_set_on();
 bool no_char(char);
+void orig_key_show(show_key_struct*);
 bool paste(size_t,row_dword,row_dword*,char*,size_t,size_t,bool);
 void pref_modify(char**,char**,bool,char*,bar_byte);
 void printinverted(const char*s);
@@ -27,6 +28,9 @@ size_t sizemembuf(size_t,row_dword,size_t,row_dword);
 void vis(char,WINDOW*);
 //tw
 int xc_to_c(size_t,int);
+//tw,tit
+char orig_key(char,char);
+#define orig_upkey(a) orig_key(a,0)
 //tit
 void fixed_x(size_t,row_dword*,int,int);
 //bar,tit
@@ -44,7 +48,7 @@ command_char save(void);
 command_char saving_base(char*);
 command_char question(const char*);
 command_char change_key(bar_byte);
-command_char command(char*);
+command_char command(char*,show_key_struct*);
 #define centering2(w,prw,pxc,right) position(0,0);centering3(w,prw,pxc,right);
 #define centering(w,prw,pxc) centering2(w,prw,pxc,false)
 #define centering_simple(w) centering(w,nullptr,nullptr)
@@ -111,6 +115,7 @@ extern bool filewhites_flag;
 extern char*filewhites_extension;
 extern bool insensitive;
 extern key_struct*keys;
+extern char key_save;
 extern char*keys_row;
 extern bool mod_flag;
 extern char*ocode_extension;
@@ -120,9 +125,13 @@ extern char key_quit;
 //bar,tw,tit
 extern size_t ytext;
 extern row_dword xtext;
+//tw
+extern char key_wrap;
 //tw,tit
 extern bool ocompiler_flag;
 extern size_t aftercall;
+//tit
+extern char key_titles;
 
 //tw
 //tit

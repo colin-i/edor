@@ -107,7 +107,7 @@ bool titles(WINDOW*w){
 
 		//visual
 		bar_clear();
-		visual('H');
+		visual(orig_upkey(key_titles));
 		refreshpage(w);//visual shows now only with this
 		wmove(w,0,0);  //                        or this
 		position_translated(w);//position_core(near_ytext,0);

@@ -106,3 +106,7 @@ typedef struct{
 	unsigned short upos;
 	char index;
 }key_struct;
+typedef struct{
+	char key;
+	char add;
+}show_key_struct;
