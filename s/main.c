@@ -180,7 +180,7 @@ static char editingfile_buf2[max_path_0];
 
 static mmask_t stored_mouse_mask=0;
 #define stored_mouse_mask_q stored_mouse_mask!=0
-static bool indent_flag=true;
+static bool indent_flag=false;
 #define mask_size 1
 //#define mask_nomask 0
 #define mask_mouse 1
@@ -217,18 +217,6 @@ bool filewhites_flag=false;
 char*filewhites_extension=(char*)"yml";
 static char*filewhites_extension_new=nullptr;
 
-#define mouseevents_enabled 'E'
-#define mouseevents_disabled 'e'
-#define indent_enabled 'N'
-#define indent_disabled 'n'
-#define insensitive_enabled 'T'
-#define insensitive_disabled 't'
-#define ocompiler_enabled 'A'
-#define ocompiler_disabled 'a'
-#define splits_enabled 'J'
-#define splits_disabled 'j'
-#define filewhites_enabled 'Y'
-#define filewhites_disabled 'y'
 #define splits_activated 'S'
 #define splits_activated_mixless 'h'
 #define splits_deactivated '_'
@@ -491,6 +479,8 @@ static char orig_key(char now_key,char mod){
 	char orig=keys_row_orig[ix]+'A';
 	return orig+mod;
 }
+#define orig_upkey(a) orig_key(a,0)
+#define orig_lowkey(a) orig_key(a,A_to_a)
 
 static void helpshowlastrow(int rw){
 	int i=3;//with respect to helpposition
@@ -501,12 +491,12 @@ static void helpshowlastrow(int rw){
 		addch(' ');
 		i++;
 	}
-	addch(stored_mouse_mask_q?mouseevents_enabled:mouseevents_disabled);//maybe on touchscreen tablet is dominant
-	addch(indent_flag/*true*/?indent_enabled:indent_disabled);
-	addch(insensitive/*true*/?insensitive_enabled:insensitive_disabled);
-	addch(ocompiler_flag/*true*/?ocompiler_enabled:ocompiler_disabled);//i'm using otoc with gdb for new code
-	addch(splits_flag/*true*/?splits_enabled:splits_disabled);
-	addch(filewhites_flag/*true*/?orig_key(key_whites,0):orig_key(key_whites,A_to_a));
+	addch(stored_mouse_mask_q?orig_upkey(key_mouse):orig_lowkey(key_mouse));//maybe on touchscreen tablet is dominant
+	addch(indent_flag/*true*/?orig_upkey(key_indents):orig_lowkey(key_indents));
+	addch(insensitive/*true*/?orig_upkey(key_insens):orig_lowkey(key_insens));
+	addch(ocompiler_flag/*true*/?orig_upkey(key_ocomp):orig_lowkey(key_ocomp));//i'm using otoc with gdb for new code
+	addch(splits_flag/*true*/?orig_upkey(key_actswf):orig_lowkey(key_actswf));
+	addch(filewhites_flag/*true*/?orig_upkey(key_whites):orig_lowkey(key_whites));
 	addch(' ');
 	addch(split_reminder_c>=split_yes_mixless?(split_reminder_c==split_yes_mix?splits_activated:splits_activated_mixless):splits_deactivated);
 	//1@: else at my compilers, and also gcc, is faster: if is with new asm jump instruction. but still not counting on that and aspire to fast first
@@ -2083,23 +2073,22 @@ static void writeprefs(int f,char mask){
 			}
 		}
 	}
-	close(f);
 }
 void setprefs(int flag,bool set){
 	if(prefs_file[0]!='\0'){
-		//can use O_RDWR and lseek SEEK_SET and ftruncate(newsize)
-		int f=open(prefs_file,O_RDONLY);
+		int f=open(prefs_file,O_RDWR|O_CREAT,S_IRUSR|S_IWUSR);
 		if(f!=-1){
 			char mask;
-			if(read(f,&mask,mask_size)==mask_size){
-				close(f);
-				if(flag!=(mask_nomask)){
-					if(set/*true*/)mask|=flag;
-					else mask&=~flag;
-				}
-				f=open(prefs_file,O_WRONLY|O_TRUNC);
-				if(f!=-1)writeprefs(f,mask);
+			if(read(f,&mask,mask_size)!=mask_size)mask=mask_nomask;
+			else lseek(f,0,SEEK_SET);
+			if(flag!=(mask_nomask)){
+				if(set/*true*/)mask|=flag;
+				else mask&=~flag;
 			}
+			writeprefs(f,mask);
+			unsigned short nowsize=lseek(f,0,SEEK_CUR);//now is 7 bar_bytes and a mask, not 256
+			ftruncate(f,nowsize);
+			close(f);
 		}
 	}
 }
@@ -2253,38 +2242,38 @@ static bool loopin(WINDOW*w){
 					return false;
 				}else if(chr==key_insens){
 					bool b;char c;
-					if(insensitive/*true*/){insensitive=false;c=insensitive_disabled;}
-					else{insensitive=true;c=insensitive_enabled;}
+					if(insensitive/*true*/){insensitive=false;c=orig_lowkey(key_insens);}
+					else{insensitive=true;c=orig_upkey(key_insens);}
 					setprefs(mask_insensitive,insensitive);//here the bit is set on full insensitive search
 					vis(c,w);//is not showing on stdscr without wnoutrefresh(thisWindow)
 				}else if(chr==key_mouse){
 					bool b;char c;
-					if(stored_mouse_mask_q){stored_mouse_mask=mousemask(0,nullptr);c=mouseevents_disabled;setprefs(mask_mouse,false);}
-					else{stored_mouse_mask=mousemask(ALL_MOUSE_EVENTS,nullptr);c=mouseevents_enabled;setprefs(mask_mouse,true);}
+					if(stored_mouse_mask_q){stored_mouse_mask=mousemask(0,nullptr);c=orig_lowkey(key_mouse);setprefs(mask_mouse,false);}
+					else{stored_mouse_mask=mousemask(ALL_MOUSE_EVENTS,nullptr);c=orig_upkey(key_mouse);setprefs(mask_mouse,true);}
 					vis(c,w);
 				}else if(chr==key_indents){
 					char c;
-					if(indent_flag/*true*/){indent_flag=false;c=indent_disabled;}
-					else{indent_flag=true;c=indent_enabled;}
+					if(indent_flag/*true*/){indent_flag=false;c=orig_lowkey(key_indents);}
+					else{indent_flag=true;c=orig_upkey(key_indents);}
 					setprefs(mask_indent,indent_flag);
 					vis(c,w);//is not showing on stdscr without wnoutrefresh(thisWindow)
 				}else if(chr==key_ocomp){
-					if(ocompiler_flag/*true*/){ocompiler_flag=false;c=ocompiler_disabled;}
-					else{ocompiler_flag=true;c=ocompiler_enabled;
+					if(ocompiler_flag/*true*/){ocompiler_flag=false;c=orig_lowkey(key_ocomp);}
+					else{ocompiler_flag=true;c=orig_upkey(key_ocomp);
 						aftercall=aftercall_find();}
 					setprefs(mask_ocompiler,ocompiler_flag);
 					visual(c);//addch for more info, first to window, then wnoutrefresh to virtual, then doupdate to phisical
 					aftercall_draw(w);
 				}else if(chr==key_actswf){//joins //alt j is set delimiter,alt J escape delimiter
 					char c;
-					if(splits_flag/*true*/){splits_flag=false;c=splits_disabled;}
-					else{splits_flag=true;c=splits_enabled;}
+					if(splits_flag/*true*/){splits_flag=false;c=orig_lowkey(key_actswf);}
+					else{splits_flag=true;c=orig_upkey(key_actswf);}
 					setprefs(mask_splits,splits_flag);
 					vis(c,w);
 				}else if(chr==key_whites){
 					char c;
-					if(filewhites_flag/*true*/){filewhites_flag=false;c=filewhites_disabled;}
-					else{filewhites_flag=true;c=filewhites_enabled;}
+					if(filewhites_flag/*true*/){filewhites_flag=false;c=orig_lowkey(key_whites);}
+					else{filewhites_flag=true;c=orig_upkey(key_whites);}
 					setprefs(mask_filewhites,filewhites_flag);
 					vis(c,w);
 				}else if(chr==key_wrap){if(text_wrap(w)/*true*/)return true;}
@@ -2541,7 +2530,7 @@ static void getprefs(){
 		char mask;
 		if(read(f,&mask,mask_size)==mask_size){
 			if((mask&mask_mouse)!=0)stored_mouse_mask=~0;
-			if((mask&mask_indent)==0)indent_flag=false;
+			if((mask&mask_indent)!=0)indent_flag=true;
 			if((mask&mask_insensitive)!=0)insensitive=true;
 			if((mask&mask_ocompiler)!=0)ocompiler_flag=true;
 			if((mask&mask_splits)!=0)splits_flag=true;
