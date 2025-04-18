@@ -20,7 +20,7 @@ jobs:
         version=`cat debian/changelog | head -1 | grep -Poe "[^\(]*(?=\))"`
         text=`curl https://api.github.com/graphql -X POST -H "Authorization: bearer ${{ secrets.PAT }}" -d '
         {
-         "query": "query { repository ( owner: \"colin-i\", name: \"edor\" ) { release ( tagName: \"${version}\" ) { databaseId }} }"
+         "query": "query { repository ( owner: \"colin-i\", name: \"'"${repo_at_gh}"'\" ) { release ( tagName: \"'"${version}"'\" ) { databaseId }} }"
         }'`
         id=`echo ${text} | grep -Poe "(?<=databaseId\":)[^}]*"`
         up_url=https://uploads.github.com/repos/colin-i/edor/releases/${id}/assets{?name,label}
