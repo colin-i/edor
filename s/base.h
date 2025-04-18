@@ -1,4 +1,74 @@
 
+
+//can add //comment if a macro in a set is only for a file but don't spread them and make a mess
+
+//main,bar
+#define bar_byte unsigned char
+#define bar_byte_plus short
+#define com_nr_find 0
+#define com_nr_findagain 1
+#define com_nr_findword 2
+#define com_nr_findwordfrom 3
+	#define com_nr_find_numbers com_nr_findwordfrom
+#define com_nr_goto 4
+#define com_nr_goto_alt 5
+#define com_nr_swkey 6
+#define com_nr_tab 7
+	#define com_nr_passcursor_numbers com_nr_tab
+#define com_nr_save 8
+#define com_nr_ext 9
+#define comnrp_define char*
+#define command_resize -2
+#define command_no -1 //(char)-1 but there is at least a r> comparation
+#define command_false 0
+#define command_ok 1
+#define command_char signed char
+typedef struct{
+	char**orig;
+	char**buf;
+	bool sizedonly;
+}extdata;
+#define is_KEY_BACKSPACE(a) a==KEY_BACKSPACE||a==0x7f //can be 127(ascii Delete) or 263, note: Ctrl+h generates 263
+#define is_word_char(a) ('0'<=a&&(a<='9'||('A'<=a&&(a<='Z'||(a=='_'||('a'<=a&&a<='z'))))))
+#define max_path 0xff
+#define max_path_0 max_path+1
+#define protocol_simple "%u"
+#ifdef PLATFORM64
+#define protocol "%lu"
+#else
+#define protocol protocol_simple
+#endif
+#define row_pad 0xF
+#define tab_conditions_low '2'
+#define tab_conditions_high '9'
+#define tab_conditions(a) a>=tab_conditions_low&&a<=tab_conditions_high
+#define tab_conditions_nr(a) a>=(tab_conditions_low-'0')&&a<=(tab_conditions_high-'0')
+typedef struct{
+	char* key_location;
+	unsigned short*pos;
+	char pos_total;
+	unsigned short upos;
+	char index;
+}key_struct;
+typedef struct{
+	char key;
+	char add;
+}show_key_struct;
+//main,bar,tit
+#define Char_Return 0xd  //main bar tit
+#define Char_Escape 0x1b //main
+#define Char_Ctrl 0x5e   //main bar tit
+#define color_0 0
+#define color_a 1
+#define color_b 2
+#define color_c 3
+#define color_d 4
+//main,tw,tit
+#define movement_processed -1
+#define movement_diffkey 0
+#define movement_resize 1
+#define movement_char signed char
+
 //main
 //bar
 int c_to_xc(int,int);
@@ -26,19 +96,37 @@ void row_set(row*,row_dword,row_dword,row_dword,const char*);
 void setprefs(int,bool);
 size_t sizemembuf(size_t,row_dword,size_t,row_dword);
 void vis(char,WINDOW*);
+extern bool filewhites_flag;
+extern char*filewhites_extension;
+extern bool insensitive;
+extern key_struct*keys;
+extern char key_save;
+extern char*keys_row;
+extern bool mod_flag;
+extern char*ocode_extension;
+extern char*textfile;
+//bar,tw
+extern char tab_sz;
 //bar,tw,tit
 void visual(char);
 void fixed_yx(size_t*,row_dword*,int,int);
+extern size_t ytext;
+extern row_dword xtext;
 //bar,tit
 #define refreshpage(w) refreshrows(w,0)
+extern char key_quit;
 //tw
 int xc_to_c(size_t,int);
+extern char key_wrap;
 //tw,tit
 command_char movment(int,WINDOW*);
 char orig_key(char,char);
 #define orig_upkey(a) orig_key(a,0)
+extern bool ocompiler_flag;
+extern size_t aftercall;
 //tit
 void fixed_x(size_t,row_dword*,int,int);
+extern char key_titles;
 
 //bar
 //main
@@ -47,7 +135,8 @@ command_char save(void);
 command_char saving_base(char*);
 command_char question(const char*);
 command_char change_key(bar_byte);
-command_char command(char*,show_key_struct*);
+command_char change_tab_size(bar_byte);
+command_char command(char*,show_key_struct);
 #define centering2(w,prw,pxc,right) position(0,0);centering3(w,prw,pxc,right);
 #define centering(w,prw,pxc) centering2(w,prw,pxc,false)
 #define centering_simple(w) centering(w,nullptr,nullptr)
@@ -90,6 +179,10 @@ void position_core(size_t,row_dword);
 bool text_wrap(WINDOW*);
 //tit
 void extra_unlock(size_t,size_t,WINDOW*);
+extern row*rowswrap;
+extern row*store_rows;
+extern size_t store_rows_tot;
+extern size_t store_aftercall;
 
 //tit
 //main
@@ -105,44 +198,6 @@ void split_freeprefs();
 bool split_write_init(char*);
 const char* split_write(size_t*,int,unsigned int*,bool*);
 void split_write_free();
-//bar
-swrite_char swrite(int,void*,unsigned int);
-
-//main
-//bar
-extern bool filewhites_flag;
-extern char*filewhites_extension;
-extern bool insensitive;
-extern key_struct*keys;
-extern char key_save;
-extern char*keys_row;
-extern bool mod_flag;
-extern char*ocode_extension;
-extern char*textfile;
-//bar,tw
-extern char tab_sz;
-//bar,tw,tit
-extern size_t ytext;
-extern row_dword xtext;
-//bar,tit
-extern char key_quit;
-//tw
-extern char key_wrap;
-//tw,tit
-extern bool ocompiler_flag;
-extern size_t aftercall;
-//tit
-extern char key_titles;
-
-//tw
-//tit
-extern row*rowswrap;
-extern row*store_rows;
-extern size_t store_rows_tot;
-extern size_t store_aftercall;
-
-//split
-//main
 extern bool splits_flag;
 extern split_char split_reminder_c;
 extern char*sdelimiter;
@@ -153,5 +208,8 @@ extern char*split_out;
 extern char*split_out_new;
 extern char*split_extension;
 extern char*split_extension_new;
+//bar
+swrite_char swrite(int,void*,unsigned int);
+
 
 #include "def.h"

@@ -656,7 +656,7 @@ static void set_key(key_struct*from,char to){
 	}
 }
 #define is_a_z(p) input0[p]>='a'&&input0[p]<='z'
-//same as goto
+//same as go_to
 command_char change_key(bar_byte cursor){
 	if(is_a_z(0)){
 		if(is_a_z(1)){
@@ -674,13 +674,23 @@ command_char change_key(bar_byte cursor){
 	}
 	return command_false;
 }
+command_char change_tab_size(bar_byte cursor){
+	if(cursor==1){
+		if(tab_conditions(*input0)){
+			tab_sz=*input0-'0';
+			rewriteprefs;
+			return command_ok;
+		}
+	}
+	return command_false;
+}
 
 command_char save(){
 	if(textfile!=nullptr){
 		return saving();
 	}
 	char a=com_nr_save;
-	return command(&a,&(show_key_struct){key_save,0});
+	return command(&a,(show_key_struct){key_save,0});
 }
 WINDOW*position_init(){
 	poswn=newwin(1,3,0,0);
@@ -1285,7 +1295,7 @@ static int word_at_cursor(char*z){
 }
 
 //-2resize,-1no/quit,0er/fals,1ok
-command_char command(comnrp_define comnrp,show_key_struct*s){
+command_char command(comnrp_define comnrp,show_key_struct s){
 	int rightexcl=get_right;
 	int right=rightexcl-1;
 	int visib=rightexcl-com_left;
@@ -1307,7 +1317,7 @@ command_char command(comnrp_define comnrp,show_key_struct*s){
 		}
 		else cursor=0;
 	}
-	orig_key_show(s);
+	orig_key_show(&s);
 	if(cursor==0)move(y,com_left);
 	else{
 		command_rewrite(y,com_left+(cursor<visib?cursor:0),0,input,cursor,visib);

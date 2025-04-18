@@ -7,7 +7,6 @@
 #endif
 
 #include "top.h"
-#include "main.h"
 
 #ifdef HAVE_CURSES_H
 #include<curses.h>
@@ -140,6 +139,7 @@ static void __attribute__((noreturn)) signalHandler(int sig,siginfo_t *info,void
 #endif
 
 #include"base.h"
+#include "main.h"
 
 #define no_clue (size_t)-1
 
@@ -216,7 +216,8 @@ static WINDOW*syntaxcontent=nullptr;
 bool filewhites_flag=false;
 char*filewhites_extension=(char*)"yml";
 static char*filewhites_extension_new=nullptr;
-char tab_sz=6;
+#define tab_protocol char
+tab_protocol tab_sz=6;
 
 #define splits_activated 'S'
 #define splits_activated_mixless 'h'
@@ -2003,7 +2004,7 @@ static bool visual_mode(WINDOW*w,bool v_l){
 #define quick_pack3(nr,fn,w) comnrp_define args[3];((comnrp_define)args)[0]=nr;args[1]=(comnrp_define)fn;args[2]=(comnrp_define)w;
 static bool find_mode(int nr,WINDOW*w){
 	quick_pack((long)nr,w)
-	command_char r=command((comnrp_define)args,&(show_key_struct){key_find,0});
+	command_char r=command((comnrp_define)args,(show_key_struct){key_find,0});
 	if(r==command_resize)return true;
 	//if(r==command_no){//only at quit from the bar, but at command_ok also to update stdscr, and at command_false visib<2 at finds
 	//	only at first command_false visib<2 is extra, to find that will be extra in extra
@@ -2012,7 +2013,7 @@ static bool find_mode(int nr,WINDOW*w){
 	return false;
 }
 static bool goto_mode(char*args,WINDOW*w){
-	command_char r=command(args,&(show_key_struct){key_goto,0});
+	command_char r=command(args,(show_key_struct){key_goto,0});
 	if(r==command_ok){
 		centering_simple(w)
 	}
@@ -2025,7 +2026,7 @@ static bool savetofile(WINDOW*w,bool has_file){
 	command_char ret;
 	if(has_file){
 		ret=save();
-	}else{char aa=com_nr_save;ret=command(&aa,&(show_key_struct){key_save,0});}
+	}else{char aa=com_nr_save;ret=command(&aa,(show_key_struct){key_save,0});}
 	if(ret!=command_false){
 		if(ret==command_ok){
 			if(d!=textfile){
@@ -2066,10 +2067,12 @@ static void writeprefs(int f,char mask){
 						if(write(f,keys_row,k)==k){
 							sz=strlen(filewhites_extension);
 							if(write(f,&sz,extlen_size)==extlen_size){
-								#pragma GCC diagnostic push
-								#pragma GCC diagnostic ignored "-Wunused-result"
-								write(f,filewhites_extension,sz);
-								#pragma GCC diagnostic pop
+								if(write(f,filewhites_extension,sz)==sz){
+									#pragma GCC diagnostic push
+									#pragma GCC diagnostic ignored "-Wunused-result"
+									write(f,&tab_sz,sizeof(tab_protocol));
+									#pragma GCC diagnostic pop
+								}
 							}
 						}
 					}
@@ -2119,7 +2122,7 @@ void pref_modify(char**pref_orig,char**pref_buf,bool sizedonly,char*newinput,bar
 static bool pref_change(WINDOW*w,char**pref_orig,char**pref_buf,bool sizedonly,char k,char add){
 	extdata d={pref_orig,pref_buf,sizedonly};
 	quick_pack(com_nr_ext,&d)
-	command_char nr=command((char*)args,&(show_key_struct){k,add});
+	command_char nr=command((char*)args,(show_key_struct){k,add});
 	if(nr>command_resize){
 		wmove(w,getcury(w),getcurx(w));//ok/quit/err
 		return false;
@@ -2283,8 +2286,12 @@ static bool loopin(WINDOW*w){
 				}else if(chr==key_wrap){if(text_wrap(w)/*true*/)return true;}
 				else if(chr==key_swkey){
 					quick_pack(com_nr_swkey,change_key)
-					if(command((char*)args,&(show_key_struct){key_swkey,0})==command_resize)return true;
+					if(command((char*)args,(show_key_struct){key_swkey,0})==command_resize)return true;
 					wmove(w,getcury(w),getcurx(w));
+				}else if(chr==key_tab){
+					quick_pack(com_nr_tab,change_tab_size)
+					if(command((char*)args,(show_key_struct){key_tab,0})==command_false)wmove(w,getcury(w),getcurx(w));
+					else return true;
 				}else type(c,w);//enter, tab, ^, unknown ctrls
 			}else{
 				if(strcmp(s,"KEY_F(1)")==0){
@@ -2556,6 +2563,12 @@ static void getprefs(){
 											if(read(f,filewhites_extension_new,len)==len){
 												filewhites_extension=filewhites_extension_new;
 												filewhites_extension[len]='\0';
+												tab_protocol tabtest;
+												if(read(f,&tabtest,sizeof(tab_protocol))==sizeof(tab_protocol)){
+													if(tab_conditions_nr(tabtest)){
+														tab_sz=tabtest;
+													}
+												}
 											}
 										}
 									}

@@ -66,6 +66,7 @@ text="\ncommand mode: left,right,home,end,Ctrl+q\
 \nCtrl+j = enable/disable OA split syntax; Alt+j = change delimiter; Alt+J = change view delimiter\
 \n    Alt+p = change splits folder (blank is mixless); Alt+P = change rule extension name for splits (blank is all)\
 \nCtrl+y = enable/disable spaces->tabs indents at read, tabs->spaces at write; Alt+y = change rule extension name (blank is all)\
+\nCtrl+b = change tab size\
 \nCtrl+z = switch keys, applies to Ctrl and lower/upper Alt (example: az , +a becomes +z and +z becomes +a)\
 \nCtrl+q = quit\""
 wr_n "${text}"
@@ -133,6 +134,7 @@ _find_pos                 ocomp              97 1 1 1   #a
 i=98
 while [ $i -lt 123 ]; do
 	case $i in
+		98) find_pos tab                 $i 1;;     #b
 		99) find_pos findword            $i 1 1;;   #c
 		101) find_pos mouse              $i 1;;     #e
 		102) find_pos find               $i 1 1;;   #f
