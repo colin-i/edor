@@ -2094,7 +2094,10 @@ void setprefs(int flag,bool set){
 			}
 			writeprefs(f,mask);
 			unsigned short nowsize=lseek(f,0,SEEK_CUR);//now is 7 bar_bytes and a mask, not 256
+			#pragma GCC diagnostic push
+			#pragma GCC diagnostic ignored "-Wunused-result"
 			ftruncate(f,nowsize);
+			#pragma GCC diagnostic pop
 			close(f);
 		}
 	}
