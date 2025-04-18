@@ -16,6 +16,14 @@ jobs:
     - name: build
       run: |
         name=`cat debian/changelog | head -1 | grep -o ^[^\ ]*`
+        repo_at_gh=`cat debian/control | grep "^Homepage" | grep -o [^/]*$`
+        version=`cat debian/changelog | head -1 | grep -Poe "[^\(]*(?=\))"`
+        text=`curl https://api.github.com/graphql -X POST -H "Authorization: bearer ${{ secrets.PAT }}" -d '
+        {
+         "query": "query { repository ( owner: \"colin-i\", name: \"edor\" ) { release ( tagName: \"${version}\" ) { databaseId }} }"
+        }'`
+        id=`echo ${text} | grep -Poe "(?<=databaseId\":)[^}]*"`
+        up_url=https://uploads.github.com/repos/colin-i/edor/releases/${id}/assets{?name,label}
         here=`pwd`
         cd /home/alarm
 
@@ -29,10 +37,9 @@ jobs:
         nm=`ls | grep ".*\.xz$" | grep -v debug`
         nm2=`echo ${nm} | sed s/-any/-arch-aarch64/`
         mv ${nm} ${here}/${nm2}
-        echo "file=${nm2}" >> $GITHUB_ENV
 
-        wget https://github.com/colin-i/test/releases/download/1.5/${name} -O 1.txt
-        echo "up_url=`cat 1.txt`" >> $GITHUB_ENV
+        echo "file=${nm2}" >> $GITHUB_ENV
+        echo "up_url=${up_url}" >> $GITHUB_ENV
     - name: Upload Release Asset
       uses: actions/upload-release-asset@v1
       with:
