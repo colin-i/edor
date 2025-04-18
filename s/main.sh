@@ -77,7 +77,7 @@ fi
 
 #QWERTYU O    ip
 #AS FG J L dk h
-# Z CV N   xb m
+# Z CVBN   x  m
 # ^M is 13 that comes also at Enter, ^I is 9 that comes also at Tab
 # ^P at docker, something is not ok with the redraw
 # ^H at termux is backspace

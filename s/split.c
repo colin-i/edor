@@ -457,7 +457,7 @@ swrite_char swrite(int f,void*buf,row_dword size){
 	}
 	return swrite_bad;
 }
-static swrite_char swwrite_if(int f,void*buf,row_dword size,row_dword off){
+static swrite_char swwrite_if(int f,char*buf,row_dword size,row_dword off){
 	if(off==0)return swwrite(f,buf,size);
 	return swrite(f,buf,size);
 }

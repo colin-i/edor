@@ -31,7 +31,7 @@ typedef struct{
 
 #define swrite_bad -1
 #define swrite_ok 0
-#define swrite_char char
+#define swrite_char signed char
 
 #define extlen_size 1
 
