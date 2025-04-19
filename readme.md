@@ -12,6 +12,11 @@ Install:
 sudo apt-get install edor
 ```
 \
+On Arch Linux, <i>.zst</i> or <i>.xz</i> file from [releases](https://github.com/colin-i/edor/releases), depending on architecture. Or:
+```sh
+yay -Sy edor
+```
+\
 On Fedora, <i>.rpm</i> file from [releases](https://github.com/colin-i/edor/releases).
 ```sh
 dnf install edor-*.*.rpm
