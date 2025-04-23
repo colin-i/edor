@@ -158,7 +158,7 @@ row_dword xtext=0;//and what about when xtext + xc goes size_t ? is ok, nothing 
 bool mod_flag=true;
 bool ocompiler_flag=false;
 size_t aftercall;
-size_t clue=no_clue;
+size_t clue=no_clue;size_t normalize_clue=no_clue;
 
 static char*mapsel=nullptr;
 //static char*text_file=nullptr;
@@ -2318,6 +2318,7 @@ static bool loopin(WINDOW*w){
 		}
 	}
 }
+#define normalize_yes_clue ok=normalize_yes;normalize_clue=*r;
 //-1 to normalize, 0 errors, 1 ok
 static normalize_char normalize(char**c,size_t*size,size_t*r){
 	normalize_char ok=normalize_err;
@@ -2331,20 +2332,20 @@ static normalize_char normalize(char**c,size_t*size,size_t*r){
 			if(a=='\n'){
 				r[0]++;
 				if(ln_term_sz==2){
-					norm[j]='\r';j++;ok=normalize_yes;
+					norm[j]='\r';j++;normalize_yes_clue
 				}
-				else if(ln_term[0]=='\r'){a='\r';ok=normalize_yes;}
+				else if(ln_term[0]=='\r'){a='\r';normalize_yes_clue}
 			}else if(a=='\r'){
 				r[0]++;
 				if(ln_term_sz==2){
 					if(((i+1)<sz)&&text_w[i+1]=='\n'){
 						norm[j]=a;j++;i++;
 						a='\n';}
-					else{norm[j]=a;j++;a='\n';ok=normalize_yes;}
+					else{norm[j]=a;j++;a='\n';normalize_yes_clue}
 				}
 				else if(ln_term[0]=='\n'){
 					if(((i+1)<sz)&&text_w[i+1]=='\n')i++;
-					a='\n';ok=normalize_yes;
+					a='\n';normalize_yes_clue
 				}
 			}
 			norm[j]=a;j++;
@@ -2925,6 +2926,7 @@ static void action_go(int argc,char**argv,char*cutbuf_file,char*argfile){
 			}
 			endwin();
 
+			if(normalize_clue!=no_clue)printf("normalize clue: " protocol "\n",normalize_clue);
 			if(clue!=no_clue)printf("last row where was an error at split write was: " protocol "\n",clue);
 		}
 	}
