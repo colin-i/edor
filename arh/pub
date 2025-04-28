@@ -17,6 +17,7 @@ last=$(curl https://api.github.com/repos/colin-i/$(cat debian/changelog | head -
 ~/test/rerpm && \
 ~/test/uprpm && \
 ~/test/pub upapp pkg pkgarm && \
+~/test/pkg/aur && \
 ~/test/pub2 && \
 ~/test/publp2 && \
 ~/test/lp && \
