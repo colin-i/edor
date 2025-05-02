@@ -2318,9 +2318,9 @@ static bool loopin(WINDOW*w){
 		}
 	}
 }
-#define normalize_yes_clue ok=normalize_yes;normalize_clue=*r;
+#define normalize_yes_clue ok=normalize_yes;*normalize_clue_pointer=*r;
 //-1 to normalize, 0 errors, 1 ok
-static normalize_char normalize(char**c,size_t*size,size_t*r){
+static normalize_char normalize(char**c,size_t*size,size_t*r,size_t*normalize_clue_pointer){
 	normalize_char ok=normalize_err;
 	char*text_w=c[0];
 	size_t sz=size[0];
@@ -2358,7 +2358,7 @@ static normalize_char normalize(char**c,size_t*size,size_t*r){
 //same as normalize
 static normalize_char normalize_split(char**c,size_t*s,size_t*r,char*argfile){
 	if(argfile==nullptr||split_grab(c,s)/*true*/){//if at normalize will work also in open cutbufs but will error at explodes there(save cutbuf with explodes)
-		return normalize(c,s,r);
+		return normalize(c,s,r,&normalize_clue);
 	}
 	return normalize_err;
 }
@@ -2531,7 +2531,8 @@ static void getfilebuf(char*cutbuf_file){//,size_t off){
 			if(v!=nullptr){
 				lseek(f,0,SEEK_SET);
 				cutbuf_sz=(size_t)read(f,v,sz);
-				if(normalize(&v,&cutbuf_sz,&cutbuf_r)!=normalize_err){
+				size_t not_a_clue_at_cutbuf;
+				if(normalize(&v,&cutbuf_sz,&cutbuf_r,&not_a_clue_at_cutbuf)!=normalize_err){
 					cutbuf=v;cutbuf_spc=cutbuf_sz;
 				}else free(v);
 			}
