@@ -25,7 +25,7 @@ dnf install edor-*.*.rpm
 On linux distributions, <i>.AppImage</i> file from [releases](https://github.com/colin-i/edor/releases).
 
 ## From source
-Use autoconf automake libncurses-dev ; on armv7l(alias armhf) cpu, libunwind-dev. There is a "headless" build file as well.
+Debian example: Use autoconf automake make libncurses-dev bc ; on armv7l(alias armhf) cpu, libunwind-dev. There is a "headless" build file as well.
 ```sh
 autoreconf -i
 ./configure

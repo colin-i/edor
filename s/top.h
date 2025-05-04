@@ -7,11 +7,12 @@
 //
 #ifdef _Bool
 typedef typeof(_Bool) bool;
-#else
-typedef char bool;
+enum{false=0!=0,true=1==1};
+//#else //bool is a keyword with -std=c23 onwards
+//typedef char bool;
+//enum{false... //false is a keyword with -std=c23 onwards
 #endif
 //
-enum{false=0!=0,true=1==1};
 #endif
 
 #include "null.h"
