@@ -190,7 +190,7 @@ bool titles(WINDOW*);
 
 //split
 //main
-char split_conditions(char*,bool);
+split_char split_conditions(char*,bool);
 bool split_grab(char**,size_t*);
 bool split_writeprefs(int);
 bool split_readprefs(int);
