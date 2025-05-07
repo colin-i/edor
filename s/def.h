@@ -6,6 +6,7 @@
 extern row*rows;
 extern size_t rows_tot;
 //bar,split
+#define bar_byte unsigned char
 extern char ln_term[3];
 extern size_t ln_term_sz;
 //split

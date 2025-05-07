@@ -195,8 +195,8 @@ bool split_grab(char**p_text,size_t*p_size){
 		if(split_reminder_c!=split_no){// yes_mixless or yes_mix
 			char*text;size_t size;int cmp;char*next;
 			char a=*sdelimiter;
-			unsigned char sdelimsize=strlen(sdelimiter);//at file read only one byte for size
-			unsigned char esdelimsize=strlen(esdelimiter);//same from preferences
+			bar_byte sdelimsize=strlen(sdelimiter);//also at file read only one byte for size
+			bar_byte esdelimsize=strlen(esdelimiter);//same from preferences
 
 			//calculate number of explodes
 			size_t explodes=0;
@@ -205,7 +205,7 @@ bool split_grab(char**p_text,size_t*p_size){
 				next=(char*)memchr(text,a,size);
 				if(next==nullptr)break;
 				next++;size-=next-text;
-				if(size<=(sdelimsize-1))break;
+				if(size<=(sdelimsize-1))break;  //both are unsigned, don't know why rpmbuild is saying sdelimsize-1 is int
 				cmp=memcmp(next,sdelimiter+1,sdelimsize-1);
 				text=next+(sdelimsize-1);size-=text-next;
 				if(cmp!=0)continue;

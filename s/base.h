@@ -2,8 +2,9 @@
 
 //can add //comment if a macro in a set is only for a file but don't spread them and make a mess
 
+#include "def.h"
+
 //main,bar
-#define bar_byte unsigned char
 #define bar_byte_plus short
 #define com_nr_find 0
 #define com_nr_findagain 1
@@ -72,7 +73,7 @@ typedef struct{
 //main
 //bar
 int c_to_xc(int,int);
-void changekey(char);
+void changekey(unsigned char);
 void cpymembuf(size_t,row_dword,size_t,row_dword,char*);
 void deleting(size_t,size_t,size_t,size_t);
 bool deleting_init(size_t,row_dword,size_t,row_dword);
@@ -210,6 +211,3 @@ extern char*split_extension;
 extern char*split_extension_new;
 //bar
 swrite_char swrite(int,void*,unsigned int);
-
-
-#include "def.h"

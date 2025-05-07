@@ -484,7 +484,7 @@ void visual(char a){
 
 char orig_key(char now_key,char mod){
 	key_struct*now=&keys[now_key-'A'];
-	char ix=now->index;
+	unsigned char ix=now->index;
 	char orig=keys_row_orig[ix]+'A';
 	return orig+mod;
 }
@@ -1119,7 +1119,7 @@ static void pasted(size_t r,size_t x,WINDOW*w){
 	size_t z1=ytext;row_dword z2=xtext;size_t z3=r;
 	size_t rws=cutbuf_r-1;
 	r+=rws;int maxy=getmaxy(w);
-	if(maxy<=r){
+	if(maxy<=r){ //to silence rpmbuild warning, unsigned
 		ytext+=r-maxy+1;
 		r=maxy-1;
 	}
@@ -2133,7 +2133,7 @@ static bool pref_change(WINDOW*w,char**pref_orig,char**pref_buf,bool sizedonly,c
 	return true;
 }
 
-void changekey(char i){
+void changekey(unsigned char i){
 	key_struct*k=&keys[i];
 	char newkey=i+_0_to_A;
 	*(k->key_location)=newkey;
@@ -2251,13 +2251,13 @@ static bool loopin(WINDOW*w){
 					if(restorefile!=nullptr)unlink(restorefile);//here restorefile is deleted
 					return false;
 				}else if(chr==key_insens){
-					bool b;char c;
+					char c;
 					if(insensitive/*true*/){insensitive=false;c=orig_lowkey(key_insens);}
 					else{insensitive=true;c=orig_upkey(key_insens);}
 					setprefs(mask_insensitive,insensitive);//here the bit is set on full insensitive search
 					vis(c,w);//is not showing on stdscr without wnoutrefresh(thisWindow)
 				}else if(chr==key_mouse){
-					bool b;char c;
+					char c;
 					if(stored_mouse_mask_q){stored_mouse_mask=mousemask(0,nullptr);c=orig_lowkey(key_mouse);setprefs(mask_mouse,false);}
 					else{stored_mouse_mask=mousemask(ALL_MOUSE_EVENTS,nullptr);c=orig_upkey(key_mouse);setprefs(mask_mouse,true);}
 					vis(c,w);
@@ -2391,8 +2391,8 @@ static bool grab_file(char*f,size_t*text_sz){
 			puts("\" is a directory");
 		}
 		else{
-			size_t size=(size_t)lseek(fd,0,SEEK_END);
-			if(size!=-1){
+			size_t size=lseek(fd,0,SEEK_END);
+			if(size!=(size_t)-1){
 				text_init_b=(char*)malloc(size);
 				if(text_init_b!=nullptr){
 					lseek(fd,0,SEEK_SET);
@@ -2429,7 +2429,7 @@ static bool grab_input(size_t*text_sz){
 }
 
 static void getkeys(char kp){
-	for(char i=0;i<number_of_keys;i++){
+	for(unsigned char i=0;i<number_of_keys;i++){
 		unsigned char ix;//this is unsigned because is unknown read
 		if(i<kp){
 			ix=keys_row_frompref[i];
@@ -2439,12 +2439,12 @@ static void getkeys(char kp){
 			//keys_row_frompref[i]=ix; is already at define time
 		}
 		if(keys_frompref[ix].key_location!=nullptr)return;
-		char ix_orig=keys_row_orig[i];
+		unsigned char ix_orig=keys_row_orig[i];
 		memcpy(&keys_frompref[ix],&keys_orig[ix_orig],sizeof(key_struct));
 	}
 	keys=keys_frompref;
 	keys_row=keys_row_frompref;
-	for(char i=0;i<number_of_keys;i++){
+	for(unsigned char i=0;i<number_of_keys;i++){
 		char ix=keys_row[i];
 		if(keys_row_orig[i]!=ix){
 			changekey(ix);
@@ -2525,8 +2525,8 @@ static void getfilebuf(char*cutbuf_file){//,size_t off){
 		cutbuf_file[off]=store;
 	}*/
 	if(f!=-1){
-		size_t sz=(size_t)lseek(f,0,SEEK_END);
-		if(sz!=0&&sz!=-1){
+		size_t sz=lseek(f,0,SEEK_END);
+		if(sz!=(size_t)-1&&sz!=0){
 			char*v=(char*)malloc(sz);
 			if(v!=nullptr){
 				lseek(f,0,SEEK_SET);

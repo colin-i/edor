@@ -179,7 +179,7 @@ static command_char wrt_simple(int f){
 	for(size_t i=0;i<n;i++){
 		row*r=&rows[i];
 		if(wwrite(f,r->data,r->sz,awrite)==swrite_bad)return command_false;
-		if(write(f,ln_term,ln_term_sz)!=ln_term_sz)return command_false;
+		if(write(f,ln_term,ln_term_sz)!=(ssize_t)ln_term_sz)return command_false;
 	}
 	if(wwrite(f,rows[n].data,rows[n].sz,awrite)==swrite_ok)return command_ok;
 	return command_false;
@@ -564,8 +564,8 @@ void centering3(WINDOW*w,size_t*prw,row_dword*pxc,bool right){
 	}
 }
 int centeringy(WINDOW*w){
-	int hg=getmaxy(w)/2;
-	if(ytext<hg){hg=ytext;ytext=0;}
+	unsigned int hg=getmaxy(w)/2;
+	if(ytext<hg){hg=ytext;ytext=0;}//to silence rpmbuild warning, unsigned
 	else ytext=ytext-hg;
 	refreshpage(w);
 	return hg;
@@ -648,10 +648,10 @@ command_char go_to(bar_byte cursor){
 	}
 	return command_false;
 }
-static void set_key(key_struct*from,char to){
+static void set_key(key_struct*from,unsigned char to){
 	memcpy(&keys[to],from,sizeof(key_struct));
 	if(keys[to].key_location!=nullptr){
-		char ix=keys[to].index;keys_row[ix]=to;
+		unsigned char ix=keys[to].index;keys_row[ix]=to;
 		changekey(to);
 	}
 }
@@ -661,8 +661,8 @@ command_char change_key(bar_byte cursor){
 	if(is_a_z(0)){
 		if(is_a_z(1)){
 			if(input0[2]=='\0'){
-				char from=*input0-'a';
-				char to=input0[1]-'a';
+				unsigned char from=*input0-'a';
+				unsigned char to=input0[1]-'a';
 				key_struct aux;
 				memcpy(&aux,&keys[to],sizeof(key_struct));
 				set_key(&keys[from],to);
