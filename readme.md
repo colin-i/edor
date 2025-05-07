@@ -17,9 +17,10 @@ On Arch Linux, <i>.zst</i> or <i>.xz</i> file from [releases](https://github.com
 yay -Sy edor
 ```
 \
-On Fedora, <i>.rpm</i> file from [releases](https://github.com/colin-i/edor/releases).
+On Fedora:
 ```sh
-dnf install edor-*.*.rpm
+sudo dnf copr enable colin/project
+sudo dnf install edor
 ```
 \
 On linux distributions, <i>.AppImage</i> file from [releases](https://github.com/colin-i/edor/releases).
