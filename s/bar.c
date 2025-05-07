@@ -564,7 +564,7 @@ void centering3(WINDOW*w,size_t*prw,row_dword*pxc,bool right){
 	}
 }
 int centeringy(WINDOW*w){
-	unsigned int hg=getmaxy(w)/2;
+	int hg=getmaxy(w)/2;
 	if(ytext<hg){hg=ytext;ytext=0;}//to silence rpmbuild warning, unsigned
 	else ytext=ytext-hg;
 	refreshpage(w);
