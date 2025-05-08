@@ -10,7 +10,7 @@ Source0: %{name}-%{version}.tar.gz
 
 BuildArch: x86_64 aarch64
 
-BuildRequires: autoconf automake make bc gcc-c++ ncurses-devel bash
+BuildRequires: autoconf automake make bc gcc-c++ ncurses-devel
 
 Requires: ncurses
 
