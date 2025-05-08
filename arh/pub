@@ -7,17 +7,15 @@ last=$(curl https://api.github.com/repos/colin-i/$(cat debian/changelog | head -
 ~/test/deb && \
 ~/test/publp && \
 ~/test/ai && \
-#~/test/rpm #rpm now at copr
 ~/test/del && \
 ~/test/rel && \
 ~/test/pub appimage rel && \
 ~/test/upapp && \
 ~/test/pkg/onb && \
 ~/test/pkg/onab && \
-#~/test/rerpm
-#~/test/uprpm
 ~/test/pub upapp pkg pkgarm && \
 ~/test/pkg/aur && \
+~/test/rpm/copr && \
 ~/test/pub2 && \
 ~/test/publp2 && \
 ~/test/lp && \
