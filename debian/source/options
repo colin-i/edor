@@ -1,1 +1,1 @@
-extend-diff-ignore = "^(\.github\/.*|\.tito\/.*|edor\.spec|arh\/.*)$"
+extend-diff-ignore = "^(\.github\/.*|\.tito\/.*|arh\/.*|edor\.spec)$"
