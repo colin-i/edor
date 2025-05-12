@@ -1,21 +1,20 @@
 
 #ifndef __cplusplus
-
-#ifdef HAVE_STDBOOL_H
-#include<stdbool.h>
-#else
-//
-#ifdef _Bool
-typedef typeof(_Bool) bool;
-enum{false=0!=0,true=1==1};
-//#else //bool is a keyword with -std=c23 onwards
-//typedef char bool;
-//enum{false... //false is a keyword with -std=c23 onwards
-#endif
-//
-#endif
-
-#include "null.h"
+#	ifdef HAVE_STDBOOL_H
+#		include<stdbool.h>
+#	else
+#		ifdef _Bool
+			typedef typeof(_Bool) bool;
+			enum{false=0!=0,true=1==1};
+#		else
+#			ifdef BOOL_REQUIRED
+				//bool,true,false are keywords with -std=c23 onwards
+				typedef char bool;
+				enum{false=0!=0,true=1==1};
+#			endif
+#		endif
+#	endif
+#	include "null.h"
 #endif
 
 

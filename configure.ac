@@ -65,6 +65,19 @@ AC_COMPILE_IFELSE(
 )
 CFLAGS="$start_cflgs"
 
+#99% for tests only
+AC_MSG_CHECKING([bool is a keyword])
+AC_COMPILE_IFELSE(
+	[AC_LANG_SOURCE([[
+		typedef char bool;
+	]])],
+	[
+		AC_MSG_RESULT([no])
+		AC_DEFINE(BOOL_REQUIRED, 1)
+	],
+	[AC_MSG_RESULT([yes])]
+)
+
 AS_IF([test x"${cpp}" = x"true"],[
 AC_LANG([C++])
 AC_MSG_CHECKING([for std::filesystem::preferred_separator])
