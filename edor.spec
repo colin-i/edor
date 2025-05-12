@@ -1,11 +1,10 @@
-%global srcname edor
 
 Name: edor
 Version: 1.71
 Release: 0
 License: GPLv3
 Summary: Console user interface text editor
-Url: https://github.com/colin-i/%{srcname}
+Url: https://github.com/colin-i/%{name}
 Source0: %{name}-%{version}.tar.gz
 
 BuildArch: x86_64 aarch64
