@@ -471,7 +471,7 @@ static int helpshow(int n){
 		}
 	}while(helpend==false);
 	int x=getcurx(stdscr);
-	if(x!=0)for(int i=max-x;i!=max;i++)addch(' ');
+	if(x!=0)for(;x!=max;x++)addch(' ');//seems that prelast row need this, a color switch will be at next last row
 	return y;
 }
 
