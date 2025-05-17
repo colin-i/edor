@@ -24,13 +24,13 @@ sudo dnf install edor
 ```
 \
 On openSUSE, run the following as __root__:\
-For openSUSE Factory ARM:
-```sh
-zypper addrepo https://download.opensuse.org/repositories/home:costin/openSUSE_Factory_ARM/home:costin.repo
-```
-For openSUSE Factory ARM:
+From openSUSE Factory:
 ```sh
 zypper addrepo https://download.opensuse.org/repositories/home:costin/openSUSE_Factory/home:costin.repo
+```
+From openSUSE Factory ARM:
+```sh
+zypper addrepo https://download.opensuse.org/repositories/home:costin/openSUSE_Factory_ARM/home:costin.repo
 ```
 And:
 ```sh
