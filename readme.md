@@ -23,6 +23,21 @@ sudo dnf copr enable colin/project
 sudo dnf install edor
 ```
 \
+On openSUSE, run the following as __root__:\
+For openSUSE Factory ARM:
+```sh
+zypper addrepo https://download.opensuse.org/repositories/home:costin/openSUSE_Factory_ARM/home:costin.repo
+```
+For openSUSE Factory ARM:
+```sh
+zypper addrepo https://download.opensuse.org/repositories/home:costin/openSUSE_Factory/home:costin.repo
+```
+And:
+```sh
+zypper refresh
+zypper install edor
+```
+\
 On linux distributions, <i>.AppImage</i> file from [releases](https://github.com/colin-i/edor/releases).
 
 ## From source
