@@ -16,6 +16,7 @@ tito=x ~/test/debinit "${1}" ${2} && \
 ~/test/pub upapp pkg pkgarm && \
 ~/test/pkg/aur && \
 ~/test/rpm/copr && \
+~/test/rpm/suse && \
 ~/test/pub2 && \
 ~/test/publp2 && \
 ~/test/lp && \
