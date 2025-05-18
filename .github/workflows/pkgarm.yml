@@ -13,13 +13,17 @@ jobs:
     steps:
     - name: Checkout
       uses: actions/checkout@v3
-      with:
-       fetch-tags: true
     - name: build
       run: |
         name=`cat debian/changelog | head -1 | grep -o ^[^\ ]*`
-        repo_at_gh=`cat debian/control | grep "^Homepage" | grep -o [^/]*$`
-        version=`git tag --sort=-taggerdate | head -1`
+        site_at_gh=`cat debian/control | grep ^Homepage | grep -o "[^ ]*$"`
+        repo_at_gh=`echo ${site_at_gh} | grep -o [^/]*$`
+
+        #at checkout and fetch-tags true, attention that fetch-depth is 1 at default, and to test is easier with this
+        git config --global --add safe.directory .
+        git remote add tags ${site_at_gh}
+        version=`git ls-remote --tags --sort='v:refname' tags | tail -n1 | sed 's/.*\///' | grep -o "[^^]*" | head -1`
+
         text=`curl https://api.github.com/graphql -X POST -H "Authorization: bearer ${{ secrets.PAT }}" -d '
         {
          "query": "query { repository ( owner: \"colin-i\", name: \"'"${repo_at_gh}"'\" ) { release ( tagName: \"'"${version}"'\" ) { databaseId }} }"
