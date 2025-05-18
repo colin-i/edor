@@ -1,6 +1,6 @@
 
 Name: edor
-Version: 1.71
+Version: 1.72
 Release: 0
 License: GPLv3
 Summary: Console user interface text editor
@@ -34,6 +34,21 @@ make
 
 #-- CHANGELOG -----------------------------------------------------------------#
 %changelog
+* Sun May 18 2025 Costin Botescu <costin.b.84@gmail.com> 1.72-0
+- alt+q and keys_help (costin.b.84@gmail.com)
+- reason at main.sh (costin.botescu@gmail.com)
+- Alt+q & keys_help (costin.botescu@gmail.com)
+- factory (costin.botescu@gmail.com)
+- openSUSE (costin.botescu@gmail.com)
+- f1 last row (costin.botescu@gmail.com)
+- only ncurses on suse, and test std=c23 (costin.botescu@gmail.com)
+- "sync" (costin.b.84@gmail.com)
+- "sync" (costin.b.84@gmail.com)
+- options (costin.botescu@gmail.com)
+- "sync" (costin.b.84@gmail.com)
+- "sync" (costin.b.84@gmail.com)
+- "sync" (costin.b.84@gmail.com)
+
 * Thu May 08 2025 Costin Botescu <costin.botescu@gmail.com> 1.71-0
 - new package built with tito
 

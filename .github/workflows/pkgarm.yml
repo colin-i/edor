@@ -13,11 +13,13 @@ jobs:
     steps:
     - name: Checkout
       uses: actions/checkout@v3
+      with:
+       fetch-tags: true
     - name: build
       run: |
         name=`cat debian/changelog | head -1 | grep -o ^[^\ ]*`
         repo_at_gh=`cat debian/control | grep "^Homepage" | grep -o [^/]*$`
-        version=`cat debian/changelog | head -1 | grep -Poe "[^\(]*(?=\))"`
+        version=`git tag --sort=-taggerdate | head -1`
         text=`curl https://api.github.com/graphql -X POST -H "Authorization: bearer ${{ secrets.PAT }}" -d '
         {
          "query": "query { repository ( owner: \"colin-i\", name: \"'"${repo_at_gh}"'\" ) { release ( tagName: \"'"${version}"'\" ) { databaseId }} }"
