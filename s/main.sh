@@ -160,12 +160,11 @@ while [ $i -lt 123 ]; do
 done
 wr_n ""
 
+#can define here static a[]; and defines to compile right but is a risk and better to undo them
 wr_n "#define A_to_a 0x20"
 if [ ${level} -ge ${level_pref_wr} ]; then
 	wr_n "static char keys_row_orig[]={${buf2}};"
-	wr_n "char* keys_row=keys_row_orig;"
-	wr_n "char*keys_help;"
-	wr_n "#define help_last_part_size $((26+1))"
+	wr_n "char*keys_row=keys_row_orig;"
 	if [ ${level} -ge ${level_pref_rd} ]; then
 		wr_n "static char keys_row_frompref[]={${buf2}};"
 		if [ ${level} -ge ${level_map} ]; then
@@ -176,6 +175,8 @@ if [ ${level} -ge ${level_pref_wr} ]; then
 			wr_n "#define key_last_index $((122-97))"
 			wr_n "#define _0_to_A 0x41"
 			wr_n "#define number_of_keys ${number_of_keys}"
+			wr_n "char*keys_help;"
+			wr_n "#define help_last_part_size $((26+1))"
 		fi
 	fi
 fi
