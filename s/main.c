@@ -218,6 +218,7 @@ char*filewhites_extension=(char*)"yml";
 static char*filewhites_extension_new=nullptr;
 #define tab_protocol char
 tab_protocol tab_sz=6;
+static int user_return=EXIT_SUCCESS;
 
 #define splits_activated 'S'
 #define splits_activated_mixless 'h'
@@ -2207,6 +2208,7 @@ static bool loopin(WINDOW*w){
 			else if(z==(key_actswf+A_to_a)){if(pref_change(w,&sdelimiter,&sdelimiter_new,true,key_actswf,A_to_a)/*true*/)return true;}//don't allow no size delimiters
 			else if(z==(key_actswf2+A_to_a)){if(pref_change(w,&split_out,&split_out_new,false,key_actswf2,A_to_a)/*true*/)return true;}
 			else if(z==key_whites+A_to_a){if(pref_change(w,&filewhites_extension,&filewhites_extension_new,false,key_whites,A_to_a)/*true*/)return true;}
+			else if(z==key_quit+A_to_a){user_return=EXIT_FAILURE;return false;}
 			else if(z==key_ocomp){if(pref_change(w,&ocode_extension,&ocode_extension_new,false,key_ocomp,0)/*true*/)return true;}
 			else if(z==key_actswf){if(pref_change(w,&esdelimiter,&esdelimiter_new,true,key_actswf,0)/*true*/)return true;}            //don't allow no size delimiters
 			else if(z==key_actswf2){if(pref_change(w,&split_extension,&split_extension_new,false,key_actswf2,0)/*true*/)return true;}
@@ -2511,6 +2513,7 @@ static bool help_init(char*f,size_t szf){
 		a+=sz1;memcpy(a,f,szf);
 		keys_helptext=a+szf;
 		memcpy(keys_helptext,hel2,sz2);
+		keys_help=keys_helptext+(sz2-help_last_part_size);
 		return true;
 	}
 	return false;
@@ -2815,6 +2818,10 @@ static void freeprefs(){//these if are not from start , they can be when user de
 }
 static void action_go(int argc,char**argv,char*cutbuf_file,char*argfile){
 	if(prefs_file[0]!='\0')getprefs();//split is first that depends on prefs
+	for(unsigned char i=0;i<number_of_keys;i++){//this or set only at modifications
+		unsigned char k=keys_row[i];
+		keys_help[k]=k+'A';
+	}
 
 	size_t text_sz;
 	bool not_forced=true;
@@ -2967,5 +2974,5 @@ int main(int argc,char**argv){
 	if(argc>3){puts("Too many arguments.");return EXIT_FAILURE;}
 
 	action(argc,argv);
-	return EXIT_SUCCESS;
+	return user_return;
 }

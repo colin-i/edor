@@ -68,7 +68,8 @@ text="\ncommand mode: left,right,home,end,Ctrl+q\
 \nCtrl+y = enable/disable spaces->tabs indents at read, tabs->spaces at write; Alt+y = change rule extension name (blank is all)\
 \nCtrl+b = change tab size\
 \nCtrl+z = switch keys, applies to Ctrl and lower/upper Alt (example: az , +a becomes +z and +z becomes +a)\
-\nCtrl+q = quit\""
+\nCtrl+q = quit; Alt+q = quit and return EXIT_FAILURE\
+\nabcdefghijklmnopqrstuvwxyz\""
 wr_n "${text}"
 
 if [ ${level} -eq ${level_help} ]; then
@@ -144,7 +145,7 @@ while [ $i -lt 123 ]; do
 		110) find_pos indents            $i 1;;     #n
 		111) find_pos paste              $i 1 1;;   #o
 		112) find_pos actswf2            $i 0 1 1;; #p
-		113) is_extern=x find_pos quit   $i 3;;     #q
+		113) is_extern=x find_pos quit   $i 3 1;;   #q
 		114) find_pos redo               $i 1;;     #r
 		115) is_extern=x find_pos save   $i 1 1;;   #s
 		116) find_pos insens             $i 1;;     #t
@@ -163,6 +164,8 @@ wr_n "#define A_to_a 0x20"
 if [ ${level} -ge ${level_pref_wr} ]; then
 	wr_n "static char keys_row_orig[]={${buf2}};"
 	wr_n "char* keys_row=keys_row_orig;"
+	wr_n "char*keys_help;"
+	wr_n "#define help_last_part_size $((26+1))"
 	if [ ${level} -ge ${level_pref_rd} ]; then
 		wr_n "static char keys_row_frompref[]={${buf2}};"
 		if [ ${level} -ge ${level_map} ]; then

@@ -648,12 +648,14 @@ command_char go_to(bar_byte cursor){
 	}
 	return command_false;
 }
-static void set_key(key_struct*from,unsigned char to){
+static unsigned char set_key(key_struct*from,unsigned char to,unsigned char orig){
 	memcpy(&keys[to],from,sizeof(key_struct));
 	if(keys[to].key_location!=nullptr){
 		unsigned char ix=keys[to].index;keys_row[ix]=to;
 		changekey(to);
+		return orig+'a';
 	}
+	return orig+'A';
 }
 #define is_a_z(p) input0[p]>='a'&&input0[p]<='z'
 //same as go_to
@@ -665,8 +667,8 @@ command_char change_key(bar_byte cursor){
 				unsigned char to=input0[1]-'a';
 				key_struct aux;
 				memcpy(&aux,&keys[to],sizeof(key_struct));
-				set_key(&keys[from],to);
-				set_key(&aux,from);
+				keys_help[from]=set_key(&keys[from],to,from);
+				keys_help[to]=set_key(&aux,from,to);
 				rewriteprefs;
 				return command_ok;
 			}

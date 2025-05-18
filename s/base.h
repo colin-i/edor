@@ -103,6 +103,7 @@ extern bool insensitive;
 extern key_struct*keys;
 extern char key_save;
 extern char*keys_row;
+extern char*keys_help;
 extern bool mod_flag;
 extern char*ocode_extension;
 extern char*textfile;
