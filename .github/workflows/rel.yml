@@ -7,10 +7,13 @@ jobs:
   runs-on: ubuntu-latest
   steps:
    - uses: actions/checkout@v3
+     with:
+      fetch-tags: true
+      #attention that fetch-depth is 1 and can only be 1 or 0 tags
    - name: Run a multi-line script
      run: |
-      #get the version from changelog/launchpad/input
-      tag=`cat debian/changelog | head -1 | grep -Poe "[^\(]*(?=\))"`
+      #tag=`cat debian/changelog | head -1 | grep -Poe "[^\(]*(?=\))"`
+      tag=`git tag --sort=-taggerdate | head -1`
       echo "tag=${tag}" >> $GITHUB_ENV
    - name: Create Release
      id: create_release
@@ -19,10 +22,8 @@ jobs:
       GITHUB_TOKEN: ${{ secrets.PAT }}
      with:
       tag_name: ${{ env.tag }}
-      release_name: Release ${{ env.tag }}
       draft: false
       prerelease: false
-      #this can be undone. example: git push origin :refs/tags/1.6
    - name: Store upload url for assets
      run: |
       #echo straight will not escape {}
