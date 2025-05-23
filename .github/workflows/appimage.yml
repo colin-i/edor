@@ -54,6 +54,7 @@ jobs:
        wget -c https://github.com/${urlpart}
        chmod a+x ${archfile2}
        mv ${archfile2} ${file2}
+       
       fi
       pngfile=${name}.png
       if [ ! -e "${pngfile}" ]; then
@@ -93,7 +94,7 @@ jobs:
        <screenshots>
         <screenshot type="default">
          <caption>${name2} image</caption>
-         <image>https://raw.github.com/colin-i/${name}/master/arh/${name}.png</image>
+         <image>https://github.com/colin-i/${name}/releases/download/img/${name}.jpg</image>
         </screenshot>
        </screenshots>
        <content_rating/>
