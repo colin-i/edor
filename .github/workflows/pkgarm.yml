@@ -15,15 +15,12 @@ jobs:
       uses: actions/checkout@v3
     - name: build
       run: |
-        name=`cat debian/changelog | head -1 | grep -o ^[^\ ]*`
+        #at checkout and fetch-tags true, attention that fetch-depth is 1 at default, and to test is easier with this
+        git config --global --add safe.directory .  #this is not required outside of this archarm
+        version=`git ls-remote --tags --sort='v:refname' | tail -n1 | sed 's/.*\///' | grep -o "[^^]*" | head -1`
+
         site_at_gh=`cat debian/control | grep ^Homepage | grep -o "[^ ]*$"`
         repo_at_gh=`echo ${site_at_gh} | grep -o [^/]*$`
-
-        #at checkout and fetch-tags true, attention that fetch-depth is 1 at default, and to test is easier with this
-        git config --global --add safe.directory .
-        git remote add tags ${site_at_gh}
-        version=`git ls-remote --tags --sort='v:refname' tags | tail -n1 | sed 's/.*\///' | grep -o "[^^]*" | head -1`
-
         text=`curl https://api.github.com/graphql -X POST -H "Authorization: bearer ${{ secrets.PAT }}" -d '
         {
          "query": "query { repository ( owner: \"colin-i\", name: \"'"${repo_at_gh}"'\" ) { release ( tagName: \"'"${version}"'\" ) { databaseId }} }"
@@ -33,6 +30,7 @@ jobs:
         here=`pwd`
         cd /home/alarm
 
+        name=`cat debian/changelog | head -1 | grep -o ^[^\ ]*`
         su alarm -c 'git clone -n --depth=1 --filter=tree:0 https://github.com/colin-i/pkgbuilds'
         cd pkgbuilds
         su alarm -c "git sparse-checkout set --no-cone /${name}"

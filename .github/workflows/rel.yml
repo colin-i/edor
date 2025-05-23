@@ -7,13 +7,10 @@ jobs:
   runs-on: ubuntu-latest
   steps:
    - uses: actions/checkout@v3
-     with:
-      fetch-tags: true
-      #attention that fetch-depth is 1 and can only be 1 or 0 tags
    - name: Run a multi-line script
      run: |
-      #tag=`cat debian/changelog | head -1 | grep -Poe "[^\(]*(?=\))"`
-      tag=`git tag --sort=-taggerdate | head -1`
+      #tag=`git tag --sort=-taggerdate | head -1` #this is only on fetch-depth: 1
+      tag=`git ls-remote --tags --sort='v:refname' | tail -n1 | sed 's/.*\///' | grep -o "[^^]*" | head -1`
       echo "tag=${tag}" >> $GITHUB_ENV
    - name: Create Release
      id: create_release
