@@ -2150,6 +2150,24 @@ void changekey(unsigned char i){
 		keys_helptext[upos]=newkey;
 	}
 }
+static bool quit_from_key(WINDOW*w,bool *b){
+	if(mod_flag==false){
+		bar_clear();//errors
+		command_char q=question("And save");
+		if(q==command_ok){
+			q=save();
+			if(q==command_false)err_set(w);
+		}
+		if(q==command_resize){*b=true;return false;}
+		else if(q==command_false){
+			wnoutrefresh(stdscr);
+			wmove(w,getcury(w),getcurx(w));
+			return true;
+		}
+	}
+	if(restorefile!=nullptr)unlink(restorefile);//here restorefile is deleted
+	*b=false;return false;
+}
 
 static time_t guardian=0;
 static bool loopin(WINDOW*w){
@@ -2208,7 +2226,12 @@ static bool loopin(WINDOW*w){
 			else if(z==(key_actswf+A_to_a)){if(pref_change(w,&sdelimiter,&sdelimiter_new,true,key_actswf,A_to_a)/*true*/)return true;}//don't allow no size delimiters
 			else if(z==(key_actswf2+A_to_a)){if(pref_change(w,&split_out,&split_out_new,false,key_actswf2,A_to_a)/*true*/)return true;}
 			else if(z==key_whites+A_to_a){if(pref_change(w,&filewhites_extension,&filewhites_extension_new,false,key_whites,A_to_a)/*true*/)return true;}
-			else if(z==key_quit+A_to_a){user_return=EXIT_FAILURE;return false;}
+			else if(z==key_quit+A_to_a){
+				bool q;bool not_q=quit_from_key(w,&q);
+				if(not_q/*true*/)continue;
+				if(q==false)user_return=EXIT_FAILURE;
+				return q;
+			}
 			else if(z==key_ocomp){if(pref_change(w,&ocode_extension,&ocode_extension_new,false,key_ocomp,0)/*true*/)return true;}
 			else if(z==key_actswf){if(pref_change(w,&esdelimiter,&esdelimiter_new,true,key_actswf,0)/*true*/)return true;}            //don't allow no size delimiters
 			else if(z==key_actswf2){if(pref_change(w,&split_extension,&split_extension_new,false,key_actswf2,0)/*true*/)return true;}
@@ -2236,22 +2259,8 @@ static bool loopin(WINDOW*w){
 				}else if(chr==key_titles){
 					if(titles(w)/*true*/)return true;
 				}else if(chr==key_quit){
-					if(mod_flag==false){
-						bar_clear();//errors
-						command_char q=question("And save");
-						if(q==command_ok){
-							q=save();
-							if(q==command_false)err_set(w);
-						}
-						if(q==command_resize)return true;
-						else if(q==command_false){
-							wnoutrefresh(stdscr);
-							wmove(w,getcury(w),getcurx(w));
-							continue;
-						}
-					}
-					if(restorefile!=nullptr)unlink(restorefile);//here restorefile is deleted
-					return false;
+					bool q;bool not_q=quit_from_key(w,&q);
+					if(not_q/*true*/)continue;return q;
 				}else if(chr==key_insens){
 					char c;
 					if(insensitive/*true*/){insensitive=false;c=orig_lowkey(key_insens);}
