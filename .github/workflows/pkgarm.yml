@@ -28,9 +28,10 @@ jobs:
         id=`echo ${text} | grep -Poe "(?<=databaseId\":)[^}]*"`
         up_url=https://uploads.github.com/repos/colin-i/edor/releases/${id}/assets{?name,label}
         here=`pwd`
-        cd /home/alarm
 
         name=`cat debian/changelog | head -1 | grep -o ^[^\ ]*`
+        cd /home/alarm
+
         su alarm -c 'git clone -n --depth=1 --filter=tree:0 https://github.com/colin-i/pkgbuilds'
         cd pkgbuilds
         su alarm -c "git sparse-checkout set --no-cone /${name}"
