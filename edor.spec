@@ -1,6 +1,6 @@
 
 Name: edor
-Version: 1.72
+Version: 1.73
 Release: 0
 License: GPLv3
 Summary: Console user interface text editor
@@ -34,6 +34,12 @@ make
 
 #-- CHANGELOG -----------------------------------------------------------------#
 %changelog
+* Fri May 23 2025 Costin Botescu <costin.botescu@gmail.com> 1.73-0
+- alt+q following ctrl+q (costin.botescu@gmail.com)
+- suse pub (costin.botescu@gmail.com)
+- "sync" (costin.b.84@gmail.com)
+- fix pkgarm (costin.botescu@gmail.com)
+
 * Sun May 18 2025 Costin Botescu <costin.b.84@gmail.com> 1.72-0
 - alt+q and keys_help (costin.b.84@gmail.com)
 - reason at main.sh (costin.botescu@gmail.com)
