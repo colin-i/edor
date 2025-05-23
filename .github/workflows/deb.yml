@@ -20,6 +20,7 @@ jobs:
       mv in2/debian/patches in/debian/patches
       mv in2/.pc in/.pc
       if [ -z "`dpkg -s devscripts>/dev/null 2>&1 && echo x`" ]; then
+       sudo apt update
        sudo apt install -y devscripts debhelper build-essential
       fi
       origf=${name}-1.tar.gz
