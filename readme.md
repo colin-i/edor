@@ -24,13 +24,13 @@ sudo dnf install edor
 ```
 \
 On openSUSE, run the following as __root__:\
-From openSUSE Factory:
+For openSUSE Tumbleweed:
 ```sh
-zypper addrepo https://download.opensuse.org/repositories/home:costin/openSUSE_Factory/home:costin.repo
+zypper addrepo https://download.opensuse.org/repositories/home:costin/openSUSE_Tumbleweed/home:costin.repo
 ```
-From openSUSE Factory ARM:
+For openSUSE Leap:
 ```sh
-zypper addrepo https://download.opensuse.org/repositories/home:costin/openSUSE_Factory_ARM/home:costin.repo
+zypper addrepo https://download.opensuse.org/repositories/home:costin/openSUSE_Leap_15.6/home:costin.repo
 ```
 And:
 ```sh
