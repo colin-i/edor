@@ -171,7 +171,11 @@ bool undo_bcsp(size_t,row_dword,size_t,row_dword);
 bool undo_delk(size_t,row_dword,size_t,row_dword);
 void undo_loop(WINDOW*);
 bool new_visual(char*);
+#ifndef MKDIR_1ARG
 bool is_dir(int);
+#else
+bool is_dir(char*);
+#endif
 void err_set(WINDOW*);
 int open_new(char*);
 void texter_macro(const char*);

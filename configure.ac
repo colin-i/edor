@@ -41,6 +41,7 @@ AC_CHECK_HEADERS(sys/stat.h, [
 		[
 			AC_MSG_RESULT([yes])
 			AC_DEFINE(MKDIR_1ARG, 1)
+			#to not write extra, also assume rest of windows definitions
 		],
 		[
 			AC_MSG_RESULT([no])

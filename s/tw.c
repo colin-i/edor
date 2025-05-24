@@ -135,7 +135,7 @@ bool text_wrap(WINDOW*w){
 		store_rows=rows;rows=rowswrap;
 		store_rows_tot=rows_tot;rows_tot=j;
 		if(ocompiler_flag/*true*/){
-			store_aftercall=aftercall;aftercall=aftercall_aux;
+			store_aftercall=aftercall;aftercall=aftercall_aux; // if warning, is ok, ocompiler_flag dependent
 		}
 
 		//window

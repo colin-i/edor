@@ -49,6 +49,10 @@
 #include"inc/unistd.h"
 #endif
 
+#ifdef MKDIR_1ARG
+#include"sys/stat.h"
+#endif
+
 #include"base.h"
 
 static char*err_s;
@@ -150,7 +154,7 @@ static command_char wrt_simple_split(int f){
 }
 
 static swrite_char awrite(int f,void*buf,row_dword size){
-	if(write(f,buf,size)==size)return swrite_ok;
+	if((ssize_t)write(f,buf,size)==size)return swrite_ok; //(ssize_t) only for windows to not be int and warning, on linux is ssize_t
 	return swrite_bad;
 }
 swrite_char wwrite(int f,char*buf,row_dword size,swrite_char(*fn)(int,void*,row_dword)){
@@ -288,7 +292,11 @@ bool bar_char(char c,WINDOW*w,bool singlechar){
 }
 
 int open_new(char*path){
+#ifndef MKDIR_1ARG
 	return open(path,O_CREAT|O_WRONLY|O_TRUNC,S_IRUSR|S_IWUSR);
+#else
+	return open(path,O_CREAT|O_WRONLY|O_TRUNC,_S_IREAD|_S_IWRITE);
+#endif
 }
 int open_or_new(char*dest){
 	int f;
@@ -1490,8 +1498,13 @@ bool new_visual(char*f){
 	}
 	return false;
 }
+#ifndef MKDIR_1ARG
 bool is_dir(int fd){
 	DIR*d=fdopendir(fd);
+#else
+bool is_dir(char*dirname){
+	DIR*d=opendir(dirname);
+#endif
 	if(d!=nullptr){closedir(d);return true;}
 	return false;
 }

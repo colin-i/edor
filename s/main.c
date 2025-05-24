@@ -2395,7 +2395,11 @@ static bool grab_file(char*f,size_t*text_sz){
 	bool fake=true;
 	int fd=open(f,O_RDONLY);
 	if(fd!=-1){
+#ifndef MKDIR_1ARG
 		if(is_dir(fd)/*true*/){
+#else
+		if(is_dir(f)/*true*/){
+#endif
 			putchar('\"');
 			size_t n=strlen(f);
 			for(size_t i=0;i<n;i++){

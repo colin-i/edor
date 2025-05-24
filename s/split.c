@@ -91,6 +91,29 @@ static void split_add(char**text,char*next,char**newtext,size_t*remaining_size){
 	*text+=dif;*newtext+=dif;*remaining_size-=dif;
 }
 
+#ifdef MKDIR_1ARG
+#include <fileapi.h>
+char *realpath(const char* path, char * resolved_path){
+	DWORD sz=GetFullPathName(path,0,(NULL),(NULL));
+	if(sz!=0){
+		char*p=(char*)malloc(sz);
+		if(p!=nullptr){
+			GetFullPathName(path,sz,p,(NULL));
+			return p;
+		}
+	}
+	return nullptr;
+}
+char *memmem(char *haystack, size_t haystack_len, const void * const needle, size_t needle_len){//void*(const void*,size_t,const void*,size_t)
+	for (char *h = haystack;
+	     haystack_len >= needle_len;
+	     h++, haystack_len--) {
+		if (memcmp(h,needle,needle_len)==0) return h;
+	}
+	return nullptr;
+}
+#endif
+
 static char* real_path(char*pathname){
 	char*a=realpath(pathname,nullptr);
 	if(a==nullptr&&errno==ENOENT){//is a New Path
@@ -213,7 +236,7 @@ bool split_grab(char**p_text,size_t*p_size){
 				next=(char*)memchr(text,a,size);
 				if(next==nullptr){split_error();return false;}
 				next++;size-=next-text;
-				if(size<(sdelimsize-1)){split_error();return false;} //can be equal and is last char of the file
+				if(size<(sdelimsize-1)){split_error();return false;} //can be equal and is last char of the file //rpmbuild warning
 				cmp=memcmp(next,sdelimiter+1,sdelimsize-1);
 				if(cmp!=0){split_error();return false;}//it looks like the delimiter chars can't be in filename chars
 				text=next+(sdelimsize-1);size-=text-next;
@@ -236,7 +259,7 @@ bool split_grab(char**p_text,size_t*p_size){
 						next=(char*)memchr(text,a,size);
 						if(next==nullptr)break;
 						next++;dif=next-text;size-=dif;calculated_new_size+=dif;
-						if(size<=(sdelimsize-1))break;
+						if(size<=(sdelimsize-1))break; //rpmbuild warning
 						cmp=memcmp(next,sdelimiter+1,sdelimsize-1);
 						text=next+(sdelimsize-1);dif=text-next;size-=dif;calculated_new_size+=dif;
 						if(cmp!=0)continue;
@@ -446,9 +469,9 @@ void split_write_free(){
 }
 
 swrite_char swrite(int f,void*buf,row_dword size){
-	if(write(f,buf,size)==size){
+	if((ssize_t)write(f,buf,size)==size){  //ssize_t windows warning
 		if(split_reminder_c==split_yes_mix){
-			if(write(split_out_file,buf,size)==size){
+			if((ssize_t)write(split_out_file,buf,size)==size){  //ssize_t windows warning
 				return swrite_ok;
 			}
 			return swrite_bad;
@@ -480,7 +503,7 @@ static bool split_write_split(char*file,size_t start,size_t end,unsigned int siz
 }
 static bool split_write_orig(int orig_file,char*cursor,unsigned int size,bool*majorerror){
 	if(write(orig_file,sdelimiter,sdelimiter_size)==sdelimiter_size)
-		if(write(orig_file,cursor,size)==size)
+		if((ssize_t)write(orig_file,cursor,size)==size)   //ssize_t windows warning
 			if(write(orig_file,sdelimiter,sdelimiter_size)==sdelimiter_size)
 				return true;
 	*majorerror=true;return false;
