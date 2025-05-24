@@ -39,8 +39,10 @@ AC_CHECK_HEADERS(curses.h, [
 		AC_SUBST(CSS, "-Wno-padded")
 	])
 AC_CHECK_HEADERS(stddef.h)
+
+start_cflgs="$CFLAGS"
+CFLAGS="-Werror=implicit-function-declaration"
 AC_CHECK_HEADERS(string.h, [
-	#AC_CHECK_FUNCS(memmem) this is not good, will link ok but is implicit declaration for compile
 	AC_MSG_CHECKING([function memmem])
 	AC_COMPILE_IFELSE(
 		[AC_LANG_SOURCE([[
@@ -73,6 +75,7 @@ AC_CHECK_HEADERS(sys/stat.h, [
 		]
 	)
 ])
+CFLAGS="$start_cflgs"
 
 #AC_SUBST(UNW, "")
 #arm32 unwind
