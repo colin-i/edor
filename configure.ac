@@ -29,8 +29,17 @@ AC_PROG_CC
 
 # Checks for header files. Checks for libraries.
 
+AC_CHECK_HEADERS(dirent.h errno.h fcntl.h stdio.h stdlib.h unistd.h time.h)
+AC_CHECK_HEADERS(curses.h, [
+		AC_SUBST(CSS, "")
+		AC_SEARCH_LIBS([nc_getmouse],[pdcurses],[AC_DEFINE(OTHER_CURSES,1,[is pdcurses])],[
+			AC_SEARCH_LIBS([getmouse],[ncurses])
+		])
+	], [
+		AC_SUBST(CSS, "-Wno-padded")
+	])
 AC_CHECK_HEADERS(stddef.h)
-AC_CHECK_HEADERS(dirent.h errno.h fcntl.h stdio.h stdlib.h string.h unistd.h time.h)
+AC_CHECK_HEADERS(string.h, [AC_CHECK_FUNCS(memmem)])
 AC_CHECK_HEADERS(sys/stat.h, [
 	AC_MSG_CHECKING([mkdir without mode_t])
 	AC_COMPILE_IFELSE(
@@ -48,16 +57,8 @@ AC_CHECK_HEADERS(sys/stat.h, [
 		]
 	)
 ])
-AC_CHECK_HEADERS(curses.h, [
-		AC_SUBST(CSS, "")
-		AC_SEARCH_LIBS([nc_getmouse],[pdcurses],[AC_DEFINE(OTHER_CURSES,1,[is pdcurses])],[
-			AC_SEARCH_LIBS([getmouse],[ncurses])
-		])
-	], [
-		AC_SUBST(CSS, "-Wno-padded")
-	])
-#AC_SUBST(UNW, "")
 
+#AC_SUBST(UNW, "")
 #arm32 unwind
 AC_CANONICAL_BUILD
 AC_MSG_CHECKING([build_cpu])

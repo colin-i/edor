@@ -104,6 +104,8 @@ char *realpath(const char* path, char * resolved_path){
 	}
 	return nullptr;
 }
+#endif
+#ifndef HAVE_MEMMEM
 char *memmem(char *haystack, size_t haystack_len, const void * const needle, size_t needle_len){//void*(const void*,size_t,const void*,size_t)
 	for (char *h = haystack;
 	     haystack_len >= needle_len;
