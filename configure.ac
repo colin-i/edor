@@ -108,11 +108,13 @@ char a=std::filesystem::path::preferred_separator;
 AC_CHECK_HEADERS(stdbool.h)
 ])
 
-AC_RUN_IFELSE([AC_LANG_SOURCE([
-int main(){
-return sizeof(long)==sizeof(int);//0 is true for ac_run
-}
-])], [AC_DEFINE(PLATFORM64, 1, "64")], [])
+AC_CHECK_SIZEOF([int *])
+AC_CHECK_SIZEOF([long])
+#AC_RUN_IFELSE([AC_LANG_SOURCE([ #this is not cross-compile ok
+#int main(){
+#return sizeof(long)==sizeof(int);//0 is true for ac_run
+#}
+#])], [AC_DEFINE(PLATFORM64, 1, "64")], [])
 
 #back at CFLAGS
 test "x${enable_cflags_setting}" = xyes && CFLAGS="-O3 -s"

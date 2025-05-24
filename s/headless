@@ -25,8 +25,10 @@ if [ -n "${n}" ]; then #on c flags will be commented
 	b=`echo ${b} | sed "s/-DUSE_FS=1//g"`
 fi
 if [ "${1}" = "1" ]; then #rare test, if wanting 32
-	echo ${b} | grep --color "\-DPLATFORM64=1"
-	b=`echo ${b} | sed "s/\-DPLATFORM64=1//g"`
+	echo ${b} | grep --color "\-DSIZEOF_INT_P=8"
+	b=`echo ${b} | sed "s/\-DSIZEOF_INT_P=8/\-DSIZEOF_INT_P=4/g"`
+	echo ${b} | grep --color "\-DSIZEOF_LONG=8"
+	b=`echo ${b} | sed "s/\-DSIZEOF_LONG=8/\-DSIZEOF_LONG=4/g"`
 fi
 a=$(echo ${a} | sed 's/\\/\\\\/g')
 b=$(echo ${b} | sed 's/\\/\\\\/g')

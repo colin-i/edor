@@ -16,9 +16,10 @@ CLEANFILES += main.h
 
 test: $(BUILT_SOURCES)
 	flag=`echo "${DEFS}" | grep -o "\-DARM7L=1"`; \
-	flag2=`echo "${DEFS}" | grep -o "\-DPLATFORM64=1"`; \
-	flag3=`echo "${DEFS}" | grep -o "\-DBOOL_REQUIRED=1"`; \
-	text="$(CC) $${flag} $${flag2} $${flag3} -I. ${edor_SOURCES} ${edor_LDADD} ${LIBS} -o ${bin_PROGRAMS}t"; \
+	flag2=`echo "${DEFS}" | grep -o "\-DSIZEOF_INT_P=."`; \
+	flag3=`echo "${DEFS}" | grep -o "\-DSIZEOF_LONG=."`; \
+	flag4=`echo "${DEFS}" | grep -o "\-DBOOL_REQUIRED=1"`; \
+	text="$(CC) $${flag} $${flag2} $${flag3} $${flag4} -I. ${edor_SOURCES} ${edor_LDADD} ${LIBS} -o ${bin_PROGRAMS}t"; \
 	echo $${text}; \
 	$${text}
 #clean: #here, unlike .PHONY, will overwrite the clean rule

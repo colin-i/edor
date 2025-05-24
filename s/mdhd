@@ -1,1 +1,1 @@
-extraflags="CFLAGS=-g" ./headless
+extraflags="CFLAGS=-g" ./headless $@

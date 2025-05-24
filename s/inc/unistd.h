@@ -1,10 +1,26 @@
 
 //#if defined(is_main_c)||defined(is_bar_c)||defined(is_split_c)
-#ifdef PLATFORM64
-	typedef long int ssize_t;
-#else
-	typedef int ssize_t;
+
+//this is at sys/types.h
+#undef platform_is_known
+#ifdef SIZEOF_INT_P
+#	if SIZEOF_INT_P >= 4
+#		ifdef SIZEOF_LONG
+#			define platform_is_known 1
+#			if SIZEOF_LONG >= 4
+				typedef long int ssize_t;
+#			else
+				typedef long long int ssize_t; //long long for windows
+#			endif
+#		endif
+#	endif
 #endif
+#ifndef platform_is_known
+	typedef int size_t;
+#else
+#	undef platform_is_known
+#endif
+
 //#include "inc/stddef.h"
 
 #ifdef __cplusplus

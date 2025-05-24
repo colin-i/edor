@@ -33,12 +33,24 @@ typedef struct{
 #define is_word_char(a) ('0'<=a&&(a<='9'||('A'<=a&&(a<='Z'||(a=='_'||('a'<=a&&a<='z'))))))
 #define max_path 0xff
 #define max_path_0 max_path+1
+
 #define protocol_simple "%u"
-#ifdef PLATFORM64
-#define protocol "%lu"
-#else
-#define protocol protocol_simple
+#undef protocol
+#ifdef SIZEOF_INT_P
+#	if SIZEOF_INT_P >= 4
+#		ifdef SIZEOF_LONG
+#			if SIZEOF_LONG >=4
+#				define protocol "%lu"
+#			else
+#				define protocol "%llu" //long long for windows
+#			endif
+#		endif
+#	endif
 #endif
+#ifndef protocol
+#	define protocol protocol_simple
+#endif
+
 #define row_pad 0xF
 #define tab_conditions_low '2'
 #define tab_conditions_high '9'
