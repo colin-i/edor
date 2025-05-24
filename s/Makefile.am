@@ -3,10 +3,10 @@ AUTOMAKE_OPTIONS = subdir-objects
 bin_PROGRAMS = edor
 edor_SOURCES = main.c bar.c sep.c tw.c tit.c split.c
 edor_LDFLAGS = -rdynamic
-edor_LDADD = -lncurses
 edor_CFLAGS = @CSS@
 if CPP
-edor_CPPFLAGS = -x c++ -Wno-old-style-cast @UNW@
+edor_CPPFLAGS = -x c++ -Wno-old-style-cast
+# @UNW@
 # -Wno-c++98-compat
 endif
 
@@ -19,7 +19,9 @@ test: $(BUILT_SOURCES)
 	flag2=`echo "${DEFS}" | grep -o "\-DSIZEOF_INT_P=."`; \
 	flag3=`echo "${DEFS}" | grep -o "\-DSIZEOF_LONG=."`; \
 	flag4=`echo "${DEFS}" | grep -o "\-DBOOL_REQUIRED=1"`; \
-	text="$(CC) $${flag} $${flag2} $${flag3} $${flag4} -I. ${edor_SOURCES} ${edor_LDADD} ${LIBS} -o ${bin_PROGRAMS}t"; \
+	flag5=`echo "${DEFS}" | grep -o "\-DOTHER_CURSES=1"`; \
+	flag6=`echo "${DEFS}" | grep -o "\-DMKDIR_1ARG=1"`; \
+	text="$(CC) $${flag} $${flag2} $${flag3} $${flag4} $${flag5} $${flag6} -I. ${edor_SOURCES} ${LIBS} -o ${bin_PROGRAMS}t"; \
 	echo $${text}; \
 	$${text}
 #clean: #here, unlike .PHONY, will overwrite the clean rule

@@ -37,12 +37,12 @@ typedef struct{
 #define protocol_simple "%u"
 #undef protocol
 #ifdef SIZEOF_INT_P
-#	if SIZEOF_INT_P >= 4
+#	if SIZEOF_INT_P >= 8
 #		ifdef SIZEOF_LONG
-#			if SIZEOF_LONG >=4
-#				define protocol "%lu"
-#			else
+#			if SIZEOF_LONG == 4
 #				define protocol "%llu" //long long for windows
+#			else
+#				define protocol "%lu"
 #			endif
 #		endif
 #	endif

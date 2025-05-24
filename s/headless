@@ -6,7 +6,7 @@ cp Makefile mk
 #headers, first are default, second are our input
 #\-DHAVE_STDIO_H=1 \-DHAVE_STDLIB_H=1 \-DHAVE_STRING_H=1 \-DHAVE_INTTYPES_H=1 \-DHAVE_STDINT_H=1 \-DHAVE_STRINGS_H=1 \-DHAVE_SYS_STAT_H=1 \-DHAVE_SYS_TYPES_H=1 \-DHAVE_UNISTD_H=1
 #without \-DSTDC_HEADERS=1
-#\-DHAVE_STDDEF_H=1 \-DHAVE_DIRENT_H=1 \-DHAVE_ERRNO_H=1 \-DHAVE_FCNTL_H=1 \-DHAVE_POLL_H=1 \-DHAVE_STDIO_H=1 \-DHAVE_STDLIB_H=1 \-DHAVE_STRING_H=1 \-DHAVE_UNISTD_H=1 \-DHAVE_TIME_H=1 \-DHAVE_SYS_STAT_H=1 \-DHAVE_CURSES_H=1
+#\-DHAVE_STDDEF_H=1 \-DHAVE_DIRENT_H=1 \-DHAVE_ERRNO_H=1 \-DHAVE_FCNTL_H=1 \-DHAVE_STDIO_H=1 \-DHAVE_STDLIB_H=1 \-DHAVE_STRING_H=1 \-DHAVE_UNISTD_H=1 \-DHAVE_TIME_H=1 \-DHAVE_SYS_STAT_H=1 \-DHAVE_CURSES_H=1
 #c only headers \-DHAVE_STDBOOL_H=1
 #
 a=`grep "^DEFS =" mk`
@@ -30,6 +30,7 @@ if [ "${1}" = "1" ]; then #rare test, if wanting 32
 	echo ${b} | grep --color "\-DSIZEOF_LONG=8"
 	b=`echo ${b} | sed "s/\-DSIZEOF_LONG=8/\-DSIZEOF_LONG=4/g"`
 fi
+# OTHER_CURSES MKDIR_1ARG
 a=$(echo ${a} | sed 's/\\/\\\\/g')
 b=$(echo ${b} | sed 's/\\/\\\\/g')
 #

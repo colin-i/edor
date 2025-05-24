@@ -18,11 +18,6 @@
 #else
 #include"inc/main/fcntl.h"
 #endif
-#ifdef HAVE_POLL_H
-#include<poll.h>
-#else
-#include"inc/main/poll.h"
-#endif
 #ifdef HAVE_STDIO_H
 #include<stdio.h>
 #else
@@ -206,7 +201,6 @@ static int topspace=1;
 #define contentmarginsize 1
 static int leftspace=contentmarginsize+contentmarginsize;
 #define view_margin 8
-#define known_stdin 0
 static WINDOW*leftcontent=nullptr;
 static WINDOW*rightcontent=nullptr;
 static char at_right_mark='>';
@@ -540,7 +534,11 @@ static bool helpin(WINDOW*w){
 		c=getch();
 		if(c==KEY_MOUSE){
 			MEVENT e;//switch case? a label can only be part of a statement and a declaration is not a statement
+#ifndef OTHER_CURSES
 			getmouse(&e);
+#else
+			nc_getmouse(&e);
+#endif
 			if((e.bstate&BUTTON4_PRESSED)!=0)hmove(-1);
 			else
 		#ifdef BUTTON5_PRESSED
@@ -769,7 +767,11 @@ static void right_move(WINDOW*w,bool(*f)(char)){
 movement_char movment(int c,WINDOW*w){
 	if(c==KEY_MOUSE){
 		MEVENT e;
+#ifndef OTHER_CURSES
 		getmouse(&e);//==OK is when mousemask is 0, but then nothing at getch
+#else
+		nc_getmouse(&e);
+#endif
 		if((e.bstate&BUTTON4_PRESSED)!=0)vu1move(w,getcury(w));
 		else
 	#ifdef BUTTON5_PRESSED
@@ -2260,7 +2262,8 @@ static bool loopin(WINDOW*w){
 					if(titles(w)/*true*/)return true;
 				}else if(chr==key_quit){
 					bool q;bool not_q=quit_from_key(w,&q);
-					if(not_q/*true*/)continue;return q;
+					if(not_q/*true*/)continue;
+					return q;
 				}else if(chr==key_insens){
 					char c;
 					if(insensitive/*true*/){insensitive=false;c=orig_lowkey(key_insens);}
@@ -2427,7 +2430,7 @@ static bool grab_input(size_t*text_sz){
 		if(v==nullptr)return true;
 		text_init_b=(char*)v;
 		char*c=text_init_b+*text_sz;
-		d=(size_t)read(known_stdin,c,s);//zero indicates end of file
+		d=(size_t)read(STDIN_FILENO,c,s);//zero indicates end of file
 		//char*b=fgets(c,s,stdin);
 		//if(b==nullptr)break;
 		//d=strlen(c);
@@ -2628,7 +2631,11 @@ static bool help_cutbuffile_preffile(char*s,char*cutbuf_file){
 				if(info_sz+csz<=max_path_0){
 					int dirsz=sprintf(prefs_file,"%s%c%s",h,path_separator,conf);
 					if(access(prefs_file,F_OK)==-1){
+#ifndef MKDIR_1ARG
 						mkdir(prefs_file,0777);
+#else
+						mkdir(prefs_file);
+#endif
 						//the mode of the created directory is (mode & ~umask & 0777)
 						//0 on success
 					}
@@ -2869,12 +2876,18 @@ static void action_go(int argc,char**argv,char*cutbuf_file,char*argfile){
 		split_reminder_c=split_conditions(argfile,true);//if or if not the file exists
 	}
 
-	struct pollfd fds[1];
-	//typedef struct __sFILE FILE;
-	//FILE* stdin __attribute__((annotate("introduced_in=" "23")));
-	fds[0].fd = known_stdin;
-	fds[0].events = POLLIN;
-	bool no_input=poll(fds, 1, 0)<1;
+	//#define POLLIN 0x0001
+	//typedef unsigned int nfds_t;
+	//struct pollfd{int    fd;short  events;short  revents;};
+	//int poll(struct pollfd fds[], nfds_t nfds, int timeout);
+	//struct pollfd fds[1];
+	////typedef struct __sFILE FILE;
+	////FILE* stdin __attribute__((annotate("introduced_in=" "23")));
+	//fds[0].fd = STDIN_FILENO;
+	//fds[0].events = POLLIN;
+	//bool no_input=poll(fds, 1, 0)<1;
+	bool no_input=isatty(STDIN_FILENO);
+
 	normalize_char ok=0;
 	if(no_file/*true*/&&no_input/*true*/){
 		text_init_b=(char*)malloc(1);

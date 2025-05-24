@@ -4,13 +4,13 @@
 //this is at sys/types.h
 #undef platform_is_known
 #ifdef SIZEOF_INT_P
-#	if SIZEOF_INT_P >= 4
+#	if SIZEOF_INT_P >= 8
 #		ifdef SIZEOF_LONG
 #			define platform_is_known 1
-#			if SIZEOF_LONG >= 4
-				typedef long int ssize_t;
-#			else
+#			if SIZEOF_LONG == 4
 				typedef long long int ssize_t; //long long for windows
+#			else
+				typedef long int ssize_t;
 #			endif
 #		endif
 #	endif
