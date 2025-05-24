@@ -39,7 +39,23 @@ AC_CHECK_HEADERS(curses.h, [
 		AC_SUBST(CSS, "-Wno-padded")
 	])
 AC_CHECK_HEADERS(stddef.h)
-AC_CHECK_HEADERS(string.h, [AC_CHECK_FUNCS(memmem)])
+AC_CHECK_HEADERS(string.h, [
+	#AC_CHECK_FUNCS(memmem) this is not good, will link ok but is implicit declaration for compile
+	AC_MSG_CHECKING([function memmem])
+	AC_COMPILE_IFELSE(
+		[AC_LANG_SOURCE([[
+			#include <string.h>
+			void main(){memmem("",1,"",1);}
+		]])],
+		[
+			AC_MSG_RESULT([yes])
+			AC_DEFINE(HAVE_MEMMEM, 1)
+		],
+		[
+			AC_MSG_RESULT([no])
+		]
+	)
+])
 AC_CHECK_HEADERS(sys/stat.h, [
 	AC_MSG_CHECKING([mkdir without mode_t])
 	AC_COMPILE_IFELSE(
