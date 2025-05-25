@@ -80,8 +80,8 @@ fi
 #AS FG J L dk h
 # Z CVBN   x  m
 # ^M is 13 that comes also at Enter, ^I is 9 that comes also at Tab
+# ^H at termux is 263 backspace
 # ^P at docker, something is not ok with the redraw
-# ^H at termux is backspace
 # ^A in termux is from Ctrl+Alt+a
 
 textsed="$(echo "${text}" | sed "s/\\\n/n/g; s/\\\\\"/\"/g")"  # replace \n to n and \\\" to \"(this will go " at grep). \ at endings are 0

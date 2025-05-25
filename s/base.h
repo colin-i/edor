@@ -5,6 +5,10 @@
 #include "def.h"
 
 //main,bar
+#ifdef _KEY_BACKSPACE
+#	undef KEY_BACKSPACE
+#	define KEY_BACKSPACE _KEY_BACKSPACE   //0x7f at termux and 0x8 at pdcurses
+#endif
 #define bar_byte_plus short
 #define com_nr_find 0
 #define com_nr_findagain 1
@@ -29,7 +33,6 @@ typedef struct{
 	char**buf;
 	bool sizedonly;
 }extdata;
-#define is_KEY_BACKSPACE(a) a==KEY_BACKSPACE||a==0x7f //can be 127(ascii Delete) or 263, note: Ctrl+h generates 263
 #define is_word_char(a) ('0'<=a&&(a<='9'||('A'<=a&&(a<='Z'||(a=='_'||('a'<=a&&a<='z'))))))
 #define max_path 0xff
 #define max_path_0 max_path+1

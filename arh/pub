@@ -10,10 +10,11 @@ tito=x ~/test/debinit "${1}" ${2} && \
 ~/test/del && \
 ~/test/rel && \
 ~/test/pub appimage rel && \
+~/test/msys && \
 ~/test/upapp && \
 ~/test/pkg/onb && \
 ~/test/pkg/onab && \
-~/test/pub upapp pkg pkgarm && \
+~/test/pub upapp msys pkg pkgarm && \
 ~/test/pkg/aur && \
 ~/test/rpm/copr && \
 ~/test/rpm/suse && \

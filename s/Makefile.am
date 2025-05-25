@@ -6,7 +6,7 @@ edor_SOURCES = main.c bar.c sep.c tw.c tit.c split.c
 edor_LDFLAGS = -Wl,--export-dynamic
 #same as -rdynamic, maybe was about some undefined symbols between edor_SOURCES
 
-edor_CFLAGS = @CSS@
+edor_CFLAGS = @CSS@ @__KEY_BACKSPACE@@_KEY_BACKSPACE@
 if CPP
 edor_CPPFLAGS = -x c++ -Wno-old-style-cast
 # @UNW@

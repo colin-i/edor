@@ -8,12 +8,12 @@ AC_INIT([edor], [0.1])
 AC_CONFIG_SRCDIR([s/main.c])
 
 AC_CONFIG_AUX_DIR([build-aux])
+
 # compile with -x c++
 AC_ARG_ENABLE(cpp,
   AS_HELP_STRING([--enable-cpp],[enable cpp, default: yes]),
   [case "${enableval}" in yes) cpp=true ;; no) cpp=false ;; *) AC_MSG_ERROR([bad value ${enableval} for --enable-cpp]) ;; esac],
   [cpp=true])
-
 AM_CONDITIONAL(CPP, test x"${cpp}" = x"true")
 
 # Check for CFLAGS
@@ -24,6 +24,17 @@ else
 enable_cflags_setting=yes
 fi
 AC_MSG_RESULT($enable_cflags_setting)
+
+#AC_SUBST(__KEY_BACKSPACE, "")
+AC_ARG_VAR([_KEY_BACKSPACE],[set KEY_BACKSPACE value])
+AC_MSG_CHECKING([if redefining KEY_BACKSPACE])
+if test "x${_KEY_BACKSPACE+set}" = xset; then
+AC_MSG_RESULT([yes])
+AC_SUBST(__KEY_BACKSPACE, "-D_KEY_BACKSPACE=")
+else
+AC_MSG_RESULT([no])
+fi
+
 # Checks for programs.
 AC_PROG_CC
 

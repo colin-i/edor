@@ -605,7 +605,7 @@ static bool replace_text(WINDOW*w,int yb,int xb,int rstart,int rstop){
 			visual(' ');
 			return false;
 		}
-		else if(is_KEY_BACKSPACE(c)){
+		else if(c==KEY_BACKSPACE){
 			if(cursorr!=0){
 				int x=getcurx(w);int y=getcury(w);
 				if(x==0){
@@ -1431,7 +1431,7 @@ command_char command(comnrp_define comnrp,show_key_struct s){
 				addchnstr(t,2);
 			}else move(y,com_left+cursor-pos);
 		}
-		else if(is_KEY_BACKSPACE(a)){
+		else if(a==KEY_BACKSPACE){
 			cursor=bcdl(y,&pos,input,cursor);
 		}
 		else if(a==KEY_DC){

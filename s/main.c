@@ -1775,7 +1775,7 @@ static void type(int cr,WINDOW*w){
 		if(enter(y,x,&rw,&cl,w)/*true*/)return;
 		position(rw,cl);
 	}
-	else if(is_KEY_BACKSPACE(cr)){
+	else if(cr==KEY_BACKSPACE){
 		if(bcsp(y,x,&rw,&cl,w)/*true*/)return;
 		position(rw,cl);
 	}
