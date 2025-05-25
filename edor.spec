@@ -1,6 +1,6 @@
 
 Name: edor
-Version: 1.74
+Version: 1.75
 Release: 0
 License: GPLv3
 Summary: Console user interface text editor
@@ -34,6 +34,9 @@ make
 
 #-- CHANGELOG -----------------------------------------------------------------#
 %changelog
+* Sun May 25 2025 Costin Botescu <costin.botescu@gmail.com> 1.75-0
+- 
+
 * Sun May 25 2025 Costin Botescu <costin.botescu@gmail.com> 1.74-0
 - KEY_BACKSPACE (costin.botescu@gmail.com)
 - win readme (costin.botescu@gmail.com)

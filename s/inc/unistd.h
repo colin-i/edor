@@ -16,7 +16,7 @@
 #	endif
 #endif
 #ifndef platform_is_known
-	typedef int size_t;
+	typedef int ssize_t;
 #else
 #	undef platform_is_known
 #endif
