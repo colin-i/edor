@@ -1,5 +1,9 @@
 
 #define is_split_c
+#ifdef HAVE_MEMMEM
+#define _GNU_SOURCE
+#endif
+
 #ifdef HAVE_STDDEF_H
 #include<stddef.h>
 #else
