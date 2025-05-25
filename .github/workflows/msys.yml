@@ -49,7 +49,7 @@ jobs:
       #pkgname=("\${MINGW_PACKAGE_PREFIX}-\${_realname}")
       pkgname=("\${_realname}")
       pkgver=${version}
-      pkgrel=0
+      pkgrel=msys
       pkgdesc=${desc}
       arch=('x86_64')
       #depends=("\${MINGW_PACKAGE_PREFIX}-ncurses")
