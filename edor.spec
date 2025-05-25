@@ -1,6 +1,6 @@
 
 Name: edor
-Version: 1.73
+Version: 1.74
 Release: 0
 License: GPLv3
 Summary: Console user interface text editor
@@ -34,6 +34,27 @@ make
 
 #-- CHANGELOG -----------------------------------------------------------------#
 %changelog
+* Sun May 25 2025 Costin Botescu <costin.botescu@gmail.com> 1.74-0
+- KEY_BACKSPACE (costin.botescu@gmail.com)
+- win readme (costin.botescu@gmail.com)
+- msys instead of 0 at subrelease (costin.botescu@gmail.com)
+- windows msys build (costin.botescu@gmail.com)
+- warnings (costin.botescu@gmail.com)
+- erroring (costin.botescu@gmail.com)
+- memmem (costin.botescu@gmail.com)
+- memmem from configure (costin.botescu@gmail.com)
+- is_dir  open write  realpath memmem (costin.botescu@gmail.com)
+- poll nc_getmouse mkdir(char*) (costin.botescu@gmail.com)
+- cross compile considerations (costin.botescu@gmail.com)
+- jpg (costin.botescu@gmail.com)
+- "sync" (costin.b.84@gmail.com)
+- "sync" (costin.b.84@gmail.com)
+- "sync" (costin.b.84@gmail.com)
+- tumbleweed and leap (costin.botescu@gmail.com)
+- "tests" (costin.b.84@gmail.com)
+- remote tags (costin.botescu@gmail.com)
+- update (costin.botescu@gmail.com)
+
 * Fri May 23 2025 Costin Botescu <costin.botescu@gmail.com> 1.73-0
 - alt+q following ctrl+q (costin.botescu@gmail.com)
 - suse pub (costin.botescu@gmail.com)
