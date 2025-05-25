@@ -24,7 +24,9 @@ test: $(BUILT_SOURCES)
 	flag4=`echo "${DEFS}" | grep -o "\-DBOOL_REQUIRED=1"`; \
 	flag5=`echo "${DEFS}" | grep -o "\-DOTHER_CURSES=1"`; \
 	flag6=`echo "${DEFS}" | grep -o "\-DMKDIR_1ARG=1"`; \
-	text="$(CC) $${flag} $${flag2} $${flag3} $${flag4} $${flag5} $${flag6} -I. ${edor_SOURCES} ${LIBS} -o ${bin_PROGRAMS}t"; \
+	flag7=`echo "${DEFS}" | grep -o "\-DHAVE_ERRNO_LOCATION=1"`; \
+	flag8=`echo "${DEFS}" | grep -o "\-DHAVE__GETREENT=1"`; \
+	text="$(CC) $${flag} $${flag2} $${flag3} $${flag4} $${flag5} $${flag6} $${flag7} $${flag8} -I. ${edor_SOURCES} ${LIBS} -o ${bin_PROGRAMS}t"; \
 	echo $${text}; \
 	$${text}
 #clean: #here, unlike .PHONY, will overwrite the clean rule

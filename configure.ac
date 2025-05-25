@@ -29,7 +29,7 @@ AC_PROG_CC
 
 # Checks for header files. Checks for libraries.
 
-AC_CHECK_HEADERS(dirent.h errno.h fcntl.h stdio.h stdlib.h unistd.h time.h)
+AC_CHECK_HEADERS(fcntl.h stdlib.h unistd.h time.h)
 AC_CHECK_HEADERS(curses.h, [
 		AC_SUBST(CSS, "")
 		AC_SEARCH_LIBS([nc_getmouse],[pdcurses],[AC_DEFINE(OTHER_CURSES,1,[is pdcurses])],[
@@ -42,6 +42,38 @@ AC_CHECK_HEADERS(stddef.h)
 
 start_cflgs="$CFLAGS"
 CFLAGS="-Werror=implicit-function-declaration"
+AC_CHECK_HEADERS(errno.h, [
+	AC_MSG_CHECKING([function __errno_location])
+	AC_COMPILE_IFELSE(
+		[AC_LANG_SOURCE([[
+			#include <errno.h>
+			void main(){__errno_location();}
+		]])],
+		[
+			AC_MSG_RESULT([yes])
+			AC_DEFINE(HAVE_ERRNO_LOCATION, 1)
+		],
+		[
+			AC_MSG_RESULT([no])
+		]
+	)
+])
+AC_CHECK_HEADERS(stdio.h, [
+	AC_MSG_CHECKING([function __getreent])
+	AC_COMPILE_IFELSE(
+		[AC_LANG_SOURCE([[
+			#include <stdio.h>
+			void main(){__getreent();}
+		]])],
+		[
+			AC_MSG_RESULT([yes])
+			AC_DEFINE(HAVE__GETREENT, 1)
+		],
+		[
+			AC_MSG_RESULT([no])
+		]
+	)
+])
 AC_CHECK_HEADERS(string.h, [
 	AC_MSG_CHECKING([function memmem])
 	AC_COMPILE_IFELSE(

@@ -2391,15 +2391,21 @@ static void rows_init(size_t size){
 	z->sz=b-a;z->spc=0;
 	rows_spc=rows_tot;
 }
+//DIR*d=fdopendir(fd);//having problems with this and msys2
+//	DIR*d=opendir(dirname);
+//	if(d!=nullptr){closedir(d);return true;}
+static bool is_dir(char*dirname){
+	struct stat s;
+	if(stat(dirname,&s)==0){//this is possible to test, since switching from fdopendir
+		return (s.st_mode & S_IFDIR)!=0;
+	}
+	return false;
+}
 static bool grab_file(char*f,size_t*text_sz){
 	bool fake=true;
 	int fd=open(f,O_RDONLY);
 	if(fd!=-1){
-#ifndef MKDIR_1ARG
-		if(is_dir(fd)/*true*/){
-#else
 		if(is_dir(f)/*true*/){
-#endif
 			putchar('\"');
 			size_t n=strlen(f);
 			for(size_t i=0;i<n;i++){

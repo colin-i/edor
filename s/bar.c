@@ -13,11 +13,6 @@
 #else
 #include"inc/bar/curses.h"
 #endif
-#ifdef HAVE_DIRENT_H
-#include<dirent.h>
-#else
-#include"inc/bar/dirent.h"
-#endif
 #ifdef HAVE_ERRNO_H
 #include<errno.h>
 #else
@@ -1496,16 +1491,6 @@ bool new_visual(char*f){
 		new_f=true;
 		return true;
 	}
-	return false;
-}
-#ifndef MKDIR_1ARG
-bool is_dir(int fd){
-	DIR*d=fdopendir(fd);
-#else
-bool is_dir(char*dirname){
-	DIR*d=opendir(dirname);
-#endif
-	if(d!=nullptr){closedir(d);return true;}
 	return false;
 }
 

@@ -1,0 +1,91 @@
+on:
+ workflow_dispatch:
+ #	inputs:
+ #		onlydeps:
+ #			description: "deps and stop"
+ #			required: false
+jobs:
+ msys:
+  runs-on: windows-latest
+  defaults:
+   run:
+    shell: msys2 {0}
+  steps:
+   - uses: msys2/setup-msys2@v2
+     id: msys2
+     with:
+      #msystem: mingw64
+      msystem: msys
+      install: base-devel autoconf automake bc        gcc ncurses-devel
+      #	zip
+      #pacboy: toolchain:p ncurses:p
+   #seems that msys build is not running in linux arm with box64+wine, the fedora pdcurses build will run but is very graphical problematic(same on windows)
+   #- name: deps
+   #		run: |
+   #			#zip a.zip "${{ steps.msys2.outputs.msys2-location }}\mingw64\bin\libncursesw6.dll"
+   #			zip a.zip "${{ steps.msys2.outputs.msys2-location }}\usr\bin\msys-ncursesw6.dll"
+   #			zip a.zip "${{ steps.msys2.outputs.msys2-location }}\usr\bin\msys-2.0.dll"
+   #- name: 'Upload artifact: deps'
+   #		uses: actions/upload-artifact@v4
+   #		with:
+   #			path: a.zip
+   #- name: after deps
+   #		run: |
+   #			if [ -n "${{ github.event.inputs.onlydeps }}" ]; then exit 1; fi
+   - uses: actions/checkout@master
+     with:
+      path: src
+   - name: pkgbuild
+     run: |
+      _srcdir=src
+      name=`cat ${_srcdir}/debian/control | grep ^Source: | grep -o "[^ ]*$"`
+      wget https://raw.githubusercontent.com/colin-i/pkgbuilds/refs/heads/main/${name}/PKGBUILD -O 1
+      version="`cat 1 | grep ^pkgver | grep -o [^=]*$`"
+      desc=`cat 1 | grep ^pkgdesc | grep -o [^=]*$`
+      cat > PKGBUILD <<EOF
+      _realname=${name}
+      #pkgbase=mingw-w64-\${_realname}
+      pkgbase=\${_realname}
+      #pkgname=("\${MINGW_PACKAGE_PREFIX}-\${_realname}")
+      pkgname=("\${_realname}")
+      pkgver=${version}
+      pkgrel=0
+      pkgdesc=${desc}
+      arch=('x86_64')
+      #depends=("\${MINGW_PACKAGE_PREFIX}-ncurses")
+      depends=("ncurses")
+      ##makedepends=("\${MINGW_PACKAGE_PREFIX}-ncurses" 'bc')
+      #makedepends=("ncurses" 'bc')
+      build() {
+       cd "\${_srcdir}"
+       autoreconf -i
+       ./configure
+       make
+      }
+      check() {
+       cd "\${_srcdir}"
+       make test
+      }
+      package() {
+       cd "\${_srcdir}"
+       make DESTDIR="\${pkgdir}" install
+      }
+      EOF
+      #makepkg-mingw --noconfirm --noprogressbar
+      makepkg --noconfirm --noprogressbar
+
+      #test & up
+      nm=`ls | grep ".*\.zst$"`
+      pacman -U --noconfirm ${nm}
+      echo "file=${nm}" >> $GITHUB_ENV
+      wget https://github.com/colin-i/test/releases/download/1.5/${name} -O 1.txt
+      echo "up_url=`cat 1.txt`" >> $GITHUB_ENV
+   - name: Upload Release Asset
+     uses: actions/upload-release-asset@v1
+     env:
+      GITHUB_TOKEN: ${{ secrets.PAT }}
+     with:
+      upload_url: ${{ env.up_url }}
+      asset_path: ./${{ env.file }}
+      asset_name: ${{ env.file }}
+      asset_content_type: application/zip
