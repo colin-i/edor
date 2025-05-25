@@ -38,6 +38,9 @@ zypper refresh
 zypper install edor
 ```
 \
+On Windows, there is this **edor-\*-msys-\*.zst** pkg at [releases](https://github.com/colin-i/edor/releases) which is using [msys2](https://msys2.github.io).
+\
+\
 On other linux distributions, <i>.AppImage</i> file from [releases](https://github.com/colin-i/edor/releases).
 
 ## From source
