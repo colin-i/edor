@@ -93,7 +93,7 @@ jobs:
        <screenshots>
         <screenshot type="default">
          <caption>${name2} image</caption>
-         <image>https://github.com/colin-i/${name}/releases/download/img/${name}.jpg</image>
+         <image>https://github.com/colin-i/${name}/releases/download/_aimg/${name}.jpg</image>
         </screenshot>
        </screenshots>
        <content_rating/>

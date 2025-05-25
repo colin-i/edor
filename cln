@@ -1,2 +1,2 @@
 
-git clean -xdf -e .pc/ -e debian/patches/ && git diff && echo git diff
+git clean -xdf -e .pc/ -e debian/patches/ -e arh/edor.jpg && git diff && echo git diff
