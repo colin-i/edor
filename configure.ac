@@ -89,6 +89,7 @@ AC_CHECK_HEADERS(string.h, [
 	AC_MSG_CHECKING([function memmem])
 	AC_COMPILE_IFELSE(
 		[AC_LANG_SOURCE([[
+			#define _GNU_SOURCE
 			#include <string.h>
 			void main(){memmem("",1,"",1);}
 		]])],
