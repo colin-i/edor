@@ -6,12 +6,12 @@ tito=x ~/test/debinit "${1}" ${2} && \
 ~/test/pub deb && \
 ~/test/deb && \
 ~/test/publp && \
-~/test/ai && \
+~/test/ai/ai && \
 ~/test/del && \
 ~/test/rel && \
 ~/test/pub appimage rel && \
 ~/test/msys && \
-~/test/upapp && \
+~/test/ai/upapp && \
 ~/test/pkg/onb && \
 ~/test/pkg/onab && \
 ~/test/pub upapp msys pkg pkgarm && \
