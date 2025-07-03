@@ -41,9 +41,9 @@ jobs:
        cat > ${file} <<EOF
       #! /bin/sh
       set -e
-      this_dir="$(readlink -f "$(dirname "$0")")"
-      export PATH="$this_dir"/usr/bin:"${PATH}"
-      exec "${this_dir}"/usr/bin/${name} "$@"
+      this_dir="\$(readlink -f "\$(dirname "\$0")")"
+      export PATH="\${this_dir}"/usr/bin:"\${PATH}"
+      exec "\${this_dir}"/usr/bin/\${name} "\$@"
       EOF
        chmod a+x ${file}
       fi
