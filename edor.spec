@@ -1,6 +1,6 @@
 
 Name: edor
-Version: 1.76
+Version: 1.77
 Release: 0
 License: GPLv3
 Summary: Console user interface text editor
@@ -34,6 +34,19 @@ make
 
 #-- CHANGELOG -----------------------------------------------------------------#
 %changelog
+* Thu Jul 03 2025 Costin Botescu <costin.botescu@gmail.com> 1.77-0
+- ENTRY_DEBUG not required anymore (costin.botescu@gmail.com)
+- "up" (costin.botescu@gmail.com)
+- --file argument (costin.botescu@gmail.com)
+- "up" (costin.botescu@gmail.com)
+- "up" (costin.botescu@gmail.com)
+- "up" (costin.botescu@gmail.com)
+- "up" (costin.botescu@gmail.com)
+- some win tests, and since stat, also at arm7 (costin.botescu@gmail.com)
+- "up" (costin.botescu@gmail.com)
+- same as in configure (costin.botescu@gmail.com)
+- "sync" (costin.b.84@gmail.com)
+
 * Sun May 25 2025 Costin Botescu <costin.botescu@gmail.com> 1.76-0
 - memmem on older systems (costin.botescu@gmail.com)
 
