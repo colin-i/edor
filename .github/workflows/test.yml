@@ -32,18 +32,16 @@ jobs:
       curl -L -H "Authorization: token ${{ secrets.PAT }}" ${url} --output a.zip
       unzip ./a.zip
 
-      apt download libfuse2`if [ ${{ matrix.os }} = "ubuntu-24.04" ]; then echo -n t64; fi` #xvfb is already
-      dpkg -x ./*.deb q
-
-      test=$(LD_LIBRARY_PATH=$(pwd)/q/lib/x86_64-linux-gnu ./${name}.AppImage --help)
+      test=`./${name}.AppImage --help`
       if [ "${test}" != "Enter the program and press F1 for help" ]; then echo ${test}; exit 1; fi
 
-      sudo apt install -y xterm imagemagick #imagemagick is on jammy, not on noble
+      sudo apt install -y xterm imagemagick
+      #imagemagick is on jammy, not on noble
 
       sudo Xvfb :99 -screen 0 1920x1080x8 &
       sleep 5
       export DISPLAY=:99
-      LD_LIBRARY_PATH=`pwd`/q/lib/x86_64-linux-gnu xterm -hold -e ./${name}.AppImage &
+      xterm -hold -e ./${name}.AppImage &
       sleep 15
       import -window root -screen screenshot.png
    - name: upload artifact
