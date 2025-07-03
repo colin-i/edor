@@ -22,8 +22,9 @@ wr4 () { buf3="${buf3}$@"; }
 
 printf '%s\n' "#define hel1 \"USAGE\n\"" > ${f}
 wr "#define hel2 \""
-d2=" [filepath [line_termination: rn/r/n]]\
+d2=" [--file] [filepath [line_termination: rn/r/n]]\
 \n      --remove-config      Remove configuration files.\
+\n      --help               Will guide to enter here.\
 \nINPUT\
 \nthis help: q(uit),up/down,mouse/touch V.scroll\
 \nMovement:\

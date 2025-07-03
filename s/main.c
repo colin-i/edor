@@ -2491,7 +2491,7 @@ static bool valid_ln_term(int argc,char**argv,bool*not_forced){
 	return false;
 }
 //same as normalize
-static normalize_char startfile(char*argfile,int argc,char**argv,size_t*text_sz,bool no_file,bool no_input,bool not_forced){
+static normalize_char startfile(char*argfile,size_t*text_sz,bool no_file,bool no_input,bool not_forced){//,int argc,char**argv
 	if(no_file==false)if(grab_file(argfile,text_sz)/*true*/)return normalize_err;
 	if(no_input==false){
 		if(no_file/*true*/){
@@ -2768,6 +2768,27 @@ static void proced(char*cutbuf_file,WINDOW*w1){
 		}
 	}
 }
+
+#define step_one_command *argc=(*argc)-1;*argv=(*argv)+1;
+static int file_command(int*argc,char***argv){
+	if(*argc>1){
+		char*pattern=(*argv)[1];
+		if(strcmp(pattern,"--file")==0){
+			step_one_command
+			return false;
+		}else if(strcmp(pattern,"--help")==0){
+			if(*argc!=2){
+				const char entry_text[]="ENTRY_DEBUG marker\n";//for headless dependencies start test
+				write(STDOUT_FILENO, entry_text, sizeof(entry_text)-1);// or fd=-1 for EBADF ( man errno )
+				step_one_command
+			}else{
+				puts("Enter the program and press F1 for help");
+				return -1;
+			}
+		}
+	}
+	return true;
+}
 static void remove_config_print(char*s){
 	printf("%s removed\n",s);
 }
@@ -2842,29 +2863,29 @@ static void freeprefs(){//these if are not from start , they can be when user de
 	split_freeprefs();
 	if(filewhites_extension_new!=nullptr)free(filewhites_extension_new);
 }
-static void action_go(int argc,char**argv,char*cutbuf_file,char*argfile){
+static void action_go(int argc,char**argv,char*cutbuf_file,bool no_file_command){//,char*argfile
 	if(prefs_file[0]!='\0')getprefs();//split is first that depends on prefs
 	for(unsigned char i=0;i<number_of_keys;i++){//this or set only at modifications
 		unsigned char k=keys_row[i];
 		keys_help[k]=k+'A';
 	}
 
-	size_t text_sz;
+	size_t text_sz;char*argfile;
 	bool not_forced=true;
 	bool no_file=argc==1;
 	if(no_file==false){
-		char*src=argv[1];
-		if(remove_config(src,cutbuf_file)/*true*/)return;
-		size_t f_slen=strlen(src);
-		argfile=(char*)malloc(f_slen+1);//textfile= is not ok, can be changed at =input. is also set at new visual, and below
-		if(argfile==nullptr)return;
-		char*dest=argfile;char*end=src+f_slen;
-		while(src<end){
-			if(*src=='\\'){src++;
-				if(src==end)break;
-			}
-			*dest=*src;dest++;src++;
-		}*dest='\0';
+		argfile=argv[1];
+		if(no_file_command/*true*/)if(remove_config(argfile,cutbuf_file)/*true*/)return;
+		//size_t f_slen=strlen(src);
+		//argfile=(char*)malloc(f_slen+1);//textfile= is not ok, can be changed at =input. is also set at new visual, and below
+		//if(argfile==nullptr)return;
+		//char*dest=argfile;char*end=src+f_slen;
+		//while(src<end){
+		//	if(*src=='\\'){src++;
+		//		if(src==end)break;
+		//	}
+		//	*dest=*src;dest++;src++;
+		//}*dest='\0';
 
 		no_file=new_visual(argfile)/*true*/;
 		if(restorefile_path(argfile)/*true*/){
@@ -2884,7 +2905,7 @@ static void action_go(int argc,char**argv,char*cutbuf_file,char*argfile){
 		if(valid_ln_term(argc,argv,&not_forced)/*true*/)return;
 		//if(no_file/*true*/)
 		split_reminder_c=split_conditions(argfile,true);//if or if not the file exists
-	}
+	}else argfile=nullptr;
 
 	//#define POLLIN 0x0001
 	//typedef unsigned int nfds_t;
@@ -2913,7 +2934,7 @@ static void action_go(int argc,char**argv,char*cutbuf_file,char*argfile){
 			}
 		}
 	}else{
-		ok=startfile(argfile,argc,argv,&text_sz,no_file,no_input,not_forced);
+		ok=startfile(argfile,&text_sz,no_file,no_input,not_forced);//,argc,argv
 		if(ok!=normalize_err){
 			if(ok==normalize_yes){
 				//entering \r in printf at %s will return to the start
@@ -2980,13 +3001,13 @@ static void action_go(int argc,char**argv,char*cutbuf_file,char*argfile){
 	}
 	freeprefs();
 }
-static void action(int argc,char**argv){
+static void action(int argc,char**argv,bool no_file_command){
 	char cutbuf_file[max_path_0];
 	cutbuf_file[0]='\0';
 	if(help_cutbuffile_preffile(argv[0],cutbuf_file)/*true*/){//this is here, is convenient for remove_config
-		char*argfile=nullptr;//example when launching with no args
-		action_go(argc,argv,cutbuf_file,argfile);
-		if(argfile!=nullptr)free(argfile);
+		//char*argfile=nullptr;//example when launching with no args//now is --file
+		action_go(argc,argv,cutbuf_file,no_file_command);//,argfile
+		//if(argfile!=nullptr)free(argfile);
 		if(editingfile!=nullptr)unlink(editingfile);//this can be before and after text_init_b, also, this can be if no argfile when rebase is on with a save as..
 
 		free(helptext);
@@ -3003,8 +3024,9 @@ int main(int argc,char**argv){
 	//baz(argc);
 	#endif
 
+	int fc=file_command(&argc,&argv);
+	if(fc==-1)return EXIT_SUCCESS;
 	if(argc>3){puts("Too many arguments.");return EXIT_FAILURE;}
-
-	action(argc,argv);
+	action(argc,argv,fc);
 	return user_return;
 }
