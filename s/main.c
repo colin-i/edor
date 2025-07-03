@@ -2769,80 +2769,77 @@ static void proced(char*cutbuf_file,WINDOW*w1){
 	}
 }
 
-#define step_one_command *argc=(*argc)-1;*argv=(*argv)+1;
-static int file_command(int*argc,char***argv){
-	if(*argc>1){
-		char*pattern=(*argv)[1];
-		if(strcmp(pattern,"--file")==0){
-			step_one_command
-			return false;
-		}else if(strcmp(pattern,"--help")==0){
-			if(*argc!=2){
-				const char entry_text[]="ENTRY_DEBUG marker\n";//for headless dependencies start test
-				write(STDOUT_FILENO, entry_text, sizeof(entry_text)-1);// or fd=-1 for EBADF ( man errno )
-				step_one_command
-			}else{
-				puts("Enter the program and press F1 for help");
-				return -1;
-			}
-		}
-	}
-	return true;
-}
 static void remove_config_print(char*s){
 	printf("%s removed\n",s);
 }
-static bool remove_config(char*pattern,char*cutbuf_file){
-	if(strcmp(pattern,"--remove-config")==0){
-		int c=-1;int p=-1;int pf=-1;
-		char prefs_folder[max_path_0];
-		if(cutbuf_file[0]!='\0')c=access(cutbuf_file,F_OK);
-		if(prefs_file[0]!='\0'){
-			char*end=prefs_file+strlen(prefs_file);
-			do{end--;}while(*end!=path_separator);
-			*end='\0';sprintf(prefs_folder,"%s",prefs_file);*end=path_separator;
-			p=access(prefs_folder,F_OK);//is also working for folders
-			if(p==0)pf=access(prefs_file,F_OK);
+static void remove_config(char*cutbuf_file){
+	int c=-1;int p=-1;int pf=-1;
+	char prefs_folder[max_path_0];
+	if(cutbuf_file[0]!='\0')c=access(cutbuf_file,F_OK);
+	if(prefs_file[0]!='\0'){
+		char*end=prefs_file+strlen(prefs_file);
+		do{end--;}while(*end!=path_separator);
+		*end='\0';sprintf(prefs_folder,"%s",prefs_file);*end=path_separator;
+		p=access(prefs_folder,F_OK);//is also working for folders
+		if(p==0)pf=access(prefs_file,F_OK);
+	}
+	if(c==0||p==0){
+		puts("Would remove:");//puts writes and a trailing new line
+		if(c==0)puts(cutbuf_file);
+		if(p==0){
+			if(pf==0)puts(prefs_file);
+			printf("\"%s\" if is empty\n",prefs_folder);
 		}
-		if(c==0||p==0){
-			puts("Would remove:");//puts writes and a trailing new line
-			if(c==0)puts(cutbuf_file);
-			if(p==0){
-				if(pf==0)puts(prefs_file);
-				printf("\"%s\" if is empty\n",prefs_folder);
-			}
-			puts("yes ?");
-			int e=getchar();//can be fgets but at raw was not ok, and initscr is clearing screen and can't see printf on some systems, if can combine raw with initscr this is ok
-			if(e=='y'){
+		puts("yes ?");
+		int e=getchar();//can be fgets but at raw was not ok, and initscr is clearing screen and can't see printf on some systems, if can combine raw with initscr this is ok
+		if(e=='y'){
+			e=getchar();
+			if(e=='e'){
 				e=getchar();
-				if(e=='e'){
-					e=getchar();
-					if(e=='s'){
-					//here can also verify for newline
-						if(c==0)
-							if(unlink(cutbuf_file)==0)
-								remove_config_print(cutbuf_file);
-						if(p==0){
-							if(pf==0)if(unlink(prefs_file)==0)
-								remove_config_print(prefs_file);
-							if(rmdir(prefs_folder)==0)remove_config_print(prefs_folder);
-							else printf("%s ignored (maybe is not empty)\n",prefs_folder);
-						}
-						return true;
+				if(e=='s'){
+				//here can also verify for newline
+					if(c==0)
+						if(unlink(cutbuf_file)==0)
+							remove_config_print(cutbuf_file);
+					if(p==0){
+						if(pf==0)if(unlink(prefs_file)==0)
+							remove_config_print(prefs_file);
+						if(rmdir(prefs_folder)==0)remove_config_print(prefs_folder);
+						else printf("%s ignored (maybe is not empty)\n",prefs_folder);
 					}
 				}
 			}
-			puts("expecting \"yes\"");
 		}
-		return true;
+		puts("expecting \"yes\"");
 	}
-	return false;
 }
 static bool get_answer(char switcher){
 	int c=getchar();
 	bool a=c==switcher;
 	while(c!='\n')c=getchar();
 	return a;
+}
+static bool command_line(int*argc,char***argv,char*cutbuf_file){
+	if(*argc>1){
+		char*pattern=(*argv)[1];
+		if(strcmp(pattern,"--file")==0){
+			*argc=(*argc)-1;*argv=(*argv)+1;
+			return false;
+		}else if(strcmp(pattern,"--help")==0){
+			//if(*argc!=2){
+			//	const char entry_text[]="ENTRY_DEBUG marker\n";//for headless dependencies start test
+			//	write(STDOUT_FILENO, entry_text, sizeof(entry_text)-1);// or fd=-1 for EBADF ( man errno )
+			//	step_one_command
+			//}else{
+			puts("Enter the program and press F1 for help");
+			return true;
+			//}
+		}else if(strcmp(pattern,"--remove-config")==0){
+			remove_config(cutbuf_file);
+			return true;
+		}
+	}
+	return false;
 }
 
 static void filewhites_read(){
@@ -2863,7 +2860,10 @@ static void freeprefs(){//these if are not from start , they can be when user de
 	split_freeprefs();
 	if(filewhites_extension_new!=nullptr)free(filewhites_extension_new);
 }
-static void action_go(int argc,char**argv,char*cutbuf_file,bool no_file_command){//,char*argfile
+static void action_go(int argc,char**argv,char*cutbuf_file){
+	if(command_line(&argc,&argv,cutbuf_file)/*true*/)return;
+	if(argc>3){puts("Too many arguments.");user_return=EXIT_FAILURE;return;}
+
 	if(prefs_file[0]!='\0')getprefs();//split is first that depends on prefs
 	for(unsigned char i=0;i<number_of_keys;i++){//this or set only at modifications
 		unsigned char k=keys_row[i];
@@ -2875,18 +2875,6 @@ static void action_go(int argc,char**argv,char*cutbuf_file,bool no_file_command)
 	bool no_file=argc==1;
 	if(no_file==false){
 		argfile=argv[1];
-		if(no_file_command/*true*/)if(remove_config(argfile,cutbuf_file)/*true*/)return;
-		//size_t f_slen=strlen(src);
-		//argfile=(char*)malloc(f_slen+1);//textfile= is not ok, can be changed at =input. is also set at new visual, and below
-		//if(argfile==nullptr)return;
-		//char*dest=argfile;char*end=src+f_slen;
-		//while(src<end){
-		//	if(*src=='\\'){src++;
-		//		if(src==end)break;
-		//	}
-		//	*dest=*src;dest++;src++;
-		//}*dest='\0';
-
 		no_file=new_visual(argfile)/*true*/;
 		if(restorefile_path(argfile)/*true*/){
 			if(access(restorefile_buf,F_OK)==0){
@@ -3001,17 +2989,14 @@ static void action_go(int argc,char**argv,char*cutbuf_file,bool no_file_command)
 	}
 	freeprefs();
 }
-static void action(int argc,char**argv,bool no_file_command){
+static void action(int argc,char**argv){
 	char cutbuf_file[max_path_0];
 	cutbuf_file[0]='\0';
 	if(help_cutbuffile_preffile(argv[0],cutbuf_file)/*true*/){//this is here, is convenient for remove_config
-		//char*argfile=nullptr;//example when launching with no args//now is --file
-		action_go(argc,argv,cutbuf_file,no_file_command);//,argfile
-		//if(argfile!=nullptr)free(argfile);
+		action_go(argc,argv,cutbuf_file);
 		if(editingfile!=nullptr)unlink(editingfile);//this can be before and after text_init_b, also, this can be if no argfile when rebase is on with a save as..
-
-		free(helptext);
 		if(cutbuf!=nullptr)free(cutbuf);//this is init at getfilebuf or if not there at writemembuf
+		free(helptext);
 	}
 }
 int main(int argc,char**argv){
@@ -3024,9 +3009,6 @@ int main(int argc,char**argv){
 	//baz(argc);
 	#endif
 
-	int fc=file_command(&argc,&argv);
-	if(fc==-1)return EXIT_SUCCESS;
-	if(argc>3){puts("Too many arguments.");return EXIT_FAILURE;}
-	action(argc,argv,fc);
+	action(argc,argv);
 	return user_return;
 }

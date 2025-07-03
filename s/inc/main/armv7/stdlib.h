@@ -1,4 +1,6 @@
 
+#define STDOUT_FILENO 0
+
 #ifdef __cplusplus
 extern "C" {
 #endif
