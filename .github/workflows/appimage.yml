@@ -22,7 +22,8 @@ jobs:
       kitpart () {
        #https://github.com/AppImage/pkg2appimage
        #urlpart=`wget -q https://github.com/AppImage/AppImageKit/releases/latest -O - | grep "${archfile}" | head -n 1 | cut -d '"' -f 2`
-       urlpart=AppImage/AppImageKit/releases/latest/download/${archfile}
+       #deprecated: urlpart=AppImage/AppImageKit/releases/latest/download/${archfile}
+       urlpart=AppImage/type2-runtime/releases/download/continuous/${archfile}
       }
       if [ ! -e "${file}" ]; then
        kitpart
