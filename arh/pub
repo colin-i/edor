@@ -9,7 +9,7 @@ tito=x ~/test/debinit "${1}" ${2} && \
 ~/test/del && \
 ~/test/rel && \
 ~/test/pub appimage rel && \
-~/test/ai/upapp && \
+~/test/ai/upapppic && \
 ~/test/msys && \
 ~/test/pkg/onb && \
 ~/test/pkg/onab && \
@@ -21,5 +21,4 @@ tito=x ~/test/debinit "${1}" ${2} && \
 ~/test/publp2 && \
 ~/test/lp && \
 ~/test/lp x && \
-~/test/keyring && \
 ~/test/arh2 ${last} 0
