@@ -14,16 +14,14 @@ jobs:
      run: |
       name=`cat debian/changelog | head -1 | grep -o ^[^\ ]*`
       name2=Edor
-      #
+
       run=runtime
       if [ ! -e "${run}" ]; then
        archfile=runtime-x86_64
        wget -c https://github.com/AppImage/type2-runtime/releases/download/continuous/${archfile}
        mv ${archfile} ${run}
       fi
-      #
-      apd=AppDir
-      mkdir -p ${apd}
+
       if [ ! -e "${name}.deb" ]; then
        arh=amd64
        version=`cat debian/changelog | head -1 | grep -Poe "[^\(]*(?=\))"`
@@ -33,20 +31,18 @@ jobs:
        fi
        OUTPUT=$(python3 lp2.py ppa${{ github.event.inputs.ppa }} ${name} ${version} ${arh})
        wget ${OUTPUT}/+files/${name}_${version}_${arh}.deb -O ${name}.deb
-       dpkg -x ${name}.deb ${apd}
+       dpkg -x ${name}.deb q
       fi
+
+      apd=AppDir
+      mkdir -p ${apd}
       cd ${apd}
+
       file=AppRun
       if [ ! -e "${file}" ]; then
-       cat > ${file} <<EOF
-      #! /bin/sh
-      set -e
-      this_dir="\$(readlink -f "\$(dirname "\$0")")"
-      export PATH="\${this_dir}"/usr/bin:"\${PATH}"
-      exec "\${this_dir}"/usr/bin/${name} "\$@"
-      EOF
-       chmod a+x ${file}
+       mv ../q/usr/bin/${name} ${file}
       fi
+
       pngfile=${name}.png
       if [ ! -e "${pngfile}" ]; then
        wget https://github.com/colin-i/test/releases/download/1.5/${name}.png -O ${pngfile}
@@ -60,6 +56,7 @@ jobs:
       EOF
        ln -s ${pngfile} .DirIcon
       fi
+
       #metadata file
       mi=usr/share/metainfo
       mif=${mi}/com.colin.${name}.appdata.xml
@@ -92,16 +89,16 @@ jobs:
       </component>
       EOF
       fi
-      #
+
       cd ..
-      #
+
       if [ ! -e "${name}.AppImage" ]; then
        mksquashfs ${apd} ${name}.squashfs -root-owned -noappend
        cat ${run} > ${name}.AppImage
        cat ${name}.squashfs >> ${name}.AppImage
        chmod a+x ${name}.AppImage
       fi
-      glibc=`readelf -V ${apd}/usr/bin/edor | grep -Po "(?<= GLIBC_)[^ ]*" | sort -Vr | head -1`
+      glibc=`readelf -V ${apd}/${file} | grep -Po "(?<= GLIBC_)[^ ]*" | sort -Vr | head -1`
       glibc=${glibc//./-}
       echo -n ${glibc} > version #"glibc" will not be ok for upload-artifact
    - name: artifact
