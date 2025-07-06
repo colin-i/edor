@@ -1,0 +1,9 @@
+set -e
+curl -s https://api.github.com/repos/colin-i/edor/releases/latest > 1
+n=`cat 1 | jq '.assets[] | .name' | grep -n msys | cut -d: -f1`
+n=$((n-1))
+x=`cat 1 | jq ".assets[${n}].browser_download_url"`
+x=${x:1:-1}
+wget $x
+pacman -U $x
+rm 1 $x
