@@ -2224,7 +2224,7 @@ static bool loopin(WINDOW*w){
 			else if(z==(key_findword+A_to_a)){if(find_mode(com_nr_findwordfrom,w)/*true*/)return true;}
 			else if(z==(key_undo+A_to_a)){vis('U',w);undo_loop(w);vis(' ',w);}
 			else if(z==(key_save+A_to_a)){b=savetofile(w,false);if(b/*true*/)return true;}
-			else if(z==(key_ocomp+A_to_a)){aftercall=init_aftercall();aftercall_draw(w);}
+			else if(z==(key_ocomp+A_to_a)){aftercall=aftercall_find();aftercall_draw(w);}//here will scan without asking about file extension or disable/enable but only if enable will show
 			else if(z==(key_actswf+A_to_a)){if(pref_change(w,&sdelimiter,&sdelimiter_new,true,key_actswf,A_to_a)/*true*/)return true;}//don't allow no size delimiters
 			else if(z==(key_actswf2+A_to_a)){if(pref_change(w,&split_out,&split_out_new,false,key_actswf2,A_to_a)/*true*/)return true;}
 			else if(z==key_whites+A_to_a){if(pref_change(w,&filewhites_extension,&filewhites_extension_new,false,key_whites,A_to_a)/*true*/)return true;}

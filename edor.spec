@@ -1,6 +1,6 @@
 
 Name: edor
-Version: 1.77
+Version: 1.78
 Release: 0
 License: GPLv3
 Summary: Console user interface text editor
@@ -34,6 +34,17 @@ make
 
 #-- CHANGELOG -----------------------------------------------------------------#
 %changelog
+* Fri Jul 11 2025 Costin Botescu <costin.botescu@gmail.com> 1.78-0
+- aftercall_aux  tabs at aftercall  and  init_aftercall
+  (costin.botescu@gmail.com)
+- win auto (costin.botescu@gmail.com)
+- appimage (costin.botescu@gmail.com)
+- name (costin.botescu@gmail.com)
+- escapes (costin.botescu@gmail.com)
+- new appimage AppRun (costin.botescu@gmail.com)
+- new appimage runtime (costin.botescu@gmail.com)
+- test.yml (costin.botescu@gmail.com)
+
 * Thu Jul 03 2025 Costin Botescu <costin.botescu@gmail.com> 1.77-0
 - ENTRY_DEBUG not required anymore (costin.botescu@gmail.com)
 - "up" (costin.botescu@gmail.com)
