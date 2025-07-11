@@ -2224,7 +2224,7 @@ static bool loopin(WINDOW*w){
 			else if(z==(key_findword+A_to_a)){if(find_mode(com_nr_findwordfrom,w)/*true*/)return true;}
 			else if(z==(key_undo+A_to_a)){vis('U',w);undo_loop(w);vis(' ',w);}
 			else if(z==(key_save+A_to_a)){b=savetofile(w,false);if(b/*true*/)return true;}
-			else if(z==(key_ocomp+A_to_a)){aftercall=aftercall_find();aftercall_draw(w);}
+			else if(z==(key_ocomp+A_to_a)){aftercall=init_aftercall();aftercall_draw(w);}
 			else if(z==(key_actswf+A_to_a)){if(pref_change(w,&sdelimiter,&sdelimiter_new,true,key_actswf,A_to_a)/*true*/)return true;}//don't allow no size delimiters
 			else if(z==(key_actswf2+A_to_a)){if(pref_change(w,&split_out,&split_out_new,false,key_actswf2,A_to_a)/*true*/)return true;}
 			else if(z==key_whites+A_to_a){if(pref_change(w,&filewhites_extension,&filewhites_extension_new,false,key_whites,A_to_a)/*true*/)return true;}
@@ -2284,7 +2284,7 @@ static bool loopin(WINDOW*w){
 				}else if(chr==key_ocomp){
 					if(ocompiler_flag/*true*/){ocompiler_flag=false;c=orig_lowkey(key_ocomp);}
 					else{ocompiler_flag=true;c=orig_upkey(key_ocomp);
-						aftercall=aftercall_find();}
+						aftercall=init_aftercall();}
 					setprefs(mask_ocompiler,ocompiler_flag);
 					visual(c);//addch for more info, first to window, then wnoutrefresh to virtual, then doupdate to phisical
 					aftercall_draw(w);

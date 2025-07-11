@@ -1532,6 +1532,6 @@ void aftercall_draw(WINDOW*w){
 size_t init_aftercall(){
 	if(textfile!=nullptr){
 		if(is_extension_ok(ocode_extension,textfile)/*true*/)return aftercall_find();
-	}
+	}else if(*ocode_extension=='\0')return aftercall_find();
 	return rows_tot;//still need a value
 }

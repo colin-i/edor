@@ -60,8 +60,8 @@ bool text_wrap(WINDOW*w){
 			row_dword sz=r->sz;
 
 			//add tabs
-			char*s=r->data;
-			int j;for (j=0; s[j]!='\0'; s[j]=='\t' ? j++ : *s++);
+			char*s=r->data;const char*end=s+sz;
+			int j=0;for(j=0;s!=end;s++)if(*s=='\t')j++;
 			sz+=(tab_sz-1)*j;
 
 			n+=sz/max;
@@ -132,11 +132,14 @@ bool text_wrap(WINDOW*w){
 		visual(orig_upkey(key_wrap));//without stdscr refresh is not ok
 
 		//tw store some variables
+		if(ocompiler_flag/*true*/){
+			store_aftercall=aftercall;
+			if(aftercall<rows_tot){
+				aftercall=aftercall_aux; // if warning, is ok, ocompiler_flag dependent
+			}else aftercall=n;
+		}
 		store_rows=rows;rows=rowswrap;
 		store_rows_tot=rows_tot;rows_tot=j;
-		if(ocompiler_flag/*true*/){
-			store_aftercall=aftercall;aftercall=aftercall_aux; // if warning, is ok, ocompiler_flag dependent
-		}
 
 		//window
 		ytext=y;xtext=0;
