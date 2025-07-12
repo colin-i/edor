@@ -5,5 +5,7 @@ n=$((n-1))
 x=`cat 1 | jq ".assets[${n}].browser_download_url"`
 x=${x:1:-1}
 wget $x
+x=`cat 1 | jq ".assets[${n}].name"`
+x=${x:1:-1}
 pacman -U $x
 rm 1 $x
