@@ -11,10 +11,12 @@ Install:
 sudo apt-get install edor
 ```
 \
-On Arch Linux, <i>.zst</i> or <i>.xz</i> file from [releases](https://github.com/colin-i/edor/releases), depending on architecture. Or:
+On Arch Linux:
 ```sh
 yay -Sy edor
 ```
+Or <i>.zst</i>(x86_64) or <i>.xz</i>(aarch64) file from [releases](https://github.com/colin-i/edor/releases).
+\
 \
 On Fedora(x86_64 aarch64):
 ```sh
