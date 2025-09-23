@@ -137,6 +137,7 @@ static void __attribute__((noreturn)) signalHandler(int sig,siginfo_t *info,void
 #include "main.h"
 
 #define no_clue (size_t)-1
+#define ignored_bool false
 
 #define normalize_yes -1
 #define normalize_err 0
@@ -184,6 +185,7 @@ static bool indent_flag=false;
 #define mask_ocompiler 8
 #define mask_splits 0x10
 #define mask_filewhites 0x20
+#define mask_indopt 0x40
 static char prefs_file[max_path_0]={'\0'};//only the first byte is set
 static char*ocode_extension_new=nullptr;
 
@@ -213,6 +215,7 @@ static char*filewhites_extension_new=nullptr;
 #define tab_protocol char
 tab_protocol tab_sz=6;
 static int user_return=EXIT_SUCCESS;
+static bool indopt_flag=false;
 
 #define splits_activated 'S'
 #define splits_activated_mixless 'h'
@@ -491,7 +494,7 @@ void orig_key_show(show_key_struct*s){
 static void helpshowlastrow(int rw){
 	int i=3;//with respect to helpposition
 	move(rw,i);
-	char stats=5+1+2;
+	char stats=6+1+2;
 	int max=getmaxx(stdscr)-stats;
 	while(i<max){
 		addch(' ');
@@ -503,6 +506,7 @@ static void helpshowlastrow(int rw){
 	addch(ocompiler_flag/*true*/?orig_upkey(key_ocomp):orig_lowkey(key_ocomp));//i'm using otoc with gdb for new code
 	addch(splits_flag/*true*/?orig_upkey(key_actswf):orig_lowkey(key_actswf));
 	addch(filewhites_flag/*true*/?orig_upkey(key_whites):orig_lowkey(key_whites));
+	addch(indopt_flag/*true*/?orig_upkey(key_indopt):orig_lowkey(key_indopt));
 	addch(' ');
 	addch(split_reminder_c>=split_yes_mixless?(split_reminder_c==split_yes_mix?splits_activated:splits_activated_mixless):splits_deactivated);
 	//1@: else at my compilers, and also gcc, is faster: if is with new asm jump instruction. but still not counting on that and aspire to fast first
@@ -1845,7 +1849,7 @@ static void type(int cr,WINDOW*w){
 	wmove(w,rw,cl);
 	mod_set_off_wrap();
 }
-static void indent(bool b,size_t ybsel,size_t*xbsel,size_t yesel,size_t*xesel,WINDOW*w){
+static void indent(bool b,size_t ybsel,size_t*xbsel,size_t yesel,size_t*xesel,WINDOW*w,bool v_l){
 	if(ybsel>=rows_tot)return;
 	size_t ye;
 	if(yesel>=rows_tot)ye=rows_tot;
@@ -1886,25 +1890,31 @@ static void indent(bool b,size_t ybsel,size_t*xbsel,size_t yesel,size_t*xesel,WI
 	if(re>max)re=max;
 	if(b/*true*/){
 		if(xbsel!=nullptr){
-			xbsel[0]++;xesel[0]++;
-			if(xtext==0){//add at left markers for content
-				for(int i=rb;i<re;i++)mvwaddch(leftcontent,i,0,at_left_mark);
-				wnoutrefresh(leftcontent);
+			if(v_l==false)xbsel[0]++;
+			if(indopt_flag/*true*/){
+				xesel[0]++;
+				if(xtext==0){//add at left markers for content
+					for(int i=rb;i<re;i++)mvwaddch(leftcontent,i,0,at_left_mark);
+					wnoutrefresh(leftcontent);
+				}
+				xtext++;
+				if(rb!=0)refreshrowsbot(w,0,rb);
+				if(re<max)refreshrowsbot(w,re,max);
+			}else{
+				xesel[0]++;
+				refreshrowsbot(w,rb,re);
+				printsel(w,ybsel,xbsel[0],yesel,xesel[0],true);
 			}
-			xtext++;
-			if(rb!=0)refreshrowsbot(w,0,rb);
-			if(re<max)refreshrowsbot(w,re,max);
 		}else refreshrowsbot(w,rb,re);
 	}else{
 		if(xbsel!=nullptr){
 			if(xtext!=0){
-				xbsel[0]--;xesel[0]--;
+				if(xbsel[0]!=0)xbsel[0]--;
+				xesel[0]--;
 				xtext--;
-				if(xtext==0){
-					if(xtext==0){//add at left markers for content
-						for(int i=rb;i<re;i++)mvwaddch(leftcontent,i,0,at_content_nomark);
-						wnoutrefresh(leftcontent);
-					}
+				if(xtext==0){//remove at left content markers
+					for(int i=rb;i<re;i++)mvwaddch(leftcontent,i,0,at_content_nomark);
+					wnoutrefresh(leftcontent);
 				}
 				if(rb!=0)refreshrowsbot(w,0,rb);
 				if(re<max)refreshrowsbot(w,re,max);
@@ -1916,8 +1926,9 @@ static void indent(bool b,size_t ybsel,size_t*xbsel,size_t yesel,size_t*xesel,WI
 		}else refreshrowsbot(w,rb,re);
 	}
 }
+#define indent_a(a,b,c,d,e,f) indent(a,b,c,d,e,f,ignored_bool)
 //true resize
-static bool visual_mode(WINDOW*w,bool v_l){
+static bool visual_mode(WINDOW*w,bool v_l){//v_l true is line mode
 	visual(orig_upkey(key_visual));
 	int rw=getcury(w);int cl=getcurx(w);
 	size_t ybsel=ytext+(size_t)rw;
@@ -1957,11 +1968,15 @@ static bool visual_mode(WINDOW*w,bool v_l){
 		else{
 			int r=getcury(w);int c=getcurx(w);
 			if(z==movement_diffkey){
-				if(b=='I'){z=-1;indent(true,ybsel,&xbsel,yesel,&xesel,w);}
+				if(b=='I'){
+					z=-1;
+					indent(true,ybsel,&xbsel,yesel,&xesel,w,v_l);
+					if(indopt_flag==false){amove(w,r,c);continue;}
+				}
 				else if(b=='U'){
 					z=-1;
 					bool edge=xtext==0;
-					indent(false,ybsel,&xbsel,yesel,&xesel,w);
+					indent_a(false,ybsel,&xbsel,yesel,&xesel,w);
 					if(edge/*true*/){amove(w,r,c);continue;}
 				}
 				else{
@@ -1980,11 +1995,11 @@ static bool visual_mode(WINDOW*w,bool v_l){
 						}
 					}else{
 						if(b=='i'){
-							indent(true,ybsel,nullptr,yesel,nullptr,w);
+							indent_a(true,ybsel,nullptr,yesel,nullptr,w);
 							amove(w,r,c);
 							c=getcurx(w);
 						}else if(b=='u'){
-							indent(false,ybsel,nullptr,yesel,nullptr,w);
+							indent_a(false,ybsel,nullptr,yesel,nullptr,w);
 							amove(w,r,c);
 							c=getcurx(w);
 						}
@@ -2309,6 +2324,12 @@ static bool loopin(WINDOW*w){
 					quick_pack(com_nr_tab,change_tab_size)
 					if(command((char*)args,(show_key_struct){key_tab,0})==command_false)wmove(w,getcury(w),getcurx(w));
 					else return true;
+				}else if(chr==key_indopt){
+					char c;
+					if(indopt_flag/*true*/){indopt_flag=false;c=orig_lowkey(key_indopt);}
+					else{indopt_flag=true;c=orig_upkey(key_indopt);}
+					setprefs(mask_indopt,indopt_flag);
+					vis(c,w);
 				}else type(c,w);//enter, tab, ^, unknown ctrls
 			}else{
 				if(strcmp(s,"KEY_F(1)")==0){
@@ -2576,6 +2597,7 @@ static void getprefs(){
 			if((mask&mask_ocompiler)!=0)ocompiler_flag=true;
 			if((mask&mask_splits)!=0)splits_flag=true;
 			if((mask&mask_filewhites)!=0)filewhites_flag=true;
+			if((mask&mask_indopt)!=0)indopt_flag=true;
 			bar_byte len;
 			if(read(f,&len,extlen_size)==extlen_size){
 				ocode_extension_new=(char*)malloc(len+1);

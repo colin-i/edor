@@ -67,6 +67,7 @@ text="\ncommand mode: left,right,home,end,Ctrl+q\
 \nCtrl+j = enable/disable OA split syntax; Alt+j = change delimiter; Alt+J = change view delimiter\
 \n    Alt+p = change splits folder (blank is mixless); Alt+P = change rule extension name for splits (blank is all)\
 \nCtrl+y = enable/disable spaces->tabs indents at read, tabs->spaces at write; Alt+y = change rule extension name (blank is all)\
+\nCtrl+d = enable/disable indent follower\
 \nCtrl+b = change tab size\
 \nCtrl+z = switch keys, applies to Ctrl and lower/upper Alt (example: az , +a becomes +z and +z becomes +a)\
 \nCtrl+q = quit; Alt+q = quit and return EXIT_FAILURE\
@@ -77,9 +78,9 @@ if [ ${level} -eq ${level_help} ]; then
 	exit 0
 fi
 
-#QWERTYU O    ip
-#AS FG J L dk h
-# Z CVBN   x  m
+#QWERTYU O   ip
+#ASDFG J L k h
+# Z CVBN   x m
 # ^M is 13 that comes also at Enter, ^I is 9 that comes also at Tab
 # ^H at termux is 263 backspace
 # ^P at docker, something is not ok with the redraw
@@ -138,6 +139,7 @@ while [ $i -lt 123 ]; do
 	case $i in
 		98) find_pos tab                 $i 1;;     #b
 		99) find_pos findword            $i 1 1;;   #c
+		100) find_pos indopt             $i 1;;     #d
 		101) find_pos mouse              $i 1;;     #e
 		102) find_pos find               $i 1 1;;   #f
 		103) find_pos goto               $i 1 1;;   #g
