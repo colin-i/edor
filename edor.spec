@@ -1,6 +1,6 @@
 
 Name: edor
-Version: 1.78
+Version: 1.79
 Release: 0
 License: GPLv3
 Summary: Console user interface text editor
@@ -34,6 +34,15 @@ make
 
 #-- CHANGELOG -----------------------------------------------------------------#
 %changelog
+* Wed Sep 24 2025 Costin Botescu <costin.botescu@gmail.com> 1.79-0
+- indent option to not follow (only positive, negative is not elegant)
+  (costin.botescu@gmail.com)
+- "up" (costin.botescu@gmail.com)
+- "up" (costin.botescu@gmail.com)
+- "up" (costin.botescu@gmail.com)
+- readme (costin.botescu@gmail.com)
+- jq name (costin.botescu@gmail.com)
+
 * Fri Jul 11 2025 Costin Botescu <costin.botescu@gmail.com> 1.78-0
 - aftercall_aux  tabs at aftercall  and  init_aftercall
   (costin.botescu@gmail.com)
