@@ -18,7 +18,7 @@ yay -Sy edor
 Or <i>.zst</i>(x86_64) or <i>.xz</i>(aarch64) file from [releases](https://github.com/colin-i/edor/releases).
 \
 \
-On Fedora 42(x86_64 aarch64):
+On Fedora 42/43(x86_64 aarch64):
 ```sh
 sudo dnf copr enable colin/project
 sudo dnf install edor
