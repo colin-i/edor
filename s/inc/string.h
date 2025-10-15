@@ -49,3 +49,15 @@ char*strrchr(const char*,int);
 }
 #endif
 #endif
+
+#if defined(is_bar_c)||defined(is_split_c)
+#ifdef __cplusplus
+extern "C" {
+#endif
+#ifdef HAVE_MEMMEM  //hard to happen
+void *memmem(const void*,size_t,const void*,size_t);//this is provided in our split.c
+#endif
+#ifdef __cplusplus
+}
+#endif
+#endif

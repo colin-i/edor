@@ -12,7 +12,7 @@ cp Makefile mk
 #
 a=`grep "^DEFS =" mk`
 echo ${a} | grep --color "HAVE"
-b=`echo ${a} | sed "s/-DHAVE_[^_]*_H=1//g; s/-DHAVE_[^_]*_[^_]*_H=1//g;"`
+b=`echo ${a} | sed "s/-DHAVE_[^_]*_H=1//g; s/-DHAVE_[^_]*_[^_]*_H=1//g; s/-DHAVE_MEMMEM=1//g;"`
 #
 c="edor_CPPFLAGS ="
 n=`grep "^${c}" -n Makefile | grep -o "^[^:]*"`

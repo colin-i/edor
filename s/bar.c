@@ -1000,7 +1000,7 @@ void undo_loop(WINDOW*w){
 		}
 	}
 }
-static bool replace(bar_byte cursor){
+static bool replace(bar_byte cursor,int*fnumber){
 	row*r=&rows[ytext];
 	if(cursorr>cursor)if(row_alloc(r,r->sz,cursorr-cursor,0)/*true*/)return true;
 	if(undo_add_replace(cursor)==false){
@@ -1010,6 +1010,21 @@ static bool replace(bar_byte cursor){
 			row_set(r,xtext+cursorr,r->sz-xtext-cursor,0,&r->data[xtext+cursor]);
 		}
 		mod_set_off_wrap();
+
+		//do not break find counter
+		if(*fnumber){//at 0 will be wrong
+			int nr=0;
+			char*ip=inputr;bar_byte cr=cursorr;
+			do{
+				char*p=memmem(ip,cr,inputf,cursor);
+				if(p==nullptr){
+					*fnumber+=(*fnumber>0?nr:-nr);
+					break;
+				}
+				ip+=cursor;cr-=cursor;nr++;
+			}while(true);
+		}
+
 		return false;
 	}
 	return true;
@@ -1120,7 +1135,7 @@ static command_char find_core(WINDOW*w,bar_byte cursor,int y,bar_byte pos,bar_by
 
 	finds_total(0,ytext,xtext,0,0,true,cursor,w);
 	ytext=y1;xtext=x1;
-	int number=0;
+	int fnumber=0;
 	//number2=0;//is set inside
 	//number3=getmaxx(stdscr);//in case is required at clean. is set inside
 
@@ -1138,15 +1153,15 @@ static command_char find_core(WINDOW*w,bar_byte cursor,int y,bar_byte pos,bar_by
 		if(a==Char_Return){
 			if(untouched/*true*/){
 				xc+=cursor;//add only when last was simple find
-				number+=1;
+				fnumber+=1;
 			}else{
-				if(number<0)number+=1;
+				if(fnumber<0)fnumber+=1;
 			}
 			forward=true;
 		}else if(a==prev_key){
-			if(untouched/*true*/)number-=1;
+			if(untouched/*true*/)fnumber-=1;
 			else{
-				if(number>0)number-=1;
+				if(fnumber>0)fnumber-=1;
 			}
 			forward=false;
 		}else if(a==KEY_LEFT){
@@ -1156,9 +1171,9 @@ static command_char find_core(WINDOW*w,bar_byte cursor,int y,bar_byte pos,bar_by
 			}
 			if(untouched/*true*/){
 				ytext+=xr;xtext+=xc;
-				if(replace(cursor)/*true*/){ytext=iferrory;xtext=iferrorx;continue;}
+				if(replace(cursor,&fnumber)/*true*/){ytext=iferrory;xtext=iferrorx;continue;}
 
-				if(number!=0){//0 is on delimiter
+				if(fnumber!=0){//0 is on delimiter
 					if(ytext==y1&&xtext<x1)x1-=cursor-cursorr;//this can be on delimiter but is observed outside
 				}else delimiter_touched=true;
 
@@ -1168,15 +1183,15 @@ static command_char find_core(WINDOW*w,bar_byte cursor,int y,bar_byte pos,bar_by
 				continue;
 			}
 			if(finding(cursor,xr,xc,forward)/*true*/){
-				if(replace(cursor)/*true*/){ytext=iferrory;xtext=iferrorx;continue;}
+				if(replace(cursor,&fnumber)/*true*/){ytext=iferrory;xtext=iferrorx;continue;}
 
 				phase=delimiter(y1,x1,y,pos,sz,cursorr,phase);
 				if(phase/*true*/)delimiter_touched=true;
 				else{
 					//if delimiter_touched is true these are not required
 					if(forward/*true*/){
-						if(number<0)number++;
-					}else if(number>0)number--;
+						if(fnumber<0)fnumber++;
+					}else if(fnumber>0)fnumber--;
 
 					if(ytext==y1&&xtext<x1)x1-=cursor-cursorr;
 				}
@@ -1197,7 +1212,7 @@ static command_char find_core(WINDOW*w,bar_byte cursor,int y,bar_byte pos,bar_by
 			if(number2==0){//only when not knowing the total
 				if(delimiter_touched==false){//to omit last replace return if that can happen at this point
 					size_t storeytext=ytext;row_dword storextext=xtext;
-					finds_total(number,y1,x1,xr,xc,untouched,cursor,w);
+					finds_total(fnumber,y1,x1,xr,xc,untouched,cursor,w);
 					ytext=storeytext;xtext=storextext;
 				}
 			}
@@ -1223,16 +1238,16 @@ static command_char find_core(WINDOW*w,bar_byte cursor,int y,bar_byte pos,bar_by
 		if(delimiter_touched/*true*/){
 			y1=ytext;x1=xtext;
 			delimiter_touched=false;
-			number=0;
+			fnumber=0;
 		}else{
-			if(number!=0){
+			if(fnumber!=0){
 				if(phase/*true*/){
 					if(number2!=0){// /100[+] is already here
 						mvaddch(0,number3,' ');// 111/100+ -> [1]111/111
 					}
-					finds(true,number,0,0);
-					number=0;
-				}else finds(false,number,0,0);
+					finds(true,fnumber,0,0);
+					fnumber=0;
+				}else finds(false,fnumber,0,0);
 			}else finds(false,0,0,0);
 		}
 		untouched=true;
