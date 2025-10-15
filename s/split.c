@@ -110,7 +110,7 @@ char *realpath(const char* path, char * resolved_path){
 }
 #endif
 #ifndef HAVE_MEMMEM
-static void *memmem(const void*haystack,size_t haystack_len,const void*needle,size_t needle_len){//same as in headless
+void *memmem(const void*haystack,size_t haystack_len,const void*needle,size_t needle_len){//same as in headless
 	for (char *h =(char*) haystack;
 	     haystack_len >= needle_len;
 	     h++, haystack_len--) {

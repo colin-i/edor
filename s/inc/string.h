@@ -54,7 +54,7 @@ char*strrchr(const char*,int);
 #ifdef __cplusplus
 extern "C" {
 #endif
-#ifdef HAVE_MEMMEM  //hard to happen
+#ifndef HAVE_MEMMEM
 void *memmem(const void*,size_t,const void*,size_t);//this is provided in our split.c
 #endif
 #ifdef __cplusplus
