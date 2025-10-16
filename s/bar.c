@@ -594,7 +594,7 @@ static void replace_text_add(WINDOW*w,chtype c,int*rstart,int*rstop){
 	}
 	waddch(w,c);
 }
-static bool replace_text(WINDOW*w,int yb,int xb,int rstart,int rstop){
+static bool replace_text(WINDOW*w,int yb,int xb,int rstart,int rstop,bar_byte cursor,row_dword*nr_re_ct){
 	vis('R',w);
 	for(;;){
 		int c=wgetch(w);
@@ -603,6 +603,15 @@ static bool replace_text(WINDOW*w,int yb,int xb,int rstart,int rstop){
 			refreshrowsbot(w,rstart,rstop);
 			wmove(w,yb,xb);
 			visual(' ');
+
+			*nr_re_ct=0;
+			char*ip=inputr;bar_byte cr=cursorr;
+			do{
+				char*p=memmem(ip,cr,inputf,cursor);
+				if(p==nullptr)break;
+				ip+=cursor;cr-=cursor;(*nr_re_ct)++;
+			}while(true);
+
 			return false;
 		}
 		else if(c==KEY_BACKSPACE){
@@ -1000,7 +1009,7 @@ void undo_loop(WINDOW*w){
 		}
 	}
 }
-static bool replace(bar_byte cursor,int*fnumber){
+static bool replace(bar_byte cursor,int*fnumber,row_dword nr){
 	row*r=&rows[ytext];
 	if(cursorr>cursor)if(row_alloc(r,r->sz,cursorr-cursor,0)/*true*/)return true;
 	if(undo_add_replace(cursor)==false){
@@ -1012,18 +1021,8 @@ static bool replace(bar_byte cursor,int*fnumber){
 		mod_set_off_wrap();
 
 		//do not break find counter
-		if(*fnumber){//at 0 will be wrong
-			int nr=0;
-			char*ip=inputr;bar_byte cr=cursorr;
-			do{
-				char*p=memmem(ip,cr,inputf,cursor);
-				if(p==nullptr){
-					*fnumber+=(*fnumber>0?nr:-nr);
-					break;
-				}
-				ip+=cursor;cr-=cursor;nr++;
-			}while(true);
-		}
+		if(*fnumber)//at 0 will be wrong
+			*fnumber+=(*fnumber>0?nr:-nr);
 
 		return false;
 	}
@@ -1050,7 +1049,7 @@ static int positiveInt_length(unsigned int nr){
 	return x;
 }
 static void finds(bool phase,int number,int number_fix,char extra){//,bool*header_was){
-	char buf[maxuint+1+maxuint+1+1];//plus another one in case of total and max case
+	char buf[maxuint+1+maxuint+1+1];//plus another one in case of total and max case. at delim touch second maxuint is ok
 	if(number<0){
 		number*=-1;
 	}
@@ -1138,6 +1137,7 @@ static command_char find_core(WINDOW*w,bar_byte cursor,int y,bar_byte pos,bar_by
 	int fnumber=0;
 	//number2=0;//is set inside
 	//number3=getmaxx(stdscr);//in case is required at clean. is set inside
+	row_dword number_replace_counter;
 
 	bool forward=true;
 	bool phase=false;
@@ -1171,7 +1171,7 @@ static command_char find_core(WINDOW*w,bar_byte cursor,int y,bar_byte pos,bar_by
 			}
 			if(untouched/*true*/){
 				ytext+=xr;xtext+=xc;
-				if(replace(cursor,&fnumber)/*true*/){ytext=iferrory;xtext=iferrorx;continue;}
+				if(replace(cursor,&fnumber,number_replace_counter)/*true*/){ytext=iferrory;xtext=iferrorx;continue;}
 
 				if(fnumber!=0){//0 is on delimiter
 					if(ytext==y1&&xtext<x1)x1-=cursor-cursorr;//this can be on delimiter but is observed outside
@@ -1183,7 +1183,7 @@ static command_char find_core(WINDOW*w,bar_byte cursor,int y,bar_byte pos,bar_by
 				continue;
 			}
 			if(finding(cursor,xr,xc,forward)/*true*/){
-				if(replace(cursor,&fnumber)/*true*/){ytext=iferrory;xtext=iferrorx;continue;}
+				if(replace(cursor,&fnumber,number_replace_counter)/*true*/){ytext=iferrory;xtext=iferrorx;continue;}
 
 				phase=delimiter(y1,x1,y,pos,sz,cursorr,phase);
 				if(phase/*true*/)delimiter_touched=true;
@@ -1204,7 +1204,7 @@ static command_char find_core(WINDOW*w,bar_byte cursor,int y,bar_byte pos,bar_by
 		}else if(a=='r'){
 			cursorr=0;wattrset(w,COLOR_PAIR(color_b));
 			int rstart=getcury(w);
-			if(replace_text(w,rstart,getcurx(w),rstart,rstart+1)/*true*/)return command_resize;
+			if(replace_text(w,rstart,getcurx(w),rstart,rstart+1,cursor,&number_replace_counter)/*true*/)return command_resize;
 			continue;
 		}else if(a=='c'){
 			return command_false;
@@ -1224,7 +1224,7 @@ static command_char find_core(WINDOW*w,bar_byte cursor,int y,bar_byte pos,bar_by
 			for(bar_byte i=0;i<cursorr;i++){
 				replace_text_add(w,inputr[i],&rstart,&rstop);
 			}
-			if(replace_text(w,yb,xb,rstart,rstop)/*true*/)return command_resize;
+			if(replace_text(w,yb,xb,rstart,rstop,cursor,&number_replace_counter)/*true*/)return command_resize;
 			continue;
 		}else{
 			find_returner
