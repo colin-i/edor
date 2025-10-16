@@ -594,6 +594,17 @@ static void replace_text_add(WINDOW*w,chtype c,int*rstart,int*rstop){
 	}
 	waddch(w,c);
 }
+static row_dword calculate_for_find_replace(bar_byte cursor){
+	row_dword nr=0;
+	char*ip=inputr;bar_byte cr=cursorr;
+	do{
+		char*p=memmem(ip,cr,inputf,cursor);//if cursor is 0 p is not null, if cr is 0 p is null, if both are zero is like cursor is 0 p is not null
+		//                                   starting with cursor 0, or press c and make cursor 0, will not be here
+		if(p==nullptr)break;
+		ip+=cursor;cr-=cursor;nr++;
+	}while(true);
+	return nr;
+}
 static bool replace_text(WINDOW*w,int yb,int xb,int rstart,int rstop,bar_byte cursor,row_dword*nr_re_ct){
 	vis('R',w);
 	for(;;){
@@ -603,15 +614,7 @@ static bool replace_text(WINDOW*w,int yb,int xb,int rstart,int rstop,bar_byte cu
 			refreshrowsbot(w,rstart,rstop);
 			wmove(w,yb,xb);
 			visual(' ');
-
-			*nr_re_ct=0;
-			char*ip=inputr;bar_byte cr=cursorr;
-			do{
-				char*p=memmem(ip,cr,inputf,cursor);
-				if(p==nullptr)break;
-				ip+=cursor;cr-=cursor;(*nr_re_ct)++;
-			}while(true);
-
+			*nr_re_ct=calculate_for_find_replace(cursor);
 			return false;
 		}
 		else if(c==KEY_BACKSPACE){
@@ -1137,7 +1140,7 @@ static command_char find_core(WINDOW*w,bar_byte cursor,int y,bar_byte pos,bar_by
 	int fnumber=0;
 	//number2=0;//is set inside
 	//number3=getmaxx(stdscr);//in case is required at clean. is set inside
-	row_dword number_replace_counter;
+	row_dword number_replace_counter=calculate_for_find_replace(cursor);
 
 	bool forward=true;
 	bool phase=false;
