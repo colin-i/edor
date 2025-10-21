@@ -1,6 +1,6 @@
 
 Name: edor
-Version: 1.80
+Version: 1.81
 Release: 0
 License: GPLv3
 Summary: Console user interface text editor
@@ -34,6 +34,18 @@ make
 
 #-- CHANGELOG -----------------------------------------------------------------#
 %changelog
+* Tue Oct 21 2025 Costin Botescu <costin.botescu@gmail.com> 1.81-0
+- "sync" (costin.b.84@gmail.com)
+- cast (costin.botescu@gmail.com)
+- calculate replace number counter (costin.b.84@gmail.com)
+- "up" (costin.botescu@gmail.com)
+- calculate replace number counter once (costin.botescu@gmail.com)
+- "up" (costin.botescu@gmail.com)
+- "up" (costin.botescu@gmail.com)
+- fix finds counter when replacing a text and the old text is included one or
+  multiple times in the new text (costin.botescu@gmail.com)
+- "up" (costin.botescu@gmail.com)
+
 * Wed Sep 24 2025 Costin Botescu <costin.botescu@gmail.com> 1.79-0
 - indent option to not follow (only positive, negative is not elegant)
   (costin.botescu@gmail.com)
