@@ -1,3 +1,9 @@
+edor (1-x80) focal; urgency=medium
+
+  * calculate replace number counter
+
+ -- bc <bc@bc-desktop>  Tue, 21 Oct 2025 07:54:02 +0300
+
 edor (1-x79) focal; urgency=medium
 
   * 1.79
