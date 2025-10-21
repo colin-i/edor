@@ -34,15 +34,6 @@ make
 
 #-- CHANGELOG -----------------------------------------------------------------#
 %changelog
-* Tue Oct 21 2025 Costin Botescu <costin.botescu@gmail.com> 1.80-0
-- "up" (costin.botescu@gmail.com)
-- calculate replace number counter once (costin.botescu@gmail.com)
-- "up" (costin.botescu@gmail.com)
-- "up" (costin.botescu@gmail.com)
-- fix finds counter when replacing a text and the old text is included one or
-  multiple times in the new text (costin.botescu@gmail.com)
-- "up" (costin.botescu@gmail.com)
-
 * Wed Sep 24 2025 Costin Botescu <costin.botescu@gmail.com> 1.79-0
 - indent option to not follow (only positive, negative is not elegant)
   (costin.botescu@gmail.com)
