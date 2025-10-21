@@ -1,6 +1,6 @@
 
 #define is_split_c
-#ifdef HAVE_MEMMEM
+#ifdef HAVE_MEMMEM //example at msys
 #	ifndef _GNU_SOURCE //example on arm64
 #	define _GNU_SOURCE
 #	endif

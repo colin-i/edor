@@ -1,5 +1,11 @@
 
 #define is_bar_c
+#ifdef HAVE_MEMMEM //example at msys
+#	ifndef _GNU_SOURCE //example on arm64
+#	define _GNU_SOURCE
+#	endif
+#endif
+
 #ifdef HAVE_STDDEF_H
 #include<stddef.h>
 #else
