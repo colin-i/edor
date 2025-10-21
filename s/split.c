@@ -1,7 +1,9 @@
 
 #define is_split_c
 #ifdef HAVE_MEMMEM
-#define _GNU_SOURCE
+#	ifndef _GNU_SOURCE //example on arm64
+#	define _GNU_SOURCE
+#	endif
 #endif
 
 #ifdef HAVE_STDDEF_H

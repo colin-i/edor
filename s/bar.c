@@ -598,7 +598,7 @@ static row_dword calculate_for_find_replace(bar_byte cursor){
 	row_dword nr=0;
 	char*ip=inputr;bar_byte cr=cursorr;
 	do{
-		char*p=memmem(ip,cr,inputf,cursor);//if cursor is 0 p is not null, if cr is 0 p is null, if both are zero is like cursor is 0 p is not null
+		char*p=(char*)memmem(ip,cr,inputf,cursor);//if cursor is 0 p is not null, if cr is 0 p is null, if both are zero is like cursor is 0 p is not null
 		//                                   starting with cursor 0, or press c and make cursor 0, will not be here
 		if(p==nullptr)break;
 		ip+=cursor;cr-=cursor;nr++;
