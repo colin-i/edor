@@ -69,7 +69,7 @@ int init_pair(short,short,short);
 WINDOW*initscr(void);
 int keypad(WINDOW*,bool);
 mmask_t mousemask(mmask_t,mmask_t*);
-int mvaddstr(int,int,const char*);
+int mvaddnstr(int,int,const char*,int);
 chtype mvwinch(WINDOW*,int,int);
 int nodelay(WINDOW*,bool);
 int noecho(void);

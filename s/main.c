@@ -222,6 +222,9 @@ static bool indopt_flag=false;
 #define splits_deactivated '_'
 
 #define maxulong_nul 20+1
+static char tot_inf[maxulong_nul];
+static char tot_bts;
+static int tot_x;
 
 bool no_char(char z){return z<32||z>=127;}
 static size_t tab_grow(WINDOW*w,char*a,size_t sz,int*ptr){
@@ -2038,8 +2041,8 @@ static bool goto_mode(char*args,WINDOW*w){
 		centering_simple(w)
 	}
 	else if(r>command_resize)wmove(w,getcury(w),getcurx(w));//-1 quit and 0 nothing
-	return true;//-2
-	//return false;
+	else return true;//-2
+	return false;
 }
 static bool savetofile(WINDOW*w,bool has_file){
 	char*d=textfile;
@@ -2191,19 +2194,19 @@ static bool quit_from_key(WINDOW*w,bool *b){
 static time_t guardian=0;
 static bool loopin(WINDOW*w){
 	int c;
-	char inf[maxulong_nul];
-	char bts=sprintf(inf,"%lu",rows_tot);
-	mvaddstr(0,getmaxx(stdscr)-bts,inf);
-	wnoutrefresh(stdscr);
 	for(;;){
 		//wtimeout(w,1000);
 		wtimeout(w,one_minute*1000);//it counts where wgetch is (example at visual)
 		c=wgetch(w);
-		if(bts!=0){
-			for(char z=0;z<bts;z++)inf[z]=' ';
-			mvaddstr(0,getmaxx(stdscr)-bts,inf);//no refresh, will not overlap anything, will dissapear easy
-			bts=0;
+
+		if(tot_bts!=0){
+			//if(getmaxx(stdscr)<stdmaxx)return;//was resized at left
+			for(char z=0;z<tot_bts;z++)tot_inf[z]=' ';
+			mvaddnstr(0,tot_x,tot_inf,tot_bts);//no refresh, will not overlap anything, will dissapear easy
+			//tot_x, can also be resized at right, need to remember
+			tot_bts=0;
 		}
+
 		hardtime_resolve(w);
 		if(c==ERR){
 			time_t test=time(nullptr);
@@ -2722,8 +2725,8 @@ static void proced(char*cutbuf_file,WINDOW*w1){
 		void*a=realloc(x_right,(size_t)r);
 		if(a==nullptr)break;
 		x_right=(bool*)a;//is text,[xtext+nothing
-		int maxx=getmaxx(stdscr);
-		int c=maxx-(leftspace+contentmarginsize);
+		int stdmaxx=getmaxx(stdscr);
+		int c=stdmaxx-(leftspace+contentmarginsize);
 		tabs_rsz=1+(c/tab_sz);
 		if((c%tab_sz)!=0)tabs_rsz++;
 		void*b=realloc(tabs,sizeof(int)*(size_t)(r*tabs_rsz));
@@ -2737,6 +2740,10 @@ static void proced(char*cutbuf_file,WINDOW*w1){
 			move(0,0);//no clear, only overwrite, can resize left to right then back right to left
 			write_title();//this is also the first write
 		}
+		tot_bts=sprintf(tot_inf,"%lu",rows_tot);
+		tot_x=getmaxx(stdscr)-tot_bts;
+		mvaddnstr(0,tot_x,tot_inf,tot_bts);//maximize with problems at gnome-terminal but not at ptyxis
+		//will be later, wnoutrefresh(stdscr);
 
 		loops=false;
 		WINDOW*w=newwin(r-topspace,c,topspace,leftspace);//The functions which return a window pointer may also fail if there is insufficient memory for its data structures.
@@ -2745,7 +2752,7 @@ static void proced(char*cutbuf_file,WINDOW*w1){
 			if(leftcontent!=nullptr){
 				syntaxcontent=newwin(r-topspace,contentmarginsize,topspace,contentmarginsize);
 				if(syntaxcontent!=nullptr){
-					rightcontent=newwin(r-topspace,contentmarginsize,topspace,maxx-contentmarginsize);
+					rightcontent=newwin(r-topspace,contentmarginsize,topspace,stdmaxx-contentmarginsize);
 					if(rightcontent!=nullptr){
 						keypad(w,true);
 
@@ -2761,6 +2768,7 @@ static void proced(char*cutbuf_file,WINDOW*w1){
 								visual_write(splits_activated_mixless);
 							//visual_bool=true;//to clear at a next key
 						}
+
 						if(mod_flag==false){
 							if(hardtime==0)restore_visual();//has wnoutrefresh(stdscr)
 							else mod_visual(modif_visual);//has wnoutrefresh(stdscr)
