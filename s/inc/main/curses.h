@@ -60,29 +60,30 @@ MEVENT;
 extern "C" {
 #endif
 
-WINDOW*initscr(void);
-int endwin(void);
-int ungetch(int);
-chtype winch(WINDOW*);
-chtype mvwinch(WINDOW*,int,int);
-int winnstr(WINDOW*,char*,int);
-mmask_t mousemask(mmask_t,mmask_t*);
-int noecho(void);
-int raw(void);
-int nonl(void);
-int delwin(WINDOW*);
-int waddstr(WINDOW*,const char*);
-int waddnstr(WINDOW*,const char*,int);
 int clrtoeol(void);
-int wclrtoeol(WINDOW*);
-int use_default_colors(void);
-int start_color(void);
-int init_pair(short,short,short);
-int keypad(WINDOW*,bool);
-int getmouse(MEVENT*);
-int nodelay(WINDOW*,bool);
-void wtimeout(WINDOW*,int);
+int delwin(WINDOW*);
 //int doupdate(void);
+int endwin(void);
+int getmouse(MEVENT*);
+int init_pair(short,short,short);
+WINDOW*initscr(void);
+int keypad(WINDOW*,bool);
+mmask_t mousemask(mmask_t,mmask_t*);
+int mvaddstr(int,int,const char*);
+chtype mvwinch(WINDOW*,int,int);
+int nodelay(WINDOW*,bool);
+int noecho(void);
+int nonl(void);
+int raw(void);
+int start_color(void);
+int ungetch(int);
+int use_default_colors(void);
+int waddnstr(WINDOW*,const char*,int);
+int waddstr(WINDOW*,const char*);
+int wclrtoeol(WINDOW*);
+chtype winch(WINDOW*);
+int winnstr(WINDOW*,char*,int);
+void wtimeout(WINDOW*,int);
 
 #ifdef __cplusplus
 }

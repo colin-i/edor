@@ -221,6 +221,8 @@ static bool indopt_flag=false;
 #define splits_activated_mixless 'h'
 #define splits_deactivated '_'
 
+#define maxulong_nul 20+1
+
 bool no_char(char z){return z<32||z>=127;}
 static size_t tab_grow(WINDOW*w,char*a,size_t sz,int*ptr){
 	int c=0;int cr=0;
@@ -2189,10 +2191,19 @@ static bool quit_from_key(WINDOW*w,bool *b){
 static time_t guardian=0;
 static bool loopin(WINDOW*w){
 	int c;
+	char inf[maxulong_nul];
+	char bts=sprintf(inf,"%lu",rows_tot);
+	mvaddstr(0,getmaxx(stdscr)-bts,inf);
+	wnoutrefresh(stdscr);
 	for(;;){
 		//wtimeout(w,1000);
 		wtimeout(w,one_minute*1000);//it counts where wgetch is (example at visual)
 		c=wgetch(w);
+		if(bts!=0){
+			for(char z=0;z<bts;z++)inf[z]=' ';
+			mvaddstr(0,getmaxx(stdscr)-bts,inf);//no refresh, will not overlap anything, will dissapear easy
+			bts=0;
+		}
 		hardtime_resolve(w);
 		if(c==ERR){
 			time_t test=time(nullptr);
