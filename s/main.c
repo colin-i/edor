@@ -2095,7 +2095,7 @@ static void writeprefs(int f,char mask){
 									if(write(f,&tab_sz,sizeof(tab_protocol))==sizeof(tab_protocol)){
 										char tmbuf[7];
 										char n=sprintf(tmbuf,"%u",timeout_duration);
-										if(write(f,&n,1)==sizeof(char)){
+										if(write(f,&n,sizeof(char))==sizeof(char)){
 											#pragma GCC diagnostic push
 											#pragma GCC diagnostic ignored "-Wunused-result"
 											write(f,tmbuf,n);
