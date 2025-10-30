@@ -2096,8 +2096,8 @@ static void writeprefs(int f,char mask){
 							if(write(f,&sz,extlen_size)==extlen_size){
 								if(write(f,filewhites_extension,sz)==sz){
 									if(write(f,&tab_sz,sizeof(tab_protocol))==sizeof(tab_protocol)){
-										char tmbuf[7];
-										char n=sprintf(tmbuf,"%u",timeout_duration);
+										char tmbuf[maxushort_nul];
+										char n=sprintf(tmbuf,"%hu",timeout_duration);
 										if(write(f,&n,sizeof(char))==sizeof(char)){
 											#pragma GCC diagnostic push
 											#pragma GCC diagnostic ignored "-Wunused-result"
