@@ -69,7 +69,7 @@ text="\ncommand mode: left,right,home,end,Ctrl+q\
 \nCtrl+y = enable/disable spaces->tabs indents at read, tabs->spaces at write; Alt+y = change rule extension name (blank is all)\
 \nCtrl+d = enable/disable indent follower\
 \nCtrl+b = change tab size\
-\nCtrl+x = change save timeout in seconds\
+\nCtrl+x = change save timeout in seconds (0 is default timeout)\
 \nCtrl+z = switch keys, applies to Ctrl and lower/upper Alt (example: az , +a becomes +z and +z becomes +a)\
 \nCtrl+q = quit; Alt+q = quit and return EXIT_FAILURE\
 \nabcdefghijklmnopqrstuvwxyz\""

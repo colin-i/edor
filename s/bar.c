@@ -713,7 +713,8 @@ command_char change_save_timeout(bar_byte cursor){
 	unsigned short a;
 	int n=sscanf(input0,fmt,&a);
 	if(n==1){
-		timeout_duration=a;
+		if(a==0)timeout_duration=default_timeout;
+		else timeout_duration=a;
 		rewriteprefs;
 	}
 	return command_ok;
