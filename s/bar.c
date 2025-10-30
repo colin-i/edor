@@ -708,7 +708,7 @@ command_char change_tab_size(bar_byte cursor){
 	return command_false;
 }
 command_char change_save_timeout(bar_byte cursor){
-	char fmt[maxushort_nul];//let 9999999999999 to be truncated at maxushort
+	char fmt[    1+3+  1+1+1];//let 9999999999999 to be truncated at maxushort
 	sprintf(fmt,"%%%hhuhu",cursor);//input0 is null terminated but that was for another way, not depending on that
 	unsigned short a;
 	int n=sscanf(input0,fmt,&a);

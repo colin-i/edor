@@ -226,6 +226,9 @@ static char tot_inf[maxulong_nul];
 static char tot_bts;
 static int tot_x;
 
+#define maxushort 6
+#define maxushort_nul maxushort+1
+
 bool no_char(char z){return z<32||z>=127;}
 static size_t tab_grow(WINDOW*w,char*a,size_t sz,int*ptr){
 	int c=0;int cr=0;
@@ -2647,6 +2650,7 @@ static void getprefs(){
 															if(n<=maxushort){
 																char rd[maxushort_nul];
 																if(read(f,rd,n)==n){
+																	rd[n]='\0';
 																	sscanf(rd,"%hu",&timeout_duration);
 																}
 															}

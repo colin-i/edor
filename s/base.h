@@ -71,8 +71,6 @@ typedef struct{
 	char key;
 	char add;
 }show_key_struct;
-#define maxushort 6
-#define maxushort_nul maxushort+1
 //main,bar,tit
 #define Char_Return 0xd  //main bar tit
 #define Char_Escape 0x1b //main
