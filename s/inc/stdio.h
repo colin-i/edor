@@ -14,6 +14,7 @@ int puts(const char*);
 extern "C" {
 #endif
 int sprintf(char*,const char*,...);
+int sscanf(const char *restrict str,const char *restrict format, ...);
 #ifdef __cplusplus
 }
 #endif

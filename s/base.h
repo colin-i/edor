@@ -19,7 +19,8 @@
 #define com_nr_goto_alt 5
 #define com_nr_swkey 6
 #define com_nr_tab 7
-	#define com_nr_passcursor_numbers com_nr_tab
+#define com_nr_restore 8
+	#define com_nr_passcursor_numbers com_nr_restore
 #define com_nr_save 8
 #define com_nr_ext 9
 #define comnrp_define char*
@@ -70,6 +71,8 @@ typedef struct{
 	char key;
 	char add;
 }show_key_struct;
+#define maxushort 6
+#define maxushort_nul maxushort+1
 //main,bar,tit
 #define Char_Return 0xd  //main bar tit
 #define Char_Escape 0x1b //main
@@ -122,6 +125,7 @@ extern char*keys_help;
 extern bool mod_flag;
 extern char*ocode_extension;
 extern char*textfile;
+extern unsigned short timeout_duration;
 //bar,tw
 extern char tab_sz;
 //bar,tw,tit
@@ -153,6 +157,7 @@ command_char saving_base(char*);
 command_char question(const char*);
 command_char change_key(bar_byte);
 command_char change_tab_size(bar_byte);
+command_char change_save_timeout(bar_byte);
 command_char command(char*,show_key_struct);
 #define centering2(w,prw,pxc,right) position(0,0);centering3(w,prw,pxc,right);
 #define centering(w,prw,pxc) centering2(w,prw,pxc,false)

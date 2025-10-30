@@ -707,6 +707,17 @@ command_char change_tab_size(bar_byte cursor){
 	}
 	return command_false;
 }
+command_char change_save_timeout(bar_byte cursor){
+	char fmt[maxushort_nul];//let 9999999999999 to be truncated at maxushort
+	sprintf(fmt,"%%%hhuhu",cursor);//input0 is null terminated but that was for another way, not depending on that
+	unsigned short a;
+	int n=sscanf(input0,fmt,&a);
+	if(n==1){
+		timeout_duration=a;
+		rewriteprefs;
+	}
+	return command_ok;
+}
 
 command_char save(){
 	if(textfile!=nullptr){
@@ -1343,7 +1354,8 @@ command_char command(comnrp_define comnrp,show_key_struct s){
 		else if(*comnrp==com_nr_ext){
 			extdata*d=((extdata**)comnrp)[1];
 			cursor=sprintf(input,"%s",(d->orig)[0]);//on prefs is len<=0xff and max_path_0 is 0x100
-		}
+		}else if(*comnrp==com_nr_restore)
+			cursor=sprintf(input,"%u",timeout_duration);
 		else cursor=0;
 	}
 	orig_key_show(&s);

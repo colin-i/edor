@@ -1325,13 +1325,14 @@ static void hardtime_resolve_returner(WINDOW*w){//argument for errors
 		}
 	}
 }
-#define one_minute 60
-#define one_minute_less one_minute-1
-//#define one_minute 3
+//#define one_minute 60
+//#define one_minute_less one_minute-1
+unsigned short timeout_duration=60;
 static void hardtime_resolve(WINDOW*w){//argument for errors
 	if(hardtime!=0){
 		//if((time((time_t)nullptr)-hardtime)>=one_minute){//= here is easily tested(set to 3, will wait 6 seconds if not and equal
-		if((time(nullptr)-hardtime)>one_minute_less){//(time_t*)
+		//if((time(nullptr)-hardtime)>one_minute_less){//(time_t*)
+		if((time(nullptr)-hardtime)>=timeout_duration){//(time_t*)
 			hardtime_resolve_returner(w);
 			easytime();
 		}
@@ -2091,10 +2092,16 @@ static void writeprefs(int f,char mask){
 							sz=strlen(filewhites_extension);
 							if(write(f,&sz,extlen_size)==extlen_size){
 								if(write(f,filewhites_extension,sz)==sz){
-									#pragma GCC diagnostic push
-									#pragma GCC diagnostic ignored "-Wunused-result"
-									write(f,&tab_sz,sizeof(tab_protocol));
-									#pragma GCC diagnostic pop
+									if(write(f,&tab_sz,sizeof(tab_protocol))==sizeof(tab_protocol)){
+										char tmbuf[7];
+										char n=sprintf(tmbuf,"%u",timeout_duration);
+										if(write(f,&n,1)==sizeof(char)){
+											#pragma GCC diagnostic push
+											#pragma GCC diagnostic ignored "-Wunused-result"
+											write(f,tmbuf,n);
+											#pragma GCC diagnostic pop
+										}
+									}
 								}
 							}
 						}
@@ -2193,39 +2200,13 @@ static bool quit_from_key(WINDOW*w,bool *b){
 
 static time_t guardian=0;
 static bool loopin(WINDOW*w){
-	int c;
+	//if(getmaxx(stdscr)<stdmaxx)return;//was resized at left
+	for(char z=0;z<tot_bts;z++)tot_inf[z]=' ';
+	mvaddnstr(0,tot_x,tot_inf,tot_bts);//no refresh, will not overlap anything, will dissapear easy
+	//tot_x, can also be resized at right, need to remember
+
+	int c=wgetch(w);
 	for(;;){
-		//wtimeout(w,1000);
-		wtimeout(w,one_minute*1000);//it counts where wgetch is (example at visual)
-		c=wgetch(w);
-
-		if(tot_bts!=0){
-			//if(getmaxx(stdscr)<stdmaxx)return;//was resized at left
-			for(char z=0;z<tot_bts;z++)tot_inf[z]=' ';
-			mvaddnstr(0,tot_x,tot_inf,tot_bts);//no refresh, will not overlap anything, will dissapear easy
-			//tot_x, can also be resized at right, need to remember
-			tot_bts=0;
-		}
-
-		hardtime_resolve(w);
-		if(c==ERR){
-			time_t test=time(nullptr);
-			if(test==guardian)return false;//example: cc nothing.c | edor , will have errno 0, will loop.
-				//reproducible? fprintf to stderr+something else, see cc source for answer
-				//fprintf was tested and is separate from this, then why? at that cc is showing same time with edor
-			guardian=test;
-
-			//this was ok at hardtime_resolve but will be too often there, here will be wrong sometimes but still less trouble
-			//doupdate();//noone will show virtual screen if without this
-
-			//and the cursor is getting away, not right but ok
-			wmove(w,getcury(w),getcurx(w));
-			//same as doupdate+not moving the cursor
-
-			continue;//timeout
-		}
-		wtimeout(w,-1);
-
 		movement_char a=movment(c,w);
 		if(a==movement_resize)return true;
 		if(a!=movement_diffkey){
@@ -2259,9 +2240,11 @@ static bool loopin(WINDOW*w){
 			else if(z==key_whites+A_to_a){if(pref_change(w,&filewhites_extension,&filewhites_extension_new,false,key_whites,A_to_a)/*true*/)return true;}
 			else if(z==key_quit+A_to_a){
 				bool q;bool not_q=quit_from_key(w,&q);
-				if(not_q/*true*/)continue;
-				if(q==false)user_return=EXIT_FAILURE;
-				return q;
+				//if(not_q/*true*/)continue;
+				if(!not_q/*false*/){
+					if(q==false)user_return=EXIT_FAILURE;
+					return q;
+				}
 			}
 			else if(z==key_ocomp){if(pref_change(w,&ocode_extension,&ocode_extension_new,false,key_ocomp,0)/*true*/)return true;}
 			else if(z==key_actswf){if(pref_change(w,&esdelimiter,&esdelimiter_new,true,key_actswf,0)/*true*/)return true;}            //don't allow no size delimiters
@@ -2291,8 +2274,8 @@ static bool loopin(WINDOW*w){
 					if(titles(w)/*true*/)return true;
 				}else if(chr==key_quit){
 					bool q;bool not_q=quit_from_key(w,&q);
-					if(not_q/*true*/)continue;
-					return q;
+					//if(not_q/*true*/)continue;
+					if(!not_q/*false*/)return q;
 				}else if(chr==key_insens){
 					char c;
 					if(insensitive/*true*/){insensitive=false;c=orig_lowkey(key_insens);}
@@ -2338,6 +2321,10 @@ static bool loopin(WINDOW*w){
 					quick_pack(com_nr_tab,change_tab_size)
 					if(command((char*)args,(show_key_struct){key_tab,0})==command_false)wmove(w,getcury(w),getcurx(w));
 					else return true;
+				}else if(chr==key_restore){
+					quick_pack(com_nr_restore,change_save_timeout)
+					if(command((char*)args,(show_key_struct){key_restore,0})==command_resize)return true;
+					wmove(w,getcury(w),getcurx(w));
 				}else if(chr==key_indopt){
 					char c;
 					if(indopt_flag/*true*/){indopt_flag=false;c=orig_lowkey(key_indopt);}
@@ -2365,6 +2352,29 @@ static bool loopin(WINDOW*w){
 				//continue;
 			}
 		}
+		getchlabel:
+		//wtimeout(w,1000);
+		wtimeout(w,timeout_duration*1000);//it counts where wgetch is (example at visual)
+		c=wgetch(w);
+		hardtime_resolve(w);
+		if(c==ERR){
+			time_t test=time(nullptr);
+			if(test==guardian)return false;//example: cc nothing.c | edor , will have errno 0, will loop.
+				//reproducible? fprintf to stderr+something else, see cc source for answer
+				//fprintf was tested and is separate from this, then why? at that cc is showing same time with edor
+			guardian=test;
+
+			//this was ok at hardtime_resolve but will be too often there, here will be wrong sometimes but still less trouble
+			//doupdate();//noone will show virtual screen if without this
+
+			//and the cursor is getting away, not right but ok
+			wmove(w,getcury(w),getcurx(w));
+			//same as doupdate+not moving the cursor
+
+			goto getchlabel;
+			//continue;//timeout
+		}
+		wtimeout(w,-1);
 	}
 }
 #define normalize_yes_clue ok=normalize_yes;*normalize_clue_pointer=*r;
@@ -2633,6 +2643,14 @@ static void getprefs(){
 												if(read(f,&tabtest,sizeof(tab_protocol))==sizeof(tab_protocol)){
 													if(tab_conditions_nr(tabtest)){
 														tab_sz=tabtest;
+														char n;if(read(f,&n,sizeof(char))==sizeof(char)){
+															if(n<=maxushort){
+																char rd[maxushort_nul];
+																if(read(f,rd,n)==n){
+																	sscanf(rd,"%hu",&timeout_duration);
+																}
+															}
+														}
 													}
 												}
 											}

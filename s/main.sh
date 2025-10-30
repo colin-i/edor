@@ -69,6 +69,7 @@ text="\ncommand mode: left,right,home,end,Ctrl+q\
 \nCtrl+y = enable/disable spaces->tabs indents at read, tabs->spaces at write; Alt+y = change rule extension name (blank is all)\
 \nCtrl+d = enable/disable indent follower\
 \nCtrl+b = change tab size\
+\nCtrl+x = change save timeout in seconds\
 \nCtrl+z = switch keys, applies to Ctrl and lower/upper Alt (example: az , +a becomes +z and +z becomes +a)\
 \nCtrl+q = quit; Alt+q = quit and return EXIT_FAILURE\
 \nabcdefghijklmnopqrstuvwxyz\""
@@ -80,7 +81,7 @@ fi
 
 #QWERTYU O   ip
 #ASDFG J L k h
-# Z CVBN   x m
+# ZXCVBN     m
 # ^M is 13 that comes also at Enter, ^I is 9 that comes also at Tab
 # ^H at termux is 263 backspace
 # ^P at docker, something is not ok with the redraw
@@ -155,6 +156,7 @@ while [ $i -lt 123 ]; do
 		117) find_pos undo               $i 1 1;;   #u
 		118) find_pos visual             $i 1 1;;   #v
 		119) is_extern=x find_pos wrap   $i 1;;     #w
+		120) find_pos restore            $i 1;;     #x
 		121) find_pos whites             $i 1 1;;   #y
 		122) find_pos swkey              $i 1;;     #z
 		*) wr2 ",${nothing}"; wr4 ",${nothing}";;
