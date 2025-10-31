@@ -718,11 +718,14 @@ static void left_move(WINDOW*w,bool(*f)(char)){
 	if(x==sz||f(d[x])==false||x==0||f(d[x-1])==false){left(w,c);return;}
 	size_t prevx=x;
 	x--;
-	for(;;){
-		if(x==0)break;
+	left_move_for:
+	//for(;;){
+		if(x==0)goto left_move_for_end;//break
 		x--;
-		if(f(d[x])==false){x++;break;}
-	}
+		if(f(d[x])==false){x++;goto left_move_for_end;}//break
+	//}
+	goto left_move_for;
+	left_move_for_end:
 	if(x<xtext){xtext=x;refreshpage(w);c=0;}
 	else c-=prevx-x;
 	wmove(w,r,c);
@@ -736,11 +739,14 @@ static void right(WINDOW*w,int c){
 #define right_short(f,x,d,sz) x==sz||f(d[x])==false||x+1==sz||f(d[x+1])==false
 static size_t right_long(size_t x,char*d,size_t sz,bool(*f)(char)){
 	x++;
-	for(;;){
-		if(x+1==sz)break;
+	right_long_for:
+	//for(;;){
+		if(x+1==sz)goto right_long_for_end;//break
 		x++;
-		if(f(d[x])==false){x--;break;}
-	}
+		if(f(d[x])==false){x--;goto right_long_for_end;}//break
+	//}
+	goto right_long_for;
+	right_long_for_end:
 	return x;
 }
 static void right_move(WINDOW*w,bool(*f)(char)){
@@ -2209,7 +2215,8 @@ static bool loopin(WINDOW*w){
 	//tot_x, can also be resized at right, need to remember
 
 	int c=wgetch(w);
-	for(;;){
+	loopin_for:
+	//for(;;){
 		movement_char a=movment(c,w);
 		if(a==movement_resize)return true;
 		if(a!=movement_diffkey){
@@ -2378,7 +2385,8 @@ static bool loopin(WINDOW*w){
 			//continue;//timeout
 		}
 		wtimeout(w,-1);
-	}
+	//}
+	goto loopin_for;
 }
 #define normalize_yes_clue ok=normalize_yes;*normalize_clue_pointer=*r;
 //-1 to normalize, 0 errors, 1 ok

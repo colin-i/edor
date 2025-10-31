@@ -464,7 +464,8 @@ static bool findingf(bar_byte cursor,size_t r,size_t c){
 	}
 	size_t b=i;
 	size_t e=rows_tot;
-	for(;;){
+	findingf_for:
+	//for(;;){
 		int a=inputcmp(rows[i].data,rows[i].sz,cursor);
 		if(a>=0){xtext=a;ytext=i;return true;}
 		i++;
@@ -475,7 +476,8 @@ static bool findingf(bar_byte cursor,size_t r,size_t c){
 			}
 			else return false;
 		}
-	}
+	//}
+	goto findingf_for;
 }
 static int inputrcmp(char*S1,size_t L1,size_t l2){
 	if(l2>L1)return -1;
@@ -513,7 +515,8 @@ static bool findingb(bar_byte cursor,size_t r,size_t c){
 	}
 	size_t b=i;
 	size_t e=0;
-	for(;;){
+	findingb_for:
+	//for(;;){
 		int a=inputrcmp(rows[i].data,rows[i].sz,cursor);
 		if(a>=0){xtext=a;ytext=i;return true;}
 		if(i==e){
@@ -522,7 +525,8 @@ static bool findingb(bar_byte cursor,size_t r,size_t c){
 				i=rows_tot-1;e=b+1;
 			}else return false;
 		}else i--;
-	}
+	//}
+	goto findingb_for;
 }
 static bool finding(bar_byte cursor,size_t r,size_t c,bool f){
 	if(cursor==0)return false;
@@ -613,7 +617,8 @@ static row_dword calculate_for_find_replace(bar_byte cursor){
 }
 static bool replace_text(WINDOW*w,int yb,int xb,int rstart,int rstop,bar_byte cursor,row_dword*nr_re_ct){
 	vis('R',w);
-	for(;;){
+	replace_text_for:
+	//for(;;){
 		int c=wgetch(w);
 		if(c==Char_Return){
 			wattrset(w,0);
@@ -640,25 +645,30 @@ static bool replace_text(WINDOW*w,int yb,int xb,int rstart,int rstop,bar_byte cu
 			inputr[cursorr]=(char)c;
 			cursorr++;
 		}
-	}
+	//}
+	goto replace_text_for;
 }
 
 //0/1  not signed but will return at command
 command_char go_to(bar_byte cursor){
 	int i=0;size_t y;size_t x;
-	for(;;){
+	go_to_for:
+	//for(;;){
 		if(input0[i]==','){
 			input0[i]='\0';
 			y=(size_t)atoi(input0);
 			x=(size_t)atoi(input0+i+1);
-			break;
+			goto go_to_for_end;//break
 		}
 		if(i==cursor){
 			y=(size_t)atoi(input0);
-			x=1;break;
+			x=1;
+			goto go_to_for_end;//break
 		}
 		i++;
-	}
+	//}
+	goto go_to_for;
+	go_to_for_end:
 	if(y>0){
 		if(y>rows_tot)y=rows_tot;
 		ytext=y-1;
@@ -1018,7 +1028,8 @@ bool undo_delk(size_t yb,row_dword xb,size_t ye,row_dword xe){
 	return undo_add_del(yb,xb,ye,xe);
 }
 void undo_loop(WINDOW*w){
-	for(;;){
+	undo_loop_for:
+	//for(;;){
 		int c=wgetch(w);
 		switch(c){//reread from mem or a special register? gcc same as if-else, from mem
 			case KEY_LEFT:
@@ -1028,7 +1039,8 @@ void undo_loop(WINDOW*w){
 			default:
 				return;
 		}
-	}
+	//}
+	goto undo_loop_for;
 }
 static bool replace(bar_byte cursor,int*fnumber,row_dword nr){
 	row*r=&rows[ytext];
@@ -1134,18 +1146,21 @@ static void finds_total(int number,size_t y1,row_dword x1,size_t xr,row_dword xc
 			here_forward=false;
 		}
 	}
-	for(;;){
+	finds_total_for:
+	//for(;;){
 		finding(cursor,0,here_forward?cursor:0,here_forward);//is true
 		if(delim_touch(y1,x1,cursor)/*true*/){//ytext==y1&&xtext==x1 is not enough,example qqq and search last 2 q (qq), will loop wrong
 			finds(true,number+(n*here_sense),-n,0);
-			break;//only at number=0: if not delim_touch and that rare case, ytext is y1,xtext is x1
+			goto finds_total_for_end;//break//only at number=0: if not delim_touch and that rare case, ytext is y1,xtext is x1
 		}
 		n++;
 		if(n==max){
 			finds(true,number+(n*here_sense),-n,'+');
-			break;
+			goto finds_total_for_end;//break
 		}
-	}
+	//}
+	goto finds_total_for;
+	finds_total_for_end:
 	wmove(w,getcury(w),getcurx(w));//print the result
 }
 
@@ -1169,7 +1184,8 @@ static command_char find_core(WINDOW*w,bar_byte cursor,int y,bar_byte pos,bar_by
 	char prev_key=' ';
 	//bool is_for_forward=true;//last key only at next/prev/replace
 
-	for(;;){
+	find_core_for:
+	//for(;;){
 		int a=wgetch(w);
 		if(a==Char_Return){
 			if(untouched/*true*/){
@@ -1192,7 +1208,7 @@ static command_char find_core(WINDOW*w,bar_byte cursor,int y,bar_byte pos,bar_by
 			}
 			if(untouched/*true*/){
 				ytext+=xr;xtext+=xc;
-				if(replace(cursor,&fnumber,number_replace_counter)/*true*/){ytext=iferrory;xtext=iferrorx;continue;}
+				if(replace(cursor,&fnumber,number_replace_counter)/*true*/){ytext=iferrory;xtext=iferrorx;goto find_core_for;}//find_core_for
 
 				if(fnumber!=0){//0 is on delimiter
 					if(ytext==y1&&xtext<x1)x1-=cursor-cursorr;//this can be on delimiter but is observed outside
@@ -1201,10 +1217,10 @@ static command_char find_core(WINDOW*w,bar_byte cursor,int y,bar_byte pos,bar_by
 				if(forward){xtext+=cursorr;centering2(w,&xr,&xc,true)}
 				else{centering(w,&xr,&xc)}
 				untouched=false;
-				continue;
+				goto find_core_for;//continue
 			}
 			if(finding(cursor,xr,xc,forward)/*true*/){
-				if(replace(cursor,&fnumber,number_replace_counter)/*true*/){ytext=iferrory;xtext=iferrorx;continue;}
+				if(replace(cursor,&fnumber,number_replace_counter)/*true*/){ytext=iferrory;xtext=iferrorx;goto find_core_for;}//continue
 
 				phase=delimiter(y1,x1,y,pos,sz,cursorr,phase);
 				if(phase/*true*/)delimiter_touched=true;
@@ -1219,14 +1235,14 @@ static command_char find_core(WINDOW*w,bar_byte cursor,int y,bar_byte pos,bar_by
 
 				if(forward){xtext+=cursorr;centering2(w,&xr,&xc,true)}
 				else{centering(w,&xr,&xc)}
-				continue;
+				goto find_core_for;//continue
 			}
 			return command_ok;
 		}else if(a=='r'){
 			cursorr=0;wattrset(w,COLOR_PAIR(color_b));
 			int rstart=getcury(w);
 			if(replace_text(w,rstart,getcurx(w),rstart,rstart+1,cursor,&number_replace_counter)/*true*/)return command_resize;
-			continue;
+			goto find_core_for;//continue
 		}else if(a=='c'){
 			return command_false;
 		}else if(a==KEY_RIGHT){
@@ -1237,7 +1253,7 @@ static command_char find_core(WINDOW*w,bar_byte cursor,int y,bar_byte pos,bar_by
 					ytext=storeytext;xtext=storextext;
 				}
 			}
-			continue;
+			goto find_core_for;//continue
 		}else if(a=='R'){
 			wattrset(w,COLOR_PAIR(color_b));
 			int yb=getcury(w);int xb=getcurx(w);
@@ -1246,7 +1262,7 @@ static command_char find_core(WINDOW*w,bar_byte cursor,int y,bar_byte pos,bar_by
 				replace_text_add(w,inputr[i],&rstart,&rstop);
 			}
 			if(replace_text(w,yb,xb,rstart,rstop,cursor,&number_replace_counter)/*true*/)return command_resize;
-			continue;
+			goto find_core_for;//continue
 		}else{
 			find_returner
 		}
@@ -1273,7 +1289,8 @@ static command_char find_core(WINDOW*w,bar_byte cursor,int y,bar_byte pos,bar_by
 		}
 		untouched=true;
 		centering(w,&xr,&xc)
-	}
+	//}
+	goto find_core_for;
 }
 //same
 static command_char find(char*z,bar_byte cursor,bar_byte pos,int visib,int y){
@@ -1364,19 +1381,21 @@ command_char command(comnrp_define comnrp,show_key_struct s){
 	else{
 		command_rewrite(y,com_left+(cursor<visib?cursor:0),0,input,cursor,visib);
 	}
-	command_char r;for(;;){
+	command_char r;
+	command_for:
+	//for(;;){
 		int a=getch();
 		if(a==Char_Return){
 			char comnr=comnrp[0];
 			if(is_find/*true*/){
 				int ifback=getcurx(stdscr);
 				r=find(comnrp,cursor,pos,visib,y);
-				if(r==command_resize)break;
+				if(r==command_resize)goto command_for_end;//break
 				int dif=rightexcl-getbegx(poswn);
 				if(dif!=-1){//here when finding far away and position window is growing too much
 					right-=dif+1;rightexcl=right+1;
 					visib=rightexcl-com_left;
-					if(visib<2)break;
+					if(visib<2)goto command_for_end;//break
 				}
 				if(r==command_false){
 					//the text was highlighted
@@ -1384,7 +1403,7 @@ command_char command(comnrp_define comnrp,show_key_struct s){
 					//can be resized big,resized small
 					//if(dif>=0 here is not relevant
 					command_rewrite(y,ifback>right?right:ifback,pos,inputf,cursor,visib);
-					continue;
+					goto command_for;//continue
 				}
 			}else if(comnr<=com_nr_passcursor_numbers){
 				input[cursor]='\0';
@@ -1402,7 +1421,7 @@ command_char command(comnrp_define comnrp,show_key_struct s){
 						r=saving();
 					}else if(r==command_false){
 						command_rewrite(y,x,pos,input0,cursor,visib);
-						continue;
+						goto command_for;//continue
 					}else if(r==command_resize)return command_resize;
 					wnoutrefresh(stdscr);
 					return r;
@@ -1414,7 +1433,7 @@ command_char command(comnrp_define comnrp,show_key_struct s){
 				pref_modify(d->orig,d->buf,d->sizedonly,input,cursor);
 				r=command_ok;
 			}
-			break;
+			goto command_for_end;//break
 		}
 		else if(a==KEY_LEFT){
 			int x=getcurx(stdscr);
@@ -1476,10 +1495,10 @@ command_char command(comnrp_define comnrp,show_key_struct s){
 			cursor=del(x-com_left+pos,input,cursor,rightexcl-x);
 			move(y,x);
 		}
-		else if(a==KEY_RESIZE){r=command_resize;break;}
+		else if(a==KEY_RESIZE){r=command_resize;goto command_for_end;}//break
 		else{
 			const char*s=keyname(a);
-			if(*s==Char_Ctrl&&s[1]==key_quit){r=command_no;break;}
+			if(*s==Char_Ctrl&&s[1]==key_quit){r=command_no;goto command_for_end;}//break
 			if(cursor!=max_path){
 				char ch=(char)a;
 				if(no_char(ch)==false){
@@ -1510,7 +1529,9 @@ command_char command(comnrp_define comnrp,show_key_struct s){
 				}
 			}
 		}
-	}
+	//}
+	goto command_for;
+	command_for_end:
 	if(r!=command_resize){
 		visual(' ');//i'm cleaning this because if wanting to change flags will be confused about the previous same flags
 		//again, same wnoutrefresh here, because if not, will erase position, example Alt+y Ctrl+q
