@@ -1,3 +1,9 @@
+edor (1-x82) focal; urgency=medium
+
+  * display nr of rows. timeout option
+
+ -- bc <bc@bc-desktop>  Sun, 02 Nov 2025 15:31:21 +0200
+
 edor (1-x81) focal; urgency=medium
 
   * calculate replace number counter
