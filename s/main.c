@@ -2215,7 +2215,7 @@ static bool loopin(WINDOW*w){
 	//tot_x, can also be resized at right, need to remember
 
 	int c=wgetch(w);
-	loopin_for:
+	loopin_for: ;//i'm placing this for old focal make test, at resolute is ok, and is not modifying the final executable
 	//for(;;){
 		movement_char a=movment(c,w);
 		if(a==movement_resize)return true;

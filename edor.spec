@@ -34,17 +34,6 @@ make
 
 #-- CHANGELOG -----------------------------------------------------------------#
 %changelog
-* Sun Nov 02 2025 Costin Botescu <costin.botescu@gmail.com> 1.82-0
-- not depending on for(;;) (costin.botescu@gmail.com)
-- default timeout (costin.botescu@gmail.com)
-- "up" (costin.botescu@gmail.com)
-- "up" (costin.botescu@gmail.com)
-- "up" (costin.botescu@gmail.com)
-- save timeout option (costin.botescu@gmail.com)
-- extra wnoutrefresh. goto fix. (costin.botescu@gmail.com)
-- number of rows at start (costin.botescu@gmail.com)
-- "up" (costin.botescu@gmail.com)
-
 * Tue Oct 21 2025 Costin Botescu <costin.botescu@gmail.com> 1.81-0
 - "sync" (costin.b.84@gmail.com)
 - cast (costin.botescu@gmail.com)
