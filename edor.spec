@@ -1,6 +1,6 @@
 
 Name: edor
-Version: 1.82
+Version: 1.83
 Release: 0
 License: GPLv3
 Summary: Console user interface text editor
@@ -34,6 +34,19 @@ make
 
 #-- CHANGELOG -----------------------------------------------------------------#
 %changelog
+* Mon Nov 03 2025 Costin Botescu <costin.botescu@gmail.com> 1.83-0
+- "sync" (costin.b.84@gmail.com)
+- display nr of rows. timeout option (costin.b.84@gmail.com)
+- not depending on for(;;) (costin.botescu@gmail.com)
+- default timeout (costin.botescu@gmail.com)
+- "up" (costin.botescu@gmail.com)
+- "up" (costin.botescu@gmail.com)
+- "up" (costin.botescu@gmail.com)
+- save timeout option (costin.botescu@gmail.com)
+- extra wnoutrefresh. goto fix. (costin.botescu@gmail.com)
+- number of rows at start (costin.botescu@gmail.com)
+- "up" (costin.botescu@gmail.com)
+
 * Tue Oct 21 2025 Costin Botescu <costin.botescu@gmail.com> 1.81-0
 - "sync" (costin.b.84@gmail.com)
 - cast (costin.botescu@gmail.com)
