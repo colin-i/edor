@@ -21,8 +21,8 @@
 #define com_nr_tab 7
 #define com_nr_restore 8
 	#define com_nr_passcursor_numbers com_nr_restore
-#define com_nr_save 8
-#define com_nr_ext 9
+#define com_nr_save 9
+#define com_nr_ext 10
 #define comnrp_define char*
 #define command_resize -2
 #define command_no -1 //(char)-1 but there is at least a r> comparation

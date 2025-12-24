@@ -1367,14 +1367,16 @@ command_char command(comnrp_define comnrp,show_key_struct s){
 		input=inputf;
 	}else{
 		input=input0;
-		if(*comnrp==com_nr_goto_alt)cursor=sprintf(input,protocol ",",1+ytext
-			+(size_t)getcury(quick_get3(comnrp)));
-		else if(*comnrp==com_nr_ext){
+		if(*comnrp==com_nr_goto_alt){
+			cursor=sprintf(input,protocol ",",1+ytext+(size_t)getcury(quick_get3(comnrp)));
+		}else if(*comnrp==com_nr_ext){
 			extdata*d=((extdata**)comnrp)[1];
 			cursor=sprintf(input,"%s",(d->orig)[0]);//on prefs is len<=0xff and max_path_0 is 0x100
-		}else if(*comnrp==com_nr_restore)
+		}else if(*comnrp==com_nr_restore){
 			cursor=sprintf(input,"%u",timeout_duration);
-		else cursor=0;
+		}else{
+			cursor=0;
+		}
 	}
 	orig_key_show(&s);
 	if(cursor==0)move(y,com_left);
