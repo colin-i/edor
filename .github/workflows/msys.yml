@@ -37,8 +37,8 @@ jobs:
       path: src
    - name: pkgbuild
      run: |
-      _srcdir=src
-      name=`cat ${_srcdir}/debian/control | grep ^Source: | grep -o "[^ ]*$"`
+      _s=src
+      name=`cat ${_s}/debian/control | grep ^Source: | grep -o "[^ ]*$"`
       wget https://raw.githubusercontent.com/colin-i/pkgbuilds/refs/heads/main/${name}/PKGBUILD -O 1
       version="`cat 1 | grep ^pkgver | grep -o [^=]*$`"
       desc=`cat 1 | grep ^pkgdesc | grep -o [^=]*$`
@@ -57,21 +57,24 @@ jobs:
       ##makedepends=("\${MINGW_PACKAGE_PREFIX}-ncurses" 'bc')
       #makedepends=("ncurses" 'bc')
       build() {
-       cd "${_srcdir}"
+       #cd "${_s}" #seems that is already here now
        autoreconf -i
        ./configure
        make
       }
       check() {
-       cd "${_srcdir}"
+       #cd "${_s}"
        make test
       }
       package() {
-       cd "${_srcdir}"
+       #cd "${_s}"
        make DESTDIR="\${pkgdir}" install
       }
       EOF
       #makepkg-mingw --noconfirm --noprogressbar
+      pwd
+      ls -l
+      ls -l src
       makepkg --noconfirm --noprogressbar
 
       #test & up
