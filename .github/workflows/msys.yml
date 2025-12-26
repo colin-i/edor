@@ -57,17 +57,17 @@ jobs:
       ##makedepends=("\${MINGW_PACKAGE_PREFIX}-ncurses" 'bc')
       #makedepends=("ncurses" 'bc')
       build() {
-       cd "\${_srcdir}"
+       cd "${_srcdir}"
        autoreconf -i
        ./configure
        make
       }
       check() {
-       cd "\${_srcdir}"
+       cd "${_srcdir}"
        make test
       }
       package() {
-       cd "\${_srcdir}"
+       cd "${_srcdir}"
        make DESTDIR="\${pkgdir}" install
       }
       EOF
