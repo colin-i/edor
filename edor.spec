@@ -1,6 +1,6 @@
 
 Name: edor
-Version: 1.83
+Version: 1.84
 Release: 0
 License: GPLv3
 Summary: Console user interface text editor
@@ -34,6 +34,9 @@ make
 
 #-- CHANGELOG -----------------------------------------------------------------#
 %changelog
+* Fri Dec 26 2025 costin <costin.botescu@gmail.com> 1.84-0
+- fix com_nr confusion (costin.botescu@gmail.com)
+
 * Mon Nov 03 2025 Costin Botescu <costin.botescu@gmail.com> 1.83-0
 - "sync" (costin.b.84@gmail.com)
 - display nr of rows. timeout option (costin.b.84@gmail.com)
