@@ -2770,7 +2770,7 @@ static void proced(char*cutbuf_file,WINDOW*w1){
 			move(0,0);//no clear, only overwrite, can resize left to right then back right to left
 			write_title();//this is also the first write
 		}
-		tot_bts=sprintf(tot_inf,"%lu",rows_tot);
+		tot_bts=sprintf(tot_inf,protocol,rows_tot);
 		tot_x=getmaxx(stdscr)-tot_bts;
 		mvaddnstr(0,tot_x,tot_inf,tot_bts);//maximize with problems at gnome-terminal but not at ptyxis
 		//will be later, wnoutrefresh(stdscr);
