@@ -1,6 +1,6 @@
 
 Name: edor
-Version: 1.85
+Version: 1.86
 Release: 0
 License: GPLv3
 Summary: Console user interface text editor
@@ -34,6 +34,9 @@ make
 
 #-- CHANGELOG -----------------------------------------------------------------#
 %changelog
+* Sat Jan 17 2026 costin <costin.botescu@gmail.com> 1.86-0
+- 
+
 * Wed Jan 07 2026 costin <costin.botescu@gmail.com> 1.85-0
 - fix a warning (costin.botescu@gmail.com)
 - fix for new makepkg (costin.botescu@gmail.com)

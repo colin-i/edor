@@ -1,3 +1,9 @@
+edor (1-x86) focal; urgency=medium
+
+  * small fix at help
+
+ -- bc <bc@ubuntu>  Sat, 17 Jan 2026 14:45:49 +0200
+
 edor (1-x85) focal; urgency=medium
 
   * optimize low bits printf

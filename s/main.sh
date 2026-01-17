@@ -61,7 +61,7 @@ text="\ncommand mode: left,right,home,end,Ctrl+q\
 \nCtrl+l = titles (movement, Enter at done, Ctrl+q, other keys to search)\
 \nCtrl+w = text wrapping (movement. another key to return)\
 \nCtrl+e = enable/disable internal mouse/touch\
-\nCtrl+n = disable/enable indentation\
+\nCtrl+n = enable/disable indentation\
 \nCtrl+t = enable/disable insensitive search\
 \nCtrl+a = enable/disable O language syntax; Alt+a = syntax rescan; Alt+A = change rule extension name (blank is all)\
 \nCtrl+j = enable/disable OA split syntax; Alt+j = change delimiter; Alt+J = change view delimiter\
