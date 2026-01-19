@@ -228,6 +228,8 @@ extern char*split_out;
 extern char*split_out_new;
 extern char*split_extension;
 extern char*split_extension_new;
+extern char*split_outext;
+extern char*split_outext_new;
 //bar
 #ifndef HAVE_MEMMEM
 void *memmem(const void*,size_t,const void*,size_t);

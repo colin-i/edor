@@ -58,6 +58,8 @@ char*split_out=(char*)"osrc";
 char*split_out_new=nullptr;
 char*split_extension=(char*)"oac";
 char*split_extension_new=nullptr;
+char*split_outext=(char*)"oc";
+char*split_outext_new=nullptr;
 
 //char*fulldelim;
 //unsigned short fulldelim_size;
@@ -369,7 +371,12 @@ bool split_writeprefs(int f){
 							sz=strlen(split_extension);
 							if(write(f,&sz,extlen_size)==extlen_size){
 								if(write(f,split_extension,sz)==sz){
-									return true;
+									sz=strlen(split_outext);
+									if(write(f,&sz,extlen_size)==extlen_size){
+										if(write(f,split_outext,sz)==sz){
+											return true;
+										}
+									}
 								}
 							}
 						}
@@ -406,7 +413,16 @@ bool split_readprefs(int f){
 												if(read(f,split_extension_new,len)==len){
 													split_extension_new[len]='\0';
 													split_extension=split_extension_new;
-													return true;
+													if(read(f,&len,extlen_size)==extlen_size){
+														split_outext_new=(char*)malloc(len+1);
+														if(split_outext_new!=nullptr){
+															if(read(f,split_outext_new,len)==len){
+																split_outext_new[len]='\0';
+																split_outext=split_outext_new;
+																return true;
+															}
+														}
+													}
 												}
 											}
 										}
@@ -449,13 +465,14 @@ bool split_write_init(char*orig_filename){
 			split_out_path2+=sz;split_out_path4+=sz;
 		}while(true);
 		size_t size=split_out_path1-split_out_path3;// +1 will be with the existent null
-		const char outext[]=".out";
-		size_t sizeplusoutext=size+sizeof(outext);
+		size_t outext_size=strlen(split_outext)+1;
+		size_t sizeplusoutext=size+1+outext_size;
 		split_out_size2-=ancestors_diff;
 		char*a=(char*)realloc(split_out_alloc2,split_out_size2+sizeplusoutext);
 		if(a!=nullptr){
 			memcpy(a+split_out_size2,split_out_path3,size);
-			memcpy(a+split_out_size2+size,outext,sizeof(outext));
+			char*b=a+split_out_size2+size;*b='.';
+			b++;memcpy(b,split_outext,outext_size);
 			free(split_out_alloc1);
 			split_out_file=open_or_new(a);
 			free(a);

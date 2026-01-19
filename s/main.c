@@ -2259,6 +2259,12 @@ static bool loopin(WINDOW*w){
 			else if(z==key_ocomp){if(pref_change(w,&ocode_extension,&ocode_extension_new,false,key_ocomp,0)/*true*/)return true;}
 			else if(z==key_actswf){if(pref_change(w,&esdelimiter,&esdelimiter_new,true,key_actswf,0)/*true*/)return true;}            //don't allow no size delimiters
 			else if(z==key_actswf2){if(pref_change(w,&split_extension,&split_extension_new,false,key_actswf2,0)/*true*/)return true;}
+			else{
+				const char*s=keyname(z);
+				if(*s==Char_Ctrl){
+					if(s[1]==key_actswf){if(pref_change(w,&split_outext,&split_outext_new,false,key_actswf,0)/*true*/)return true;}
+				}
+			}
 		}else{
 			const char*s=keyname(c);
 			if(*s==Char_Ctrl){//seems that all cases are ^ a letter \0

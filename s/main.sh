@@ -84,7 +84,7 @@ fi
 # ZXCVBN     m
 # ^M is 13 that comes also at Enter, ^I is 9 that comes also at Tab
 # ^H at termux is 263 backspace
-# ^P at docker, something is not ok with the redraw
+# ^P at docker(noble), needs another char to return at getchar, ^altP first is slow 1B(alt), second is slow 10(^P) 1B, same rule, another char to return at getchar
 # ^A in termux is from Ctrl+Alt+a
 
 textsed="$(echo "${text}" | sed "s/\\\n/n/g; s/\\\\\"/\"/g")"  # replace \n to n and \\\" to \"(this will go " at grep). \ at endings are 0
