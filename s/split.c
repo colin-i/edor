@@ -466,13 +466,17 @@ bool split_write_init(char*orig_filename){
 		}while(true);
 		size_t size=split_out_path1-split_out_path3;// +1 will be with the existent null
 		size_t outext_size=strlen(split_outext)+1;
-		size_t sizeplusoutext=size+1+outext_size;
+		size_t sizeplusoutext=size+outext_size;
+		if(outext_size!=1)sizeplusoutext++;
 		split_out_size2-=ancestors_diff;
 		char*a=(char*)realloc(split_out_alloc2,split_out_size2+sizeplusoutext);
 		if(a!=nullptr){
 			memcpy(a+split_out_size2,split_out_path3,size);
-			char*b=a+split_out_size2+size;*b='.';
-			b++;memcpy(b,split_outext,outext_size);
+			char*b=a+split_out_size2+size;
+			if(outext_size!=1){
+				*b='.';b++;
+			}
+			memcpy(b,split_outext,outext_size);
 			free(split_out_alloc1);
 			split_out_file=open_or_new(a);
 			free(a);
