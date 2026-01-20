@@ -64,7 +64,7 @@ text="\ncommand mode: left,right,home,end,Ctrl+q\
 \nCtrl+n = enable/disable indentation\
 \nCtrl+t = enable/disable insensitive search\
 \nCtrl+a = enable/disable O language syntax; Alt+a = syntax rescan; Alt+A = change rule extension name (blank is all)\
-\nCtrl+j = enable/disable OA split syntax; Alt+j = change delimiter; Alt+J = change view delimiter\
+\nCtrl+j = enable/disable OA split syntax; Alt+j = change delimiter; Alt+J = change view delimiter; Alt+Ctrl+j = change splits out extension (blank is no extension)\
 \n    Alt+p = change splits folder (blank is mixless); Alt+P = change rule extension name for splits (blank is all)\
 \nCtrl+y = enable/disable spaces->tabs indents at read, tabs->spaces at write; Alt+y = change rule extension name (blank is all)\
 \nCtrl+d = enable/disable indent follower\
@@ -144,7 +144,7 @@ while [ $i -lt 123 ]; do
 		101) find_pos mouse              $i 1;;     #e
 		102) find_pos find               $i 1 1;;   #f
 		103) find_pos goto               $i 1 1;;   #g
-		106) find_pos actswf             $i 1 1 1;; #j
+		106) find_pos actswf             $i 2 1 1;; #j
 		108) is_extern=x find_pos titles $i 1;;     #l
 		110) find_pos indents            $i 1;;     #n
 		111) find_pos paste              $i 1 1;;   #o
