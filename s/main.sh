@@ -64,8 +64,8 @@ text="\ncommand mode: left,right,home,end,Ctrl+q\
 \nCtrl+n = enable/disable indentation\
 \nCtrl+t = enable/disable insensitive search\
 \nCtrl+a = enable/disable O language syntax; Alt+a = syntax rescan; Alt+A = change rule extension name (blank is all)\
-\nCtrl+j = enable/disable OA split syntax; Alt+j = change delimiter; Alt+J = change view delimiter; Alt+Ctrl+j = change splits out extension (blank is no extension)\
-\n    Alt+p = change splits folder (blank is mixless); Alt+P = change rule extension name for splits (blank is all)\
+\nCtrl+j = enable/disable OA split syntax; Alt+j = change delimiter; Alt+J = change view delimiter; Alt+Ctrl+j = change rule extension name for splits (blank is all)\
+\n    Alt+p = change splits folder (blank is mixless); Alt+P = change splits out extension (blank is no extension)\
 \nCtrl+y = enable/disable spaces->tabs indents at read, tabs->spaces at write; Alt+y = change rule extension name (blank is all)\
 \nCtrl+d = enable/disable indent follower\
 \nCtrl+b = change tab size\
