@@ -60,6 +60,8 @@ char*split_extension=(char*)"oac";
 char*split_extension_new=nullptr;
 char*split_outext=(char*)"oc";
 char*split_outext_new=nullptr;
+char*split_outformatext=(char*)"split";
+char*split_outformatext_new=nullptr;
 
 //char*fulldelim;
 //unsigned short fulldelim_size;
@@ -76,6 +78,7 @@ static unsigned char split_out_size1;
 static size_t split_out_size2;
 
 static int split_out_file;
+static int split_out_formatfile;
 
 typedef struct{
 	int file;
@@ -374,7 +377,12 @@ bool split_writeprefs(int f){
 									sz=strlen(split_outext);
 									if(write(f,&sz,extlen_size)==extlen_size){
 										if(write(f,split_outext,sz)==sz){
-											return true;
+											sz=strlen(split_outformatext);
+											if(write(f,&sz,extlen_size)==extlen_size){
+												if(write(f,split_outformatext,sz)==sz){
+													return true;
+												}
+											}
 										}
 									}
 								}
@@ -419,7 +427,16 @@ bool split_readprefs(int f){
 															if(read(f,split_outext_new,len)==len){
 																split_outext_new[len]='\0';
 																split_outext=split_outext_new;
-																return true;
+																if(read(f,&len,extlen_size)==extlen_size){
+																	split_outformatext_new=(char*)malloc(len+1);
+																	if(split_outformatext_new!=nullptr){
+																		if(read(f,split_outformatext_new,len)==len){
+																			split_outformatext_new[len]='\0';
+																			split_outformatext=split_outformatext_new;
+																			return true;
+																		}
+																	}
+																}
 															}
 														}
 													}
@@ -442,6 +459,8 @@ void split_freeprefs(){
 	if(esdelimiter_new!=nullptr)free(esdelimiter_new);
 	if(split_out_new!=nullptr)free(split_out_new);
 	if(split_extension_new!=nullptr)free(split_extension_new);
+	if(split_outext_new!=nullptr)free(split_outext_new);
+	if(split_outformatext_new!=nullptr)free(split_outformatext_new);
 }
 
 //true at ok
@@ -465,24 +484,47 @@ bool split_write_init(char*orig_filename){
 			split_out_path2+=sz;split_out_path4+=sz;
 		}while(true);
 		size_t size=split_out_path1-split_out_path3;// +1 will be with the existent null
-		size_t outext_size=strlen(split_outext)+1;
-		size_t sizeplusoutext=size+outext_size;
-		if(outext_size!=1)sizeplusoutext++;
+		bar_byte outext_size=strlen(split_outext)+1;//this from pref can also come 1 char size
+		bar_byte outformatext_size=strlen(split_outformatext)+1;//this from pref can also come 1 char size
+		size_t sizeplusoutext;
+		if(outformatext_size>outext_size){
+			sizeplusoutext=size+outformatext_size;
+		}else{
+			if(outformatext_size==outext_size){
+				if(memcmp(split_outext,split_outformatext,outext_size)==0){//will be same file, is also working for a="" b=""
+					free(split_out_alloc1);free(split_out_alloc2);
+					return false;
+				}
+			}
+			sizeplusoutext=size+outext_size;
+		}
+		//if(outext_size!=1) again, a="" b="" is error
+		sizeplusoutext++;
 		split_out_size2-=ancestors_diff;
 		char*a=(char*)realloc(split_out_alloc2,split_out_size2+sizeplusoutext);
 		if(a!=nullptr){
 			memcpy(a+split_out_size2,split_out_path3,size);
 			char*b=a+split_out_size2+size;
+			char*c=b;
 			if(outext_size!=1){
 				*b='.';b++;
 			}
-			memcpy(b,split_outext,outext_size);
+			memcpy(b,split_outext,outext_size);//at "" is also good for null end char
 			free(split_out_alloc1);
 			split_out_file=open_or_new(a);
-			free(a);
 			if(split_out_file!=-1){
-				return true;
+				if(outformatext_size!=1){
+					*c='.';c++;
+				}
+				memcpy(c,split_outformatext,outformatext_size);//format + null end
+				split_out_formatfile=open_or_new(a);
+				if(split_out_formatfile!=-1){
+					free(a);
+					return true;
+				}
+				close(split_out_file);
 			}
+			free(a);
 			return false;
 		}
 		free(split_out_alloc1);free(split_out_alloc2);
@@ -494,6 +536,7 @@ void split_write_free(){
 	//free(fulldelim);
 	if(split_reminder_c==split_yes_mix){
 		close(split_out_file);
+		close(split_out_formatfile);
 	}
 }
 
