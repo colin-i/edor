@@ -558,12 +558,18 @@ static swrite_char swwrite_if(int f,char*buf,row_dword size,row_dword off){
 }
 
 //true if ok
-static bool split_write_split(char*file,size_t start,size_t end,unsigned int size,bool*majorerror){
+static bool split_write_split(char*file,size_t start,size_t end,row_dword size,bool*majorerror){
+	if(split_reminder_c==split_yes_mix){
+		row_dword sz=strlen(file)+1;
+		if((ssize_t)write(split_out_formatfile,file,sz)!=sz){
+			*majorerror=true;return false;
+		}
+	}
 	int f=open_or_new(file);
 	if(f!=-1){
 		for(size_t k=start;k<end;k++){
 			row*r=&rows[k];
-			unsigned int sz=r->sz;
+			row_dword sz=r->sz;
 			if(swwrite(f,r->data,sz)==swrite_bad){close(f);*majorerror=true;return false;}
 			if(swrite(f,ln_term,ln_term_sz)==swrite_bad){close(f);*majorerror=true;return false;}
 		}
