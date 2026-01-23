@@ -2246,7 +2246,7 @@ static bool loopin(WINDOW*w){
 			else if(z==(key_save+A_to_a)){b=savetofile(w,false);if(b/*true*/)return true;}
 			else if(z==(key_ocomp+A_to_a)){aftercall=aftercall_find();aftercall_draw(w);}//here will scan without asking about file extension or disable/enable but only if enable will show
 			else if(z==(key_actswf+A_to_a)){if(pref_change(w,&sdelimiter,&sdelimiter_new,true,key_actswf,A_to_a)/*true*/)return true;}//don't allow no size delimiters
-			else if(z==(key_actswf2+A_to_a)){if(pref_change(w,&split_out,&split_out_new,false,key_actswf2,A_to_a)/*true*/)return true;}
+			else if(z==(key_actswf2+A_to_a)){if(pref_change(w,&split_outext,&split_outext_new,false,key_actswf2,A_to_a)/*true*/)return true;}
 			else if(z==key_whites+A_to_a){if(pref_change(w,&filewhites_extension,&filewhites_extension_new,false,key_whites,A_to_a)/*true*/)return true;}
 			else if(z==key_quit+A_to_a){
 				bool q;bool not_q=quit_from_key(w,&q);
@@ -2258,11 +2258,11 @@ static bool loopin(WINDOW*w){
 			}
 			else if(z==key_ocomp){if(pref_change(w,&ocode_extension,&ocode_extension_new,false,key_ocomp,0)/*true*/)return true;}
 			else if(z==key_actswf){if(pref_change(w,&esdelimiter,&esdelimiter_new,true,key_actswf,0)/*true*/)return true;}            //don't allow no size delimiters
-			else if(z==key_actswf2){if(pref_change(w,&split_outext,&split_outext_new,false,key_actswf,0)/*true*/)return true;}
+			else if(z==key_actswf2){if(pref_change(w,&split_outformatext,&split_outformatext_new,false,key_actswf2,0)/*true*/)return true;}
 			else{
 				const char*s=keyname(z);
 				if(*s==Char_Ctrl){
-					if(s[1]==key_actswf){if(pref_change(w,&split_extension,&split_extension_new,false,key_actswf2,0)/*true*/)return true;}
+					if(s[1]==key_actswf){if(pref_change(w,&split_extension,&split_extension_new,false,key_actswf,A_to_a)/*true*/)return true;}
 				}
 			}
 		}else{
@@ -2322,6 +2322,8 @@ static bool loopin(WINDOW*w){
 					else{splits_flag=true;c=orig_upkey(key_actswf);}
 					setprefs(mask_splits,splits_flag);
 					vis(c,w);
+				}else if(chr==key_actswf2){
+					if(pref_change(w,&split_out,&split_out_new,false,key_actswf2,A_to_a)/*true*/)return true;
 				}else if(chr==key_whites){
 					char c;
 					if(filewhites_flag/*true*/){filewhites_flag=false;c=orig_lowkey(key_whites);}

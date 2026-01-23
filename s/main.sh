@@ -65,7 +65,7 @@ text="\ncommand mode: left,right,home,end,Ctrl+q\
 \nCtrl+t = enable/disable insensitive search\
 \nCtrl+a = enable/disable O language syntax; Alt+a = syntax rescan; Alt+A = change rule extension name (blank is all)\
 \nCtrl+j = enable/disable OA split syntax; Alt+j = change delimiter; Alt+J = change view delimiter; Alt+Ctrl+j = change rule extension name for splits (blank is all)\
-\n    Alt+p = change splits folder (blank is mixless); Alt+P = change splits out extension (blank is no extension)\
+\n    Ctrl+k = change splits folder (blank is mixless); Alt+k = change splits out extension (blank is no extension); Alt+K = change splits out format extension (blank is no extension)\
 \nCtrl+y = enable/disable spaces->tabs indents at read, tabs->spaces at write; Alt+y = change rule extension name (blank is all)\
 \nCtrl+d = enable/disable indent follower\
 \nCtrl+b = change tab size\
@@ -79,9 +79,9 @@ if [ ${level} -eq ${level_help} ]; then
 	exit 0
 fi
 
-#QWERTYU O   ip
-#ASDFG J L k h
-# ZXCVBN     m
+#QWERTYU O ip
+#ASDFG JKL h
+# ZXCVBN   m
 # ^M is 13 that comes also at Enter, ^I is 9 that comes also at Tab
 # ^H at termux is 263 backspace
 # ^P at docker(noble), needs another char to return at getchar, ^altP first is slow 1B(alt), second is slow 10(^P) 1B, same rule, another char to return at getchar
@@ -108,12 +108,12 @@ _find_pos () { #name=$1 letter=$2 ctrls=$3 alt=$4 bigalt=$5
 	if [ -z "${is_extern}" ]; then wr "static "; fi
 	wr "char key_${1}=$(echo ${2}-32 | bc);"
 	wr2 "{&key_${1},(unsigned short[]){"
-	e=
+#	e=
 	z=0
-	if [ ${3} -ne 0 ]; then
+#	if [ ${3} -ne 0 ]; then 0 was a case but it was changed
 		search_pos Ctrl ${2} "" 1
 		e=,
-	fi
+#	fi
 	if [ -n "${4}" ]; then
 		search_pos Alt ${2} ${e}
 	fi
@@ -145,10 +145,10 @@ while [ $i -lt 123 ]; do
 		102) find_pos find               $i 1 1;;   #f
 		103) find_pos goto               $i 1 1;;   #g
 		106) find_pos actswf             $i 2 1 1;; #j
+		107) find_pos actswf2            $i 1 1 1;; #k
 		108) is_extern=x find_pos titles $i 1;;     #l
 		110) find_pos indents            $i 1;;     #n
 		111) find_pos paste              $i 1 1;;   #o
-		112) find_pos actswf2            $i 0 1 1;; #p
 		113) is_extern=x find_pos quit   $i 3 1;;   #q
 		114) find_pos redo               $i 1;;     #r
 		115) is_extern=x find_pos save   $i 1 1;;   #s
