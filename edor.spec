@@ -1,6 +1,6 @@
 
 Name: edor
-Version: 1.86
+Version: 1.87
 Release: 0
 License: GPLv3
 Summary: Console user interface text editor
@@ -34,6 +34,17 @@ make
 
 #-- CHANGELOG -----------------------------------------------------------------#
 %changelog
+* Sun Jan 25 2026 costin <costin.botescu@gmail.com> 1.87-0
+- split format with what was left: change,help (costin.botescu@gmail.com)
+- write .split file (costin.botescu@gmail.com)
+- .split at overall (costin.botescu@gmail.com)
+- will make room for a new key that will work with actionswf as3
+  (costin.botescu@gmail.com)
+- "up" (costin.botescu@gmail.com)
+- and at help (costin.botescu@gmail.com)
+- ignore blanks (costin.botescu@gmail.com)
+- first part implementation of ctrl alt j (costin.botescu@gmail.com)
+
 * Sat Jan 17 2026 costin <costin.botescu@gmail.com> 1.86-0
 - 
 
