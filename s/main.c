@@ -551,14 +551,15 @@ static bool helpin(WINDOW*w){
 #else
 			nc_getmouse(&e);
 #endif
-			if((e.bstate&BUTTON4_PRESSED)!=0)hmove(-1);
-			else
+			if((e.bstate&BUTTON4_PRESSED)==BUTTON4_PRESSED)//same
+				hmove(-1);
+			else //can remove BUTTON1_PRESSED from the mask if is important to not if compare
 		#ifdef BUTTON5_PRESSED
-			if((e.bstate&BUTTON5_PRESSED)!=0)
+			if((e.bstate&BUTTON5_PRESSED)==BUTTON5_PRESSED)//same
 		#else
 			if(e.bstate==0)     // at wheel down (libncurses5 at bionic)
 		#endif
-			hmove(1);
+				hmove(1);
 		}else if(c==KEY_DOWN){hmove(1);}
 		else if(c==KEY_UP){hmove(-1);}
 		else if(c==KEY_RESIZE){return true;}
@@ -792,15 +793,17 @@ movement_char movment(int c,WINDOW*w){
 #else
 		nc_getmouse(&e);
 #endif
-		if((e.bstate&BUTTON4_PRESSED)!=0)vu1move(w,getcury(w));
+		if((e.bstate&BUTTON4_PRESSED)==BUTTON4_PRESSED)//is not multi-bit, just in case
+			vu1move(w,getcury(w));
 		else
 	#ifdef BUTTON5_PRESSED
-		if((e.bstate&BUTTON5_PRESSED)!=0)
+		if((e.bstate&BUTTON5_PRESSED)==BUTTON5_PRESSED)//same
 	#else
-		if(e.bstate==0)     // at wheel down (libncurses5 at bionic)
+		if(e.bstate==0)     // at wheel down (libncurses5 at bionic), anyway this is only for test
 	#endif
-		vd1move(w,getcury(w));
-		else if((e.bstate&click)!=0)amove(w,e.y-topspace,e.x-leftspace);//return -2;}
+			vd1move(w,getcury(w));
+		else //if((e.bstate&click)!=0)//no need to compare, it is the remaining event
+			amove(w,e.y-topspace,e.x-leftspace);//return -2;}
 	}else if(c==KEY_LEFT)left(w,getcurx(w));
 	else if(c==KEY_RIGHT)right(w,getcurx(w));
 	else if(c==KEY_UP){
