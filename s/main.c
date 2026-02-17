@@ -2367,7 +2367,7 @@ static bool loopin(WINDOW*w){
 					wmove(w,cy,cx);
 				}
 				////i saw these only when mousemask is ALL_MOUSE_EVENTS : focus in, focus out
-				//don't know why was that, focus in out are separate, enable focus reporting printf("\033[?1004h"); fflush(stdout);  and test
+				//don't know why was that, focus in out are separate, enable focus reporting outside printf '\033[?1004h' then enter and test
 				else if(strcmp(s,"kxIN")==0||strcmp(s,"kxOUT")==0){}
 				else type(c,w);
 				//continue;
