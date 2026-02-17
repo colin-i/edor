@@ -777,9 +777,11 @@ static void right_move(WINDOW*w,bool(*f)(char)){
 #define alt_jump 2
 #define ctrl_jump 3
 
-#define click (BUTTON1_CLICKED|BUTTON1_PRESSED|BUTTON1_DOUBLE_CLICKED|BUTTON1_TRIPLE_CLICKED \
-|BUTTON2_CLICKED|BUTTON2_PRESSED|BUTTON2_DOUBLE_CLICKED|BUTTON2_TRIPLE_CLICKED \
-|BUTTON3_CLICKED|BUTTON3_PRESSED|BUTTON3_DOUBLE_CLICKED|BUTTON3_TRIPLE_CLICKED)
+#define click BUTTON1_PRESSED //bstate can be 0 when clicking multiple times and fast, but that is in all cases
+//(BUTTON1_CLICKED|BUTTON1_PRESSED|BUTTON1_DOUBLE_CLICKED|BUTTON1_TRIPLE_CLICKED \
+//|BUTTON2_CLICKED|BUTTON2_PRESSED|BUTTON2_DOUBLE_CLICKED|BUTTON2_TRIPLE_CLICKED \
+//|BUTTON3_CLICKED|BUTTON3_PRESSED|BUTTON3_DOUBLE_CLICKED|BUTTON3_TRIPLE_CLICKED)
+#define all_mouse_events click|BUTTON4_PRESSED|BUTTON5_PRESSED
 
 //1resize,0diff key,-1processed
 movement_char movment(int c,WINDOW*w){
@@ -2301,7 +2303,7 @@ static bool loopin(WINDOW*w){
 				}else if(chr==key_mouse){
 					char c;
 					if(stored_mouse_mask_q){stored_mouse_mask=mousemask(0,nullptr);c=orig_lowkey(key_mouse);setprefs(mask_mouse,false);}
-					else{stored_mouse_mask=mousemask(ALL_MOUSE_EVENTS,nullptr);c=orig_upkey(key_mouse);setprefs(mask_mouse,true);}
+					else{stored_mouse_mask=mousemask(all_mouse_events,nullptr);c=orig_upkey(key_mouse);setprefs(mask_mouse,true);}
 					vis(c,w);
 				}else if(chr==key_indents){
 					char c;
@@ -2364,7 +2366,8 @@ static bool loopin(WINDOW*w){
 					}
 					wmove(w,cy,cx);
 				}
-				//i saw these only when mousemask is ALL_MOUSE_EVENTS : focus in, focus out
+				////i saw these only when mousemask is ALL_MOUSE_EVENTS : focus in, focus out
+				//don't know why was that, focus in out are separate, enable focus reporting printf("\033[?1004h"); fflush(stdout);  and test
 				else if(strcmp(s,"kxIN")==0||strcmp(s,"kxOUT")==0){}
 				else type(c,w);
 				//continue;
@@ -3035,7 +3038,7 @@ static void action_go(int argc,char**argv,char*cutbuf_file){
 			//the only difference with ALL_..EVENTS is that we want to speed up and process all events here (if there is a curses implementation like that)
 			//this was default for android, but nowadays on desktop is not a default
 			//stored_mouse_mask=mousemask(ALL_MOUSE_EVENTS,nullptr);//for error, export TERM=vt100
-			if(stored_mouse_mask_q)stored_mouse_mask=mousemask(ALL_MOUSE_EVENTS,nullptr);//must set it after initscr to work
+			if(stored_mouse_mask_q)stored_mouse_mask=mousemask(all_mouse_events,nullptr);//must set it after initscr to work
 
 			if(ocompiler_flag/*true*/){//this is here, in loop can be set if wanted with enable/disable and rescan keys
 				aftercall=init_aftercall();
