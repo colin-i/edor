@@ -30,7 +30,7 @@ d2=" [--file] [filepath [line_termination: rn/r/n]]\
 \nMovement:\
 \n    [Ctrl/Alt/Shift +]arrows/home/end/del,page up,page down,backspace,enter\
 \n    p.s.: Ctrl+ left/right/del breaks at white-spaces and (),[]{}\
-\n    mouse/touch Click and V.scroll"
+\n    mouse/touch Press and V.scroll"
 wr "${d2}"
 d2s="$(echo -n "${d2}" | sed "s/\\\n/n/g" | wc -c)" #more at second sed of this kind, if here was \\\" was another command
 fix_s="$(echo ${d2s}+4 | bc)"
