@@ -23,14 +23,15 @@ wr4 () { buf3="${buf3}$@"; }
 printf '%s\n' "#define hel1 \"USAGE\n\"" > ${f}
 wr "#define hel2 \""
 d2=" [--file] [filepath [line_termination: rn/r/n]]\
-\n      --remove-config      Remove configuration files.\
-\n      --help               Will guide to enter here.\
+\n      --remove-config        Remove configuration files.\
+\n      --help                 Will guide to enter here.\
 \nINPUT\
-\nthis help: q(uit),up/down,mouse/touch V.scroll\
+\nthis help: (q)uit, up/down, mouse/touch V-scroll\
 \nMovement:\
-\n    [Ctrl/Alt/Shift +]arrows/home/end/del,page up,page down,backspace,enter\
-\n    p.s.: Ctrl+ left/right/del breaks at white-spaces and (),[]{}\
-\n    mouse/touch Press and V.scroll"
+\n    [Ctrl/Alt/Shift +] arrows/home/end/del,pageUp,pageDown,backspace,enter\
+\n    p.s.: Ctrl + left/right/del breaks at white-spaces and (),[]{}\
+\n          Alt  + left/right/del breaks after alphanumerics and _\
+\n    mouse/touch Press and V-scroll"
 wr "${d2}"
 d2s="$(echo -n "${d2}" | sed "s/\\\n/n/g" | wc -c)" #more at second sed of this kind, if here was \\\" was another command
 fix_s="$(echo ${d2s}+4 | bc)"
@@ -56,7 +57,7 @@ text="\ncommand mode: left,right,home,end,Ctrl+q\
 \n      R           = modify replace text\
 \n    c = cancel\
 \n    other key to return\
-\nCtrl+u = undo; Alt+u = undo mode: left=undo,right=redo,other key to return\
+\nCtrl+u = undo; Alt+u = undo mode: left=undo, right=redo, other key to return\
 \nCtrl+r = redo\
 \nCtrl+l = titles (movement, Enter at done, Ctrl+q, other keys to search)\
 \nCtrl+w = text wrapping (movement. another key to return)\
