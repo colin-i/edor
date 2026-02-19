@@ -1,6 +1,6 @@
 
 Name: edor
-Version: 1.87
+Version: 1.88
 Release: 0
 License: GPLv3
 Summary: Console user interface text editor
@@ -34,6 +34,13 @@ make
 
 #-- CHANGELOG -----------------------------------------------------------------#
 %changelog
+* Thu Feb 19 2026 costin <costin.botescu@gmail.com> 1.88-0
+- guides (costin.botescu@gmail.com)
+- one less comparison at mouse (costin.botescu@gmail.com)
+- "up" (costin.botescu@gmail.com)
+- Press instead of Click (costin.botescu@gmail.com)
+- "up" (costin.botescu@gmail.com)
+
 * Sun Jan 25 2026 costin <costin.botescu@gmail.com> 1.87-0
 - split format with what was left: change,help (costin.botescu@gmail.com)
 - write .split file (costin.botescu@gmail.com)
