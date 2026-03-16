@@ -1,0 +1,3 @@
+
+i=`ps aux | grep ./edor | tr -s ' ' | cut -d' ' -f2 | head -1`
+sudo gdb -p $i

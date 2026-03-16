@@ -22,10 +22,18 @@
 #ifdef HAVE_STRING_H
 #include<string.h>
 #else
-#include"inc/string.h"
+#include"inc/tit/string.h"
+#endif
+#ifdef HAVE_UNISTD_H
+#include<unistd.h>
+#else
+#include"inc/unistd.h"
 #endif
 
 #include "base.h"
+
+char*tit_delims=(char*)":";// iso forbids
+char*tit_delims_new=nullptr;
 
 static bool titcolor(char b,char*color,WINDOW*w,bool singlechar){
 	singlechar=bar_char(b,w,singlechar);
@@ -49,9 +57,8 @@ bool titles(WINDOW*w){
 			char*s=r->data;
 			if(*s!='\t'&&*s!=' '){
 				s+=r->sz-1;
-				if(*s=='{'||*s==')'){
-					n++; //func ... { //func ... )
-				}
+				if(strchr(tit_delims,*s))//!=nullptr
+					n++;
 			}
 		}
 	}
@@ -78,7 +85,7 @@ bool titles(WINDOW*w){
 					char*s=r->data;
 					if(*s!='\t'&&*s!=' '){
 						s+=r->sz-1;
-						if(*s=='{'||*s==')'){
+						if(strchr(tit_delims,*s)){//!=nullptr
 							row*rw=&rowswrap[m];
 							rw->data=r->data;
 							rw->sz=r->sz;
@@ -169,4 +176,29 @@ bool titles(WINDOW*w){
 	}
 
 	return false;
+}
+
+void tit_freeprefs(){
+	if(tit_delims_new)free(tit_delims_new);//!=nullptr
+}
+void tit_writeprefs(int f){//not bool because is last
+	bar_byte sz=strlen(tit_delims);
+	if(write(f,&sz,extlen_size)==extlen_size){
+		#pragma GCC diagnostic push
+		#pragma GCC diagnostic ignored "-Wunused-result"
+		write(f,tit_delims,sz);
+		#pragma GCC diagnostic pop
+	}
+}
+void tit_readprefs(int f){//not bool because is last
+	bar_byte len;
+	if(read(f,&len,extlen_size)==extlen_size){
+		tit_delims_new=(char*)malloc(len+1);
+		if(tit_delims_new){//!=nullptr
+			if(read(f,tit_delims_new,len)==len){
+				tit_delims_new[len]='\0';
+				tit_delims=tit_delims_new;
+			}
+		}
+	}
 }

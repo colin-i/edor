@@ -1,5 +1,5 @@
 
-#if defined(is_main_c)||defined(is_bar_c)||defined(is_sep_c)||defined(is_split_c)
+#if defined(is_main_c)||defined(is_bar_c)||defined(is_sep_c)||defined(is_tit_c)||defined(is_split_c)
 //#include "inc/stddef.h"
 #ifdef __cplusplus
 extern "C" {

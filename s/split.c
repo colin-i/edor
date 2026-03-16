@@ -362,7 +362,7 @@ bool split_grab(char**p_text,size_t*p_size){
 }
 
 bool split_writeprefs(int f){
-	unsigned char sz=strlen(sdelimiter);
+	bar_byte sz=strlen(sdelimiter);
 	if(write(f,&sz,extlen_size)==extlen_size){
 		if(write(f,sdelimiter,sz)==sz){
 			sz=strlen(esdelimiter);
@@ -396,7 +396,7 @@ bool split_writeprefs(int f){
 	return false;
 }
 bool split_readprefs(int f){
-	unsigned char len;
+	bar_byte len;
 	if(read(f,&len,extlen_size)==extlen_size){
 		sdelimiter_new=(char*)malloc(len+1);
 		if(sdelimiter_new!=nullptr){

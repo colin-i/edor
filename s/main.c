@@ -2110,10 +2110,9 @@ static void writeprefs(int f,char mask){
 										char tmbuf[maxushort_nul];
 										char n=sprintf(tmbuf,"%hu",timeout_duration);
 										if(write(f,&n,sizeof(char))==sizeof(char)){
-											#pragma GCC diagnostic push
-											#pragma GCC diagnostic ignored "-Wunused-result"
-											write(f,tmbuf,n);
-											#pragma GCC diagnostic pop
+											if(write(f,tmbuf,n)==n){
+												tit_writeprefs(f);
+											}
 										}
 									}
 								}
@@ -2261,6 +2260,7 @@ static bool loopin(WINDOW*w){
 					return q;
 				}
 			}
+			else if(z==(key_titles+A_to_a)){if(pref_change(w,&tit_delims,&tit_delims_new,false,key_titles,0)/*true*/)return true;}
 			else if(z==key_ocomp){if(pref_change(w,&ocode_extension,&ocode_extension_new,false,key_ocomp,0)/*true*/)return true;}
 			else if(z==key_actswf){if(pref_change(w,&esdelimiter,&esdelimiter_new,true,key_actswf,0)/*true*/)return true;}            //don't allow no size delimiters
 			else if(z==key_actswf2){if(pref_change(w,&split_outformatext,&split_outformatext_new,false,key_actswf2,0)/*true*/)return true;}
@@ -2674,6 +2674,8 @@ static void getprefs(){
 																if(read(f,rd,n)==n){
 																	rd[n]='\0';
 																	sscanf(rd,"%hu",&timeout_duration);
+																	//
+																	tit_readprefs(f);
 																}
 															}
 														}
@@ -2944,6 +2946,7 @@ static void freeprefs(){//these if are not from start , they can be when user de
 	if(ocode_extension_new!=nullptr)free(ocode_extension_new);//also need it at change for view what is was
 	split_freeprefs();
 	if(filewhites_extension_new!=nullptr)free(filewhites_extension_new);
+	tit_freeprefs();
 }
 static void action_go(int argc,char**argv,char*cutbuf_file){
 	if(command_line(&argc,&argv,cutbuf_file)/*true*/)return;

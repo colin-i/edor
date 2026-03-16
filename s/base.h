@@ -207,6 +207,11 @@ extern size_t store_aftercall;
 //tit
 //main
 bool titles(WINDOW*);
+void tit_freeprefs();
+void tit_writeprefs(int);
+void tit_readprefs(int);
+extern char*tit_delims;
+extern char*tit_delims_new;
 
 //split
 //main
