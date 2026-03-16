@@ -59,7 +59,7 @@ text="\ncommand mode: left,right,home,end,Ctrl+q\
 \n    other key to return\
 \nCtrl+u = undo; Alt+u = undo mode: left=undo, right=redo, other key to return\
 \nCtrl+r = redo\
-\nCtrl+l = titles (movement, Enter at done, Ctrl+q, other keys to search)\
+\nCtrl+l = titles (movement, Enter at done, Ctrl+q, other keys to search); Alt+l = last character possibilities\
 \nCtrl+w = text wrapping (movement. another key to return)\
 \nCtrl+e = enable/disable internal mouse/touch\
 \nCtrl+n = enable/disable indentation\
@@ -147,7 +147,7 @@ while [ $i -lt 123 ]; do
 		103) find_pos goto               $i 1 1;;   #g
 		106) find_pos actswf             $i 2 1 1;; #j
 		107) find_pos actswf2            $i 1 1 1;; #k
-		108) is_extern=x find_pos titles $i 1;;     #l
+		108) is_extern=x find_pos titles $i 1 1;;   #l
 		110) find_pos indents            $i 1;;     #n
 		111) find_pos paste              $i 1 1;;   #o
 		113) is_extern=x find_pos quit   $i 3 1;;   #q
