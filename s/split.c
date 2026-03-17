@@ -108,7 +108,7 @@ char *realpath(const char* path, char * resolved_path){
 	DWORD sz=GetFullPathName(path,0,(NULL),(NULL));
 	if(sz!=0){
 		char*p=(char*)malloc(sz);
-		if(p!=nullptr){
+		if(p){//!=nullptr
 			GetFullPathName(path,sz,p,(NULL));
 			return p;
 		}
@@ -138,7 +138,7 @@ static char* real_path(char*pathname){
 				*b='\0';
 				a=realpath(pathname,nullptr);
 				*b=path_separator;
-				if(a!=nullptr){
+				if(a){//!=nullptr
 					b++;
 					break;
 				}else if(errno!=ENOENT)return nullptr;
@@ -152,7 +152,7 @@ static char* real_path(char*pathname){
 		size_t left_and_center=left+1;
 		size_t right=strlen(b)+1;
 		char*c=(char*)realloc(a,left_and_center+right);
-		if(c!=nullptr){
+		if(c){//!=nullptr
 			c[left]=path_separator;
 			memcpy(c+left_and_center,b,right);
 			return c;
@@ -166,7 +166,7 @@ static char* real_path(char*pathname){
 static split_char split_conditions_out(char*filename,bool free_paths){
 	if(*split_out!='\0'){
 		split_out_alloc1=real_path(filename);
-		if(split_out_alloc1!=nullptr){
+		if(split_out_alloc1){//!=nullptr
 			size_t s=strlen(split_out_alloc1);
 			split_out_path1=split_out_alloc1+s;
 			split_out_path2=split_out_path1;
@@ -177,7 +177,7 @@ static split_char split_conditions_out(char*filename,bool free_paths){
 					size_t size=split_out_path3-split_out_alloc1;
 					split_out_size2=size+split_out_size1;
 					split_out_alloc2=(char*)malloc(split_out_size2);//this at maximum but can be smaller if two ancestors until match
-					if(split_out_alloc2!=nullptr){
+					if(split_out_alloc2){//!=nullptr
 						memcpy(split_out_alloc2,split_out_alloc1,size);
 						char*d=split_out_alloc2-1;//also, look in root
 						split_out_path4=split_out_alloc2+(split_out_path2-split_out_alloc1);
@@ -258,7 +258,7 @@ bool split_grab(char**p_text,size_t*p_size){
 			}while(true);
 			if(explodes!=0){
 				filedata*files=(filedata*)malloc(sizeof(filedata)*(explodes+1));//+1 because decided to not global store number of explodes
-				if(files!=nullptr){
+				if(files){//!=nullptr
 					files[0].file=-1;
 					explodes=0;
 
@@ -399,37 +399,37 @@ bool split_readprefs(int f){
 	bar_byte len;
 	if(read(f,&len,extlen_size)==extlen_size){
 		sdelimiter_new=(char*)malloc(len+1);
-		if(sdelimiter_new!=nullptr){
+		if(sdelimiter_new){//!=nullptr
 			if(read(f,sdelimiter_new,len)==len){
 				sdelimiter_new[len]='\0';
 				sdelimiter=sdelimiter_new;
 				if(read(f,&len,extlen_size)==extlen_size){
 					esdelimiter_new=(char*)malloc(len+1);
-					if(esdelimiter_new!=nullptr){
+					if(esdelimiter_new){//!=nullptr
 						if(read(f,esdelimiter_new,len)==len){
 							esdelimiter_new[len]='\0';
 							esdelimiter=esdelimiter_new;
 							if(read(f,&len,extlen_size)==extlen_size){
 								split_out_new=(char*)malloc(len+1);
-								if(split_out_new!=nullptr){
+								if(split_out_new){//!=nullptr
 									if(read(f,split_out_new,len)==len){
 										split_out_new[len]='\0';
 										split_out=split_out_new;
 										if(read(f,&len,extlen_size)==extlen_size){
 											split_extension_new=(char*)malloc(len+1);
-											if(split_extension_new!=nullptr){
+											if(split_extension_new){//!=nullptr
 												if(read(f,split_extension_new,len)==len){
 													split_extension_new[len]='\0';
 													split_extension=split_extension_new;
 													if(read(f,&len,extlen_size)==extlen_size){
 														split_outext_new=(char*)malloc(len+1);
-														if(split_outext_new!=nullptr){
+														if(split_outext_new){//!=nullptr
 															if(read(f,split_outext_new,len)==len){
 																split_outext_new[len]='\0';
 																split_outext=split_outext_new;
 																if(read(f,&len,extlen_size)==extlen_size){
 																	split_outformatext_new=(char*)malloc(len+1);
-																	if(split_outformatext_new!=nullptr){
+																	if(split_outformatext_new){//!=nullptr
 																		if(read(f,split_outformatext_new,len)==len){
 																			split_outformatext_new[len]='\0';
 																			split_outformatext=split_outformatext_new;
@@ -455,19 +455,21 @@ bool split_readprefs(int f){
 	return false;
 }
 void split_freeprefs(){
-	if(sdelimiter_new!=nullptr)free(sdelimiter_new);
-	if(esdelimiter_new!=nullptr)free(esdelimiter_new);
-	if(split_out_new!=nullptr)free(split_out_new);
-	if(split_extension_new!=nullptr)free(split_extension_new);
-	if(split_outext_new!=nullptr)free(split_outext_new);
-	if(split_outformatext_new!=nullptr)free(split_outformatext_new);
+	if(sdelimiter_new)free(sdelimiter_new);//!=nullptr
+	if(esdelimiter_new)free(esdelimiter_new);//!=nullptr
+	if(split_out_new)free(split_out_new);//!=nullptr
+	if(split_extension_new)free(split_extension_new);//!=nullptr
+	if(split_outext_new)free(split_outext_new);//!=nullptr
+	if(split_outformatext_new)free(split_outformatext_new);//!=nullptr
 }
 
 //true at ok
 bool split_write_init(char*orig_filename){
 	sdelimiter_size=strlen(sdelimiter);
 	esdelimiter_size=strlen(esdelimiter);
-	//unsigned char s2=strlen(esdelimiter);fulldelim_size=sdelimiter_size+s2;fulldelim=(char*)malloc(fulldelim_size);if(fulldelim!=nullptr){memcpy(fulldelim,esdelimiter,s2);memcpy(fulldelim+s2,sdelimiter,sdelimiter_size);
+	//unsigned char s2=strlen(esdelimiter);fulldelim_size=sdelimiter_size+s2;fulldelim=(char*)malloc(fulldelim_size);
+	//if(fulldelim){//!=nullptr
+	//	memcpy(fulldelim,esdelimiter,s2);memcpy(fulldelim+s2,sdelimiter,sdelimiter_size);
 
 	if(split_reminder_c==split_yes_mix){
 		size_t ancestors_diff=split_out_path2-split_out_path4;
@@ -502,7 +504,7 @@ bool split_write_init(char*orig_filename){
 		sizeplusoutext++;
 		split_out_size2-=ancestors_diff;
 		char*a=(char*)realloc(split_out_alloc2,split_out_size2+sizeplusoutext);
-		if(a!=nullptr){
+		if(a){//!=nullptr
 			memcpy(a+split_out_size2,split_out_path3,size);
 			char*b=a+split_out_size2+size;
 			char*c=b;
@@ -593,7 +595,7 @@ const char* split_write(size_t*_index,int orig_file,row_dword*_off,bool*majorerr
 	char*data=rw->data+*_off;
 	unsigned int size=rw->sz-*_off;
 	char*pointer=(char*)memmem(data,size,esdelimiter,esdelimiter_size);//fulldelim,fulldelim_size
-	if(pointer!=nullptr){
+	if(pointer){//!=nullptr
 		char*cursor=pointer+esdelimiter_size;//fulldelim_size
 		size-=cursor-data;
 		if(size!=0){
@@ -603,7 +605,7 @@ const char* split_write(size_t*_index,int orig_file,row_dword*_off,bool*majorerr
 				char*content=rw->data;
 				unsigned int sz=rw->sz;
 				char*marker=(char*)memmem(content,sz,esdelimiter,esdelimiter_size);//fulldelim,fulldelim_size
-				if(marker!=nullptr){
+				if(marker){//!=nullptr
 					if(swwrite_if(orig_file,data,pointer-data,*_off)==swrite_ok){
 						unsigned int part=marker-content;
 						*_index=j;

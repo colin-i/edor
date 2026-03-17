@@ -49,13 +49,13 @@ void set_path_separator(char*s){
 		}
 	}while(i);
 	s=getenv("HOME");
-	if(s!=nullptr){
+	if(s){//!=nullptr
 		i=strlen(s);
-		if(strrchr(s,'/')!=nullptr){
+		if(strrchr(s,'/')){//!=nullptr
 			path_separator='/';
 			return;
 		}
-		else if(strrchr(s,'\\')!=nullptr){
+		else if(strrchr(s,'\\')){//!=nullptr
 			path_separator='\\';
 			return;
 		}

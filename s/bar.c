@@ -120,7 +120,7 @@ static bool wrt_loop_split(int f,size_t n,unsigned int*_off,bool*no_errors){
 		do{
 			i=m;
 			const char*errors=split_write(&m,f,_off,&majorerror);
-			if(errors!=nullptr){
+			if(errors){//!=nullptr
 				print_error((char*)errors);
 				if(majorerror/*true*/)return false;
 				*no_errors=false;
@@ -314,7 +314,7 @@ int open_or_new(char*dest){
 bool is_extension_ok(char*extension,char*filename){//also filename to save restore files in a simple way
 	if(*extension!='\0'){//else all files
 		char*pos=strrchr(filename,'.');
-		if(pos!=nullptr){
+		if(pos){//!=nullptr
 			pos++;
 			if(strcmp(pos,extension)==0)return true;
 		}
@@ -572,7 +572,7 @@ void centering3(WINDOW*w,size_t*prw,row_dword*pxc,bool right){
 	}while(c<wd);
 	size_t hg=centeringy(w);
 	wmove(w,(int)hg,c);
-	if(prw!=nullptr){
+	if(prw){//!=nullptr
 		prw[0]=hg;pxc[0]=xc-xtext;
 	}
 }
@@ -681,7 +681,7 @@ command_char go_to(bar_byte cursor){
 }
 static unsigned char set_key(key_struct*from,unsigned char to,unsigned char orig){
 	memcpy(&keys[to],from,sizeof(key_struct));
-	if(keys[to].key_location!=nullptr){
+	if(keys[to].key_location){//!=nullptr
 		unsigned char ix=keys[to].index;keys_row[ix]=to;
 		changekey(to);
 		return orig+'a';
@@ -731,7 +731,7 @@ command_char change_save_timeout(bar_byte cursor){
 }
 
 command_char save(){
-	if(textfile!=nullptr){
+	if(textfile){//!=nullptr
 		return saving();
 	}
 	char a=com_nr_save;
@@ -762,7 +762,7 @@ static void undo_ok(){
 }
 static void undo_release(size_t a,size_t b){
 	while(a<b){
-		if(undos[a].data!=nullptr)
+		if(undos[a].data)//!=nullptr
 			free(undos[a].data);
 		a++;
 	}
@@ -797,7 +797,7 @@ bool undo_add_del(size_t yb,row_dword xb,size_t ye,row_dword xe){
 		char dif=x&row_pad;
 		if(dif!=0)dif=(dif^row_pad)+1;
 		char*v=(char*)malloc(x+dif);
-		if(v!=nullptr){
+		if(v){//!=nullptr
 			undo_newway();
 			eundo*un=&undos[undos_tot];
 			un->yb=yb;un->xb=xb;un->ye=ye;un->xe=x;
@@ -826,14 +826,14 @@ static void undo_ind_del(eundo*un,size_t yb,size_t ye,char*d){
 bool undo_add_ind_del(size_t yb,size_t ye){
 	if(undo_expand()/*true*/){
 		void*d=malloc(ye-yb);
-		if(d!=nullptr){
+		if(d){//!=nullptr
 			undo_newway();
 			undo_ind_del(&undos[undos_tot],yb,ye,(char*)d);
 			undo_ok();return false;}}
 	return true;
 }
 void undo_free(){
-	if(undos!=nullptr){
+	if(undos){//!=nullptr
 		undo_release(0,undos_max);
 		free(undos);
 	}
@@ -841,7 +841,7 @@ void undo_free(){
 static bool undo_add_replace(bar_byte cursor){
 	if(undo_expand()/*true*/){
 		char*d=(char*)malloc(1+sizeof(row_dword)+cursor);
-		if(d!=nullptr){
+		if(d){//!=nullptr
 			undo_newway();
 			eundo*un=&undos[undos_tot];
 			un->yb=ytext;un->xb=xtext;
@@ -893,7 +893,7 @@ static bool dos(WINDOW*w,eundo*un,size_t vl){
 	size_t y1=un->yb;size_t y2=un->ye;
 	if(y1<=y2){
 		row_dword xb=un->xb;row_dword xe=un->xe;
-		if(d!=nullptr){
+		if(d){//!=nullptr
 			if(y1==y2&&d[0]==ln_term[0]){
 				if(undo_replace(un,d,y1,xb,xe,vl!=1)/*true*/)return false;
 				centering2(w,nullptr,nullptr,true)
@@ -913,7 +913,7 @@ static bool dos(WINDOW*w,eundo*un,size_t vl){
 			centering_simple(w)
 		}
 	}else{
-		if(d!=nullptr){
+		if(d){//!=nullptr
 			for(size_t i=y2;i<y1;i++){
 				row*r=&rows[i];
 				if(row_alloc(r,0,1,r->sz)/*true*/)return false;
@@ -989,7 +989,7 @@ bool undo_type(size_t yb,row_dword xb,size_t ye,row_dword xe){
 bool undo_bcsp(size_t yb,row_dword xb,size_t ye,row_dword xe){
 	if(undos_tot!=0){
 		eundo*un=&undos[undos_tot-1];
-		if(un->data!=nullptr&&un->yb<=un->ye){
+		if(un->data&&un->yb<=un->ye){//!=nullptr
 			if(un->yb==ye&&un->xb==xe){
 				if(mod_flag==false){
 					char*d;if((un->xe&row_pad)==0){
@@ -1010,7 +1010,7 @@ bool undo_bcsp(size_t yb,row_dword xb,size_t ye,row_dword xe){
 bool undo_delk(size_t yb,row_dword xb,size_t ye,row_dword xe){
 	if(undos_tot!=0){
 		eundo*un=&undos[undos_tot-1];
-		if(un->data!=nullptr&&un->yb<=un->ye){
+		if(un->data&&un->yb<=un->ye){//!=nullptr
 			if(un->yb==yb&&un->xb==xb){
 				if(mod_flag==false){
 					char*d;if((un->xe&row_pad)==0){
@@ -1590,7 +1590,7 @@ void aftercall_draw(WINDOW*w){
 	wmove(w,row,col);
 }
 size_t init_aftercall(){
-	if(textfile!=nullptr){
+	if(textfile){//!=nullptr
 		if(is_extension_ok(ocode_extension,textfile)/*true*/)return aftercall_find();
 	}else if(*ocode_extension=='\0')return aftercall_find();
 	return rows_tot;//still need a value

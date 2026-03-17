@@ -568,7 +568,7 @@ static bool helpin(WINDOW*w){
 
 	//need to clear first line anyway
 	topspace_clear();
-	if(textfile!=nullptr)write_title();
+	if(textfile)write_title();//!=nullptr
 	wnoutrefresh(stdscr);//doupdate is not enough
 
 	refreshpage(w);
@@ -1323,7 +1323,7 @@ static void restore_visual(){
 	mod_visual('&');
 }
 static void hardtime_resolve_returner(WINDOW*w){//argument for errors
-	if(textfile!=nullptr){
+	if(textfile){//!=nullptr
 		if(restorefile==nullptr){
 			//set restore file path
 			if(restorefile_path(textfile)/*true*/){
@@ -1364,12 +1364,12 @@ static void hardtime_resolve(WINDOW*w){//argument for errors
 		if(rename(src,dest)==0)file=dest;\
 	}
 void restore_rebase(){
-	if(restorefile!=nullptr){
+	if(restorefile){//!=nullptr
 		file_rebase(restorefile,restorefile_buf,restorefile_buf2,restorefile_path_base)
 	}
 }
 void editing_rebase(){
-	if(editingfile!=nullptr){
+	if(editingfile){//!=nullptr
 		file_rebase(editingfile,editingfile_buf,editingfile_buf2,editingfile_path_base)
 	}else if(editingfile_path(textfile)/*true*/)editing_new();
 }
@@ -1521,7 +1521,7 @@ bool paste(size_t y,row_dword x,row_dword*xe,char*buf,size_t buf_sz,size_t buf_r
 		if(d==nullptr)return false;}
 	else d=nullptr;
 	size_t n=pasting(d,y,x,xe,buf,buf_sz,buf_r,fromcopy);
-	if(d!=nullptr){
+	if(d){//!=nullptr
 		for(size_t i=1;i<n;i++){
 			free(d[i-1].data);
 		}
@@ -1909,7 +1909,7 @@ static void indent(bool b,size_t ybsel,size_t*xbsel,size_t yesel,size_t*xesel,WI
 	int max=getmaxy(w);
 	if(re>max)re=max;
 	if(b/*true*/){
-		if(xbsel!=nullptr){
+		if(xbsel){//!=nullptr
 			if(v_l==false)xbsel[0]++;
 			if(indopt_flag/*true*/){
 				xesel[0]++;
@@ -1927,7 +1927,7 @@ static void indent(bool b,size_t ybsel,size_t*xbsel,size_t yesel,size_t*xesel,WI
 			}
 		}else refreshrowsbot(w,rb,re);
 	}else{
-		if(xbsel!=nullptr){
+		if(xbsel){//!=nullptr
 			if(xtext!=0){
 				if(xbsel[0]!=0)xbsel[0]--;
 				xesel[0]--;
@@ -2148,16 +2148,16 @@ void setprefs(int flag,bool set){
 
 void pref_modify(char**pref_orig,char**pref_buf,bool sizedonly,char*newinput,bar_byte cursor){
 	if(cursor==0)if(sizedonly/*true*/)return;
-	if(*pref_buf!=nullptr){
+	if(*pref_buf){//!=nullptr
 		size_t len=strlen(*pref_buf);
 		if(len<cursor){
 			char*newmem=(char*)malloc(cursor+1);
-			if(newmem!=nullptr)*pref_buf=newmem;
+			if(newmem)*pref_buf=newmem;//!=nullptr
 			else return;
 		}
 	}else{
 		char*newmem=(char*)malloc(cursor+1);
-		if(newmem!=nullptr)*pref_buf=newmem;
+		if(newmem)*pref_buf=newmem;//!=nullptr
 		else return;
 	}
 	memcpy(*pref_buf,newinput,cursor);
@@ -2207,7 +2207,7 @@ static bool quit_from_key(WINDOW*w,bool *b){
 			return true;
 		}
 	}
-	if(restorefile!=nullptr)unlink(restorefile);//here restorefile is deleted
+	if(restorefile)unlink(restorefile);//here restorefile is deleted //!=nullptr
 	*b=false;return false;
 }
 
@@ -2409,7 +2409,7 @@ static normalize_char normalize(char**c,size_t*size,size_t*r,size_t*normalize_cl
 	char*text_w=c[0];
 	size_t sz=size[0];
 	char*norm=(char*)malloc(2*sz+1); //+1, there are many curses addstr
-	if(norm!=nullptr){
+	if(norm){//!=nullptr
 		size_t j=0;ok=normalize_ok;
 		for(size_t i=0;i<sz;i++){
 			char a=text_w[i];
@@ -2463,7 +2463,7 @@ static void rows_init(size_t size){
 }
 //DIR*d=fdopendir(fd);//having problems with this and msys2
 //	DIR*d=opendir(dirname);
-//	if(d!=nullptr){closedir(d);return true;}
+//	if(d){closedir(d);return true;}//!=nullptr
 static bool is_dir(char*dirname){
 	struct stat s;
 	if(stat(dirname,&s)==0){//this is possible to test, since switching from fdopendir
@@ -2488,7 +2488,7 @@ static bool grab_file(char*f,size_t*text_sz){
 			size_t size=lseek(fd,0,SEEK_END);
 			if(size!=(size_t)-1){
 				text_init_b=(char*)malloc(size);
-				if(text_init_b!=nullptr){
+				if(text_init_b){//!=nullptr
 					lseek(fd,0,SEEK_SET);
 					#pragma GCC diagnostic push
 					#pragma GCC diagnostic ignored "-Wunused-result"
@@ -2517,7 +2517,7 @@ static bool grab_input(size_t*text_sz){
 		*text_sz+=d;
 	}while(d==s);
 	FILE* tty=freopen("/dev/tty","r",stdin);
-	if(tty!=nullptr)
+	if(tty)//!=nullptr
 		return false;
 	return true;//it was a problem at input, not sure if was here, anyway here is easy to force with sudo chmod 600 /dev/tty
 }
@@ -2532,7 +2532,7 @@ static void getkeys(char kp){
 			ix=keys_row_orig[i];
 			//keys_row_frompref[i]=ix; is already at define time
 		}
-		if(keys_frompref[ix].key_location!=nullptr)return;
+		if(keys_frompref[ix].key_location)return;//!=nullptr
 		unsigned char ix_orig=keys_row_orig[i];
 		memcpy(&keys_frompref[ix],&keys_orig[ix_orig],sizeof(key_struct));
 	}
@@ -2599,7 +2599,7 @@ static bool help_init(char*f,size_t szf){
 	size_t sz1=sizeof(hel1)-1;
 	size_t sz2=sizeof(hel2);
 	char*a=(char*)malloc(sz1+szf+sz2);
-	if(a!=nullptr){
+	if(a){//!=nullptr
 		helptext=a;
 		memcpy(a,hel1,sz1);
 		a+=sz1;memcpy(a,f,szf);
@@ -2623,7 +2623,7 @@ static void getfilebuf(char*cutbuf_file){//,size_t off){
 		size_t sz=lseek(f,0,SEEK_END);
 		if(sz!=(size_t)-1&&sz!=0){
 			char*v=(char*)malloc(sz);
-			if(v!=nullptr){
+			if(v){//!=nullptr
 				lseek(f,0,SEEK_SET);
 				cutbuf_sz=(size_t)read(f,v,sz);
 				size_t not_a_clue_at_cutbuf;
@@ -2650,7 +2650,7 @@ static void getprefs(){
 			bar_byte len;
 			if(read(f,&len,extlen_size)==extlen_size){
 				ocode_extension_new=(char*)malloc(len+1);
-				if(ocode_extension_new!=nullptr){
+				if(ocode_extension_new){//!=nullptr
 					if(read(f,ocode_extension_new,len)==len){
 						ocode_extension=ocode_extension_new;
 						ocode_extension[len]='\0';
@@ -2709,7 +2709,7 @@ static bool help_cutbuffile_preffile(char*s,char*cutbuf_file){
 	size_t exenamesize=sz-i;
 	bool b=help_init(&s[i],exenamesize);
 	char*h=getenv("HOME");
-	if(h!=nullptr){
+	if(h){//!=nullptr
 		size_t h_sz=strlen(h);
 		if(h_sz!=0){
 			size_t info_sz=h_sz+1+1+exenamesize+4+1; //+separator +dot +info +null
@@ -2782,7 +2782,7 @@ static void proced(char*cutbuf_file,WINDOW*w1){
 		if(a==nullptr)break;
 		mapsel=(char*)a;//cols+null
 
-		if(textfile!=nullptr){
+		if(textfile){//!=nullptr
 			move(0,0);//no clear, only overwrite, can resize left to right then back right to left
 			write_title();//this is also the first write
 		}
@@ -2793,13 +2793,13 @@ static void proced(char*cutbuf_file,WINDOW*w1){
 
 		loops=false;
 		WINDOW*w=newwin(r-topspace,c,topspace,leftspace);//The functions which return a window pointer may also fail if there is insufficient memory for its data structures.
-		if(w!=nullptr){
+		if(w){//!=nullptr
 			leftcontent=newwin(r-topspace,contentmarginsize,topspace,0);
-			if(leftcontent!=nullptr){
+			if(leftcontent){//!=nullptr
 				syntaxcontent=newwin(r-topspace,contentmarginsize,topspace,contentmarginsize);
-				if(syntaxcontent!=nullptr){
+				if(syntaxcontent){//!=nullptr
 					rightcontent=newwin(r-topspace,contentmarginsize,topspace,stdmaxx-contentmarginsize);
-					if(rightcontent!=nullptr){
+					if(rightcontent){//!=nullptr
 						keypad(w,true);
 
 						bar_init();
@@ -2843,11 +2843,11 @@ static void proced(char*cutbuf_file,WINDOW*w1){
 		}
 		delwin(w);delwin(leftcontent);delwin(syntaxcontent);delwin(rightcontent);//returns an error if the window pointer is null
 	}while(loops/*true*/);//this will reenter only if loopin() said
-	if(x_right!=nullptr){
+	if(x_right){//!=nullptr
 		free(x_right);
-		if(tabs!=nullptr){
+		if(tabs){//!=nullptr
 			free(tabs);
-			if(mapsel!=nullptr){
+			if(mapsel){//!=nullptr
 				free(mapsel);//from here it is the interaction
 				writefilebuf(cutbuf_file);//only here can be modified than the initial state
 				undo_free();//when using undo
@@ -2943,9 +2943,9 @@ static void filewhites_read(){
 }
 
 static void freeprefs(){//these if are not from start , they can be when user decides to enter new prefs, and an alloc is there
-	if(ocode_extension_new!=nullptr)free(ocode_extension_new);//also need it at change for view what is was
+	if(ocode_extension_new)free(ocode_extension_new);//also need it at change for view what is was //!=nullptr
 	split_freeprefs();
-	if(filewhites_extension_new!=nullptr)free(filewhites_extension_new);
+	if(filewhites_extension_new)free(filewhites_extension_new);//!=nullptr
 	tit_freeprefs();
 }
 static void action_go(int argc,char**argv,char*cutbuf_file){
@@ -2998,9 +2998,9 @@ static void action_go(int argc,char**argv,char*cutbuf_file){
 	normalize_char ok=0;
 	if(no_file/*true*/&&no_input/*true*/){
 		text_init_b=(char*)malloc(1);
-		if(text_init_b!=nullptr){
+		if(text_init_b){//!=nullptr
 			rows=(row*)malloc(sizeof(row));
-			if(rows!=nullptr){
+			if(rows){//!=nullptr
 				text_init_b[0]='\0';
 				text_sz=0;
 				rows[0].data=text_init_b;
@@ -3024,9 +3024,10 @@ static void action_go(int argc,char**argv,char*cutbuf_file){
 			}
 			if(ok!=normalize_err){
 				rows=(row*)malloc(rows_tot*sizeof(row));
-				if(rows!=nullptr){
+				if(rows){//!=nullptr
 					rows_init(text_sz);
-					if(argfile!=nullptr)if(filewhites_flag/*true*/)if(is_extension_ok(filewhites_extension,argfile))filewhites_read();
+					if(argfile)//!=nullptr
+						if(filewhites_flag/*true*/)if(is_extension_ok(filewhites_extension,argfile))filewhites_read();
 					textfile=argfile;
 					text_init_e=text_init_b+text_sz+1;
 				}
@@ -3036,7 +3037,7 @@ static void action_go(int argc,char**argv,char*cutbuf_file){
 	}
 	if(ok!=normalize_err){
 		WINDOW*w1=initscr();
-		if(w1!=nullptr){
+		if(w1){//!=nullptr
 			if(cutbuf_file[0]!='\0')getfilebuf(cutbuf_file);//this is here,not after cutbuf_file path is set,but after line termination is final
 
 			//if set 1press_and_4,5 will disable right press (for copy menu) anyway
@@ -3054,7 +3055,7 @@ static void action_go(int argc,char**argv,char*cutbuf_file){
 			raw();//stty,cooked; characters typed are immediately passed through to the user program. interrupt, quit, suspend, and flow control characters are all passed through uninterpreted, instead of generating a signal
 			color();
 			WINDOW*pw=position_init();
-			if(pw!=nullptr){
+			if(pw){//!=nullptr
 				keypad(w1,true);//this here and not at start: Normalize... and other text will not be after clearscreen
 				noecho();//characters typed are not echoed
 				nonl();//no translation,faster
@@ -3067,8 +3068,8 @@ static void action_go(int argc,char**argv,char*cutbuf_file){
 			if(clue!=no_clue)printf("last row where was an error at split write was: " protocol "\n",clue);
 		}
 	}
-	if(text_init_b!=nullptr){
-		if(rows!=nullptr){
+	if(text_init_b){//!=nullptr
+		if(rows){//!=nullptr
 			text_free(0,rows_tot);
 			free(rows);
 			//puts(text_file
@@ -3082,8 +3083,8 @@ static void action(int argc,char**argv){
 	cutbuf_file[0]='\0';
 	if(help_cutbuffile_preffile(argv[0],cutbuf_file)/*true*/){//this is here, is convenient for remove_config
 		action_go(argc,argv,cutbuf_file);
-		if(editingfile!=nullptr)unlink(editingfile);//this can be before and after text_init_b, also, this can be if no argfile when rebase is on with a save as..
-		if(cutbuf!=nullptr)free(cutbuf);//this is init at getfilebuf or if not there at writemembuf
+		if(editingfile)unlink(editingfile);//this can be before and after text_init_b, also, this can be if no argfile when rebase is on with a save as.. //!=nullptr
+		if(cutbuf)free(cutbuf);//this is init at getfilebuf or if not there at writemembuf //!=nullptr
 		free(helptext);
 	}
 }

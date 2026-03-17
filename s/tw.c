@@ -75,7 +75,7 @@ bool text_wrap(WINDOW*w){
 	}
 
 	rowswrap=(row*)malloc((n*sizeof(row))+(n*sizeof(rowwrap)));//add it after rows, for easy free
-	if(rowswrap!=nullptr){
+	if(rowswrap){//!=nullptr
 		rowwrap*rowswrap_add=(rowwrap*)(&rowswrap[n]);
 
 		//non-wrapped x,y
