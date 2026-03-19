@@ -545,6 +545,7 @@ void split_write_free(){
 swrite_char swrite(int f,void*buf,row_dword size){
 	if((ssize_t)write(f,buf,size)==size){  //ssize_t windows warning
 		if(split_reminder_c==split_yes_mix){
+			//if escape_decision(this is not global) write buf size escaped
 			if((ssize_t)write(split_out_file,buf,size)==size){  //ssize_t windows warning
 				return swrite_ok;
 			}
@@ -560,7 +561,7 @@ static swrite_char swwrite_if(int f,char*buf,row_dword size,row_dword off){
 }
 
 //true if ok
-static bool split_write_split(char*file,size_t start,size_t end,row_dword size,bool*majorerror){
+static bool split_write_split(char*file,size_t start,size_t end,row_dword size,bool*majorerror/*, char*bigstart,char*smallstart,char*smallend*/){
 	if(split_reminder_c==split_yes_mix){
 		row_dword sz=strlen(file)+1;
 		if((ssize_t)write(split_out_formatfile,file,sz)!=sz){
@@ -569,14 +570,16 @@ static bool split_write_split(char*file,size_t start,size_t end,row_dword size,b
 	}
 	int f=open_or_new(file);
 	if(f!=-1){
+		//decide if must escape, bigstart!=smallstart, global last_escape_decision = test smallstart[-1], else global last_split_end == smallend+esdelimiter_size, last_escape_decision
+		//	else last_escape_decision=false
 		for(size_t k=start;k<end;k++){
 			row*r=&rows[k];
 			row_dword sz=r->sz;
-			if(swwrite(f,r->data,sz)==swrite_bad){close(f);*majorerror=true;return false;}
+			if(swwrite/*_full*/(f,r->data,sz/*last_escape_decision*/)==swrite_bad){close(f);*majorerror=true;return false;}
 			if(swrite(f,ln_term,ln_term_sz)==swrite_bad){close(f);*majorerror=true;return false;}
 		}
 		row*r=&rows[end];
-		if(swwrite(f,r->data,size)==swrite_ok){close(f);return true;}
+		if(swwrite/*_full*/(f,r->data,size/*last_escape_decision*/)==swrite_ok){close(f);return true;}
 		close(f);*majorerror=true;return false;
 	}
 	clue=start;*majorerror=false;return false;
@@ -614,7 +617,7 @@ const char* split_write(size_t*_index,int orig_file,row_dword*_off,bool*majorerr
 						//char aux=cursor[size];//also alloced rows have +1
 						cursor[size]='\0';//this is for unmodified where ln_term is there, for alloced is undefined there
 						//cursor[size]=aux;//is not important to have ln_term back there
-						if(split_write_split(cursor,i,j,part,majorerror)/*true*/)
+						if(split_write_split(cursor,i,j,part,majorerror/*, data,pointer,marker*/)/*true*/)
 							{if(split_write_orig(orig_file,cursor,size,majorerror)/*true*/)return nullptr;}
 						else if(*majorerror==false)split_write_orig(orig_file,cursor,size,majorerror);
 					}else *majorerror=true;

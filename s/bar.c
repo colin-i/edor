@@ -126,7 +126,7 @@ static bool wrt_loop_split(int f,size_t n,unsigned int*_off,bool*no_errors){
 				*no_errors=false;
 			}
 			if(m==n)return true;//there are no possible splits on one row. last row can also be blank
-		}while(m!=i);
+		}while(m!=i);//these are coming on one row in orig
 		row*r=&rows[i];
 		if(*_off!=0){//write rest of the line after split end
 			if(swrite(f,r->data+*_off,r->sz-*_off)==swrite_bad)return false;
