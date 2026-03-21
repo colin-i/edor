@@ -522,6 +522,7 @@ bool split_write_init(char*orig_filename){
 				split_out_formatfile=open_or_new(a);
 				if(split_out_formatfile!=-1){
 					free(a);
+					//last_split_end=nullptr;
 					return true;
 				}
 				close(split_out_file);
@@ -545,7 +546,7 @@ void split_write_free(){
 swrite_char swrite(int f,void*buf,row_dword size){
 	if((ssize_t)write(f,buf,size)==size){  //ssize_t windows warning
 		if(split_reminder_c==split_yes_mix){
-			//if escape_decision(this is not global) write buf size escaped
+			//if last_escape_char write buf size escaped
 			if((ssize_t)write(split_out_file,buf,size)==size){  //ssize_t windows warning
 				return swrite_ok;
 			}
@@ -561,7 +562,7 @@ static swrite_char swwrite_if(int f,char*buf,row_dword size,row_dword off){
 }
 
 //true if ok
-static bool split_write_split(char*file,size_t start,size_t end,row_dword size,bool*majorerror/*, char*bigstart,char*smallstart,char*smallend*/){
+static bool split_write_split(char*file,size_t start,size_t end,row_dword size,bool*majorerror){
 	if(split_reminder_c==split_yes_mix){
 		row_dword sz=strlen(file)+1;
 		if((ssize_t)write(split_out_formatfile,file,sz)!=sz){
@@ -570,16 +571,14 @@ static bool split_write_split(char*file,size_t start,size_t end,row_dword size,b
 	}
 	int f=open_or_new(file);
 	if(f!=-1){
-		//decide if must escape, bigstart!=smallstart, global last_escape_decision = test smallstart[-1], else global last_split_end == smallend+esdelimiter_size, last_escape_decision
-		//	else last_escape_decision=false
 		for(size_t k=start;k<end;k++){
 			row*r=&rows[k];
 			row_dword sz=r->sz;
-			if(swwrite/*_full*/(f,r->data,sz/*last_escape_decision*/)==swrite_bad){close(f);*majorerror=true;return false;}
+			if(swwrite/*_full*/(f,r->data,sz)==swrite_bad){close(f);*majorerror=true;return false;}
 			if(swrite(f,ln_term,ln_term_sz)==swrite_bad){close(f);*majorerror=true;return false;}
 		}
 		row*r=&rows[end];
-		if(swwrite/*_full*/(f,r->data,size/*last_escape_decision*/)==swrite_ok){close(f);return true;}
+		if(swwrite/*_full*/(f,r->data,size)==swrite_ok){close(f);return true;}
 		close(f);*majorerror=true;return false;
 	}
 	clue=start;*majorerror=false;return false;
@@ -591,6 +590,23 @@ static bool split_write_orig(int orig_file,char*cursor,unsigned int size,bool*ma
 				return true;
 	*majorerror=true;return false;
 }
+/*static char decide_escape(char*bigstart,char*smallstart,char*smallend){//for split_write_split swwrite row call(in loop and last)
+	char*s='\0';
+	if(split_reminder_c==split_yes_mix){
+		char*split_end=smallend+esdelimiter_size;
+		if(bigstart!=smallstart){
+			char a=smallstart[-1];
+			if(strchr(escape_delims,a)){//!=nullptr
+				s=a;
+			}
+		}else{
+			if(last_split_end==split_end)s=last_escape_char_store;
+		}
+		last_split_end=split_end;
+		last_escape_char_store=s;
+	}
+	return s;
+}*/
 //null or error
 const char* split_write(size_t*_index,int orig_file,row_dword*_off,bool*majorerror){
 	size_t i=*_index;
@@ -617,7 +633,10 @@ const char* split_write(size_t*_index,int orig_file,row_dword*_off,bool*majorerr
 						//char aux=cursor[size];//also alloced rows have +1
 						cursor[size]='\0';//this is for unmodified where ln_term is there, for alloced is undefined there
 						//cursor[size]=aux;//is not important to have ln_term back there
-						if(split_write_split(cursor,i,j,part,majorerror/*, data,pointer,marker*/)/*true*/)
+						//last_escape_char=decide_escape(data,pointer,marker);
+						//bool b=split_write_split
+						//last_escape_char='\0';
+						if(split_write_split(cursor,i,j,part,majorerror)/*true*/)
 							{if(split_write_orig(orig_file,cursor,size,majorerror)/*true*/)return nullptr;}
 						else if(*majorerror==false)split_write_orig(orig_file,cursor,size,majorerror);
 					}else *majorerror=true;
