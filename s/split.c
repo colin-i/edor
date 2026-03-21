@@ -574,11 +574,11 @@ static bool split_write_split(char*file,size_t start,size_t end,row_dword size,b
 		for(size_t k=start;k<end;k++){
 			row*r=&rows[k];
 			row_dword sz=r->sz;
-			if(swwrite/*_full*/(f,r->data,sz)==swrite_bad){close(f);*majorerror=true;return false;}
+			if(swwrite(f,r->data,sz)==swrite_bad){close(f);*majorerror=true;return false;}
 			if(swrite(f,ln_term,ln_term_sz)==swrite_bad){close(f);*majorerror=true;return false;}
 		}
 		row*r=&rows[end];
-		if(swwrite/*_full*/(f,r->data,size)==swrite_ok){close(f);return true;}
+		if(swwrite(f,r->data,size)==swrite_ok){close(f);return true;}
 		close(f);*majorerror=true;return false;
 	}
 	clue=start;*majorerror=false;return false;
