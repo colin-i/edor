@@ -543,14 +543,49 @@ void split_write_free(){
 	}
 }
 
+/*
+static swrite_char write_escaped(void*buf,row_dword size){
+	if(last_escape_char!='\0'){
+		row_dword start=0;
+		for (row_dword i = 0; i < size; i++) {
+			unsigned char c = p[i];
+			if ((c == '\\') || (c == last_escape_char)) {
+				// write pending data
+				if (i > start) {
+					if (write(split_out_file, p + start, i - start) != (ssize_t)(i - start))
+						return swrite_bad;
+				}
+				// write escape character
+				if (write(split_out_file, &'\\', 1) != 1)
+					return swrite_bad;
+				// write the character itself
+				if (write(split_out_file, &c, 1) != 1)
+					return swrite_bad;
+				// update start
+				start = i + 1;
+			}
+		}
+		// write remaining tail
+		if (start < size) {
+			if (write(split_out_file, p + start, size - start) != (ssize_t)(size - start))
+				return swrite_bad;
+		}
+		return swrite_ok;
+	}
+	return swrite_not;
+}
+*/
 swrite_char swrite(int f,void*buf,row_dword size){
 	if((ssize_t)write(f,buf,size)==size){  //ssize_t windows warning
 		if(split_reminder_c==split_yes_mix){
-			//if last_escape_char write buf size escaped
-			if((ssize_t)write(split_out_file,buf,size)==size){  //ssize_t windows warning
-				return swrite_ok;
-			}
-			return swrite_bad;
+			//swrite_char c=write_escaped(buf,size);
+			//if(c==swrite_not){
+				if((ssize_t)write(split_out_file,buf,size)==size){  //ssize_t windows warning
+					return swrite_ok;
+				}
+				return swrite_bad;
+			//}
+			//return c;
 		}
 		return swrite_ok;
 	}
