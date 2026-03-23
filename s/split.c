@@ -547,6 +547,8 @@ void split_write_free(){
 static swrite_char write_escaped(void*buf,row_dword size){
 	if(last_escape_char!='\0'){
 		row_dword start=0;
+		char out1[2] = {'\\', '\\'};
+		char out2[2] = {'\\', last_escape_char};
 		for (row_dword i = 0; i < size; i++) {
 			char c = (char*)p[i];
 			if ((c == '\\') || (c == last_escape_char)) {
@@ -555,11 +557,10 @@ static swrite_char write_escaped(void*buf,row_dword size){
 					if (write(split_out_file, (char*)buf + start, i - start) != (ssize_t)(i - start))
 						return swrite_bad;
 				}
-				// write escape character
-				if (write(split_out_file, &'\\', sizeof(char)) != sizeof(char))
-					return swrite_bad;
-				// write the character itself
-				if (write(split_out_file, &c, sizeof(char)) != sizeof(char))
+				// choose which buffer to use
+				char *out = (c == '\\') ? out1 : out2;
+				// single write call
+				if (write(split_out_file, out, 2) != 2)
 					return swrite_bad;
 				// update start
 				start = i + sizeof(char);
