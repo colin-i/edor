@@ -626,7 +626,13 @@ static bool split_write_orig(int orig_file,char*cursor,unsigned int size,bool*ma
 				return true;
 	*majorerror=true;return false;
 }
-/*static char decide_escape(char*bigstart,char*smallstart,char*smallend){//for split_write_split swwrite row call(in loop and last)
+/*
+char*escape_delims=(char*)"\"'";
+char*escape_delims+new=nullptr;
+static char last_ecape_char='\0';
+static char*last_split_end;//init at split_write_init
+static char last_escape_char_store;//no init required
+static char decide_escape(char*bigstart,char*smallstart,char*smallend){//for split_write_split swwrite row call(in loop and last)
 	char*s='\0';
 	if(split_reminder_c==split_yes_mix){
 		char*split_end=smallend+esdelimiter_size;
@@ -670,11 +676,12 @@ const char* split_write(size_t*_index,int orig_file,row_dword*_off,bool*majorerr
 						cursor[size]='\0';//this is for unmodified where ln_term is there, for alloced is undefined there
 						//cursor[size]=aux;//is not important to have ln_term back there
 						//last_escape_char=decide_escape(data,pointer,marker);
-						//bool b=split_write_split
-						//last_escape_char='\0';
-						if(split_write_split(cursor,i,j,part,majorerror)/*true*/)
-							{if(split_write_orig(orig_file,cursor,size,majorerror)/*true*/)return nullptr;}
-						else if(*majorerror==false)split_write_orig(orig_file,cursor,size,majorerror);
+						//bool b=split_write_split(cursor,i,j,part,majorerror)/*true*/;
+						//last_escape_char='\0';//why? swrite is also at orig+mix, it must be cleared, and this is the only clear so error/no error and 1 clean
+						//if(b/*true*/){
+						if(split_write_split(cursor,i,j,part,majorerror)/*true*/){
+							if(split_write_orig(orig_file,cursor,size,majorerror)/*true*/)return nullptr;
+						}else if(*majorerror==false)split_write_orig(orig_file,cursor,size,majorerror);
 					}else *majorerror=true;
 					return "Error(s) at split write";
 				}

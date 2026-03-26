@@ -229,6 +229,8 @@ static int tot_x;
 #define maxushort 6
 #define maxushort_nul maxushort+1
 
+//static char pref_version[]="0";//char size,buf style write
+
 bool no_char(char z){return z<32||z>=127;}
 static size_t tab_grow(WINDOW*w,char*a,size_t sz,int*ptr){
 	int c=0;int cr=0;
