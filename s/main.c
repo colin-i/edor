@@ -2095,31 +2095,24 @@ static bool savetofile(WINDOW*w,bool has_file){
 	wmove(w,getcury(w),getcurx(w));
 	return false;
 }
-static void writeprefs(int f,char mask){
-	bar_byte sz=sizeof(pref_version);
+static void writeprefs(int f){
+	bar_byte sz=strlen(ocode_extension);//at prefs one byte is taken, and also input has 255 max
 	if(write(f,&sz,extlen_size)==extlen_size){
-		if(write(f,pref_version,sz)==sz){
-			if(write(f,&mask,mask_size)==mask_size){
-				bar_byte sz=strlen(ocode_extension);//at prefs one byte is taken, and also input has 255 max
-				if(write(f,&sz,extlen_size)==extlen_size){
-					if(write(f,ocode_extension,sz)==sz){
-						char k=0;
-						if(memcmp(keys_row,keys_row_orig,number_of_keys)!=0)k=number_of_keys;
-						if(write(f,&k,sizeof(char))==sizeof(char)){
-							if(write(f,keys_row,k)==k){
-								sz=strlen(filewhites_extension);
-								if(write(f,&sz,extlen_size)==extlen_size){
-									if(write(f,filewhites_extension,sz)==sz){
-										if(write(f,&tab_sz,sizeof(tab_protocol))==sizeof(tab_protocol)){
-											char tmbuf[maxushort_nul];
-											char n=sprintf(tmbuf,"%hu",timeout_duration);
-											if(write(f,&n,sizeof(char))==sizeof(char)){
-												if(write(f,tmbuf,n)==n){
-													if(tit_writeprefs(f)/*true*/){
-														split_writeprefs(f);
-													}
-												}
-											}
+		if(write(f,ocode_extension,sz)==sz){
+			char k=0;
+			if(memcmp(keys_row,keys_row_orig,number_of_keys)!=0)k=number_of_keys;
+			if(write(f,&k,sizeof(char))==sizeof(char)){
+				if(write(f,keys_row,k)==k){
+					sz=strlen(filewhites_extension);
+					if(write(f,&sz,extlen_size)==extlen_size){
+						if(write(f,filewhites_extension,sz)==sz){
+							if(write(f,&tab_sz,sizeof(tab_protocol))==sizeof(tab_protocol)){
+								char tmbuf[maxushort_nul];
+								char n=sprintf(tmbuf,"%hu",timeout_duration);
+								if(write(f,&n,sizeof(char))==sizeof(char)){
+									if(write(f,tmbuf,n)==n){
+										if(tit_writeprefs(f)/*true*/){
+											split_writeprefs(f);
 										}
 									}
 								}
@@ -2135,18 +2128,28 @@ void setprefs(int flag,bool set){
 	if(prefs_file[0]!='\0'){
 		int f=open(prefs_file,O_RDWR|O_CREAT,S_IRUSR|S_IWUSR);
 		if(f!=-1){
-			char mask;
-			if(read(f,&mask,mask_size)!=mask_size)mask=mask_nomask;
-			else lseek(f,0,SEEK_SET);
-			if(flag!=(mask_nomask)){
-				if(set/*true*/)mask|=flag;
-				else mask&=~flag;
+			bar_byte sz=sizeof(pref_version);
+			if(write(f,&sz,extlen_size)==extlen_size){
+				if(write(f,pref_version,sz)==sz){
+					char mask;
+					if(read(f,&mask,mask_size)!=mask_size){
+						mask=mask_nomask;
+					}else{
+						lseek(f,-mask_size,SEEK_CUR);
+					}
+					if(flag!=(mask_nomask)){
+						if(set/*true*/)mask|=flag;
+						else mask&=~flag;
+					}
+					if(write(f,&mask,mask_size)==mask_size){
+						writeprefs(f);
+					}
+				}
 			}
-			writeprefs(f,mask);
-			unsigned short nowsize=lseek(f,0,SEEK_CUR);//now is 7 bar_bytes and a mask, not 256
+			unsigned short nowsize=lseek(f,0,SEEK_CUR);
 			#pragma GCC diagnostic push
 			#pragma GCC diagnostic ignored "-Wunused-result"
-			ftruncate(f,nowsize);
+			ftruncate(f,nowsize);//keys and so many strings can change size from save to save
 			#pragma GCC diagnostic pop
 			close(f);
 		}
