@@ -208,8 +208,8 @@ extern size_t store_aftercall;
 //main
 bool titles(WINDOW*);
 void tit_freeprefs();
-void tit_writeprefs(int);
-void tit_readprefs(int);
+bool tit_writeprefs(int);
+bool tit_readprefs(int);
 extern char*tit_delims;
 extern char*tit_delims_new;
 
@@ -217,8 +217,8 @@ extern char*tit_delims_new;
 //main
 split_char split_conditions(char*,bool);
 bool split_grab(char**,size_t*);
-bool split_writeprefs(int);
-bool split_readprefs(int);
+void split_writeprefs(int);
+void split_readprefs(int);
 void split_freeprefs();
 bool split_write_init(char*);
 const char* split_write(size_t*,int,unsigned int*,bool*);
@@ -237,6 +237,8 @@ extern char*split_outext;
 extern char*split_outext_new;
 extern char*split_outformatext;
 extern char*split_outformatext_new;
+extern char*escape_delims;
+extern char*escape_delims_new;
 //bar
 #ifndef HAVE_MEMMEM
 void *memmem(const void*,size_t,const void*,size_t);

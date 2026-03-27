@@ -181,16 +181,14 @@ bool titles(WINDOW*w){
 void tit_freeprefs(){
 	if(tit_delims_new)free(tit_delims_new);//!=nullptr
 }
-void tit_writeprefs(int f){//not bool because is last
+bool tit_writeprefs(int f){
 	bar_byte sz=strlen(tit_delims);
 	if(write(f,&sz,extlen_size)==extlen_size){
-		#pragma GCC diagnostic push
-		#pragma GCC diagnostic ignored "-Wunused-result"
-		write(f,tit_delims,sz);
-		#pragma GCC diagnostic pop
+		return write(f,tit_delims,sz)==sz;
 	}
+	return false;
 }
-void tit_readprefs(int f){//not bool because is last
+bool tit_readprefs(int f){
 	bar_byte len;
 	if(read(f,&len,extlen_size)==extlen_size){
 		tit_delims_new=(char*)malloc(len+1);
@@ -198,7 +196,9 @@ void tit_readprefs(int f){//not bool because is last
 			if(read(f,tit_delims_new,len)==len){
 				tit_delims_new[len]='\0';
 				tit_delims=tit_delims_new;
+				return true;
 			}
 		}
 	}
+	return false;
 }

@@ -62,6 +62,8 @@ char*split_outext=(char*)"oc";
 char*split_outext_new=nullptr;
 char*split_outformatext=(char*)"split";
 char*split_outformatext_new=nullptr;
+char*escape_delims=(char*)"\"'";
+char*escape_delims_new=nullptr;
 
 //char*fulldelim;
 //unsigned short fulldelim_size;
@@ -361,7 +363,7 @@ bool split_grab(char**p_text,size_t*p_size){
 	return false;
 }
 
-bool split_writeprefs(int f){
+void split_writeprefs(int f){//not bool because is last
 	bar_byte sz=strlen(sdelimiter);
 	if(write(f,&sz,extlen_size)==extlen_size){
 		if(write(f,sdelimiter,sz)==sz){
@@ -380,7 +382,13 @@ bool split_writeprefs(int f){
 											sz=strlen(split_outformatext);
 											if(write(f,&sz,extlen_size)==extlen_size){
 												if(write(f,split_outformatext,sz)==sz){
-													return true;
+													sz=strlen(escape_delims);
+													if(write(f,&sz,extlen_size)==extlen_size){
+														#pragma GCC diagnostic push
+														#pragma GCC diagnostic ignored "-Wunused-result"
+														write(f,escape_delims,sz);
+														#pragma GCC diagnostic pop
+													}
 												}
 											}
 										}
@@ -393,9 +401,8 @@ bool split_writeprefs(int f){
 			}
 		}
 	}
-	return false;
 }
-bool split_readprefs(int f){
+void split_readprefs(int f){//not bool because is last
 	bar_byte len;
 	if(read(f,&len,extlen_size)==extlen_size){
 		sdelimiter_new=(char*)malloc(len+1);
@@ -433,7 +440,15 @@ bool split_readprefs(int f){
 																		if(read(f,split_outformatext_new,len)==len){
 																			split_outformatext_new[len]='\0';
 																			split_outformatext=split_outformatext_new;
-																			return true;
+																			if(read(f,&len,extlen_size)==extlen_size){
+																				escape_delims_new=(char*)malloc(len+1);
+																				if(escape_delims_new){//!=nullptr
+																					if(read(f,escape_delims_new,len)==len){
+																						escape_delims_new[len]='\0';
+																						escape_delims=escape_delims_new;
+																					}
+																				}
+																			}
 																		}
 																	}
 																}
@@ -452,7 +467,6 @@ bool split_readprefs(int f){
 			}
 		}
 	}
-	return false;
 }
 void split_freeprefs(){
 	if(sdelimiter_new)free(sdelimiter_new);//!=nullptr
@@ -461,6 +475,7 @@ void split_freeprefs(){
 	if(split_extension_new)free(split_extension_new);//!=nullptr
 	if(split_outext_new)free(split_outext_new);//!=nullptr
 	if(split_outformatext_new)free(split_outformatext_new);//!=nullptr
+	if(escape_delims_new)free(escape_delims_new);//!=nullptr
 }
 
 //true at ok
@@ -627,8 +642,6 @@ static bool split_write_orig(int orig_file,char*cursor,unsigned int size,bool*ma
 	*majorerror=true;return false;
 }
 /*
-char*escape_delims=(char*)"\"'";
-char*escape_delims+new=nullptr;
 static char last_ecape_char='\0';
 static char*last_split_end;//init at split_write_init
 static char last_escape_char_store;//no init required

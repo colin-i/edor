@@ -229,7 +229,7 @@ static int tot_x;
 #define maxushort 6
 #define maxushort_nul maxushort+1
 
-//static char pref_version[]="0";//char size,buf style write
+static char pref_version[]={'0'};
 
 bool no_char(char z){return z<32||z>=127;}
 static size_t tab_grow(WINDOW*w,char*a,size_t sz,int*ptr){
@@ -2096,24 +2096,29 @@ static bool savetofile(WINDOW*w,bool has_file){
 	return false;
 }
 static void writeprefs(int f,char mask){
-	if(write(f,&mask,mask_size)==mask_size){
-		bar_byte sz=strlen(ocode_extension);//at prefs one byte is taken, and also input has 255 max
-		if(write(f,&sz,extlen_size)==extlen_size){
-			if(write(f,ocode_extension,sz)==sz){
-				if(split_writeprefs(f)/*true*/){
-					char k=0;
-					if(memcmp(keys_row,keys_row_orig,number_of_keys)!=0)k=number_of_keys;
-					if(write(f,&k,sizeof(char))==sizeof(char)){
-						if(write(f,keys_row,k)==k){
-							sz=strlen(filewhites_extension);
-							if(write(f,&sz,extlen_size)==extlen_size){
-								if(write(f,filewhites_extension,sz)==sz){
-									if(write(f,&tab_sz,sizeof(tab_protocol))==sizeof(tab_protocol)){
-										char tmbuf[maxushort_nul];
-										char n=sprintf(tmbuf,"%hu",timeout_duration);
-										if(write(f,&n,sizeof(char))==sizeof(char)){
-											if(write(f,tmbuf,n)==n){
-												tit_writeprefs(f);
+	bar_byte sz=sizeof(pref_version);
+	if(write(f,&sz,extlen_size)==extlen_size){
+		if(write(f,pref_version,sz)==sz){
+			if(write(f,&mask,mask_size)==mask_size){
+				bar_byte sz=strlen(ocode_extension);//at prefs one byte is taken, and also input has 255 max
+				if(write(f,&sz,extlen_size)==extlen_size){
+					if(write(f,ocode_extension,sz)==sz){
+						char k=0;
+						if(memcmp(keys_row,keys_row_orig,number_of_keys)!=0)k=number_of_keys;
+						if(write(f,&k,sizeof(char))==sizeof(char)){
+							if(write(f,keys_row,k)==k){
+								sz=strlen(filewhites_extension);
+								if(write(f,&sz,extlen_size)==extlen_size){
+									if(write(f,filewhites_extension,sz)==sz){
+										if(write(f,&tab_sz,sizeof(tab_protocol))==sizeof(tab_protocol)){
+											char tmbuf[maxushort_nul];
+											char n=sprintf(tmbuf,"%hu",timeout_duration);
+											if(write(f,&n,sizeof(char))==sizeof(char)){
+												if(write(f,tmbuf,n)==n){
+													if(tit_writeprefs(f)/*true*/){
+														split_writeprefs(f);
+													}
+												}
 											}
 										}
 									}
@@ -2270,6 +2275,7 @@ static bool loopin(WINDOW*w){
 				const char*s=keyname(z);
 				if(*s==Char_Ctrl){
 					if(s[1]==key_actswf){if(pref_change(w,&split_extension,&split_extension_new,false,key_actswf,A_to_a)/*true*/)return true;}
+					else if(s[1]==key_actswf2){if(pref_change(w,&escape_delims,&escape_delims_new,false,key_actswf2,A_to_a)/*true*/)return true;}
 				}
 			}
 		}else{
@@ -2637,47 +2643,57 @@ static void getfilebuf(char*cutbuf_file){//,size_t off){
 		close(f);
 	}
 }
-static void getprefs(){
+#define remove_con "--remove-config"
+static bool getprefs(){
 	int f=open(prefs_file,O_RDONLY);
 	if(f!=-1){
-		char mask;
-		if(read(f,&mask,mask_size)==mask_size){
-			if((mask&mask_mouse)!=0)stored_mouse_mask=~0;
-			if((mask&mask_indent)!=0)indent_flag=true;
-			if((mask&mask_insensitive)!=0)insensitive=true;
-			if((mask&mask_ocompiler)!=0)ocompiler_flag=true;
-			if((mask&mask_splits)!=0)splits_flag=true;
-			if((mask&mask_filewhites)!=0)filewhites_flag=true;
-			if((mask&mask_indopt)!=0)indopt_flag=true;
-			bar_byte len;
-			if(read(f,&len,extlen_size)==extlen_size){
-				ocode_extension_new=(char*)malloc(len+1);
-				if(ocode_extension_new){//!=nullptr
-					if(read(f,ocode_extension_new,len)==len){
-						ocode_extension=ocode_extension_new;
-						ocode_extension[len]='\0';
-						if(split_readprefs(f)/*true*/){
-							if(read(f,&len,sizeof(char))==sizeof(char)){
-								if(len<=number_of_keys){
-									if(read(f,keys_row_frompref,len)==len){
-										getkeys(len);
-										if(read(f,&len,sizeof(char))==sizeof(char)){
-											filewhites_extension_new=(char*)malloc(len+1);
-											if(read(f,filewhites_extension_new,len)==len){
-												filewhites_extension=filewhites_extension_new;
-												filewhites_extension[len]='\0';
-												tab_protocol tabtest;
-												if(read(f,&tabtest,sizeof(tab_protocol))==sizeof(tab_protocol)){
-													if(tab_conditions_nr(tabtest)){
-														tab_sz=tabtest;
-														char n;if(read(f,&n,sizeof(char))==sizeof(char)){
-															if(n<=maxushort){
-																char rd[maxushort_nul];
-																if(read(f,rd,n)==n){
-																	rd[n]='\0';
-																	sscanf(rd,"%hu",&timeout_duration);
-																	//
-																	tit_readprefs(f);
+		bar_byte len;
+		if(read(f,&len,extlen_size)==extlen_size){
+			char prefe_version[0x100*sizeof(bar_byte)];
+			if(read(f,prefe_version,len)==len){
+				if((len!=sizeof(pref_version))||(memcmp(pref_version,prefe_version,len)!=0)){
+					puts("Preferences file version not matching. Run the program with " remove_con);
+					return false;
+				}
+				char mask;
+				if(read(f,&mask,mask_size)==mask_size){
+					if((mask&mask_mouse)!=0)stored_mouse_mask=~0;
+					if((mask&mask_indent)!=0)indent_flag=true;
+					if((mask&mask_insensitive)!=0)insensitive=true;
+					if((mask&mask_ocompiler)!=0)ocompiler_flag=true;
+					if((mask&mask_splits)!=0)splits_flag=true;
+					if((mask&mask_filewhites)!=0)filewhites_flag=true;
+					if((mask&mask_indopt)!=0)indopt_flag=true;
+					if(read(f,&len,extlen_size)==extlen_size){
+						ocode_extension_new=(char*)malloc(len+1);
+						if(ocode_extension_new){//!=nullptr
+							if(read(f,ocode_extension_new,len)==len){
+								ocode_extension=ocode_extension_new;
+								ocode_extension[len]='\0';
+								if(read(f,&len,sizeof(char))==sizeof(char)){
+									if(len<=number_of_keys){
+										if(read(f,keys_row_frompref,len)==len){
+											getkeys(len);
+											if(read(f,&len,sizeof(char))==sizeof(char)){
+												filewhites_extension_new=(char*)malloc(len+1);
+												if(read(f,filewhites_extension_new,len)==len){
+													filewhites_extension=filewhites_extension_new;
+													filewhites_extension[len]='\0';
+													tab_protocol tabtest;
+													if(read(f,&tabtest,sizeof(tab_protocol))==sizeof(tab_protocol)){
+														if(tab_conditions_nr(tabtest)){
+															tab_sz=tabtest;
+															char n;if(read(f,&n,sizeof(char))==sizeof(char)){
+																if(n<=maxushort){
+																	char rd[maxushort_nul];
+																	if(read(f,rd,n)==n){
+																		rd[n]='\0';
+																		sscanf(rd,"%hu",&timeout_duration);
+																		//
+																		if(tit_readprefs(f)/*true*/){
+																			split_readprefs(f);
+																		}
+																	}
 																}
 															}
 														}
@@ -2697,6 +2713,7 @@ static void getprefs(){
 	}
 	//is ok to have the default prefs always, even if is not popular, some features are good to be activated
 	//f=open_new(prefs_file);if(f!=-1){mask=mask_indent;writeprefs(f,mask);}
+	return true;
 }
 static bool help_cutbuffile_preffile(char*s,char*cutbuf_file){
 #if ((!defined(USE_FS)) && (!defined(USE__FS)))
@@ -2896,6 +2913,7 @@ static void remove_config(char*cutbuf_file){
 						if(rmdir(prefs_folder)==0)remove_config_print(prefs_folder);
 						else printf("%s ignored (maybe is not empty)\n",prefs_folder);
 					}
+					return;
 				}
 			}
 		}
@@ -2923,7 +2941,7 @@ static bool command_line(int*argc,char***argv,char*cutbuf_file){
 			puts("Enter the program and press F1 for help");
 			return true;
 			//}
-		}else if(strcmp(pattern,"--remove-config")==0){
+		}else if(strcmp(pattern,remove_con)==0){
 			remove_config(cutbuf_file);
 			return true;
 		}
@@ -2954,7 +2972,11 @@ static void action_go(int argc,char**argv,char*cutbuf_file){
 	if(command_line(&argc,&argv,cutbuf_file)/*true*/)return;
 	if(argc>3){puts("Too many arguments.");user_return=EXIT_FAILURE;return;}
 
-	if(prefs_file[0]!='\0')getprefs();//split is first that depends on prefs
+	if(prefs_file[0]!='\0'){
+		if(!getprefs()){//split is first that depends on prefs
+			user_return=EXIT_FAILURE;return;
+		}
+	}
 	for(unsigned char i=0;i<number_of_keys;i++){//this or set only at modifications
 		unsigned char k=keys_row[i];
 		keys_help[k]=k+'A';
