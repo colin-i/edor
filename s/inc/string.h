@@ -61,3 +61,13 @@ void *memmem(const void*,size_t,const void*,size_t);//this is provided in our sp
 }
 #endif
 #endif
+
+#if defined(is_tit_c)||defined(is_split_c)
+#ifdef __cplusplus
+extern "C" {
+#endif
+char *strchr(const char *s, int c);
+#ifdef __cplusplus
+}
+#endif
+#endif

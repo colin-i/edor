@@ -66,7 +66,7 @@ text="\ncommand mode: left,right,home,end,Ctrl+q\
 \nCtrl+t = enable/disable insensitive search\
 \nCtrl+a = enable/disable O language syntax; Alt+a = syntax rescan; Alt+A = change rule extension name (blank is all)\
 \nCtrl+j = enable/disable OA split syntax; Alt+j = change delimiter; Alt+J = change view delimiter; Alt+Ctrl+j = change rule extension name for splits (blank is all)\
-\n    Ctrl+k = change splits folder (blank is mixless); Alt+k = change splits out extension (blank is no extension); Alt+K = change splits out format extension (blank is no extension)\
+\n Ctrl+k = change mix folder (blank is mixless); Alt+k = change mix file ext (blank is no ext); Alt+K = change mix format file ext (blank is no ext); Alt+Ctrl+k = mix file chars to escape\
 \nCtrl+y = enable/disable spaces->tabs indents at read, tabs->spaces at write; Alt+y = change rule extension name (blank is all)\
 \nCtrl+d = enable/disable indent follower\
 \nCtrl+b = change tab size\
@@ -146,7 +146,7 @@ while [ $i -lt 123 ]; do
 		102) find_pos find               $i 1 1;;   #f
 		103) find_pos goto               $i 1 1;;   #g
 		106) find_pos actswf             $i 2 1 1;; #j
-		107) find_pos actswf2            $i 1 1 1;; #k
+		107) find_pos actswf2            $i 2 1 1;; #k
 		108) is_extern=x find_pos titles $i 1 1;;   #l
 		110) find_pos indents            $i 1;;     #n
 		111) find_pos paste              $i 1 1;;   #o
