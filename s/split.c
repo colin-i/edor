@@ -58,7 +58,7 @@ char*split_out=(char*)"osrc";
 char*split_out_new=nullptr;
 char*split_extension=(char*)"oac";
 char*split_extension_new=nullptr;
-char*split_outext=(char*)"oc";
+char*split_outext=(char*)"";//was oc but the reason is at split_write_init at split_extension
 char*split_outext_new=nullptr;
 char*split_outformatext=(char*)"split";
 char*split_outformatext_new=nullptr;
@@ -67,16 +67,16 @@ char*escape_delims_new=nullptr;
 
 //char*fulldelim;
 //unsigned short fulldelim_size;
-static unsigned char sdelimiter_size;
-static unsigned char esdelimiter_size;
+static bar_byte sdelimiter_size;
+static bar_byte esdelimiter_size;
 
 static char*split_out_alloc1;
 static char*split_out_alloc2;
-static char*split_out_path1;
-static char*split_out_path2;
-static char*split_out_path3;
-static char*split_out_path4;
-static unsigned char split_out_size1;
+static char*split_out_path1;//alloc1
+static char*split_out_path2;//alloc2 and in second init is going to alloc1
+static char*split_out_path3;//alloc1
+static char*split_out_path4;//alloc2
+static bar_byte split_out_size1;//split_out
 static size_t split_out_size2;
 
 static int split_out_file;
@@ -480,6 +480,7 @@ void split_freeprefs(){
 
 //true at ok
 bool split_write_init(char*orig_filename){
+//this is not full, more cases at first init
 	sdelimiter_size=strlen(sdelimiter);
 	esdelimiter_size=strlen(esdelimiter);
 	//unsigned char s2=strlen(esdelimiter);fulldelim_size=sdelimiter_size+s2;fulldelim=(char*)malloc(fulldelim_size);
@@ -487,7 +488,7 @@ bool split_write_init(char*orig_filename){
 	//	memcpy(fulldelim,esdelimiter,s2);memcpy(fulldelim+s2,sdelimiter,sdelimiter_size);
 
 	if(split_reminder_c==split_yes_mix){
-		size_t ancestors_diff=split_out_path2-split_out_path4;
+		size_t ancestors_diff=split_out_path2-split_out_path4;//this appears when mix folder is below orig, ./q/a.oac but osrc is at ./osrc
 		split_out_path2=split_out_alloc1+(split_out_path2-split_out_alloc2);
 		split_out_path4+=split_out_size1;
 		do{
@@ -500,17 +501,30 @@ bool split_write_init(char*orig_filename){
 			memcpy(split_out_path4,split_out_path2,sz);
 			split_out_path2+=sz;split_out_path4+=sz;
 		}while(true);
+
+		if(*split_extension!='\0')//was a.oac/a.oac.oc, is a.oac/a.oc but this change is not because of this but because a.py.oac/a.py is better than changing outext to py
+			split_out_path1-=1+strlen(split_extension);//errors if only .oac were tested
+		//and also remove the next extension to not let oaas3 predefine for oc or py
+		char*remover=split_out_path1;
+		while(split_out_path3!=remover){
+			remover--;
+			if(*remover=='.')break;
+		}
+
 		size_t size=split_out_path1-split_out_path3;// +1 will be with the existent null
 		bar_byte outext_size=strlen(split_outext)+1;//this from pref can also come 1 char size
 		bar_byte outformatext_size=strlen(split_outformatext)+1;//this from pref can also come 1 char size
 		size_t sizeplusoutext;
 		if(outformatext_size>outext_size){
 			sizeplusoutext=size+outformatext_size;
+			//can calculate more to reduce in function of remover but then need to calculate back, so, the charge is too big
 		}else{
 			if(outformatext_size==outext_size){
-				if(memcmp(split_outext,split_outformatext,outext_size)==0){//will be same file, is also working for a="" b=""
-					free(split_out_alloc1);free(split_out_alloc2);
-					return false;
+				if(remover!=split_out_path3){//only when remover rule
+					if(memcmp(split_outext,split_outformatext,outext_size)==0){//will be same file, is also working for a="" b=""
+						free(split_out_alloc1);free(split_out_alloc2);
+						return false;
+					}
 				}
 			}
 			sizeplusoutext=size+outext_size;
@@ -530,6 +544,7 @@ bool split_write_init(char*orig_filename){
 			free(split_out_alloc1);
 			split_out_file=open_or_new(a);
 			if(split_out_file!=-1){
+				if(remover!=split_out_path3)c-=split_out_path1-remover;
 				if(outformatext_size!=1){
 					*c='.';c++;
 				}

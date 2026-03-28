@@ -1,3 +1,6 @@
-
-i=`ps aux | grep ./edor | tr -s ' ' | cut -d' ' -f2 | head -1`
+p=./edor
+if [ -n "$1" ]; then
+	p=$1
+fi
+i=`ps aux | grep $p | tr -s ' ' | cut -d' ' -f2 | head -1`
 sudo gdb -p $i
