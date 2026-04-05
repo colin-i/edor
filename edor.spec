@@ -1,6 +1,6 @@
 
 Name: edor
-Version: 1.88
+Version: 1.89
 Release: 0
 License: GPLv3
 Summary: Console user interface text editor
@@ -34,6 +34,24 @@ make
 
 #-- CHANGELOG -----------------------------------------------------------------#
 %changelog
+* Sun Apr 05 2026 costin <costin.botescu@gmail.com> 1.89-0
+- alt ctrl k (costin.botescu@gmail.com)
+- when saving mix: remove rule extension, and remove prev extension left of
+  format extension (costin.botescu@gmail.com)
+- prefs fix (costin.botescu@gmail.com)
+- the new preference combo (costin.botescu@gmail.com)
+- more plans (costin.botescu@gmail.com)
+- one call (costin.botescu@gmail.com)
+- "up" (costin.botescu@gmail.com)
+- write_escaped (costin.botescu@gmail.com)
+- "up" (costin.botescu@gmail.com)
+- escape plan (costin.botescu@gmail.com)
+- split escape plan (costin.botescu@gmail.com)
+- "up" (costin.botescu@gmail.com)
+- alt+l info (costin.botescu@gmail.com)
+- titles with user option for terminations (costin.botescu@gmail.com)
+- "up" (costin.botescu@gmail.com)
+
 * Thu Feb 19 2026 costin <costin.botescu@gmail.com> 1.88-0
 - guides (costin.botescu@gmail.com)
 - one less comparison at mouse (costin.botescu@gmail.com)
