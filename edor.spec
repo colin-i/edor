@@ -1,6 +1,6 @@
 
 Name: edor
-Version: 1.89
+Version: 1.90
 Release: 0
 License: GPLv3
 Summary: Console user interface text editor
@@ -34,6 +34,10 @@ make
 
 #-- CHANGELOG -----------------------------------------------------------------#
 %changelog
+* Sun Apr 26 2026 costin <costin.botescu@gmail.com> 1.90-0
+- optimizations (costin.botescu@gmail.com)
+- "up" (costin.botescu@gmail.com)
+
 * Sun Apr 05 2026 costin <costin.botescu@gmail.com> 1.89-0
 - alt ctrl k (costin.botescu@gmail.com)
 - when saving mix: remove rule extension, and remove prev extension left of

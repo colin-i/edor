@@ -1,3 +1,9 @@
+edor (1-x90) focal; urgency=medium
+
+  * flto & march optimizations
+
+ -- bc <bc@ubuntu>  Sun, 26 Apr 2026 13:33:53 +0300
+
 edor (1-x89) focal; urgency=medium
 
   * split and title features
