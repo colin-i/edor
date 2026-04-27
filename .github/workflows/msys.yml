@@ -71,10 +71,8 @@ jobs:
        make DESTDIR="\${pkgdir}" install
       }
       EOF
+
       #makepkg-mingw --noconfirm --noprogressbar
-      pwd
-      ls -l
-      ls -l src
       makepkg --noconfirm --noprogressbar
 
       #test & up
