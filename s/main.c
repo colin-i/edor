@@ -1662,6 +1662,7 @@ static bool bcsp(size_t y,row_dword x,int*rw,int*cl,WINDOW*w){
 	int c=cl[0];
 	if(xtext==0&&c==0){
 		if(y==0)return true;//to not continue
+			//strange: here is also going with backspace when 0,0 (freshstart), when not on row 0(on row 0 is normal), then getch, normally nothing, but is not like that, also at del
 		size_t yy=y-1;
 		row*r0=&rows[yy];
 		row*r1=&rows[y];
