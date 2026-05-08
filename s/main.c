@@ -1662,7 +1662,6 @@ static bool bcsp(size_t y,row_dword x,int*rw,int*cl,WINDOW*w){
 	int c=cl[0];
 	if(xtext==0&&c==0){
 		if(y==0)return true;//to not continue
-			//strange: here is also going with backspace when 0,0 (freshstart), when not on row 0(on row 0 is normal), then getch, normally nothing, but is not like that, also at del
 		size_t yy=y-1;
 		row*r0=&rows[yy];
 		row*r1=&rows[y];
@@ -1786,9 +1785,12 @@ static void type(int cr,WINDOW*w){
 	row*r=&rows[y];
 	int rw=(int)(y-ytext);
 	if(rw<rwnr){
-		xtext=r->sz;
 		cl=0;
-		refreshpage(w);
+		//if(xtext!=r->sz){this can also be added if here was not a rare case
+		xtext=r->sz;
+		refreshpage(w);//here if nothing next, like nothing to do on backspace or del, will move cursor down, so, adding the next wmove
+		wmove(w,rw,0);  //this wmove
+		//}
 	}else{
 		size_t dif=xx-x;
 		cl-=dif;
