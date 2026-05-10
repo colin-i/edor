@@ -1,6 +1,6 @@
 
 Name: edor
-Version: 1.90
+Version: 1.91
 Release: 0
 License: GPLv3
 Summary: Console user interface text editor
@@ -34,6 +34,11 @@ make
 
 #-- CHANGELOG -----------------------------------------------------------------#
 %changelog
+* Sun May 10 2026 costin <costin.botescu@gmail.com> 1.91-0
+- annoying extra rows blank behavior keys (costin.botescu@gmail.com)
+- "up" (costin.botescu@gmail.com)
+- "up" (costin.botescu@gmail.com)
+
 * Sun Apr 26 2026 costin <costin.botescu@gmail.com> 1.90-0
 - optimizations (costin.botescu@gmail.com)
 - "up" (costin.botescu@gmail.com)
