@@ -5,7 +5,7 @@ On Ubuntu(amd64 arm64/armhf)(focal jammy noble) from PPA.
 ```sh
 sudo add-apt-repository ppa:colin-i/ppa
 ```
-Or the *manual installation step* from this link *https://gist.github.com/colin-i/e324e85e0438ed71219673fbcc661da6* \
+Or the *manual installation step* from this [link](https://gist.github.com/colin-i/e324e85e0438ed71219673fbcc661da6#manual-installation-step).\
 Install:
 ```sh
 sudo apt-get install edor
@@ -58,5 +58,4 @@ Use *\-\-prefix=your_path* at *./configure* if needed (example: at Termux in And
 Uninstall command is *make uninstall*.
 
 ## Donations
-The *donations* section is here
-*https://gist.github.com/colin-i/e324e85e0438ed71219673fbcc661da6*
+The *donations* section is [here](https://gist.github.com/colin-i/e324e85e0438ed71219673fbcc661da6#donations).
