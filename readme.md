@@ -1,7 +1,7 @@
 # EDitOR
 
 ## Install
-On Ubuntu(amd64 arm64/armhf)(focal jammy noble) from PPA.
+On Ubuntu(amd64 arm64/armhf)(focal jammy noble resolute) from PPA.
 ```sh
 sudo add-apt-repository ppa:colin-i/ppa
 ```
