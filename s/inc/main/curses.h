@@ -5,9 +5,9 @@
 #define COLOR_BLACK 0
 #define COLOR_GREEN 2
 #define COLOR_YELLOW 3
-#define COLOR_CYAN 6
+#define COLOR_BLUE 4
+//#define COLOR_CYAN 6
 #define COLOR_WHITE 7
-#define ERR -1
 typedef unsigned long mmask_t;
 typedef struct
 {
@@ -65,7 +65,6 @@ int delwin(WINDOW*);
 //int doupdate(void);
 int endwin(void);
 int getmouse(MEVENT*);
-int init_pair(short,short,short);
 WINDOW*initscr(void);
 int keypad(WINDOW*,bool);
 mmask_t mousemask(mmask_t,mmask_t*);

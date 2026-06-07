@@ -155,6 +155,7 @@ bool mod_flag=true;
 bool ocompiler_flag=false;
 size_t aftercall;
 size_t clue=no_clue;size_t normalize_clue=no_clue;
+short foregroundcolor=COLOR_WHITE;short backgroundcolor=COLOR_BLUE;
 
 static char*mapsel=nullptr;
 //static char*text_file=nullptr;
@@ -226,10 +227,9 @@ static char tot_inf[maxulong_nul];
 static char tot_bts;
 static int tot_x;
 
-#define maxushort 6
 #define maxushort_nul maxushort+1
 
-static char pref_version[]={'0'};
+static char pref_version[]={'1'};
 
 bool no_char(char z){return z<32||z>=127;}
 static size_t tab_grow(WINDOW*w,char*a,size_t sz,int*ptr){
@@ -2114,8 +2114,10 @@ static void writeprefs(int f){
 								char n=sprintf(tmbuf,"%hu",timeout_duration);
 								if(write(f,&n,sizeof(char))==sizeof(char)){
 									if(write(f,tmbuf,n)==n){
-										if(tit_writeprefs(f)/*true*/){
-											split_writeprefs(f);
+										if(color_writeprefs(f,tmbuf)/*true*/){
+											if(tit_writeprefs(f)/*true*/){
+												split_writeprefs(f);
+											}
 										}
 									}
 								}
@@ -2274,7 +2276,11 @@ static bool loopin(WINDOW*w){
 				}
 			}
 			else if(z==(key_titles+A_to_a)){if(pref_change(w,&tit_delims,&tit_delims_new,false,key_titles,0)/*true*/)return true;}
-			else if(z==key_ocomp){if(pref_change(w,&ocode_extension,&ocode_extension_new,false,key_ocomp,0)/*true*/)return true;}
+			else if(z==(key_len+A_to_a)){
+				quick_pack(com_nr_restore,change_save_timeout)
+				if(command((char*)args,(show_key_struct){key_len,0})==command_resize)return true;
+				wmove(w,getcury(w),getcurx(w));
+			}else if(z==key_ocomp){if(pref_change(w,&ocode_extension,&ocode_extension_new,false,key_ocomp,0)/*true*/)return true;}
 			else if(z==key_actswf){if(pref_change(w,&esdelimiter,&esdelimiter_new,true,key_actswf,0)/*true*/)return true;}            //don't allow no size delimiters
 			else if(z==key_actswf2){if(pref_change(w,&split_outformatext,&split_outformatext_new,false,key_actswf2,0)/*true*/)return true;}
 			else{
@@ -2328,6 +2334,12 @@ static bool loopin(WINDOW*w){
 					else{indent_flag=true;c=orig_upkey(key_indents);}
 					setprefs(mask_indent,indent_flag);
 					vis(c,w);//is not showing on stdscr without wnoutrefresh(thisWindow)
+				}else if(chr==key_indopt){
+					char c;
+					if(indopt_flag/*true*/){indopt_flag=false;c=orig_lowkey(key_indopt);}
+					else{indopt_flag=true;c=orig_upkey(key_indopt);}
+					setprefs(mask_indopt,indopt_flag);
+					vis(c,w);
 				}else if(chr==key_ocomp){
 					if(ocompiler_flag/*true*/){ocompiler_flag=false;c=orig_lowkey(key_ocomp);}
 					else{ocompiler_flag=true;c=orig_upkey(key_ocomp);
@@ -2354,20 +2366,17 @@ static bool loopin(WINDOW*w){
 					quick_pack(com_nr_swkey,change_key)
 					if(command((char*)args,(show_key_struct){key_swkey,0})==command_resize)return true;
 					wmove(w,getcury(w),getcurx(w));
-				}else if(chr==key_tab){
+				}else if(chr==key_len){
 					quick_pack(com_nr_tab,change_tab_size)
-					if(command((char*)args,(show_key_struct){key_tab,0})==command_false)wmove(w,getcury(w),getcurx(w));
+					if(command((char*)args,(show_key_struct){key_len,0})==command_false)wmove(w,getcury(w),getcurx(w));
 					else return true;
-				}else if(chr==key_restore){
-					quick_pack(com_nr_restore,change_save_timeout)
-					if(command((char*)args,(show_key_struct){key_restore,0})==command_resize)return true;
+				}else if(chr==key_color){
+					quick_pack(com_nr_color,change_color)
+					//If the color pair was previously initialized, the screen is refreshed and all occurrences of that color pair are changed to the new definition.
+					//anyway there are no colored selections
+					command((char*)args,(show_key_struct){key_color,0});//==command_false)
 					wmove(w,getcury(w),getcurx(w));
-				}else if(chr==key_indopt){
-					char c;
-					if(indopt_flag/*true*/){indopt_flag=false;c=orig_lowkey(key_indopt);}
-					else{indopt_flag=true;c=orig_upkey(key_indopt);}
-					setprefs(mask_indopt,indopt_flag);
-					vis(c,w);
+					//else return true;
 				}else type(c,w);//enter, tab, ^, unknown ctrls
 			}else{
 				if(strcmp(s,"KEY_F(1)")==0){
@@ -2694,10 +2703,12 @@ static bool getprefs(){
 																	char rd[maxushort_nul];
 																	if(read(f,rd,n)==n){
 																		rd[n]='\0';
-																		sscanf(rd,"%hu",&timeout_duration);
-																		//
-																		if(tit_readprefs(f)/*true*/){
-																			split_readprefs(f);
+																		if(sscanf(rd,"%hu",&timeout_duration)==1){
+																			if(color_readprefs(f,rd)/*true*/){
+																				if(tit_readprefs(f)/*true*/){
+																					split_readprefs(f);
+																				}
+																			}
 																		}
 																	}
 																}
@@ -2778,7 +2789,7 @@ static void writefilebuf(char*cutbuf_file){
 static void color(){
 	if(start_color()!=ERR){
 		if(init_pair(color_a,COLOR_BLACK,COLOR_WHITE)!=ERR){//TERM vt100
-			if(init_pair(color_b,COLOR_BLACK,COLOR_CYAN)!=ERR){
+			if(init_pair(color_b,foregroundcolor,backgroundcolor)!=ERR){
 				if(init_pair(color_c,COLOR_BLACK,COLOR_GREEN)!=ERR){
 					init_pair(color_d,COLOR_BLACK,COLOR_YELLOW);
 				}

@@ -1,4 +1,6 @@
 
+#define ERR -1
+
 typedef void WINDOW;
 extern WINDOW*stdscr;
 typedef unsigned int chtype;
@@ -15,16 +17,17 @@ extern "C" {
 #endif
 
 //main/bar
-int move(int,int);
+int addch(const chtype);
+int addstr(const char*);
 int getch(void);
 int getmaxy(const WINDOW*);
-int addch(const chtype);
-int waddch(WINDOW*,const chtype);
+int init_pair(short,short,short);
+int move(int,int);
 int mvaddch(int,int,const chtype);
 int mvwaddch(WINDOW*,int,int,const chtype);
-int addstr(const char*);
-int wnoutrefresh(WINDOW*);
+int waddch(WINDOW*,const chtype);
 int wattrset(WINDOW*,int);
+int wnoutrefresh(WINDOW*);
 WINDOW*newwin(int,int,int,int);
 //main/bar/tw
 int getmaxx(const WINDOW*);

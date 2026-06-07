@@ -20,9 +20,10 @@
 #define com_nr_swkey 6
 #define com_nr_tab 7
 #define com_nr_restore 8
-	#define com_nr_passcursor_numbers com_nr_restore
-#define com_nr_save 9
-#define com_nr_ext 10
+#define com_nr_color 9
+	#define com_nr_passcursor_numbers com_nr_color
+#define com_nr_save 10
+#define com_nr_ext 11
 #define comnrp_define char*
 #define command_resize -2
 #define command_no -1 //(char)-1 but there is at least a r> comparation
@@ -37,6 +38,7 @@ typedef struct{
 #define is_word_char(a) ('0'<=a&&(a<='9'||('A'<=a&&(a<='Z'||(a=='_'||('a'<=a&&a<='z'))))))
 #define max_path 0xff
 #define max_path_0 max_path+1
+#define maxushort 6
 
 #define protocol_simple "%u"
 #undef protocol
@@ -125,6 +127,8 @@ extern bool mod_flag;
 extern char*ocode_extension;
 extern char*textfile;
 extern unsigned short timeout_duration;
+extern short foregroundcolor;
+extern short backgroundcolor;
 //bar,tw
 extern char tab_sz;
 //bar,tw,tit
@@ -156,7 +160,10 @@ command_char saving_base(char*);
 command_char question(const char*);
 command_char change_key(bar_byte);
 command_char change_tab_size(bar_byte);
+command_char change_color(bar_byte);
 command_char change_save_timeout(bar_byte);
+bool color_readprefs(int,char*);
+bool color_writeprefs(int,char*);
 command_char command(char*,show_key_struct);
 #define centering2(w,prw,pxc,right) position(0,0);centering3(w,prw,pxc,right);
 #define centering(w,prw,pxc) centering2(w,prw,pxc,false)

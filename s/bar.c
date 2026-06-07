@@ -717,6 +717,55 @@ command_char change_tab_size(bar_byte cursor){
 	}
 	return command_false;
 }
+
+command_char change_color(bar_byte cursor){//input0 is null therminated
+	int pos;//is bar_byte but will be a warning
+	if (sscanf(input0, "%hu,%hu%n", &foregroundcolor, &backgroundcolor, &pos) == 2 && input0[pos] == '\0'){
+		// valid: exactly "number,number"
+		if(init_pair(color_b,foregroundcolor,backgroundcolor)!=ERR){
+			rewriteprefs;
+		}
+	}
+	return command_ok;//If the color pair was previously initialized, the screen is refreshed and all occurrences of that color pair are changed to the new definition.
+	//anyway there are no colored selections
+}
+bool color_writeprefs(int f,char*tmbuf){
+	char n=sprintf(tmbuf,"%hu",foregroundcolor);
+	if(write(f,&n,sizeof(char))==sizeof(char)){
+		if(write(f,tmbuf,n)==n){
+			n=sprintf(tmbuf,"%hu",backgroundcolor);
+			if(write(f,&n,sizeof(char))==sizeof(char)){
+				if(write(f,tmbuf,n)==n){
+					return true;
+				}
+			}
+		}
+	}
+	return false;
+}
+bool color_readprefs(int f,char*rd){
+	char n;if(read(f,&n,sizeof(char))==sizeof(char)){
+		if(n<=maxushort){
+			if(read(f,rd,n)==n){
+				rd[n]='\0';
+				if(sscanf(rd,"%hu",&foregroundcolor)==1){
+					if(read(f,&n,sizeof(char))==sizeof(char)){
+						if(n<=maxushort){
+							if(read(f,rd,n)==n){
+								rd[n]='\0';
+								if(sscanf(rd,"%hu",&backgroundcolor)==1){
+									return true;
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+	return false;
+}
+
 command_char change_save_timeout(bar_byte cursor){
 	char fmt[    1+3+  1+1+1];//let 9999999999999 to be truncated at maxushort
 	sprintf(fmt,"%%%hhuhu",cursor);//input0 is null terminated but that was for another way, not depending on that
@@ -1372,9 +1421,11 @@ command_char command(comnrp_define comnrp,show_key_struct s){
 		}else if(*comnrp==com_nr_ext){
 			extdata*d=((extdata**)comnrp)[1];
 			cursor=sprintf(input,"%s",(d->orig)[0]);//on prefs is len<=0xff and max_path_0 is 0x100
+		}else if(*comnrp==com_nr_tab){
+			cursor=sprintf(input,"%c",tab_sz+'0');
 		}else if(*comnrp==com_nr_restore){
 			cursor=sprintf(input,"%u",timeout_duration);
-		}else{
+		}else{// goto swkey save
 			cursor=0;
 		}
 	}
