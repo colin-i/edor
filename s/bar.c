@@ -718,9 +718,10 @@ command_char change_tab_size(bar_byte cursor){
 	return command_false;
 }
 
+#define color_string_macro "%hu,%hu"
 command_char change_color(bar_byte cursor){//input0 is null therminated
 	int pos;//is bar_byte but will be a warning
-	if (sscanf(input0, "%hu,%hu%n", &foregroundcolor, &backgroundcolor, &pos) == 2 && input0[pos] == '\0'){
+	if (sscanf(input0, color_string_macro "%n", &foregroundcolor, &backgroundcolor, &pos) == 2 && input0[pos] == '\0'){
 		// valid: exactly "number,number"
 		if(init_pair(color_b,foregroundcolor,backgroundcolor)!=ERR){
 			rewriteprefs;
@@ -1425,6 +1426,8 @@ command_char command(comnrp_define comnrp,show_key_struct s){
 			cursor=sprintf(input,"%c",tab_sz+'0');
 		}else if(*comnrp==com_nr_restore){
 			cursor=sprintf(input,"%u",timeout_duration);
+		}else if(*comnrp==com_nr_color){
+			cursor=sprintf(input,color_string_macro,foregroundcolor,backgroundcolor);
 		}else{// goto swkey save
 			cursor=0;
 		}
