@@ -38,7 +38,7 @@ typedef struct{
 #define is_word_char(a) ('0'<=a&&(a<='9'||('A'<=a&&(a<='Z'||(a=='_'||('a'<=a&&a<='z'))))))
 #define max_path 0xff
 #define max_path_0 max_path+1
-#define maxushort 6
+#define maxshort 6
 
 #define protocol_simple "%u"
 #undef protocol

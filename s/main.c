@@ -227,7 +227,8 @@ static char tot_inf[maxulong_nul];
 static char tot_bts;
 static int tot_x;
 
-#define maxushort_nul maxushort+1
+#define maxshort_nul maxshort+1
+#define maxushort 5
 
 static char pref_version[]={'1'};
 
@@ -2110,7 +2111,7 @@ static void writeprefs(int f){
 					if(write(f,&sz,extlen_size)==extlen_size){
 						if(write(f,filewhites_extension,sz)==sz){
 							if(write(f,&tab_sz,sizeof(tab_protocol))==sizeof(tab_protocol)){
-								char tmbuf[maxushort_nul];
+								char tmbuf[maxshort_nul]; //u here signed at colors
 								char n=sprintf(tmbuf,"%hu",timeout_duration);
 								if(write(f,&n,sizeof(char))==sizeof(char)){
 									if(write(f,tmbuf,n)==n){
@@ -2700,7 +2701,7 @@ static bool getprefs(){
 															tab_sz=tabtest;
 															char n;if(read(f,&n,sizeof(char))==sizeof(char)){
 																if(n<=maxushort){
-																	char rd[maxushort_nul];
+																	char rd[maxshort_nul]; //u here signed at readprefs
 																	if(read(f,rd,n)==n){
 																		rd[n]='\0';
 																		if(sscanf(rd,"%hu",&timeout_duration)==1){

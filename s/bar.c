@@ -718,10 +718,11 @@ command_char change_tab_size(bar_byte cursor){
 	return command_false;
 }
 
-#define color_string_macro "%hu,%hu"
+#define color_string_macro "%hi"
+#define color_strings_macro color_string_macro "," color_string_macro
 command_char change_color(bar_byte cursor){//input0 is null therminated
 	int pos;//is bar_byte but will be a warning
-	if (sscanf(input0, color_string_macro "%n", &foregroundcolor, &backgroundcolor, &pos) == 2 && input0[pos] == '\0'){
+	if (sscanf(input0, color_strings_macro "%n", &foregroundcolor, &backgroundcolor, &pos) == 2 && input0[pos] == '\0'){
 		// valid: exactly "number,number"
 		if(init_pair(color_b,foregroundcolor,backgroundcolor)!=ERR){
 			rewriteprefs;
@@ -746,12 +747,12 @@ bool color_writeprefs(int f,char*tmbuf){
 }
 bool color_readprefs(int f,char*rd){
 	char n;if(read(f,&n,sizeof(char))==sizeof(char)){
-		if(n<=maxushort){
+		if(n<=maxshort){
 			if(read(f,rd,n)==n){
 				rd[n]='\0';
 				if(sscanf(rd,"%hu",&foregroundcolor)==1){
 					if(read(f,&n,sizeof(char))==sizeof(char)){
-						if(n<=maxushort){
+						if(n<=maxshort){
 							if(read(f,rd,n)==n){
 								rd[n]='\0';
 								if(sscanf(rd,"%hu",&backgroundcolor)==1){
@@ -1427,7 +1428,7 @@ command_char command(comnrp_define comnrp,show_key_struct s){
 		}else if(*comnrp==com_nr_restore){
 			cursor=sprintf(input,"%u",timeout_duration);
 		}else if(*comnrp==com_nr_color){
-			cursor=sprintf(input,color_string_macro,foregroundcolor,backgroundcolor);
+			cursor=sprintf(input,color_strings_macro,foregroundcolor,backgroundcolor);
 		}else{// goto swkey save
 			cursor=0;
 		}
