@@ -170,9 +170,6 @@ wr_n ""
 
 wr_n "static void keys_inits(){${buf4}}"
 
-keys_index_interval=$((122-97))
-keys_index_val=$((keys_index_interval+1))
-
 #can define here static a[]; and defines to compile right but is a risk and better to undo them
 wr_n "#define A_to_a 0x20"
 if [ ${level} -ge ${level_pref_wr} ]; then
@@ -181,6 +178,9 @@ if [ ${level} -ge ${level_pref_wr} ]; then
 	if [ ${level} -ge ${level_pref_rd} ]; then
 		wr_n "static char keys_row_frompref[${number_of_keys}];static void keys_row_frompref_init(){char a[]={${buf2}};memcpy(keys_row_frompref,a,sizeof(a));}"
 		if [ ${level} -ge ${level_map} ]; then
+			keys_index_interval=$((122-97))
+			keys_index_val=$((keys_index_interval+1))
+
 			wr_n "static key_struct keys_frompref[${keys_index_val}];"
 			wr_n "static key_struct keys_orig[]={${buf}};"
 			wr_n "key_struct*keys;"
