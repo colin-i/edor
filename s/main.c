@@ -144,40 +144,40 @@ static void __attribute__((noreturn)) signalHandler(int sig,siginfo_t *info,void
 #define normalize_ok 1
 #define normalize_char signed char
 
-char ln_term[3]="\n";
-size_t ln_term_sz=1;
-char*textfile=nullptr;
-row*rows=nullptr;
-size_t rows_tot=1;
-size_t ytext=0;
-row_dword xtext=0;//and what about when xtext + xc goes size_t ? is ok, nothing is lost, tested, (size_t)xtext cast is same without cast, but is recommended
-bool mod_flag=true;
-bool ocompiler_flag=false;
+char ln_term[3];
+size_t ln_term_sz;
+char*textfile;
+row*rows;
+size_t rows_tot;
+size_t ytext;
+row_dword xtext;
+bool mod_flag;
+bool ocompiler_flag;
 size_t aftercall;
-size_t clue=no_clue;size_t normalize_clue=no_clue;
-short foregroundcolor=COLOR_WHITE;short backgroundcolor=COLOR_BLUE;
+size_t clue;size_t normalize_clue;
+short foregroundcolor;short backgroundcolor;
 
-static char*mapsel=nullptr;
+static char*mapsel;
 //static char*text_file=nullptr;
-static size_t rows_spc=1;//at rows_expand
-static bool*x_right=nullptr;
-static int*tabs=nullptr;
+static size_t rows_spc;
+static bool*x_right;
+static int*tabs;
 static int tabs_rsz;
 static int yhelp;
 static bool helpend;
 static int phelp;
 static char*helptext;
-static time_t hardtime=0;
-static char*restorefile=nullptr;
+static time_t hardtime;
+static char*restorefile;
 static char restorefile_buf[max_path_0];
 static char restorefile_buf2[max_path_0];
-static char*editingfile=nullptr;
+static char*editingfile;
 static char editingfile_buf[max_path_0];
 static char editingfile_buf2[max_path_0];
 
-static mmask_t stored_mouse_mask=0;
+static mmask_t stored_mouse_mask;
 #define stored_mouse_mask_q stored_mouse_mask!=0
-static bool indent_flag=false;
+static bool indent_flag;
 #define mask_size 1
 //#define mask_nomask 0
 #define mask_mouse 1
@@ -187,36 +187,35 @@ static bool indent_flag=false;
 #define mask_splits 0x10
 #define mask_filewhites 0x20
 #define mask_indopt 0x40
-static char prefs_file[max_path_0]={'\0'};//only the first byte is set
-static char*ocode_extension_new=nullptr;
+static char prefs_file[max_path_0];//={'\0'};//only the first byte is set
+static char*ocode_extension_new;
 
 //static bool visual_bool=false;
-static char*cutbuf=nullptr;
-static size_t cutbuf_sz=0;
-static size_t cutbuf_spc=0;
-static size_t cutbuf_r=1;
-static char*text_init_b=nullptr;
+static char*cutbuf;
+static size_t cutbuf_sz;
+static size_t cutbuf_spc;
+static size_t cutbuf_r;
+static char*text_init_b;
 static char*text_init_e;//is init? malloc to new : realloc. and to free or not to free.
 static int _rb;static int _cb;
 static int _re;static int _ce;
-static int topspace=1;
+#define topspace 1
 //left,syntax,right individual size
 #define contentmarginsize 1
-static int leftspace=contentmarginsize+contentmarginsize;
+#define leftspace (contentmarginsize+contentmarginsize)
 #define view_margin 8
-static WINDOW*leftcontent=nullptr;
-static WINDOW*rightcontent=nullptr;
-static char at_right_mark='>';
-static char at_left_mark='<';
-static char at_content_nomark=' ';
-static WINDOW*syntaxcontent=nullptr;
-bool filewhites_flag=false;
-char*filewhites_extension=(char*)"yml";
-static char*filewhites_extension_new=nullptr;
+static WINDOW*leftcontent;
+static WINDOW*rightcontent;
+#define at_right_mark '>'
+#define at_left_mark '<'
+#define at_content_nomark ' '
+static WINDOW*syntaxcontent;
+bool filewhites_flag;
+char*filewhites_extension;
+static char*filewhites_extension_new;
 #define tab_protocol char
-tab_protocol tab_sz=6;
-static int user_return=EXIT_SUCCESS;
-static bool indopt_flag=false;
+tab_protocol tab_sz;
+static bool indopt_flag;
 
 #define splits_activated 'S'
 #define splits_activated_mixless 'h'
@@ -230,7 +229,10 @@ static int tot_x;
 #define maxshort_nul maxshort+1
 #define maxushort 5
 
-static char pref_version[]={'1'};
+#define pref_version "1"
+
+static int user_return=EXIT_SUCCESS;
+static char reload=1;
 
 bool no_char(char z){return z<32||z>=127;}
 static size_t tab_grow(WINDOW*w,char*a,size_t sz,int*ptr){
@@ -455,8 +457,9 @@ static int helpshow(int n){
 	do{
 		helpend=helptext[i]==0;
 		bool newl=helptext[i]=='\n';
-		c++;i++;
+		c++;
 		bool is_max=c==max;
+		if(!helpend)i++;
 		if(newl/*true*/||helpend/*true*/||is_max/*true*/){
 			move(y,0);
 			//int sum=i-j+cstart;
@@ -467,20 +470,23 @@ static int helpshow(int n){
 			char aux=helptext[i];helptext[i]='\0';
 			addstr(&helptext[j]);
 			helptext[i]=aux;
-			//old text seems to go anyway without this
+			//old text seems to go anyway without this when writting new lines
 			//if(sum<max)clrtoeol();
 			y++;
 			if(getmaxy(stdscr)-3<y)break;
 			j=i;
-			if(newl==false){
+			if(is_max/*true*/){
 				if(helptext[i]=='\n'){j++;i=j;}
 				else cstart=1;
 			}
 			c=cstart;
 		}
-	}while(helpend==false);
+	}while(!helpend);
+
 	int x=getcurx(stdscr);
 	if(x!=0)for(;x!=max;x++)addch(' ');//seems that prelast row need this, a color switch will be at next last row
+	//this is because last row is now having a new line for addstr for curses to clean it
+
 	return y;
 }
 
@@ -2284,7 +2290,13 @@ static bool loopin(WINDOW*w){
 			}else if(z==key_ocomp){if(pref_change(w,&ocode_extension,&ocode_extension_new,false,key_ocomp,0)/*true*/)return true;}
 			else if(z==key_actswf){if(pref_change(w,&esdelimiter,&esdelimiter_new,true,key_actswf,0)/*true*/)return true;}            //don't allow no size delimiters
 			else if(z==key_actswf2){if(pref_change(w,&split_outformatext,&split_outformatext_new,false,key_actswf2,0)/*true*/)return true;}
-			else{
+			else if(z==key_quit){
+				bool q;bool not_q=quit_from_key(w,&q);
+				if(!not_q/*false*/){
+					reload=2;
+					return q;
+				}
+			}else{
 				const char*s=keyname(z);
 				if(*s==Char_Ctrl){
 					if(s[1]==key_actswf){if(pref_change(w,&split_extension,&split_extension_new,false,key_actswf,A_to_a)/*true*/)return true;}
@@ -2667,7 +2679,7 @@ static bool getprefs(){
 		if(read(f,&len,extlen_size)==extlen_size){
 			char prefe_version[0x100*sizeof(bar_byte)];
 			if(read(f,prefe_version,len)==len){
-				if((len!=sizeof(pref_version))||(memcmp(pref_version,prefe_version,len)!=0)){
+				if((len!=(sizeof(pref_version)-1))||(memcmp(pref_version,prefe_version,len)!=0)){
 					puts("Preferences file version not matching. Run the program with " remove_con);
 					return false;
 				}
@@ -3080,6 +3092,11 @@ static void action_go(int argc,char**argv,char*cutbuf_file){
 	if(ok!=normalize_err){
 		WINDOW*w1=initscr();
 		if(w1){//!=nullptr
+			if(reload!=0){
+				texter_macro("Reloaded");
+				reload=0;
+			}
+
 			if(cutbuf_file[0]!='\0')getfilebuf(cutbuf_file);//this is here,not after cutbuf_file path is set,but after line termination is final
 
 			//if set 1press_and_4,5 will disable right press (for copy menu) anyway
@@ -3130,6 +3147,46 @@ static void action(int argc,char**argv){
 		free(helptext);
 	}
 }
+static void inits(){
+	*ln_term='\n';ln_term[1]='\0';
+	ln_term_sz=1;
+	textfile=nullptr;
+	rows=nullptr;
+	rows_tot=1;
+	ytext=0;
+	xtext=0;//and what about when xtext + xc goes size_t ? is ok, nothing is lost, tested, (size_t)xtext cast is same without cast, but is recommended
+	mod_flag=true;
+	ocompiler_flag=false;
+	clue=no_clue;normalize_clue=no_clue;
+	foregroundcolor=COLOR_WHITE;backgroundcolor=COLOR_BLUE;
+	mapsel=nullptr;
+	rows_spc=1;//at rows_expand
+	x_right=nullptr;
+	tabs=nullptr;
+	hardtime=0;
+	restorefile=nullptr;
+	editingfile=nullptr;
+	stored_mouse_mask=0;
+	indent_flag=false;
+	*prefs_file='\0';
+	ocode_extension_new=nullptr;
+	cutbuf=nullptr;
+	cutbuf_sz=0;
+	cutbuf_spc=0;
+	cutbuf_r=1;
+	text_init_b=nullptr;
+	leftcontent=nullptr;
+	rightcontent=nullptr;
+	syntaxcontent=nullptr;
+	filewhites_flag=false;
+	filewhites_extension=(char*)"yml";
+	filewhites_extension_new=nullptr;
+	tab_sz=6;
+	indopt_flag=false;
+	bar_inits();
+	tit_inits();
+	split_inits();
+}
 int main(int argc,char**argv){
 	#ifdef ARM7L
 	struct sigaction signalhandlerDescriptor;
@@ -3140,6 +3197,11 @@ int main(int argc,char**argv){
 	//baz(argc);
 	#endif
 
-	action(argc,argv);
+	while(reload/*!=0*/){
+		reload--;
+		inits();
+		action(argc,argv);
+	}
+
 	return user_return;
 }

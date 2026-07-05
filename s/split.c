@@ -47,23 +47,23 @@
 
 #include "def.h"
 
-bool splits_flag=false;
-split_char split_reminder_c=split_no;
+bool splits_flag;
+split_char split_reminder_c;
 
-char*sdelimiter=(char*)"|||";// iso forbids
-char*esdelimiter=(char*)"///";
-char* sdelimiter_new=nullptr;
-char* esdelimiter_new=nullptr;
-char*split_out=(char*)"osrc";
-char*split_out_new=nullptr;
-char*split_extension=(char*)"oac";
-char*split_extension_new=nullptr;
-char*split_outext=(char*)"";//was oc but the reason is at split_write_init at split_extension
-char*split_outext_new=nullptr;
-char*split_outformatext=(char*)"split";
-char*split_outformatext_new=nullptr;
-char*escape_delims=(char*)"\"'";
-char*escape_delims_new=nullptr;
+char*sdelimiter;
+char*esdelimiter;
+char* sdelimiter_new;
+char* esdelimiter_new;
+char*split_out;
+char*split_out_new;
+char*split_extension;
+char*split_extension_new;
+char*split_outext;
+char*split_outext_new;
+char*split_outformatext;
+char*split_outformatext_new;
+char*escape_delims;
+char*escape_delims_new;
 
 //char*fulldelim;
 //unsigned short fulldelim_size;
@@ -82,7 +82,7 @@ static size_t split_out_size2;
 static int split_out_file;
 static int split_out_formatfile;
 
-static char last_escape_char='\0';
+static char last_escape_char;
 static char*last_split_end;//init at split_write_init
 static char last_escape_char_store;//no init required
 
@@ -715,4 +715,24 @@ const char* split_write(size_t*_index,int orig_file,row_dword*_off,bool*majorerr
 		}
 	}
 	return nullptr;
+}
+
+void split_inits(){
+	splits_flag=false;
+	split_reminder_c=split_no;
+	sdelimiter=(char*)"|||";// iso forbids
+	esdelimiter=(char*)"///";
+	sdelimiter_new=nullptr;
+	esdelimiter_new=nullptr;
+	split_out=(char*)"osrc";
+	split_out_new=nullptr;
+	split_extension=(char*)"oac";
+	split_extension_new=nullptr;
+	split_outext=(char*)"";//was oc but the reason is at split_write_init at split_extension
+	split_outext_new=nullptr;
+	split_outformatext=(char*)"split";
+	split_outformatext_new=nullptr;
+	escape_delims=(char*)"\"'";
+	escape_delims_new=nullptr;
+	last_escape_char='\0';
 }

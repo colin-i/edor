@@ -32,8 +32,8 @@
 
 #include "base.h"
 
-char*tit_delims=(char*)":";// iso forbids
-char*tit_delims_new=nullptr;
+char*tit_delims;// iso forbids
+char*tit_delims_new;
 
 static bool titcolor(char b,char*color,WINDOW*w,bool singlechar){
 	singlechar=bar_char(b,w,singlechar);
@@ -201,4 +201,9 @@ bool tit_readprefs(int f){
 		}
 	}
 	return false;
+}
+
+void tit_inits(){
+	tit_delims=(char*)":";// iso forbids
+	tit_delims_new=nullptr;
 }

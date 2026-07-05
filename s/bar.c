@@ -64,19 +64,19 @@ static int fprevnumber;
 static bool filewhites_reminder;//=false;
 
 #define err_len_min 2
-bool insensitive=false;
-static int err_l=0;
+bool insensitive;
+static int err_l;
 #define b_inf_s "F1 for help"
 #define quest_ex_s "? y/C/n"
-static int com_left=sizeof(b_inf_s);
+#define com_left sizeof(b_inf_s)
 static char input1[max_path_0];
 static char input2[max_path_0];
-static char*input0=input1;
+static char*input0;
 static char inputr[max_path_0];
-static bar_byte cursorr=0;
+static bar_byte cursorr;
 #define get_right getbegx(poswn)-1
 static char inputf[max_path_0];
-static bar_byte cursorf=0;
+static bar_byte cursorf;
 
 typedef struct{
 	size_t yb;
@@ -85,15 +85,15 @@ typedef struct{
 	row_dword xe;
 	char*data;
 }eundo;
-static eundo*undos=nullptr;
-static size_t undos_tot=0;
-static size_t undos_spc=0;
-static size_t undos_save=0;
-static size_t undos_max=0;
-static int undo_v=0;
-static bool new_f=false;
+static eundo*undos;
+static size_t undos_tot;
+static size_t undos_spc;
+static size_t undos_save;
+static size_t undos_max;
+static int undo_v;
+static bool new_f;
 #define new_s "New Path"
-static int new_v=0;
+static int new_v;
 
 void bar_init(){
 	move(getmaxy(stdscr)-1,0);
@@ -1649,4 +1649,20 @@ size_t init_aftercall(){
 		if(is_extension_ok(ocode_extension,textfile)/*true*/)return aftercall_find();
 	}else if(*ocode_extension=='\0')return aftercall_find();
 	return rows_tot;//still need a value
+}
+
+void bar_inits(){
+	insensitive=false;
+	err_l=0;
+	input0=input1;
+	cursorr=0;
+	cursorf=0;
+	undos=nullptr;
+	undos_tot=0;
+	undos_spc=0;
+	undos_save=0;
+	undos_max=0;
+	undo_v=0;
+	new_f=false;
+	new_v=0;
 }
