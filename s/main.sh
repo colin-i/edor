@@ -10,15 +10,16 @@ if [ -z "${level}" ]; then level=${level_map}; fi
 f=main.h
 wr_n() { printf '%s' "$@" >> ${f}; echo >> ${f}; }
 wr () { printf '%s' "$@" >> ${f}; }
-wr2_n() { buf="${buf}$@
-"; }
+#wr2_n() { buf="${buf}$@
+#"; }
 wr2 () { buf="${buf}$@"; }
-wr3_n() { buf2="${buf2}$@
-"; }
+#wr3_n() { buf2="${buf2}$@
+#"; }
 wr3 () { buf2="${buf2}$@"; }
-wr4_n() { buf3="${buf3}$@
-"; }
+#wr4_n() { buf3="${buf3}$@
+#"; }
 wr4 () { buf3="${buf3}$@"; }
+wr5 () { buf4="${buf4}$@"; }
 
 printf '%s\n' "#define hel1 \"USAGE\n\"" > ${f}
 wr "#define hel2 \""
@@ -72,7 +73,7 @@ text="\ncommand mode: left,right,home,end,Ctrl+q\
 \nCtrl+b = change selection color, short integers: foreground,background\
 \nCtrl+x = change tab size; Alt+x = change save timeout in seconds (0 is default timeout)\
 \nCtrl+z = switch keys, applies to Ctrl and lower/upper Alt (example: az , +a becomes +z and +z becomes +a)\
-\nCtrl+q = quit; Alt+q = quit and return EXIT_FAILURE\
+\nCtrl+q = quit; Alt+q = quit and return EXIT_FAILURE; Alt+Q = Reload\
 \nabcdefghijklmnopqrstuvwxyz\""
 wr_n "${text}"
 
@@ -107,7 +108,8 @@ nothing="{nullptr,nullptr,0,0,0}"
 
 _find_pos () { #name=$1 letter=$2 ctrls=$3 alt=$4 bigalt=$5
 	if [ -z "${is_extern}" ]; then wr "static "; fi
-	wr "char key_${1}=$(echo ${2}-32 | bc);"
+	wr "char key_${1};"
+	wr5 "key_${1}=$(echo ${2}-32 | bc);"
 	wr2 "{&key_${1},(unsigned short[]){"
 #	e=
 	z=0
@@ -150,7 +152,7 @@ while [ $i -lt 123 ]; do
 		108) is_extern=x find_pos titles $i 1 1;;   #l
 		110) find_pos indents            $i 1;;     #n
 		111) find_pos paste              $i 1 1;;   #o
-		113) is_extern=x find_pos quit   $i 3 1;;   #q
+		113) is_extern=x find_pos quit   $i 3 1 1;; #q
 		114) find_pos redo               $i 1;;     #r
 		115) is_extern=x find_pos save   $i 1 1;;   #s
 		116) find_pos insens             $i 1;;     #t
@@ -166,23 +168,33 @@ while [ $i -lt 123 ]; do
 done
 wr_n ""
 
+wr_n "static void keys_inits(){${buf4}}"
+
+keys_index_interval=$((122-97))
+keys_index_val=$((keys_index_interval+1))
+
 #can define here static a[]; and defines to compile right but is a risk and better to undo them
 wr_n "#define A_to_a 0x20"
 if [ ${level} -ge ${level_pref_wr} ]; then
 	wr_n "static char keys_row_orig[]={${buf2}};"
-	wr_n "char*keys_row=keys_row_orig;"
+	wr_n "char*keys_row;static void keys_row_init(){keys_row=keys_row_orig;}"
 	if [ ${level} -ge ${level_pref_rd} ]; then
-		wr_n "static char keys_row_frompref[]={${buf2}};"
+		wr_n "static char keys_row_frompref[${number_of_keys}];static void keys_row_frompref_init(){char a[]={${buf2}};memcpy(keys_row_frompref,a,sizeof(a));}"
 		if [ ${level} -ge ${level_map} ]; then
-			wr_n "static key_struct keys_frompref[]={${buf3}};"  #important to define same here and not at runtime
+			wr_n "static key_struct keys_frompref[${keys_index_val}];"
 			wr_n "static key_struct keys_orig[]={${buf}};"
-			wr_n "key_struct*keys=keys_orig;"
+			wr_n "key_struct*keys;"
 			wr_n "static char*keys_helptext;"
-			wr_n "#define key_last_index $((122-97))"
+			wr_n "#define key_last_index ${keys_index_interval}"
 			wr_n "#define _0_to_A 0x41"
 			wr_n "#define number_of_keys ${number_of_keys}"
 			wr_n "char*keys_help;"
 			wr_n "#define help_last_part_size $((26+1))"
+
+			wr_n "static void keys_map_inits(){"
+			wr_n " keys=keys_orig;"
+			wr_n " key_struct a[]={${buf3}};memcpy(keys_frompref,a,sizeof(a));"
+			wr_n "}"
 		fi
 	fi
 fi

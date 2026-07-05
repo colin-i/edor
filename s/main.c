@@ -230,6 +230,7 @@ static int tot_x;
 #define maxushort 5
 
 #define pref_version "1"
+#define pref_version_size (sizeof(pref_version)-1)
 
 static int user_return=EXIT_SUCCESS;
 static char reload=1;
@@ -2140,7 +2141,7 @@ void setprefs(int flag,bool set){
 	if(prefs_file[0]!='\0'){
 		int f=open(prefs_file,O_RDWR|O_CREAT,S_IRUSR|S_IWUSR);
 		if(f!=-1){
-			bar_byte sz=sizeof(pref_version);
+			bar_byte sz=pref_version_size;
 			if(write(f,&sz,extlen_size)==extlen_size){
 				if(write(f,pref_version,sz)==sz){
 					char mask;
@@ -2679,7 +2680,7 @@ static bool getprefs(){
 		if(read(f,&len,extlen_size)==extlen_size){
 			char prefe_version[0x100*sizeof(bar_byte)];
 			if(read(f,prefe_version,len)==len){
-				if((len!=(sizeof(pref_version)-1))||(memcmp(pref_version,prefe_version,len)!=0)){
+				if((len!=pref_version_size)||(memcmp(pref_version,prefe_version,len)!=0)){
 					puts("Preferences file version not matching. Run the program with " remove_con);
 					return false;
 				}
@@ -3183,6 +3184,9 @@ static void inits(){
 	filewhites_extension_new=nullptr;
 	tab_sz=6;
 	indopt_flag=false;
+
+	keys_inits();keys_row_init();keys_row_frompref_init();keys_map_inits();
+
 	bar_inits();
 	tit_inits();
 	split_inits();
