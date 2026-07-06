@@ -2512,28 +2512,17 @@ static bool grab_file(char*f,size_t*text_sz){
 	bool fake=true;
 	int fd=open(f,O_RDONLY);
 	if(fd!=-1){
-		if(is_dir(f)/*true*/){
-			putchar('\"');
-			size_t n=strlen(f);
-			for(size_t i=0;i<n;i++){
-				putchar(f[i]);
-			}
-			//puts(f);
-			puts("\" is a directory");
-		}
-		else{
-			size_t size=lseek(fd,0,SEEK_END);
-			if(size!=(size_t)-1){
-				text_init_b=(char*)malloc(size);
-				if(text_init_b){//!=nullptr
-					lseek(fd,0,SEEK_SET);
-					#pragma GCC diagnostic push
-					#pragma GCC diagnostic ignored "-Wunused-result"
-					read(fd,text_init_b,size);
-					#pragma GCC diagnostic pop
-					text_sz[0]=size;
-					fake=false;
-				}
+		size_t size=lseek(fd,0,SEEK_END);
+		if(size!=(size_t)-1){
+			text_init_b=(char*)malloc(size);
+			if(text_init_b){//!=nullptr
+				lseek(fd,0,SEEK_SET);
+				#pragma GCC diagnostic push
+				#pragma GCC diagnostic ignored "-Wunused-result"
+				read(fd,text_init_b,size);
+				#pragma GCC diagnostic pop
+				text_sz[0]=size;
+				fake=false;
 			}
 		}
 		close(fd);
@@ -2999,10 +2988,26 @@ static void freeprefs(){//these if are not from start , they can be when user de
 	if(filewhites_extension_new)free(filewhites_extension_new);//!=nullptr
 	tit_freeprefs();
 }
+static char* get_argfile(char*f){
+	int fd=open(f,O_RDONLY);
+	if(fd!=-1){
+		if(is_dir(f)/*true*/){
+			//return first file if is possible
+			putchar('\"');
+			size_t n=strlen(f);
+			for(size_t i=0;i<n;i++){
+				putchar(f[i]);
+			}
+			//puts(f);
+			puts("\" is a directory");
+			close(fd);
+			return nullptr;
+		}
+		close(fd);
+	}
+	return f;
+}
 static void action_go(int argc,char**argv,char*cutbuf_file){
-	if(command_line(&argc,&argv,cutbuf_file)/*true*/)return;
-	if(argc>3){puts("Too many arguments.");user_return=EXIT_FAILURE;return;}
-
 	if(prefs_file[0]!='\0'){
 		if(!getprefs()){//split is first that depends on prefs
 			user_return=EXIT_FAILURE;return;
@@ -3017,7 +3022,10 @@ static void action_go(int argc,char**argv,char*cutbuf_file){
 	bool not_forced=true;
 	bool no_file=argc==1;
 	if(no_file==false){
-		argfile=argv[1];
+		argfile=get_argfile(argv[1]);
+		if(!argfile){//==nullptr
+			user_return=EXIT_FAILURE;return;
+		}
 		no_file=new_visual(argfile)/*true*/;
 		if(restorefile_path(argfile)/*true*/){
 			if(access(restorefile_buf,F_OK)==0){
@@ -3136,15 +3144,21 @@ static void action_go(int argc,char**argv,char*cutbuf_file){
 		}
 		free(text_init_b);
 	}
-	freeprefs();
 }
 static void action(int argc,char**argv){
 	char cutbuf_file[max_path_0];
 	cutbuf_file[0]='\0';
 	if(help_cutbuffile_preffile(argv[0],cutbuf_file)/*true*/){//this is here, is convenient for remove_config
-		action_go(argc,argv,cutbuf_file);
-		if(editingfile)unlink(editingfile);//this can be before and after text_init_b, also, this can be if no argfile when rebase is on with a save as.. //!=nullptr
-		if(cutbuf)free(cutbuf);//this is init at getfilebuf or if not there at writemembuf //!=nullptr
+		if(!command_line(&argc,&argv,cutbuf_file)/*true*/){
+			if(argc<=3){
+				action_go(argc,argv,cutbuf_file);
+				freeprefs();//action_go
+				if(editingfile)unlink(editingfile);//this can be before and after text_init_b(action_go), also, this can be if no argfile when rebase is on with a save as.. //!=nullptr
+				if(cutbuf)free(cutbuf);//this is init at getfilebuf(action_go) or if not there at writemembuf //!=nullptr
+			}else{
+				puts("Too many arguments.");user_return=EXIT_FAILURE;
+			}
+		}
 		free(helptext);
 	}
 }
