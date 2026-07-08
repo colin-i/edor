@@ -3162,20 +3162,14 @@ static void action(int argc,char**argv){
 		free(helptext);
 	}
 }
-static void inits(){
-	*ln_term='\n';ln_term[1]='\0';
-	ln_term_sz=1;
+static void inits_default(){
+	ln_term[1]='\0';
 	textfile=nullptr;
 	rows=nullptr;
-	rows_tot=1;
 	ytext=0;
 	xtext=0;//and what about when xtext + xc goes size_t ? is ok, nothing is lost, tested, (size_t)xtext cast is same without cast, but is recommended
-	mod_flag=true;
 	ocompiler_flag=false;
-	clue=no_clue;normalize_clue=no_clue;
-	foregroundcolor=COLOR_WHITE;backgroundcolor=COLOR_BLUE;
 	mapsel=nullptr;
-	rows_spc=1;//at rows_expand
 	x_right=nullptr;
 	tabs=nullptr;
 	hardtime=0;
@@ -3188,16 +3182,31 @@ static void inits(){
 	cutbuf=nullptr;
 	cutbuf_sz=0;
 	cutbuf_spc=0;
-	cutbuf_r=1;
 	text_init_b=nullptr;
 	leftcontent=nullptr;
 	rightcontent=nullptr;
 	syntaxcontent=nullptr;
 	filewhites_flag=false;
-	filewhites_extension=(char*)"yml";
 	filewhites_extension_new=nullptr;
-	tab_sz=6;
 	indopt_flag=false;
+
+	keys_map_inits_default();
+
+	bar_inits_default();
+	tit_inits_default();
+	split_inits_default();
+}
+static void inits(){
+	*ln_term='\n';
+	ln_term_sz=1;
+	rows_tot=1;
+	mod_flag=true;
+	clue=no_clue;normalize_clue=no_clue;
+	foregroundcolor=COLOR_WHITE;backgroundcolor=COLOR_BLUE;
+	rows_spc=1;//at rows_expand
+	cutbuf_r=1;
+	filewhites_extension=(char*)"yml";
+	tab_sz=6;
 
 	keys_inits();keys_row_init();keys_row_frompref_init();keys_map_inits();
 
@@ -3215,11 +3224,12 @@ int main(int argc,char**argv){
 	//baz(argc);
 	#endif
 
-	while(reload/*!=0*/){
-		reload--;
-		inits();
-		action(argc,argv);
-	}
-
-	return user_return;
+	main_loop:
+	//while(reload/*!=0*/){
+	reload--;
+	inits();
+	action(argc,argv);
+	if(!reload)return user_return;
+	inits_default();
+	goto main_loop;
 }

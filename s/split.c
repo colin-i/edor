@@ -717,22 +717,24 @@ const char* split_write(size_t*_index,int orig_file,row_dword*_off,bool*majorerr
 	return nullptr;
 }
 
-void split_inits(){
+void split_inits_default(){
 	splits_flag=false;
+	sdelimiter_new=nullptr;
+	esdelimiter_new=nullptr;
+	split_out_new=nullptr;
+	split_extension_new=nullptr;
+	split_outext_new=nullptr;
+	split_outformatext_new=nullptr;
+	escape_delims_new=nullptr;
+	last_escape_char='\0';
+}
+void split_inits(){
 	split_reminder_c=split_no;
 	sdelimiter=(char*)"|||";// iso forbids
 	esdelimiter=(char*)"///";
-	sdelimiter_new=nullptr;
-	esdelimiter_new=nullptr;
 	split_out=(char*)"osrc";
-	split_out_new=nullptr;
 	split_extension=(char*)"oac";
-	split_extension_new=nullptr;
 	split_outext=(char*)"";//was oc but the reason is at split_write_init at split_extension
-	split_outext_new=nullptr;
 	split_outformatext=(char*)"split";
-	split_outformatext_new=nullptr;
 	escape_delims=(char*)"\"'";
-	escape_delims_new=nullptr;
-	last_escape_char='\0';
 }

@@ -1651,10 +1651,9 @@ size_t init_aftercall(){
 	return rows_tot;//still need a value
 }
 
-void bar_inits(){
+void bar_inits_default(){
 	insensitive=false;
 	err_l=0;
-	input0=input1;
 	cursorr=0;
 	cursorf=0;
 	undos=nullptr;
@@ -1665,4 +1664,7 @@ void bar_inits(){
 	undo_v=0;
 	new_f=false;
 	new_v=0;
+}
+void bar_inits(){
+	input0=input1;
 }

@@ -191,10 +191,8 @@ if [ ${level} -ge ${level_pref_wr} ]; then
 			wr_n "char*keys_help;"
 			wr_n "#define help_last_part_size $((26+1))"
 
-			wr_n "static void keys_map_inits(){"
-			wr_n " keys=keys_orig;"
-			wr_n " key_struct a[]={${buf3}};memcpy(keys_frompref,a,sizeof(a));"
-			wr_n "}"
+			wr_n "static void keys_map_inits_default(){key_struct a[]={${buf3}};memcpy(keys_frompref,a,sizeof(a));}"
+			wr_n "static void keys_map_inits(){keys=keys_orig;}"
 		fi
 	fi
 fi

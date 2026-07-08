@@ -203,7 +203,9 @@ bool tit_readprefs(int f){
 	return false;
 }
 
+void tit_inits_default(){
+	tit_delims_new=nullptr;
+}
 void tit_inits(){
 	tit_delims=(char*)":";// iso forbids
-	tit_delims_new=nullptr;
 }
