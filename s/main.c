@@ -2498,7 +2498,7 @@ static void rows_init(size_t size){
 	z->sz=b-a;z->spc=0;
 	rows_spc=rows_tot;
 }
-//DIR*d=fdopendir(fd);//having problems with this and msys2
+//DIR*d=fdopendir(fd);
 //	DIR*d=opendir(dirname);
 //	if(d){closedir(d);return true;}//!=nullptr
 static bool is_dir(char*dirname){
