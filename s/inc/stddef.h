@@ -14,6 +14,6 @@
 #endif
 #ifndef platform_is_known
 	typedef unsigned int size_t;
-#else
-#	undef platform_is_known
+//#else
+//#	undef platform_is_known
 #endif

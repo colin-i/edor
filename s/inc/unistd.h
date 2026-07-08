@@ -15,8 +15,8 @@
 #endif
 #ifndef platform_is_known
 	typedef int ssize_t;
-#else
-#	undef platform_is_known
+//#else
+//#	undef platform_is_known
 #endif
 
 //#include "inc/stddef.h"

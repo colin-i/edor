@@ -2502,20 +2502,13 @@ static void rows_init(size_t size){
 	z->sz=b-a;z->spc=0;
 	rows_spc=rows_tot;
 }
-//DIR*d=fdopendir(fd);
+//DIR*d=fdopendir(fd);//not at mingw
 //	DIR*d=opendir(dirname);
 //	if(d){closedir(d);return true;}//!=nullptr
 static bool is_dir(char*dirname){
 	struct stat s;
 	if(stat(dirname,&s)==0){//this is possible to test, since switching from fdopendir
 		return (s.st_mode & S_IFDIR)!=0;
-	}
-	return false;
-}
-static bool is_dir_at(DIR*dir,char*dirname){
-	struct stat st;
-	if (fstatat(dirfd(dir),dirname,&st,0) == 0) {
-		return (st.st_mode & S_IFDIR)!=0;
 	}
 	return false;
 }
@@ -2999,46 +2992,68 @@ static void freeprefs(){//these if are not from start , they can be when user de
 	if(filewhites_extension_new)free(filewhites_extension_new);//!=nullptr
 	tit_freeprefs();
 }
-static char* dirargfile_to_file(int fd,char* f){
-	char*val=nullptr;
-	DIR *dir = fdopendir(fd);
+static char* dirargfile_to_file(char* f){
+	DIR *dir = opendir(f);
+	char*path=nullptr;
 	if(dir){
-		struct dirent *ent;
-		while (ent = readdir(dir)) {// != nullptr
-			if (ent->d_name[0] == '.' &&
-				(ent->d_name[1] == '\0' ||
-				(ent->d_name[1] == '.' && ent->d_name[2] == '\0')))
-				continue; // skip "." and ".."
-			if(ent->d_type == DT_DIR)continue;
-			if(ent->d_type==DT_LNK)if(is_dir_at(dir,ent->d_name))continue;
-			if (!val || strcmp(ent->d_name, val) < 0) {
-				if(val)free(val);
-				val=strdup(ent->d_name);
-				if(!val)break;
+		size_t size=strlen(f)+1;
+		path = malloc(size+1);
+		if(path){
+			int n=snprintf(path,size+1,"%s%c",f,path_separator);
+			if(n>0){
+				if(n==size){
+					size_t right_size=0;
+					char*val=nullptr;
+					struct dirent *ent;
+					while (ent = readdir(dir)) {
+						if (ent->d_name[0] == '.' &&
+							(ent->d_name[1] == '\0' || (ent->d_name[1] == '.' && ent->d_name[2] == '\0')
+							)
+						)continue; // skip "." and ".."
+						size_t need = strlen(ent->d_name);
+						if(need > right_size){
+							char *tmp = realloc(path, size + need + 1);
+							if (!tmp) {
+								if(path){
+									free(path);
+									path=nullptr;
+								}
+								break;
+							}
+							path = tmp;
+							right_size = need;
+						}
+						strcpy(path+size,ent->d_name);
+						if (is_dir(path)/*true*/)continue;
+						if (!val || strcmp(ent->d_name,val) < 0) {
+							if(val)free(val);
+							val=strdup(ent->d_name);
+							if(!val){
+								free(path);
+								path=nullptr;
+								break;
+							}
+						}
+					}
+					if(val){
+						strcpy(path+size,val);
+						free(val);
+					}else{
+						free(path);
+						path=nullptr;
+					}
+				}
 			}
 		}
 		closedir(dir);
 	}
-	if(val){
-		size_t len=strlen(f)+1+strlen(val)+1;
-		char*a=(char*)malloc(len);
-		if(a){
-			int n=snprintf(a,len,"%s%c%s",f,path_separator,val);
-			if(n>0)if(n<len){
-				free(val);
-				return a;
-			}
-			free(a);
-		}
-		free(val);
-	}
-	return nullptr;
+	return path;
 }
 static char* get_argfile(char*f){
 	int fd=open(f,O_RDONLY);
 	if(fd!=-1){
 		if(is_dir(f)/*true*/){
-			converted_open=dirargfile_to_file(fd,f);
+			converted_open=dirargfile_to_file(f);
 			if(!converted_open){
 				putchar('\"');
 				size_t n=strlen(f);

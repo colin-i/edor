@@ -109,8 +109,8 @@ struct stat
       unsigned long int __glibc_reserved5;
 };
 
-#else
-#	undef platform_is_known
+//#else
+//#	undef platform_is_known
 #endif
 
 #ifdef __cplusplus
