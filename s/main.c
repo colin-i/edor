@@ -2512,6 +2512,13 @@ static bool is_dir(char*dirname){
 	}
 	return false;
 }
+static bool is_dir_at(DIR*dir,char*dirname){
+	struct stat st;
+	if (fstatat(dirfd(dir),dirname,&st,0) == 0) {
+		return (st.st_mode & S_IFDIR)!=0;
+	}
+	return false;
+}
 static bool grab_file(char*f,size_t*text_sz){
 	bool fake=true;
 	int fd=open(f,O_RDONLY);
@@ -3002,6 +3009,8 @@ static char* dirargfile_to_file(int fd,char* f){
 				(ent->d_name[1] == '\0' ||
 				(ent->d_name[1] == '.' && ent->d_name[2] == '\0')))
 				continue; // skip "." and ".."
+			if(ent->d_type == DT_DIR)continue;
+			if(ent->d_type==DT_LNK)if(is_dir_at(dir,ent->d_name))continue;
 			if (!val || strcmp(ent->d_name, val) < 0) {
 				if(val)free(val);
 				val=strdup(ent->d_name);
@@ -3030,7 +3039,7 @@ static char* get_argfile(char*f){
 	if(fd!=-1){
 		if(is_dir(f)/*true*/){
 			converted_open=dirargfile_to_file(fd,f);
-			if(!converted_open || is_dir(converted_open)/*true*/){
+			if(!converted_open){
 				putchar('\"');
 				size_t n=strlen(f);
 				for(size_t i=0;i<n;i++){

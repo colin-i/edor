@@ -117,6 +117,7 @@ struct stat
 extern "C" {
 #endif
 
+int fstatat(int dirfd, const char *restrict path, struct stat *restrict statbuf, int flags);
 int mkdir(const char*, __mode_t);
 int stat(const char *restrict pathname, struct stat *restrict statbuf);
 
