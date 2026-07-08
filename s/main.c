@@ -3015,7 +3015,7 @@ static char* dirargfile_to_file(int fd,char* f){
 		char*a=(char*)malloc(len);
 		if(a){
 			int n=snprintf(a,len,"%s%c%s",f,path_separator,val);
-			if(n>0)if(n==(len-1)){
+			if(n>0)if(n<len){
 				free(val);
 				return a;
 			}
