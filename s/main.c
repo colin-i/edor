@@ -239,6 +239,10 @@ static char* converted_open;
 static int user_return=EXIT_SUCCESS;
 static char reload=1;
 
+#ifndef SIZE_MAX
+# define SIZE_MAX ((size_t)-1)
+#endif
+
 bool no_char(char z){return z<32||z>=127;}
 static size_t tab_grow(WINDOW*w,char*a,size_t sz,int*ptr){
 	int c=0;int cr=0;
@@ -3005,6 +3009,7 @@ static char* dirargfile_to_file(char* f){
 					size_t right_size=0;
 					char*val=nullptr;
 					struct dirent *ent;
+					size_t paranoia=SIZE_MAX - size - 1;
 					while (ent = readdir(dir)) {
 						if (ent->d_name[0] == '.' &&
 							(ent->d_name[1] == '\0' || (ent->d_name[1] == '.' && ent->d_name[2] == '\0')
@@ -3013,7 +3018,7 @@ static char* dirargfile_to_file(char* f){
 						size_t need = strlen(ent->d_name);
 						if(need > right_size){
 							char *tmp = realloc(path, size + need + 1);
-							if (!tmp) {
+							if (!tmp || (need > paranoia)) {
 								if(path){
 									free(path);
 									path=nullptr;

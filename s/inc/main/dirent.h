@@ -33,6 +33,8 @@ struct dirent
 };
 //same on pi 32bit
 
+#else
+#	undef platform_is_known
 #endif
 
 #ifdef __cplusplus

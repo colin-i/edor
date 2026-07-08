@@ -12,8 +12,8 @@
 #endif
 #ifndef platform_is_known
 	typedef long int time_t;
-//#else
-//#	undef platform_is_known
+#else
+#	undef platform_is_known
 #endif
 
 #ifdef __cplusplus
