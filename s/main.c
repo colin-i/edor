@@ -70,9 +70,6 @@
 #ifndef HAVE_STDLIB_H
 #include"inc/main/armv7/stdlib.h"
 #endif
-#ifndef HAVE_STDIO_H
-#include"inc/main/armv7/stdio.h"
-#endif
 #ifdef HAVE_SIGNAL_H
 #include<signal.h>
 #else
@@ -236,6 +233,8 @@ static int tot_x;
 
 #define pref_version "1"
 #define pref_version_size (sizeof(pref_version)-1)
+
+static char* converted_open;
 
 static int user_return=EXIT_SUCCESS;
 static char reload=1;
@@ -2993,7 +2992,8 @@ static void freeprefs(){//these if are not from start , they can be when user de
 	if(filewhites_extension_new)free(filewhites_extension_new);//!=nullptr
 	tit_freeprefs();
 }
-static void argfile_is_dir(int fd){
+static char* dirargfile_to_file(int fd,char* f){
+	char*val=nullptr;
 	DIR *dir = fdopendir(fd);
 	if(dir){
 		struct dirent *ent;
@@ -3002,27 +3002,46 @@ static void argfile_is_dir(int fd){
 				(ent->d_name[1] == '\0' ||
 				(ent->d_name[1] == '.' && ent->d_name[2] == '\0')))
 				continue; // skip "." and ".."
-			printf("%s\n", ent->d_name);
-			break;
+			if (!val || strcmp(ent->d_name, val) < 0) {
+				if(val)free(val);
+				val=strdup(ent->d_name);
+				if(!val)break;
+			}
 		}
 		closedir(dir);
 	}
+	if(val){
+		size_t len=strlen(f)+1+strlen(val)+1;
+		char*a=(char*)malloc(len);
+		if(a){
+			int n=snprintf(a,len,"%s%c%s",f,path_separator,val);
+			if(n>0)if(n==(len-1)){
+				free(val);
+				return a;
+			}
+			free(a);
+		}
+		free(val);
+	}
+	return nullptr;
 }
 static char* get_argfile(char*f){
 	int fd=open(f,O_RDONLY);
 	if(fd!=-1){
 		if(is_dir(f)/*true*/){
-			argfile_is_dir(fd);
-
-			putchar('\"');
-			size_t n=strlen(f);
-			for(size_t i=0;i<n;i++){
-				putchar(f[i]);
+			converted_open=dirargfile_to_file(fd,f);
+			if(!converted_open || is_dir(converted_open)/*true*/){
+				putchar('\"');
+				size_t n=strlen(f);
+				for(size_t i=0;i<n;i++){
+					putchar(f[i]);
+				}
+				//puts(f);
+				puts("\" is a directory");
+				close(fd);
+				return nullptr;
 			}
-			//puts(f);
-			puts("\" is a directory");
-			close(fd);
-			return nullptr;
+			f=converted_open;
 		}
 		close(fd);
 	}
@@ -3174,6 +3193,7 @@ static void action(int argc,char**argv){
 			if(argc<=3){
 				action_go(argc,argv,cutbuf_file);
 				freeprefs();//action_go
+				if(converted_open){free(converted_open);converted_open=nullptr;}
 				if(editingfile)unlink(editingfile);//this can be before and after text_init_b(action_go), also, this can be if no argfile when rebase is on with a save as.. //!=nullptr
 				if(cutbuf)free(cutbuf);//this is init at getfilebuf(action_go) or if not there at writemembuf //!=nullptr
 			}else{

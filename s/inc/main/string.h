@@ -7,6 +7,7 @@ extern "C" {
 #endif
 
 void*memset(void*,int,size_t);
+char *strdup(const char *s);
 
 #ifdef __cplusplus
 }

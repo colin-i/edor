@@ -12,7 +12,7 @@ int getchar(void);
 int printf(const char *, ...);
 int putchar(int);
 int rename(const char*,const char*);
-//int snprintf(char* __buf, size_t __size, const char* __fmt, ...);
+int snprintf(char* __buf, size_t __size, const char* __fmt, ...);
 
 #ifdef HAVE__GETREENT   //only on windows msys
 	FILE**__getreent();
