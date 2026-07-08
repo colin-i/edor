@@ -13,6 +13,11 @@
 #else
 #include"inc/main/curses.h"
 #endif
+#ifdef HAVE_DIRENT_H
+#include<dirent.h>
+#else
+#include"inc/main/dirent.h"
+#endif
 #ifdef HAVE_FCNTL_H
 #include<fcntl.h>
 #else
@@ -2988,11 +2993,27 @@ static void freeprefs(){//these if are not from start , they can be when user de
 	if(filewhites_extension_new)free(filewhites_extension_new);//!=nullptr
 	tit_freeprefs();
 }
+static void argfile_is_dir(int fd){
+	DIR *dir = fdopendir(fd);
+	if(dir){
+		struct dirent *ent;
+		while (ent = readdir(dir)) {// != nullptr
+			if (ent->d_name[0] == '.' &&
+				(ent->d_name[1] == '\0' ||
+				(ent->d_name[1] == '.' && ent->d_name[2] == '\0')))
+				continue; // skip "." and ".."
+			printf("%s\n", ent->d_name);
+			break;
+		}
+		closedir(dir);
+	}
+}
 static char* get_argfile(char*f){
 	int fd=open(f,O_RDONLY);
 	if(fd!=-1){
 		if(is_dir(f)/*true*/){
-			//return first file if is possible
+			argfile_is_dir(fd);
+
 			putchar('\"');
 			size_t n=strlen(f);
 			for(size_t i=0;i<n;i++){

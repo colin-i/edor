@@ -72,7 +72,8 @@ int close(int);
 #if defined(is_main_c)||defined(is_split_c)
 
 //sys/types.h
-typedef long off_t;
+#include "inc/types.h"
+typedef __off_t off_t;
 //#include <bits/seek_constants.h>
 #define SEEK_SET 0
 #define SEEK_END 2

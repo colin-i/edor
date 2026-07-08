@@ -40,7 +40,7 @@ AC_PROG_CC
 
 # Checks for header files. Checks for libraries.
 
-AC_CHECK_HEADERS(fcntl.h stdlib.h unistd.h time.h)
+AC_CHECK_HEADERS(dirent.h fcntl.h stdlib.h time.h unistd.h)
 AC_CHECK_HEADERS(curses.h, [
 		AC_SUBST(CSS, "")
 		AC_SEARCH_LIBS([nc_getmouse],[pdcurses],[AC_DEFINE(OTHER_CURSES,1,[is pdcurses])],[

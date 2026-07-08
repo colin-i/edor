@@ -26,13 +26,15 @@ typedef unsigned short __mode_t;
 
 #			else
 
-typedef unsigned long int __ino_t;
+#include "inc/types.h"
+//typedef unsigned long int __ino_t;
+//typedef long int __off_t;
+
 typedef unsigned long int __dev_t;
 typedef unsigned int __mode_t;
 typedef unsigned int __nlink_t;
 typedef unsigned int __uid_t;
 typedef unsigned int __gid_t;
-typedef long int __off_t;
 typedef int __blksize_t;
 typedef long int __blkcnt_t;
 typedef time_t __time_t;
@@ -68,13 +70,15 @@ struct stat
 #endif
 #ifndef platform_is_known
 
+#include "inc/types.h"
+//typedef unsigned long int __ino_t;
+//typedef long int __off_t;
+
 typedef unsigned long long int __dev_t;
-typedef unsigned long int __ino_t;
 typedef unsigned int __mode_t;
 typedef unsigned int __nlink_t;
 typedef unsigned int __uid_t;
 typedef unsigned int __gid_t;
-typedef long int __off_t;
 typedef long int __blksize_t;
 typedef long int __blkcnt_t;
 typedef time_t __time_t;
