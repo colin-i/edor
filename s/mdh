@@ -1,2 +1,2 @@
 
-extraflags='CFLAGS=-fsanitize=address -g' ./mh "$@"
+extraflags='CFLAGS=-fsanitize=address,undefined -g' ./mh "$@"

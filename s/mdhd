@@ -1,1 +1,1 @@
-extraflags='CFLAGS=-fsanitize=address -g' ./headless $@
+extraflags='CFLAGS=-fsanitize=address,undefined -g' ./headless $@
