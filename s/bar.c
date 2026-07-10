@@ -889,6 +889,7 @@ void undo_free(){
 		free(undos);
 	}
 }
+typedef struct __attribute__((packed)) { row_dword v; } row_dword_ua;
 static bool undo_add_replace(bar_byte cursor){
 	if(undo_expand()/*true*/){
 		char*d=(char*)malloc(1+sizeof(row_dword)+cursor);
@@ -898,15 +899,18 @@ static bool undo_add_replace(bar_byte cursor){
 			un->yb=ytext;un->xb=xtext;
 			un->ye=un->yb;un->xe=cursorr;
 			un->data=d;
-			d[0]=ln_term[0];((row_dword*)((void*)&d[1]))[0]=cursor;//is not bar_byte because at first is, but at undo replace there will be the replace that is bigger
+			d[0]=ln_term[0];
+
+			//is not bar_byte because at first is, but at undo replace there will be the replace that is bigger
+			((row_dword_ua*)((void*)&d[1]))->v=cursor;//ubsan friendly, was ((row_dword*)((void*)&d[1]))[0]=cursor;
+
 			//memcpy(&d[1]+sizeof(cursor),inputf,cursor);inputf can be insensitive
 			memcpy(&d[1]+sizeof(row_dword),&rows[ytext].data[xtext],cursor);
 			undo_ok();return false;}}
 	return true;
 }
 static bool undo_replace(eundo*un,char*data,size_t yb,row_dword xb,row_dword xe,bool is_undo){
-	row_dword*sz_p=(row_dword*)((void*)&data[1]);
-	row_dword sz2=sz_p[0];
+	row_dword sz2;memcpy(&sz2, &data[1], sizeof(row_dword));//ubsan friendly, was row_dword*sz_p=(row_dword*)((void*)&data[1]);
 	row*r=&rows[yb];
 	long memdif=(long)sz2-xe;//is big only if is a long write at replace. strange is that at char the cast is not required
 	row_dword sz=r->sz;
@@ -916,10 +920,11 @@ static bool undo_replace(eundo*un,char*data,size_t yb,row_dword xb,row_dword xe,
 	else if(xe>sz2&&is_undo/*true*/){
 		data=(char*)realloc(data,1+sizeof(row_dword)+xe);
 		if(data==nullptr)return true;
-		un->data=data;sz_p=(row_dword*)((void*)&data[1]);
+		un->data=data;
+		//sz_p=(row_dword*)((void*)&data[1]);
 	}
 	char*a=&r->data[xb];
-	char*b=(char*)(sz_p+1);
+	char *b = data + 1 + sizeof(row_dword); //ubsan friendly, was char*b=(char*)(sz_p+1);
 	if(memdif>0){//here will be row_dword at max
 		for(size_t i=0;i<xe;i++){
 			char c=a[i];a[i]=b[i];b[i]=c;
@@ -934,7 +939,8 @@ static bool undo_replace(eundo*un,char*data,size_t yb,row_dword xb,row_dword xe,
 			for(size_t i=sz2;i<xe;i++)b[i]=a[i];
 		row_set(r,xb+sz2,sz-xb-xe,0,&r->data[xb+xe]);
 	}
-	sz_p[0]=xe;un->xe=sz2;
+	memcpy(&data[1], &xe, sizeof(row_dword));//ubsan friendly, was sz_p[0]=xe;
+	un->xe=sz2;
 	ytext=yb;xtext=xb+sz2;
 	return false;
 }
