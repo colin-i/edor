@@ -1,6 +1,6 @@
 
 Name: edor
-Version: 1.92
+Version: 1.93
 Release: 0
 License: GPLv3
 Summary: Console user interface text editor
@@ -34,6 +34,22 @@ make
 
 #-- CHANGELOG -----------------------------------------------------------------#
 %changelog
+* Wed Jul 15 2026 costin <costin.botescu@gmail.com> 1.93-0
+- ubsan friendly (costin.botescu@gmail.com)
+- asan (costin.botescu@gmail.com)
+- another immortal guardian (costin.botescu@gmail.com)
+- must also keep the mingw build possible (costin.botescu@gmail.com)
+- dirs (costin.botescu@gmail.com)
+- "up" (costin.botescu@gmail.com)
+- open file or folder's best file (costin.botescu@gmail.com)
+- dirent (costin.botescu@gmail.com)
+- "up" (costin.botescu@gmail.com)
+- default inits (costin.botescu@gmail.com)
+- get_argfile for folder first file (costin.botescu@gmail.com)
+- "up" (costin.botescu@gmail.com)
+- also, reload keys (costin.botescu@gmail.com)
+- reload (costin.botescu@gmail.com)
+
 * Thu Jun 11 2026 costin <costin.botescu@gmail.com> 1.92-0
 - keep them as the original: short (costin.botescu@gmail.com)
 - "up" (costin.botescu@gmail.com)

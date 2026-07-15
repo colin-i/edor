@@ -23,7 +23,7 @@ wr5 () { buf4="${buf4}$@"; }
 
 printf '%s\n' "#define hel1 \"USAGE\n\"" > ${f}
 wr "#define hel2 \""
-d2=" [--file] [file_or_folder_path [line_termination: rn/r/n]]\
+d2=" [--file] [file_or_folderWithFile_path [line_termination: rn/r/n]]\
 \n      --remove-config        Remove configuration files.\
 \n      --help                 Will guide to enter here.\
 \nINPUT\
