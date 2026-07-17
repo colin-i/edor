@@ -3013,7 +3013,7 @@ static char* dirargfile_to_file(char* f){
 					char*val=nullptr;
 					struct dirent *ent;
 					size_t paranoia=SIZE_MAX - size - 1;
-					while (ent = readdir(dir)) {
+					while ((ent = readdir(dir))) {
 						if (ent->d_name[0] == '.' &&
 							(ent->d_name[1] == '\0' || (ent->d_name[1] == '.' && ent->d_name[2] == '\0')
 							)
