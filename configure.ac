@@ -205,7 +205,7 @@ AC_CHECK_SIZEOF([long])
 #])], [AC_DEFINE(PLATFORM64, 1, "64")], [])
 
 #back at CFLAGS
-test "x${enable_cflags_setting}" = xyes && CFLAGS="-O3  -march=native -flto  -s"
+test "x${enable_cflags_setting}" = xyes && CFLAGS="-O3  -march=native -flto=auto  -s"
 
 AM_INIT_AUTOMAKE
 

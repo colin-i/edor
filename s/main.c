@@ -82,7 +82,10 @@ static void AddAddress(unsigned long ip,int address_count) {
 	unsigned long relative_address = ip-(unsigned long)info.dli_fbase;
 	char buf[100];
 	int n=snprintf(buf,99,"  #%02zu:  0x%lx  %s\r\n", address_count, relative_address, info.dli_sname);
+	#pragma GCC diagnostic push
+	#pragma GCC diagnostic ignored "-Wunused-result"
 	write(STDOUT_FILENO,&buf,(size_t)n);
+	#pragma GCC diagnostic pop
 }
 static void CaptureBacktraceUsingLibUnwind(void*ucontext) {
 	// Initialize unw_context and unw_cursor.
@@ -3001,7 +3004,7 @@ static char* dirargfile_to_file(char* f){
 	char*path=nullptr;
 	if(dir){
 		size_t size=strlen(f)+1;
-		path = malloc(size+1);
+		path = (char*)malloc(size+1);
 		if(path){
 			int n=snprintf(path,size+1,"%s%c",f,path_separator);
 			if(n>0){
@@ -3017,7 +3020,7 @@ static char* dirargfile_to_file(char* f){
 						)continue; // skip "." and ".."
 						size_t need = strlen(ent->d_name);
 						if(need > right_size){
-							char *tmp = realloc(path, size + need + 1);
+							char *tmp = (char*)realloc(path, size + need + 1);
 							if (!tmp || (need > paranoia)) {
 								if(path){
 									free(path);
