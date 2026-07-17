@@ -1,6 +1,6 @@
 
 Name: edor
-Version: 1.93
+Version: 1.94
 Release: 0
 License: GPLv3
 Summary: Console user interface text editor
@@ -34,6 +34,9 @@ make
 
 #-- CHANGELOG -----------------------------------------------------------------#
 %changelog
+* Fri Jul 17 2026 costin <costin.botescu@gmail.com> 1.94-0
+- fix default build (costin.botescu@gmail.com)
+
 * Wed Jul 15 2026 costin <costin.botescu@gmail.com> 1.93-0
 - ubsan friendly (costin.botescu@gmail.com)
 - asan (costin.botescu@gmail.com)

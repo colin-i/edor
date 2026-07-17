@@ -1,3 +1,9 @@
+edor (1-x94) focal; urgency=medium
+
+  * fix default build
+
+ -- bc <bc@ubuntu>  Fri, 17 Jul 2026 06:25:40 +0300
+
 edor (1-x93) focal; urgency=medium
 
   * folder file. reload
