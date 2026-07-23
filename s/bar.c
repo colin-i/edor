@@ -984,7 +984,7 @@ static bool dos(WINDOW*w,eundo*un,size_t vl){
 				row_set(r,0,1,r->sz,&a);
 			}
 			free(d);
-			ytext=y1;xtext=1;
+			ytext=y1-1;xtext=1;
 			centering2(w,nullptr,nullptr,true)
 		}else{
 			void*mem=malloc(y1-y2);

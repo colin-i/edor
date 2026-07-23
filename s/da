@@ -1,0 +1,2 @@
+
+ASAN_OPTIONS=log_path=asan.log:log_exec_name=1:abort_on_error=1 ./edor $@
