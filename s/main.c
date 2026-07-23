@@ -1902,11 +1902,13 @@ static void indent(bool b,size_t ybsel,size_t*xbsel,size_t yesel,size_t*xesel,WI
 	if(b/*true*/){
 		for(size_t i=ybsel;i<ye;i++){
 			row*r=&rows[i];
+			if(r->sz==0)continue;                 // skip blank rows
 			if(row_alloc(r,0,1,r->sz)/*true*/)return;
 		}
 		if(undo_add_ind(ybsel,ye)/*true*/)return;
 		for(size_t i=ybsel;i<ye;i++){
 			row*r=&rows[i];
+			if(r->sz==0)continue;                 // skip blank rows
 			row_set(r,0,1,r->sz,"\t");
 		}
 		mod_set_off_wrap();

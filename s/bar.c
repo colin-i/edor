@@ -861,7 +861,7 @@ bool undo_add_ind(size_t yb,size_t ye){
 	if(undo_expand()/*true*/){
 		undo_newway();
 		eundo*un=&undos[undos_tot];
-		un->ye=yb;un->yb=ye;
+		un->ye=yb;un->yb=ye;//this swap is intentional, more at dos function
 		un->data=nullptr;
 		undo_ok();return false;}
 	return true;
@@ -973,6 +973,7 @@ static bool dos(WINDOW*w,eundo*un,size_t vl){
 		if(d){//!=nullptr
 			for(size_t i=y2;i<y1;i++){
 				row*r=&rows[i];
+				if(rows[i].sz==0)continue; //for consistency
 				if(row_alloc(r,0,1,r->sz)/*true*/)return false;
 			}
 			un->data=nullptr;
@@ -990,7 +991,9 @@ static bool dos(WINDOW*w,eundo*un,size_t vl){
 			if(mem==nullptr)return false;
 			undo_ind_del(un,y2,y1,(char*)mem);
 			for(size_t i=y2;i<y1;i++){
-				row_dword n=rows[i].sz;char*dt=rows[i].data;
+				row_dword n=rows[i].sz;
+				if(n==0)continue;                 // don't touch/underflow blank rows
+				char*dt=rows[i].data;
 				for(size_t j=1;j<=n;j++)dt[j-1]=dt[j];
 				rows[i].sz--;
 			}
