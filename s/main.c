@@ -241,6 +241,7 @@ static char* converted_open;
 
 static int user_return=EXIT_SUCCESS;
 static char reload=1;
+static bool save_and_exit=false;
 
 #ifndef SIZE_MAX
 # define SIZE_MAX ((size_t)-1)
@@ -2962,7 +2963,10 @@ static bool command_line(int*argc,char***argv,char*cutbuf_file){
 		char*pattern=(*argv)[1];
 		if(strcmp(pattern,"--file")==0){
 			*argc=(*argc)-1;*argv=(*argv)+1;
-			return false;
+		}else if(strcmp(pattern,"--save-exit")==0){
+			*argc=(*argc)-1;*argv=(*argv)+1;
+			save_and_exit=true;
+			splits_flag=true;//this function is meaningless without this option
 		}else if(strcmp(pattern,"--help")==0){
 			//if(*argc!=2){
 			//	const char entry_text[]="ENTRY_DEBUG marker\n";//for headless dependencies start test
@@ -3171,41 +3175,46 @@ static void action_go(int argc,char**argv,char*cutbuf_file){
 		}
 	}
 	if(ok!=normalize_err){
-		WINDOW*w1=initscr();
-		if(w1){//!=nullptr
-			if(reload!=0){
-				texter_macro("Reloaded");
-				reload=0;
+		if(save_and_exit){
+			if(!textfile)puts("no file for save and exit");
+			else saving();
+		}else{
+			WINDOW*w1=initscr();
+			if(w1){//!=nullptr
+				if(reload!=0){
+					texter_macro("Reloaded");
+					reload=0;
+				}
+
+				if(cutbuf_file[0]!='\0')getfilebuf(cutbuf_file);//this is here,not after cutbuf_file path is set,but after line termination is final
+
+				//if set 1press_and_4,5 will disable right press (for copy menu) anyway
+				//on android longpress to select and copy is a gesture and is different from mouse events
+				//the only difference with ALL_..EVENTS is that we want to speed up and process all events here (if there is a curses implementation like that)
+				//this was default for android, but nowadays on desktop is not a default
+				//stored_mouse_mask=mousemask(ALL_MOUSE_EVENTS,nullptr);//for error, export TERM=vt100
+				if(stored_mouse_mask_q)stored_mouse_mask=mousemask(all_mouse_events,nullptr);//must set it after initscr to work
+
+				if(ocompiler_flag/*true*/){//this is here, in loop can be set if wanted with enable/disable and rescan keys
+					aftercall=init_aftercall();
+				}
+
+				use_default_colors();//assume_default_colors(-1,-1);//it's ok without this for color pair 0 (when attrset(0))
+				raw();//stty,cooked; characters typed are immediately passed through to the user program. interrupt, quit, suspend, and flow control characters are all passed through uninterpreted, instead of generating a signal
+				color();
+				WINDOW*pw=position_init();
+				if(pw){//!=nullptr
+					keypad(w1,true);//this here and not at start: Normalize... and other text will not be after clearscreen
+					noecho();//characters typed are not echoed
+					nonl();//no translation,faster
+					proced(cutbuf_file,w1);
+					delwin(pw);
+				}
+				endwin();
+
+				if(normalize_clue!=no_clue)printf("normalize clue: " protocol "\n",normalize_clue);
+				if(clue!=no_clue)printf("last row where was an error at split write was: " protocol "\n",clue);
 			}
-
-			if(cutbuf_file[0]!='\0')getfilebuf(cutbuf_file);//this is here,not after cutbuf_file path is set,but after line termination is final
-
-			//if set 1press_and_4,5 will disable right press (for copy menu) anyway
-			//on android longpress to select and copy is a gesture and is different from mouse events
-			//the only difference with ALL_..EVENTS is that we want to speed up and process all events here (if there is a curses implementation like that)
-			//this was default for android, but nowadays on desktop is not a default
-			//stored_mouse_mask=mousemask(ALL_MOUSE_EVENTS,nullptr);//for error, export TERM=vt100
-			if(stored_mouse_mask_q)stored_mouse_mask=mousemask(all_mouse_events,nullptr);//must set it after initscr to work
-
-			if(ocompiler_flag/*true*/){//this is here, in loop can be set if wanted with enable/disable and rescan keys
-				aftercall=init_aftercall();
-			}
-
-			use_default_colors();//assume_default_colors(-1,-1);//it's ok without this for color pair 0 (when attrset(0))
-			raw();//stty,cooked; characters typed are immediately passed through to the user program. interrupt, quit, suspend, and flow control characters are all passed through uninterpreted, instead of generating a signal
-			color();
-			WINDOW*pw=position_init();
-			if(pw){//!=nullptr
-				keypad(w1,true);//this here and not at start: Normalize... and other text will not be after clearscreen
-				noecho();//characters typed are not echoed
-				nonl();//no translation,faster
-				proced(cutbuf_file,w1);
-				delwin(pw);
-			}
-			endwin();
-
-			if(normalize_clue!=no_clue)printf("normalize clue: " protocol "\n",normalize_clue);
-			if(clue!=no_clue)printf("last row where was an error at split write was: " protocol "\n",clue);
 		}
 	}
 	if(text_init_b){//!=nullptr

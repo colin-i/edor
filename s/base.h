@@ -156,6 +156,7 @@ extern char key_titles;
 //main
 void bar_init(void);
 command_char save(void);
+command_char saving(void);
 command_char saving_base(char*);
 command_char question(const char*);
 command_char change_key(bar_byte);

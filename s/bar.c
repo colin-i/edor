@@ -333,7 +333,7 @@ command_char saving_base(char*dest){
 	return command_false;
 }
 //command return
-static command_char saving(){
+command_char saving(){
 	return saving_base(textfile);
 }
 static void inputpath(){
