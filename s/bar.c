@@ -835,7 +835,12 @@ bool undo_add(size_t yb,row_dword xb,size_t ye,row_dword xe){
 }
 static bool undo_del_backward(eundo*un,size_t yb,size_t xb,size_t ye,size_t xe){
 	row_dword x=sizemembuf(yb,xb,ye,xe);
-	char*v=(char*)malloc(x);
+
+	//char*v=(char*)malloc(x);//this was spotted by claude at a rare unpadded case of redo followed by a del key
+	char dif=x&row_pad;
+	if(dif!=0)dif=(dif^row_pad)+1;
+	char*v=(char*)malloc(x+dif);
+
 	if(v==nullptr)return true;
 	un->yb=yb;un->xb=xb;un->ye=ye;un->xe=x;
 	un->data=v;
