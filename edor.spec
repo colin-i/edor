@@ -1,6 +1,6 @@
 
 Name: edor
-Version: 1.94
+Version: 1.95
 Release: 0
 License: GPLv3
 Summary: Console user interface text editor
@@ -34,6 +34,13 @@ make
 
 #-- CHANGELOG -----------------------------------------------------------------#
 %changelog
+* Mon Aug 17 2026 costin <costin.botescu@gmail.com> 1.95-0
+- fix redo malloc padding (costin.botescu@gmail.com)
+- blank indent guard (costin.botescu@gmail.com)
+- indent blank rows fix (costin.botescu@gmail.com)
+- save and exit (costin.botescu@gmail.com)
+- warning (costin.botescu@gmail.com)
+
 * Fri Jul 17 2026 costin <costin.botescu@gmail.com> 1.94-0
 - fix default build (costin.botescu@gmail.com)
 

@@ -1,3 +1,9 @@
+edor (1-x95) focal; urgency=medium
+
+  * save and exit, indent forward on blanks
+
+ -- bc <bc@ubuntu>  Mon, 17 Aug 2026 15:37:25 +0300
+
 edor (1-x94) focal; urgency=medium
 
   * fix default build
