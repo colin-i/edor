@@ -200,6 +200,10 @@ static char*cutbuf;
 static size_t cutbuf_sz;
 static size_t cutbuf_spc;
 static size_t cutbuf_r;
+static char*pastecutbuf;//accumulates bytes coming from a terminal-paste burst (see try_paste_burst)
+static size_t pastecutbuf_sz;
+static size_t pastecutbuf_spc;
+static size_t pastecutbuf_r;
 static char*text_init_b;
 static char*text_init_e;//is init? malloc to new : realloc. and to free or not to free.
 static int _rb;static int _cb;
@@ -1163,9 +1167,9 @@ static void refreshrowscond(WINDOW*w,size_t y,row_dword x,size_t r,size_t n){
 	if(y!=ytext||x!=xtext)refreshpage(w);
 	else refreshrowsbot(w,(int)r,n!=0?getmaxy(w):(int)r+1);
 }
-static void pasted(size_t r,size_t x,WINDOW*w){
+static void pasted(size_t r,size_t x,WINDOW*w,size_t buf_r){
 	size_t z1=ytext;row_dword z2=xtext;size_t z3=r;
-	size_t rws=cutbuf_r-1;
+	size_t rws=buf_r-1;
 	r+=rws;int maxy=getmaxy(w);
 	if(maxy<=r){ //to silence rpmbuild warning, unsigned
 		ytext+=r-maxy+1;
@@ -1551,19 +1555,83 @@ bool paste(size_t y,row_dword x,row_dword*xe,char*buf,size_t buf_sz,size_t buf_r
 	}
 	return n==0;
 }
-static void past(WINDOW*w){
-	if(cutbuf_sz!=0){
+#define past(w) past_full(w,cutbuf_sz,cutbuf,cutbuf_r)
+static void past_full(WINDOW*w,size_t buf_sz,char*buf,size_t buf_r){
+	if(buf_sz!=0){
 		int r=getcury(w);
 		size_t y;row_dword x;
 		fixed_yx(&y,&x,r,getcurx(w));
 		row_dword xe;
-		if(paste(y,x,&xe,cutbuf,cutbuf_sz,cutbuf_r,true)/*true*/){
-			pasted(y-ytext,xe,w);
+		if(paste(y,x,&xe,buf,buf_sz,buf_r,true)/*true*/){
+			pasted(y-ytext,xe,w,buf_r);
 			mod_set_off_wrap();
 			position(getcury(w),getcurx(w));
 		}
 	}
 }
+
+//true if this byte is something we'd accumulate as pasted text: printable/8bit bytes, tab, or the enter key.
+//deliberately excludes ^A..^Z-style shortcuts, ESC, backspace/delete: those must never be swallowed into a paste burst.
+static bool paste_candidate(int c){
+	return (c>=32&&c<256&&c!=127)||c=='\t'||c==Char_Return;
+}
+static bool pastecutbuf_grow(size_t need){
+	if(pastecutbuf_spc<need){
+		size_t newspc=pastecutbuf_spc?pastecutbuf_spc*2:256;
+		if(newspc<need)newspc=need;
+		void*v=realloc(pastecutbuf,newspc);
+		if(v==nullptr)return false;
+		pastecutbuf=(char*)v;pastecutbuf_spc=newspc;
+	}
+	return true;
+}
+static bool pastecutbuf_putc(char ch){
+	if(pastecutbuf_grow(pastecutbuf_sz+1)==false)return false;
+	pastecutbuf[pastecutbuf_sz++]=ch;
+	return true;
+}
+static bool pastecutbuf_newline(void){
+	if(pastecutbuf_grow(pastecutbuf_sz+ln_term_sz)==false)return false;
+	memcpy(pastecutbuf+pastecutbuf_sz,ln_term,ln_term_sz);
+	pastecutbuf_sz+=ln_term_sz;
+	pastecutbuf_r++;
+	return true;
+}
+static bool pastecutbuf_push(int ch){
+	if(ch==Char_Return)return pastecutbuf_newline();
+	return pastecutbuf_putc((char)ch);
+}
+//c is the char that was just fetched (blocking) by the caller and is about to be dispatched to type().
+//if the terminal still has more bytes queued up *right now*(nodelay wgetch doesn't block), that is a strong
+//signal this came from a paste rather than a human keystroke(no human types with 0ms gaps for many chars).
+//returns true when it consumed a whole burst and applied it via paste()(same bulk path as Ctrl+Alt+V),
+//so the caller must NOT also dispatch c to type() in that case. returns false when c was a lone keystroke,
+//in which case nothing was consumed(no nodelay chars were pulled) and the caller proceeds exactly as before.
+static bool try_paste_burst(int c,WINDOW*w){
+	if(paste_candidate(c)==false)return false;
+	nodelay(w,true);
+	int z=wgetch(w);
+	if(z==ERR){//nothing queued up: this was a normal single keystroke, not a paste
+		nodelay(w,false);
+		return false;
+	}
+	pastecutbuf_sz=0;pastecutbuf_r=1;
+	bool ok=pastecutbuf_push(c);
+	if(ok){
+		if(paste_candidate(z))ok=pastecutbuf_push(z);
+		else{ungetch(z);}//odd, but let the next loop iteration deal with it normally
+	}
+	if(ok)for(;;){
+		int n=wgetch(w);//nodelay is still on
+		if(n==ERR)break;//no more bytes queued up right now: burst is done
+		if(paste_candidate(n)==false){ungetch(n);break;}//not text(arrow/ctrl/etc): stop, let it be handled normally next
+		if(pastecutbuf_push(n)==false){ok=false;break;}
+	}
+	nodelay(w,false);
+	if(ok)past_full(w,pastecutbuf_sz,pastecutbuf,pastecutbuf_r);
+	return true;
+}
+
 void vis(char c,WINDOW*w){
 	visual(c);
 	wmove(w,getcury(w),getcurx(w));
@@ -2325,6 +2393,7 @@ static bool loopin(WINDOW*w){
 				}
 			}
 		}else{
+			if(try_paste_burst(c,w))goto getchlabel;//c and whatever followed it immediately were a paste, already applied
 			const char*s=keyname(c);
 			if(*s==Char_Ctrl){//seems that all cases are ^ a letter \0
 				char chr=s[1];
@@ -2910,6 +2979,7 @@ static void proced(char*cutbuf_file,WINDOW*w1){
 				free(mapsel);//from here it is the interaction
 				writefilebuf(cutbuf_file);//only here can be modified than the initial state
 				undo_free();//when using undo
+				if(pastecutbuf)free(pastecutbuf);//!=nullptr
 			}
 		}
 	}
@@ -3272,6 +3342,8 @@ static void inits_default(){
 	cutbuf=nullptr;
 	cutbuf_sz=0;
 	cutbuf_spc=0;
+	pastecutbuf=nullptr;
+	pastecutbuf_spc=0;
 	text_init_b=nullptr;
 	leftcontent=nullptr;
 	rightcontent=nullptr;
