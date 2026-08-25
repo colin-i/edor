@@ -257,5 +257,6 @@ extern char*escape_delims_new;
 #ifndef HAVE_MEMMEM
 void *memmem(const void*,size_t,const void*,size_t);
 #endif
-void split_dir_prefix(char*);
+void dir_prefix_free();
+bool split_dir_prefix(char*);
 swrite_char swrite(int,void*,unsigned int);

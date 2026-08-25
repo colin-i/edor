@@ -106,7 +106,7 @@ static bool is_absolute_path(char*path){
 //fills *prefix/*prefix_len from filename's directory part (up to and including the
 //last path_separator). caller is responsible for freeing the previous value, if any,
 //before calling this again -- see dir_prefix's own free-after-use call sites.
-void split_dir_prefix(char*filename){
+bool split_dir_prefix(char*filename){
 	char*sep=strrchr(filename,path_separator);
 	if(sep){
 		size_t len=sep-filename+1;
@@ -115,8 +115,11 @@ void split_dir_prefix(char*filename){
 			memcpy(p,filename,len);
 			p[len]='\0';
 			dir_prefix=p;dir_prefix_len=len;
-		}//alloc failed: fall back to cwd-relative behaviour (len stays 0)
+		}else{//alloc failed
+			return false;
+		}
 	}
+	return true;
 }
 //resolves 'name' against a given prefix when 'name' is relative and a prefix is set.
 static char* resolve_path_with_prefix(char*name){
@@ -412,13 +415,18 @@ static bool split_grab_impl(char**p_text,size_t*p_size){
 	}
 	return false;
 }
+void dir_prefix_free(){
+	if(dir_prefix){free(dir_prefix);dir_prefix=nullptr;}
+}
 //wrapper: owns dir_prefix for the read -- sets it from argfile right before the read,
 //frees it right after, on every exit path of split_grab_impl (success or failure).
 bool split_grab(char**p_text,size_t*p_size,char*argfile){
-	split_dir_prefix(argfile);
-	bool r=split_grab_impl(p_text,p_size);
-	if(dir_prefix){free(dir_prefix);dir_prefix=nullptr;}
-	return r;
+	if(split_dir_prefix(argfile)){
+		bool r=split_grab_impl(p_text,p_size);
+		dir_prefix_free();
+		return r;
+	}
+	return false;
 }
 
 void split_writeprefs(int f){//not bool because is last
@@ -625,7 +633,6 @@ bool split_write_init(char*orig_filename){
 }
 void split_write_free(){
 	//free(fulldelim);
-	if(dir_prefix){free(dir_prefix);dir_prefix=nullptr;}
 	if(split_reminder_c==split_yes_mix){
 		close(split_out_file);
 		close(split_out_formatfile);
