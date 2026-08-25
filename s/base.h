@@ -228,7 +228,7 @@ extern char*tit_delims_new;
 //split
 //main
 split_char split_conditions(char*,bool);
-bool split_grab(char**,size_t*);
+bool split_grab(char**,size_t*,char*);
 void split_writeprefs(int);
 void split_readprefs(int);
 void split_freeprefs();
@@ -257,4 +257,5 @@ extern char*escape_delims_new;
 #ifndef HAVE_MEMMEM
 void *memmem(const void*,size_t,const void*,size_t);
 #endif
+void split_dir_prefix(char*);
 swrite_char swrite(int,void*,unsigned int);

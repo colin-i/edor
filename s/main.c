@@ -2567,7 +2567,7 @@ static normalize_char normalize(char**c,size_t*size,size_t*r,size_t*normalize_cl
 }
 //same as normalize
 static normalize_char normalize_split(char**c,size_t*s,size_t*r,char*argfile){
-	if(argfile==nullptr||split_grab(c,s)/*true*/){//if at normalize will work also in open cutbufs but will error at explodes there(save cutbuf with explodes)
+	if(argfile==nullptr||split_grab(c,s,argfile)/*true*/){//if at normalize will work also in open cutbufs but will error at explodes there(save cutbuf with explodes)
 		return normalize(c,s,r,&normalize_clue);
 	}
 	return normalize_err;

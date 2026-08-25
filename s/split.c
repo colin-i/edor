@@ -86,6 +86,50 @@ static char last_escape_char;
 static char*last_split_end;//init at split_write_init
 static char last_escape_char_store;//no init required
 
+//directory part of the module file currently being read or written (e.g. "dir/" from
+//"dir/a.oac"), used so that filenames referenced *inside* the module (a.as, split
+//outputs, etc.) are resolved relative to the module file's own location instead of
+//the process cwd. each side owns it directly from the filename it already receives as
+//a parameter: split_grab() sets/frees it around the read, split_write_init()/
+//split_write_free() set/free it around the write. read and write never overlap in
+//time, so one variable safely serves both.
+static char*dir_prefix=nullptr;
+static size_t dir_prefix_len;
+
+static bool is_absolute_path(char*path){
+	if(*path==path_separator)return true;
+#ifdef MKDIR_1ARG //windows: also absolute if it starts with a drive letter, e.g. C:\ or C:/
+	if(path[0]!='\0'&&path[1]==':')return true;
+#endif
+	return false;
+}
+//fills *prefix/*prefix_len from filename's directory part (up to and including the
+//last path_separator). caller is responsible for freeing the previous value, if any,
+//before calling this again -- see dir_prefix's own free-after-use call sites.
+void split_dir_prefix(char*filename){
+	char*sep=strrchr(filename,path_separator);
+	if(sep){
+		size_t len=sep-filename+1;
+		char*p=(char*)malloc(len+1);
+		if(p){
+			memcpy(p,filename,len);
+			p[len]='\0';
+			dir_prefix=p;dir_prefix_len=len;
+		}//alloc failed: fall back to cwd-relative behaviour (len stays 0)
+	}
+}
+//resolves 'name' against a given prefix when 'name' is relative and a prefix is set.
+static char* resolve_path_with_prefix(char*name){
+	if(!dir_prefix||is_absolute_path(name))return name;
+	size_t tlen=strlen(name);
+	char*full=(char*)malloc(dir_prefix_len+tlen+1);
+	if(full){
+		memcpy(full,dir_prefix,dir_prefix_len);
+		memcpy(full+dir_prefix_len,name,tlen+1);
+	}
+	return full;
+}
+
 typedef struct{
 	int file;
 	off_t size;
@@ -232,7 +276,7 @@ split_char split_conditions(char*filename,bool free_paths){
 }
 
 //false on errors
-bool split_grab(char**p_text,size_t*p_size){
+static bool split_grab_impl(char**p_text,size_t*p_size){
 	if(split_reminder_c!=split_err){
 		if(split_reminder_c!=split_no){// yes_mixless or yes_mix
 			char*text;size_t size;int cmp;char*next;
@@ -286,7 +330,9 @@ bool split_grab(char**p_text,size_t*p_size){
 
 						next=(char*)memchr(text,a,size);
 						*next='\0';
-						int f=open(text,O_RDONLY);
+						char*path=resolve_path_with_prefix(text);
+						int f=path?open(path,O_RDONLY):-1;
+						if(path&&dir_prefix)free(path);
 						if(f==-1){split_error_free(files);return false;}
 						files[explodes].file=f;
 						off_t sz=lseek(f,0,(SEEK_END));
@@ -365,6 +411,14 @@ bool split_grab(char**p_text,size_t*p_size){
 		return true;
 	}
 	return false;
+}
+//wrapper: owns dir_prefix for the read -- sets it from argfile right before the read,
+//frees it right after, on every exit path of split_grab_impl (success or failure).
+bool split_grab(char**p_text,size_t*p_size,char*argfile){
+	split_dir_prefix(argfile);
+	bool r=split_grab_impl(p_text,p_size);
+	if(dir_prefix){free(dir_prefix);dir_prefix=nullptr;}
+	return r;
 }
 
 void split_writeprefs(int f){//not bool because is last
@@ -571,6 +625,7 @@ bool split_write_init(char*orig_filename){
 }
 void split_write_free(){
 	//free(fulldelim);
+	if(dir_prefix){free(dir_prefix);dir_prefix=nullptr;}
 	if(split_reminder_c==split_yes_mix){
 		close(split_out_file);
 		close(split_out_formatfile);
@@ -655,7 +710,9 @@ static bool split_write_split(char*file,size_t start,size_t end,row_dword size,b
 			*majorerror=true;return false;
 		}
 	}
-	int f=open_or_new(file);
+	char*path=resolve_path_with_prefix(file);
+	int f=path?open_or_new(path):-1;
+	if(path&&dir_prefix)free(path);
 	if(f!=-1){
 		for(size_t k=start;k<end;k++){
 			row*r=&rows[k];

@@ -192,6 +192,7 @@ static command_char wrt_simple(int f){
 //same
 static command_char wrt_split(char*filename){
 	if(split_write_init(filename)/*true*/){
+		split_dir_prefix(filename);
 		command_char a;
 		int f=open_or_new(filename);
 		if(f!=-1){

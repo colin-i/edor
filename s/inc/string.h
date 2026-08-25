@@ -40,16 +40,6 @@ int memcmp(const void*,const void*,size_t);
 #endif
 #endif
 
-#if defined(is_bar_c)||defined(is_sep_c)
-#ifdef __cplusplus
-extern "C" {
-#endif
-char*strrchr(const char*,int);
-#ifdef __cplusplus
-}
-#endif
-#endif
-
 #if defined(is_bar_c)||defined(is_split_c)
 #ifdef __cplusplus
 extern "C" {
@@ -57,6 +47,16 @@ extern "C" {
 #ifdef HAVE_MEMMEM   //hard to happen
 void *memmem(const void*,size_t,const void*,size_t);//this is provided in our split.c
 #endif
+#ifdef __cplusplus
+}
+#endif
+#endif
+
+#if defined(is_bar_c)||defined(is_split_c)||defined(is_sep_c)
+#ifdef __cplusplus
+extern "C" {
+#endif
+char*strrchr(const char*,int);
 #ifdef __cplusplus
 }
 #endif
