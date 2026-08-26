@@ -2262,7 +2262,7 @@ void pref_modify(char**pref_orig,char**pref_buf,bool sizedonly,char*newinput,bar
 	if(*pref_buf){//!=nullptr
 		size_t len=strlen(*pref_buf);
 		if(len<cursor){
-			char*newmem=(char*)malloc(cursor+1);
+			char*newmem=(char*)realloc(*pref_buf,cursor+1);
 			if(newmem)*pref_buf=newmem;//!=nullptr
 			else return;
 		}
@@ -2362,6 +2362,7 @@ static bool loopin(WINDOW*w){
 			else if(z==(key_ocomp+A_to_a)){aftercall=aftercall_find();aftercall_draw(w);}//here will scan without asking about file extension or disable/enable but only if enable will show
 			else if(z==(key_actswf+A_to_a)){if(pref_change(w,&sdelimiter,&sdelimiter_new,true,key_actswf,A_to_a)/*true*/)return true;}//don't allow no size delimiters
 			else if(z==(key_actswf2+A_to_a)){if(pref_change(w,&split_outext,&split_outext_new,false,key_actswf2,A_to_a)/*true*/)return true;}
+			else if(z==(key_actswf3+A_to_a)){if(pref_change(w,&split_dboardext,&split_dboardext_new,false,key_actswf3,A_to_a)/*true*/)return true;}//change splits dashboard extension (oacd)
 			else if(z==key_whites+A_to_a){if(pref_change(w,&filewhites_extension,&filewhites_extension_new,false,key_whites,A_to_a)/*true*/)return true;}
 			else if(z==key_quit+A_to_a){
 				bool q;bool not_q=quit_from_key(w,&q);
@@ -2465,6 +2466,8 @@ static bool loopin(WINDOW*w){
 					vis(c,w);
 				}else if(chr==key_actswf2){
 					if(pref_change(w,&split_out,&split_out_new,false,key_actswf2,A_to_a)/*true*/)return true;
+				}else if(chr==key_actswf3){//change splits frame extension (oacf)
+					if(pref_change(w,&split_frameext,&split_frameext_new,false,key_actswf3,A_to_a)/*true*/)return true;
 				}else if(chr==key_whites){
 					char c;
 					if(filewhites_flag/*true*/){filewhites_flag=false;c=orig_lowkey(key_whites);}

@@ -314,8 +314,8 @@ int open_or_new(char*dest){
 	else f=open(dest,O_WRONLY|O_TRUNC);
 	return f;
 }
-bool is_extension_ok(char*extension,char*filename){//also filename to save restore files in a simple way
-	if(*extension!='\0'){//else all files
+bool is_extension_ok_full(char*extension,char*filename,bool no_ext){//also filename to save restore files in a simple way
+	if(*extension!='\0'){//else all files or none
 		char*pos=strrchr(filename,'.');
 		if(pos){//!=nullptr
 			pos++;
@@ -323,7 +323,7 @@ bool is_extension_ok(char*extension,char*filename){//also filename to save resto
 		}
 		return false;
 	}
-	return true;
+	return no_ext;
 }
 //command return
 command_char saving_base(char*dest){

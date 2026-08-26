@@ -69,6 +69,7 @@ text="\ncommand mode: left,right,home,end,Ctrl+q\
 \nCtrl+a = enable/disable O language syntax; Alt+a = syntax rescan; Alt+A = change rule extension name (blank is all)\
 \nCtrl+j = enable/disable OA split syntax; Alt+j = change delimiter; Alt+J = change view delimiter; Alt+Ctrl+j = change rule extension name for splits (blank is all)\
 \n Ctrl+k = change mix folder (blank is mixless); Alt+k = change mix file ext (blank is no ext); Alt+K = change mix format file ext (blank is no ext); Alt+Ctrl+k = mix file chars to escape\
+\nCtrl+b = change splits frame extension (blank is no ext); Alt+b change splits dashboard extension (blank is no ext)\
 \nCtrl+y = enable/disable spaces->tabs indents at read, tabs->spaces at write; Alt+y = change rule extension name (blank is all)\
 \nCtrl+x = change tab size; Alt+x = change save timeout in seconds (0 is default timeout); Alt+X = change selection color, short integers: foreground,background\
 \nCtrl+z = switch keys, applies to Ctrl and lower/upper Alt (example: az , +a becomes +z and +z becomes +a)\
@@ -140,7 +141,7 @@ _find_pos                 ocomp              97 1 1 1   #a
 i=98
 while [ $i -lt 123 ]; do
 	case $i in
-		#98) find_pos color               $i 1;;     #b
+		98) find_pos actswf3             $i 1 1;;   #b
 		99) find_pos findword            $i 1 1;;   #c
 		100) find_pos indopt             $i 1;;     #d
 		101) find_pos mouse              $i 1;;     #e

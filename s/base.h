@@ -253,6 +253,10 @@ extern char*split_outformatext;
 extern char*split_outformatext_new;
 extern char*escape_delims;
 extern char*escape_delims_new;
+extern char*split_frameext;
+extern char*split_frameext_new;
+extern char*split_dboardext;
+extern char*split_dboardext_new;
 //bar
 #ifndef HAVE_MEMMEM
 void *memmem(const void*,size_t,const void*,size_t);

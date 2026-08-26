@@ -64,6 +64,10 @@ char*split_outformatext;
 char*split_outformatext_new;
 char*escape_delims;
 char*escape_delims_new;
+char*split_frameext;
+char*split_frameext_new;
+char*split_dboardext;
+char*split_dboardext_new;
 
 //char*fulldelim;
 //unsigned short fulldelim_size;
@@ -274,11 +278,11 @@ split_char split_conditions(char*filename,bool free_paths){
 		if(is_extension_ok(split_extension,filename)/*true*/){
 			return split_conditions_out(filename,free_paths);
 		}
-		if(is_extension_ok((char*)"oacd",filename)/*true*/){//dashboard: .oac behaviour (respects splits_flag) but never mix. TODO: make user setting later
+		if(is_extension_ok_strict(split_dboardext,filename)/*true*/){//dashboard: .oac behaviour (respects splits_flag) but never mix.
 			return split_yes_mixless;//skip the split_out folder lookup entirely
 		}
 	}
-	if(is_extension_ok((char*)"oacf",filename)/*true*/){//.oacf ignores splits_flag, always split-parsed. TODO: make user setting later
+	if(is_extension_ok_strict(split_frameext,filename)/*true*/){//.oacf ignores splits_flag, always split-parsed.
 		return split_yes_mixless;//.oacf is subsplits-only, never mix: skip the split_out folder lookup entirely
 	}
 	return split_no;
@@ -456,10 +460,20 @@ void split_writeprefs(int f){//not bool because is last
 												if(write(f,split_outformatext,sz)==sz){
 													sz=strlen(escape_delims);
 													if(write(f,&sz,extlen_size)==extlen_size){
-														#pragma GCC diagnostic push
-														#pragma GCC diagnostic ignored "-Wunused-result"
-														write(f,escape_delims,sz);
-														#pragma GCC diagnostic pop
+														if(write(f,escape_delims,sz)==sz){
+															sz=strlen(split_frameext);
+															if(write(f,&sz,extlen_size)==extlen_size){
+																if(write(f,split_frameext,sz)==sz){
+																	sz=strlen(split_dboardext);
+																	if(write(f,&sz,extlen_size)==extlen_size){
+																		#pragma GCC diagnostic push
+																		#pragma GCC diagnostic ignored "-Wunused-result"
+																		write(f,split_dboardext,sz);
+																		#pragma GCC diagnostic pop
+																	}
+																}
+															}
+														}
 													}
 												}
 											}
@@ -518,6 +532,24 @@ void split_readprefs(int f){//not bool because is last
 																					if(read(f,escape_delims_new,len)==len){
 																						escape_delims_new[len]='\0';
 																						escape_delims=escape_delims_new;
+																						if(read(f,&len,extlen_size)==extlen_size){
+																							split_frameext_new=(char*)malloc(len+1);
+																							if(split_frameext_new){//!=nullptr
+																								if(read(f,split_frameext_new,len)==len){
+																									split_frameext_new[len]='\0';
+																									split_frameext=split_frameext_new;
+																									if(read(f,&len,extlen_size)==extlen_size){
+																										split_dboardext_new=(char*)malloc(len+1);
+																										if(split_dboardext_new){//!=nullptr
+																											if(read(f,split_dboardext_new,len)==len){
+																												split_dboardext_new[len]='\0';
+																												split_dboardext=split_dboardext_new;
+																											}
+																										}
+																									}
+																								}
+																							}
+																						}
 																					}
 																				}
 																			}
@@ -548,6 +580,8 @@ void split_freeprefs(){
 	if(split_outext_new)free(split_outext_new);//!=nullptr
 	if(split_outformatext_new)free(split_outformatext_new);//!=nullptr
 	if(escape_delims_new)free(escape_delims_new);//!=nullptr
+	if(split_frameext_new)free(split_frameext_new);//!=nullptr
+	if(split_dboardext_new)free(split_dboardext_new);//!=nullptr
 }
 
 //true at ok
@@ -797,6 +831,8 @@ void split_inits_default(){
 	split_outformatext_new=nullptr;
 	escape_delims_new=nullptr;
 	last_escape_char='\0';
+	split_frameext_new=nullptr;
+	split_dboardext_new=nullptr;
 }
 void split_inits(){
 	split_reminder_c=split_no;
@@ -807,4 +843,6 @@ void split_inits(){
 	split_outext=(char*)"";//was oc but the reason is at split_write_init at split_extension
 	split_outformatext=(char*)"split";
 	escape_delims=(char*)"\"'";
+	split_frameext=(char*)"oacf";
+	split_dboardext=(char*)"oacd";
 }
