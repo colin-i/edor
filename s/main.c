@@ -2376,15 +2376,22 @@ static bool loopin(WINDOW*w){
 				quick_pack(com_nr_restore,change_save_timeout)
 				if(command((char*)args,(show_key_struct){key_len,0})==command_resize)return true;
 				wmove(w,getcury(w),getcurx(w));
-			}else if(z==key_ocomp){if(pref_change(w,&ocode_extension,&ocode_extension_new,false,key_ocomp,0)/*true*/)return true;}
-			else if(z==key_actswf){if(pref_change(w,&esdelimiter,&esdelimiter_new,true,key_actswf,0)/*true*/)return true;}            //don't allow no size delimiters
-			else if(z==key_actswf2){if(pref_change(w,&split_outformatext,&split_outformatext_new,false,key_actswf2,0)/*true*/)return true;}
-			else if(z==key_quit){
+			}else if(z==key_quit){
 				bool q;bool not_q=quit_from_key(w,&q);
 				if(!not_q/*false*/){
 					reload=2;
 					return q;
 				}
+			}else if(z==key_ocomp){if(pref_change(w,&ocode_extension,&ocode_extension_new,false,key_ocomp,0)/*true*/)return true;}
+			else if(z==key_actswf){if(pref_change(w,&esdelimiter,&esdelimiter_new,true,key_actswf,0)/*true*/)return true;}            //don't allow no size delimiters
+			else if(z==key_actswf2){if(pref_change(w,&split_outformatext,&split_outformatext_new,false,key_actswf2,0)/*true*/)return true;}
+			else if(z==key_len){
+				quick_pack(com_nr_color,change_color)
+				//If the color pair was previously initialized, the screen is refreshed and all occurrences of that color pair are changed to the new definition.
+				//anyway there are no colored selections
+				command((char*)args,(show_key_struct){key_len,A_to_a});//==command_false)
+				wmove(w,getcury(w),getcurx(w));
+				//else return true;
 			}else{
 				const char*s=keyname(z);
 				if(*s==Char_Ctrl){
@@ -2473,13 +2480,6 @@ static bool loopin(WINDOW*w){
 					quick_pack(com_nr_tab,change_tab_size)
 					if(command((char*)args,(show_key_struct){key_len,0})==command_false)wmove(w,getcury(w),getcurx(w));
 					else return true;
-				}else if(chr==key_color){
-					quick_pack(com_nr_color,change_color)
-					//If the color pair was previously initialized, the screen is refreshed and all occurrences of that color pair are changed to the new definition.
-					//anyway there are no colored selections
-					command((char*)args,(show_key_struct){key_color,0});//==command_false)
-					wmove(w,getcury(w),getcurx(w));
-					//else return true;
 				}else type(c,w);//enter, tab, ^, unknown ctrls
 			}else{
 				if(strcmp(s,"KEY_F(1)")==0){

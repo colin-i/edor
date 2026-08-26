@@ -274,6 +274,12 @@ split_char split_conditions(char*filename,bool free_paths){
 		if(is_extension_ok(split_extension,filename)/*true*/){
 			return split_conditions_out(filename,free_paths);
 		}
+		if(is_extension_ok((char*)"oacd",filename)/*true*/){//dashboard: .oac behaviour (respects splits_flag) but never mix. TODO: make user setting later
+			return split_yes_mixless;//skip the split_out folder lookup entirely
+		}
+	}
+	if(is_extension_ok((char*)"oacf",filename)/*true*/){//.oacf ignores splits_flag, always split-parsed. TODO: make user setting later
+		return split_yes_mixless;//.oacf is subsplits-only, never mix: skip the split_out folder lookup entirely
 	}
 	return split_no;
 }
