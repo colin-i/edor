@@ -335,7 +335,7 @@ static bool split_grab_impl(char**p_text,size_t*p_size){
 						*next='\0';
 						char*path=resolve_path_with_prefix(text);
 						int f=path?open(path,O_RDONLY):-1;
-						if(path&&dir_prefix)free(path);
+						if(dir_prefix&&path)free(path);
 						if(f==-1){split_error_free(files);return false;}
 						files[explodes].file=f;
 						off_t sz=lseek(f,0,(SEEK_END));
@@ -719,7 +719,7 @@ static bool split_write_split(char*file,size_t start,size_t end,row_dword size,b
 	}
 	char*path=resolve_path_with_prefix(file);
 	int f=path?open_or_new(path):-1;
-	if(path&&dir_prefix)free(path);
+	if(dir_prefix&&path)free(path);
 	if(f!=-1){
 		for(size_t k=start;k<end;k++){
 			row*r=&rows[k];
