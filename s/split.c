@@ -94,6 +94,10 @@ static char**dboard_dirs;
 static size_t dboard_dirs_count;
 static size_t dboard_dirs_cap;
 
+static char*split_out_root;
+static size_t split_out_root_len;
+static int*dboard_files;
+
 static char last_escape_char;
 static char*last_split_end;//init at split_write_init
 static char last_escape_char_store;//no init required
@@ -649,6 +653,14 @@ bool split_write_init(char*orig_filename){
 		split_out_dboardfile=-1;
 
 		size_t ancestors_diff=split_out_path2-split_out_path4;//this appears when mix folder is below orig, ./q/a.oac but osrc is at ./osrc
+		bool is_dash_frames=*split_frameext!='\0'&&*split_dboardext!='\0';
+		if(ancestors_diff!=0&&is_dash_frames){
+			free(split_out_alloc1);free(split_out_alloc2);
+			//cannot puts and soft return in curses
+			//Splits are activated with dashboard/frames and the split_out folder was found in an ancestor folder instead of next to the source file. This combination isn't supported: move the split_out folder next to the source file, or turn off the dashboard extensions.");
+			return false;
+		}
+
 		split_out_path2=split_out_alloc1+(split_out_path2-split_out_alloc2);
 		split_out_path4+=split_out_size1;
 		do{
@@ -702,7 +714,8 @@ bool split_write_init(char*orig_filename){
 				memcpy(c,split_outformatext,outformatext_size+1);//format + null end
 				split_out_formatfile=open_or_new(a);
 				if(split_out_formatfile!=-1){
-					if(*split_dboardext!='\0'&&*split_frameext!='\0'){//frameext is required, it's part of every entry's name
+					last_split_end=nullptr;
+					if(is_dash_frames){//frameext is required, it's part of every entry's name
 						memcpy(c,split_dboardext,dboardext_size+1);//same slot as split_outformatext above, reused
 						split_out_dboardfile=open_or_new(a);
 						if(split_out_dboardfile==-1){
@@ -711,9 +724,14 @@ bool split_write_init(char*orig_filename){
 							return false;
 						}
 						dboard_dirs=nullptr;dboard_dirs_count=0;dboard_dirs_cap=0;
-					}
-					free(a);
-					last_split_end=nullptr;
+
+						//stash the split_out root folder path (a[0..split_out_size2), incl. trailing
+						//path_separator) before 'a' gets reused/freed below: split_write_dboard needs
+						//it for the whole write session to build per-directory .oacf file paths.
+						split_out_root=a;
+						split_out_root_len=split_out_size2;
+						dboard_files=nullptr;
+					}else free(a);
 					return true;
 				}
 				close(split_out_file);
@@ -737,6 +755,11 @@ void split_write_free(){
 				for(size_t k=0;k<dboard_dirs_count;k++)free(dboard_dirs[k]);
 				free(dboard_dirs);
 			}
+			if(dboard_files){
+				for(size_t k=0;k<dboard_dirs_count;k++)close(dboard_files[k]);
+				free(dboard_files);
+			}
+			free(split_out_root);
 		}
 	}
 }
@@ -812,8 +835,12 @@ static swrite_char swwrite_if(int f,char*buf,row_dword size,row_dword off){
 }
 
 //writes '|||dirname.oacf|||'+ln_term to split_out_dboardfile for file's parent directory
-//(e.g. "orig/main/d.as" -> "main"), skipping directories already written for this file.
-//true if ok (including the "already written, nothing to do" case)
+//(e.g. "orig/main/d.as" -> "main"), the first time that directory is seen for the file
+//currently being split, opening that directory's own "dirname.oacf" content file at the
+//same time. every call (first time or not) then appends this file's own entry to that
+//directory's .oacf file, as '|||../file|||' (the ".." undoes split_out being one folder
+//down from the source file -- see at split error dboard ancestor for why that must hold)
+//true if ok
 static bool split_write_dboard(char*file){
 	char*end=strrchr(file,path_separator);
 	if(!end)return true;//no directory component, nothing to index
@@ -822,28 +849,60 @@ static bool split_write_dboard(char*file){
 	size_t len=end-start;
 	if(len==0)return true;
 
-	for(size_t k=0;k<dboard_dirs_count;k++){
-		if(strlen(dboard_dirs[k])==len&&memcmp(dboard_dirs[k],start,len)==0)return true;//already listed
+	size_t k;
+	bool found=false;
+	for(k=0;k<dboard_dirs_count;k++){
+		if(strlen(dboard_dirs[k])==len&&memcmp(dboard_dirs[k],start,len)==0){found=true;break;}
 	}
-
-	if(dboard_dirs_count==dboard_dirs_cap){
-		size_t newcap=dboard_dirs_cap?dboard_dirs_cap+8:8;//cannot think at overflow because there are many delimiters/modules/extensions involved
-		char**p=(char**)realloc(dboard_dirs,sizeof(char*)*newcap);
-		if(!p)return false;
-		dboard_dirs=p;dboard_dirs_cap=newcap;
-	}
-	char*copy=(char*)malloc(len+1);
-	if(!copy)return false;
-	memcpy(copy,start,len);copy[len]='\0';
-	dboard_dirs[dboard_dirs_count++]=copy;
 
 	size_t frameext_len=strlen(split_frameext);//guaranteed non-empty: split_out_dboardfile only opens when split_frameext is set too
-	if(write(split_out_dboardfile,sdelimiter,sdelimiter_size)!=sdelimiter_size)return false;
-	if((size_t)write(split_out_dboardfile,start,len)!=len)return false;
-	char dot='.';if(write(split_out_dboardfile,&dot,1)!=1)return false;
-	if((size_t)write(split_out_dboardfile,split_frameext,frameext_len)!=frameext_len)return false;
-	if(write(split_out_dboardfile,sdelimiter,sdelimiter_size)!=sdelimiter_size)return false;
-	if(write(split_out_dboardfile,ln_term,ln_term_sz)!=ln_term_sz)return false;
+	if(!found){
+		if(dboard_dirs_count==dboard_dirs_cap){
+			size_t newcap=dboard_dirs_cap?dboard_dirs_cap+8:8;//cannot think at overflow because there are many delimiters/modules/extensions involved
+			char**p=(char**)realloc(dboard_dirs,sizeof(char*)*newcap);
+			if(!p)return false;
+			dboard_dirs=p;
+			int*fp=(int*)realloc(dboard_files,sizeof(int)*newcap);
+			if(!fp)return false;
+			dboard_files=fp;
+			dboard_dirs_cap=newcap;
+		}
+		char*copy=(char*)malloc(len+1);
+		if(!copy)return false;
+		memcpy(copy,start,len);copy[len]='\0';
+
+		//"<split_out_root><dirname>.<frameext>" -- same folder as split_out_file/
+		//split_out_formatfile/split_out_dboardfile
+		char*oacfpath=(char*)malloc(split_out_root_len+len+1+frameext_len+1);
+		if(!oacfpath){free(copy);return false;}
+		memcpy(oacfpath,split_out_root,split_out_root_len);
+		memcpy(oacfpath+split_out_root_len,start,len);
+		oacfpath[split_out_root_len+len]='.';
+		memcpy(oacfpath+split_out_root_len+len+1,split_frameext,frameext_len+1);//frameext+null
+		int of=open_or_new(oacfpath);
+		free(oacfpath);
+		if(of==-1){free(copy);return false;}
+
+		k=dboard_dirs_count;
+		dboard_dirs[k]=copy;
+		dboard_files[k]=of;
+		dboard_dirs_count++;
+
+		if(write(split_out_dboardfile,sdelimiter,sdelimiter_size)!=sdelimiter_size)return false;
+		if((size_t)write(split_out_dboardfile,start,len)!=len)return false;
+		char dot='.';if(write(split_out_dboardfile,&dot,1)!=1)return false;
+		if((size_t)write(split_out_dboardfile,split_frameext,frameext_len)!=frameext_len)return false;
+		if(write(split_out_dboardfile,sdelimiter,sdelimiter_size)!=sdelimiter_size)return false;
+		if(write(split_out_dboardfile,ln_term,ln_term_sz)!=ln_term_sz)return false;
+	}
+
+	int of=dboard_files[k];
+	if(write(of,sdelimiter,sdelimiter_size)!=sdelimiter_size)return false;
+	char up[2]={'.','.'};if(write(of,up,2)!=2)return false;
+	char sep=path_separator;if(write(of,&sep,1)!=1)return false;
+	size_t filelen=strlen(file);
+	if((size_t)write(of,file,filelen)!=filelen)return false;
+	if(write(of,sdelimiter,sdelimiter_size)!=sdelimiter_size)return false;
 	return true;
 }
 //true if ok
