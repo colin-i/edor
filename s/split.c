@@ -85,6 +85,14 @@ static size_t split_out_size2;
 
 static int split_out_file;
 static int split_out_formatfile;
+static int split_out_dboardfile;//-1 when split_dboardext is "" (feature off)
+
+//directory basenames already written to split_out_dboardfile for the file currently
+//being split-written, so each one is listed once. reset in split_write_init, freed in
+//split_write_free.
+static char**dboard_dirs;
+static size_t dboard_dirs_count;
+static size_t dboard_dirs_cap;
 
 static char last_escape_char;
 static char*last_split_end;//init at split_write_init
@@ -638,6 +646,8 @@ bool split_write_init(char*orig_filename){
 	//	memcpy(fulldelim,esdelimiter,s2);memcpy(fulldelim+s2,sdelimiter,sdelimiter_size);
 
 	if(split_reminder_c==split_yes_mix){
+		split_out_dboardfile=-1;
+
 		size_t ancestors_diff=split_out_path2-split_out_path4;//this appears when mix folder is below orig, ./q/a.oac but osrc is at ./osrc
 		split_out_path2=split_out_alloc1+(split_out_path2-split_out_alloc2);
 		split_out_path4+=split_out_size1;
@@ -692,6 +702,16 @@ bool split_write_init(char*orig_filename){
 				memcpy(c,split_outformatext,outformatext_size+1);//format + null end
 				split_out_formatfile=open_or_new(a);
 				if(split_out_formatfile!=-1){
+					if(*split_dboardext!='\0'&&*split_frameext!='\0'){//frameext is required, it's part of every entry's name
+						memcpy(c,split_dboardext,dboardext_size+1);//same slot as split_outformatext above, reused
+						split_out_dboardfile=open_or_new(a);
+						if(split_out_dboardfile==-1){
+							close(split_out_file);close(split_out_formatfile);
+							free(a);
+							return false;
+						}
+						dboard_dirs=nullptr;dboard_dirs_count=0;dboard_dirs_cap=0;
+					}
 					free(a);
 					last_split_end=nullptr;
 					return true;
@@ -711,6 +731,13 @@ void split_write_free(){
 	if(split_reminder_c==split_yes_mix){
 		close(split_out_file);
 		close(split_out_formatfile);
+		if(split_out_dboardfile!=-1){
+			close(split_out_dboardfile);
+			if(dboard_dirs){
+				for(size_t k=0;k<dboard_dirs_count;k++)free(dboard_dirs[k]);
+				free(dboard_dirs);
+			}
+		}
 	}
 }
 
@@ -784,12 +811,52 @@ static swrite_char swwrite_if(int f,char*buf,row_dword size,row_dword off){
 	return swrite(f,buf,size);
 }
 
+//writes '|||dirname.oacf|||'+ln_term to split_out_dboardfile for file's parent directory
+//(e.g. "orig/main/d.as" -> "main"), skipping directories already written for this file.
+//true if ok (including the "already written, nothing to do" case)
+static bool split_write_dboard(char*file){
+	char*end=strrchr(file,path_separator);
+	if(!end)return true;//no directory component, nothing to index
+	char*start=end;
+	while(start!=file&&*(start-1)!=path_separator)start--;
+	size_t len=end-start;
+	if(len==0)return true;
+
+	for(size_t k=0;k<dboard_dirs_count;k++){
+		if(strlen(dboard_dirs[k])==len&&memcmp(dboard_dirs[k],start,len)==0)return true;//already listed
+	}
+
+	if(dboard_dirs_count==dboard_dirs_cap){
+		size_t newcap=dboard_dirs_cap?dboard_dirs_cap+8:8;//cannot think at overflow because there are many delimiters/modules/extensions involved
+		char**p=(char**)realloc(dboard_dirs,sizeof(char*)*newcap);
+		if(!p)return false;
+		dboard_dirs=p;dboard_dirs_cap=newcap;
+	}
+	char*copy=(char*)malloc(len+1);
+	if(!copy)return false;
+	memcpy(copy,start,len);copy[len]='\0';
+	dboard_dirs[dboard_dirs_count++]=copy;
+
+	size_t frameext_len=strlen(split_frameext);//guaranteed non-empty: split_out_dboardfile only opens when split_frameext is set too
+	if(write(split_out_dboardfile,sdelimiter,sdelimiter_size)!=sdelimiter_size)return false;
+	if((size_t)write(split_out_dboardfile,start,len)!=len)return false;
+	char dot='.';if(write(split_out_dboardfile,&dot,1)!=1)return false;
+	if((size_t)write(split_out_dboardfile,split_frameext,frameext_len)!=frameext_len)return false;
+	if(write(split_out_dboardfile,sdelimiter,sdelimiter_size)!=sdelimiter_size)return false;
+	if(write(split_out_dboardfile,ln_term,ln_term_sz)!=ln_term_sz)return false;
+	return true;
+}
 //true if ok
 static bool split_write_split(char*file,size_t start,size_t end,row_dword size,bool*majorerror){
 	if(split_reminder_c==split_yes_mix){
 		row_dword sz=strlen(file)+1;
 		if((ssize_t)write(split_out_formatfile,file,sz)!=sz){
 			*majorerror=true;return false;
+		}
+		if(split_out_dboardfile!=-1){
+			if(!split_write_dboard(file)){
+				*majorerror=true;return false;
+			}
 		}
 	}
 	char*path=resolve_path_with_prefix(file);
