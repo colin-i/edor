@@ -596,8 +596,8 @@ void split_freeprefs(){
 	if(split_dboardext_new)free(split_dboardext_new);//!=nullptr
 }
 
-static bool ext_verify(char*remover,bar_byte outext_size,bar_byte outformatext_size,bar_byte dboardext_size,size_t*size){
-	size_t comparator[]={outext_size,outformatext_size,dboardext_size};
+static bool ext_verify(char*remover,bar_byte outext_size,bar_byte outformatext_size,bar_byte dboardext_size,size_t*size,bool is_dash_frames){
+	size_t comparator[]={outext_size,outformatext_size,dboardext_size,strlen(split_frameext)};//size_t from outext size part
 
 	char*outext=split_outext;size_t sz=outext_size;//EX
 	if(remover!=split_out_path3){//will remove
@@ -612,11 +612,11 @@ static bool ext_verify(char*remover,bar_byte outext_size,bar_byte outformatext_s
 		memcpy(outext+s,split_outext,outext_size+1);//qw.EX\0
 	}
 
-	char*comparable[]={outext,split_outformatext,split_dboardext};
+	char*comparable[]={outext,split_outformatext,split_dboardext,split_frameext};
 
 	char n=2;
-	if(dboardext_size!=0){//&&nsz!=0
-		n++;//+=2
+	if(is_dash_frames){
+		n+=2;
 	}
 
 	for(char i=0;i<n-1;i++){
@@ -689,7 +689,7 @@ bool split_write_init(char*orig_filename){
 		bar_byte dboardext_size=strlen(split_dboardext);
 
 		size_t sizeplusoutext=size;
-		if(!ext_verify(remover,outext_size,outformatext_size,dboardext_size,&sizeplusoutext)){
+		if(!ext_verify(remover,outext_size,outformatext_size,dboardext_size,&sizeplusoutext,is_dash_frames)){
 			free(split_out_alloc1);free(split_out_alloc2);
 			return false;
 		}
