@@ -584,6 +584,50 @@ void split_freeprefs(){
 	if(split_dboardext_new)free(split_dboardext_new);//!=nullptr
 }
 
+static bool ext_verify(char*remover,bar_byte outext_size,bar_byte outformatext_size,bar_byte dboardext_size,size_t*size){
+	size_t comparator[]={outext_size,outformatext_size,dboardext_size};
+
+	char*outext=split_outext;size_t sz=outext_size;//EX
+	if(remover!=split_out_path3){//will remove
+		size_t s=split_out_path1-remover;//.qw considering qw.
+		sz+=s;//.qwEX considering qw.EX
+		comparator[0]=sz;
+		outext=(char*)malloc(sz+1);//+null
+		if(!outext)return false;
+		s--;// qw
+		memcpy(outext,remover+1,s); //qw
+		outext[s]='.';s++; //qw.
+		memcpy(outext+s,split_outext,outext_size+1);//qw.EX\0
+	}
+
+	char*comparable[]={outext,split_outformatext,split_dboardext};
+
+	char n=2;
+	if(dboardext_size!=0){//&&nsz!=0
+		n++;//+=2
+	}
+
+	for(char i=0;i<n-1;i++){
+		for(char j=i+1;j<n;j++){
+			if(comparator[i]==comparator[j]){
+				if(memcmp(comparable[i],comparable[j],comparator[i])==0){
+					if(remover!=split_out_path3)free(outext);
+					return false;
+				}
+			}
+		}
+	}
+	if(remover!=split_out_path3)free(outext);
+
+	comparator[0]=outext_size;
+	bar_byte max=0;
+	for(char i=0;i<n-1;i++){
+		if(comparator[i]>max)max=comparator[i];
+	}
+	*size+=1+max+1;//seems that is also working for 0
+	//can calculate more to reduce in function of remover but then need to calculate back, so, the charge is too big
+	return true;
+}
 //true at ok
 bool split_write_init(char*orig_filename){
 //this is not full, more cases at first init
@@ -618,43 +662,34 @@ bool split_write_init(char*orig_filename){
 		}
 
 		size_t size=split_out_path1-split_out_path3;// +1 will be with the existent null
-		bar_byte outext_size=strlen(split_outext)+1;//this from pref can also come 1 char size
-		bar_byte outformatext_size=strlen(split_outformatext)+1;//this from pref can also come 1 char size
-		size_t sizeplusoutext;
-		if(outformatext_size>outext_size){
-			sizeplusoutext=size+outformatext_size;
-			//can calculate more to reduce in function of remover but then need to calculate back, so, the charge is too big
-		}else{
-			if(outformatext_size==outext_size){
-				if(remover!=split_out_path3){//only when remover rule
-					if(memcmp(split_outext,split_outformatext,outext_size)==0){//will be same file, is also working for a="" b=""
-						free(split_out_alloc1);free(split_out_alloc2);
-						return false;
-					}
-				}
-			}
-			sizeplusoutext=size+outext_size;
+		bar_byte outext_size=strlen(split_outext);
+		bar_byte outformatext_size=strlen(split_outformatext);
+		bar_byte dboardext_size=strlen(split_dboardext);
+
+		size_t sizeplusoutext=size;
+		if(!ext_verify(remover,outext_size,outformatext_size,dboardext_size,&sizeplusoutext)){
+			free(split_out_alloc1);free(split_out_alloc2);
+			return false;
 		}
-		//if(outext_size!=1) again, a="" b="" is error
-		sizeplusoutext++;
+
 		split_out_size2-=ancestors_diff;
 		char*a=(char*)realloc(split_out_alloc2,split_out_size2+sizeplusoutext);
 		if(a){//!=nullptr
 			memcpy(a+split_out_size2,split_out_path3,size);
 			char*b=a+split_out_size2+size;
 			char*c=b;
-			if(outext_size!=1){
+			if(outext_size){//!=0
 				*b='.';b++;
 			}
-			memcpy(b,split_outext,outext_size);//at "" is also good for null end char
+			memcpy(b,split_outext,outext_size+1);//at "" is also good for null end char
 			free(split_out_alloc1);
 			split_out_file=open_or_new(a);
 			if(split_out_file!=-1){
 				if(remover!=split_out_path3)c-=split_out_path1-remover;
-				if(outformatext_size!=1){
+				if(outformatext_size){//!=0
 					*c='.';c++;
 				}
-				memcpy(c,split_outformatext,outformatext_size);//format + null end
+				memcpy(c,split_outformatext,outformatext_size+1);//format + null end
 				split_out_formatfile=open_or_new(a);
 				if(split_out_formatfile!=-1){
 					free(a);
