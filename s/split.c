@@ -941,6 +941,14 @@ static bool split_write_orig(int orig_file,char*cursor,unsigned int size,bool*ma
 				return true;
 	*majorerror=true;return false;
 }
+
+//esdelimiter is a run of identical chars ("///"), so when real content ends in the
+//same char (e.g. "*/" right before the closing "///"), memmem's leftmost match lands
+//one (or more) chars too early: it eats into content that should stay literal and
+//leaves the true last delimiter char behind to leak out as stray text. slide the match
+//to the rightmost position that still matches, so any extra leading delimiter-char
+//bytes fall back into content where they belong. ptr must already be a confirmed match.
+#define split_macro(ptr,buf,bufsz) while((ptr)+1+esdelimiter_size<=(buf)+(bufsz)&&memcmp((ptr)+1,esdelimiter,esdelimiter_size)==0)(ptr)++
 //null or error
 const char* split_write(size_t*_index,int orig_file,row_dword*_off,bool*majorerror){
 	size_t i=*_index;
@@ -949,6 +957,7 @@ const char* split_write(size_t*_index,int orig_file,row_dword*_off,bool*majorerr
 	unsigned int size=rw->sz-*_off;
 	char*pointer=(char*)memmem(data,size,esdelimiter,esdelimiter_size);//fulldelim,fulldelim_size
 	if(pointer){//!=nullptr
+		split_macro(pointer,data,size);
 		char*cursor=pointer+esdelimiter_size;//fulldelim_size
 		size-=cursor-data;
 		if(size!=0){
@@ -959,6 +968,7 @@ const char* split_write(size_t*_index,int orig_file,row_dword*_off,bool*majorerr
 				unsigned int sz=rw->sz;
 				char*marker=(char*)memmem(content,sz,esdelimiter,esdelimiter_size);//fulldelim,fulldelim_size
 				if(marker){//!=nullptr
+					split_macro(marker,content,sz);
 					if(swwrite_if(orig_file,data,pointer-data,*_off)==swrite_ok){
 						unsigned int part=marker-content;
 						*_index=j;
