@@ -1,4 +1,3 @@
-
 #define is_split_c
 #ifdef HAVE_MEMMEM //example at msys
 #	ifndef _GNU_SOURCE //example on arm64
@@ -941,14 +940,17 @@ static bool split_write_orig(int orig_file,char*cursor,unsigned int size,bool*ma
 				return true;
 	*majorerror=true;return false;
 }
-
 //esdelimiter is a run of identical chars ("///"), so when real content ends in the
 //same char (e.g. "*/" right before the closing "///"), memmem's leftmost match lands
 //one (or more) chars too early: it eats into content that should stay literal and
 //leaves the true last delimiter char behind to leak out as stray text. slide the match
 //to the rightmost position that still matches, so any extra leading delimiter-char
 //bytes fall back into content where they belong. ptr must already be a confirmed match.
+//CLOSING match only: do NOT use this on the opening match. there the ambiguous extra
+//slash(es) sit AFTER the delimiter (e.g. an absolute-path filename "///a/b/c"), so
+//sliding right would wrongly eat the filename's leading '/' into the delimiter.
 #define split_macro(ptr,buf,bufsz) while((ptr)+1+esdelimiter_size<=(buf)+(bufsz)&&memcmp((ptr)+1,esdelimiter,esdelimiter_size)==0)(ptr)++
+
 //null or error
 const char* split_write(size_t*_index,int orig_file,row_dword*_off,bool*majorerror){
 	size_t i=*_index;
@@ -957,7 +959,6 @@ const char* split_write(size_t*_index,int orig_file,row_dword*_off,bool*majorerr
 	unsigned int size=rw->sz-*_off;
 	char*pointer=(char*)memmem(data,size,esdelimiter,esdelimiter_size);//fulldelim,fulldelim_size
 	if(pointer){//!=nullptr
-		split_macro(pointer,data,size);
 		char*cursor=pointer+esdelimiter_size;//fulldelim_size
 		size-=cursor-data;
 		if(size!=0){
