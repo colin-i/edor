@@ -949,6 +949,7 @@ static bool split_write_orig(int orig_file,char*cursor,unsigned int size,bool*ma
 //CLOSING match only: do NOT use this on the opening match. there the ambiguous extra
 //slash(es) sit AFTER the delimiter (e.g. an absolute-path filename "///a/b/c"), so
 //sliding right would wrongly eat the filename's leading '/' into the delimiter.
+//also, (buf)+(bufsz) compare is justified because these lines are not with ->spc style, they are one after another
 #define split_macro(ptr,buf,bufsz) while((ptr)+1+esdelimiter_size<=(buf)+(bufsz)&&memcmp((ptr)+1,esdelimiter,esdelimiter_size)==0)(ptr)++
 
 //null or error
