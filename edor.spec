@@ -1,6 +1,6 @@
 
 Name: edor
-Version: 1.95
+Version: 1.96
 Release: 0
 License: GPLv3
 Summary: Console user interface text editor
@@ -34,6 +34,25 @@ make
 
 #-- CHANGELOG -----------------------------------------------------------------#
 %changelog
+* Fri Sep 18 2026 costin <costin.botescu@gmail.com> 1.96-0
+- justify (costin.botescu@gmail.com)
+- "up" (costin.botescu@gmail.com)
+- split write back problem fix (costin.botescu@gmail.com)
+- sts (costin.botescu@gmail.com)
+- oacf at ext verif (costin.botescu@gmail.com)
+- oacf content (costin.botescu@gmail.com)
+- oacd content (costin.botescu@gmail.com)
+- fix at split ext inits. also, integrate there oacd, to do more for that
+  (costin.botescu@gmail.com)
+- added frameext and dboardext to user settings (costin.botescu@gmail.com)
+- oacf oacd Alt+X (costin.botescu@gmail.com)
+- "up" (costin.botescu@gmail.com)
+- "up" (costin.botescu@gmail.com)
+- oac subfiles are now relative to oac (costin.botescu@gmail.com)
+- terminal paste burst (costin.botescu@gmail.com)
+- "up" (costin.botescu@gmail.com)
+- "up" (costin.botescu@gmail.com)
+
 * Mon Aug 17 2026 costin <costin.botescu@gmail.com> 1.95-0
 - fix redo malloc padding (costin.botescu@gmail.com)
 - blank indent guard (costin.botescu@gmail.com)
