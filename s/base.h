@@ -194,6 +194,8 @@ void aftercall_draw(WINDOW*);
 size_t init_aftercall();
 void bar_inits_default(void);
 void bar_inits(void);
+extern char inputf[max_path_0];
+extern bar_byte cursorf;
 //tw
 void centering3(WINDOW*,size_t*,row_dword*,bool);
 //tit

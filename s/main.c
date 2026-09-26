@@ -2740,14 +2740,21 @@ static void getfilebuf(char*cutbuf_file){//,size_t off){
 	if(f!=-1){
 		size_t sz=lseek(f,0,SEEK_END);
 		if(sz!=(size_t)-1&&sz!=0){
-			char*v=(char*)malloc(sz);
-			if(v){//!=nullptr
-				lseek(f,0,SEEK_SET);
-				cutbuf_sz=(size_t)read(f,v,sz);
-				size_t not_a_clue_at_cutbuf;
-				if(normalize(&v,&cutbuf_sz,&cutbuf_r,&not_a_clue_at_cutbuf)!=normalize_err){
-					cutbuf=v;cutbuf_spc=cutbuf_sz;
-				}else free(v);
+			lseek(f,0,SEEK_SET);
+			bar_byte len;
+			if(read(f,&len,extlen_size)==extlen_size&&sz>=(size_t)(extlen_size+len)){//find string is stored first, so it is not lost on exit
+				if(len!=0&&read(f,inputf,len)==len)cursorf=len;
+				size_t rsz=sz-extlen_size-len;
+				if(rsz!=0){
+					char*v=(char*)malloc(rsz);
+					if(v){//!=nullptr
+						cutbuf_sz=(size_t)read(f,v,rsz);
+						size_t not_a_clue_at_cutbuf;
+						if(normalize(&v,&cutbuf_sz,&cutbuf_r,&not_a_clue_at_cutbuf)!=normalize_err){
+							cutbuf=v;cutbuf_spc=cutbuf_sz;
+						}else free(v);
+					}
+				}
 			}
 		}
 		close(f);
@@ -2875,6 +2882,8 @@ static void writefilebuf(char*cutbuf_file){
 		if(f!=-1){
 			#pragma GCC diagnostic push
 			#pragma GCC diagnostic ignored "-Wunused-result"
+			write(f,&cursorf,extlen_size);
+			if(cursorf!=0)write(f,inputf,cursorf);
 			write(f,cutbuf,cutbuf_sz);
 			#pragma GCC diagnostic pop
 			close(f);

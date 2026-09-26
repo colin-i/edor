@@ -56,6 +56,9 @@
 
 #include"base.h"
 
+char inputf[max_path_0];
+bar_byte cursorf;
+
 static char*err_s;
 static WINDOW*poswn;
 static int number2;//number is also negative
@@ -75,8 +78,6 @@ static char*input0;
 static char inputr[max_path_0];
 static bar_byte cursorr;
 #define get_right getbegx(poswn)-1
-static char inputf[max_path_0];
-static bar_byte cursorf;
 
 typedef struct{
 	size_t yb;
