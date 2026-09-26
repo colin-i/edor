@@ -2880,13 +2880,15 @@ static void writefilebuf(char*cutbuf_file){
 	if(cutbuf_file[0]!=0){
 		int f=open(cutbuf_file,O_WRONLY|O_TRUNC);
 		if(f!=-1){
-			#pragma GCC diagnostic push
-			#pragma GCC diagnostic ignored "-Wunused-result"
-			write(f,&cursorf,extlen_size);
-			if(cursorf!=0)write(f,inputf,cursorf);
-			write(f,cutbuf,cutbuf_sz);
-			#pragma GCC diagnostic pop
-			close(f);
+			if(write(f,&cursorf,extlen_size)==extlen_size){
+				if(cursorf!=0)if(write(f,inputf,cursorf)!=cursorf)goto writefilebuf_done;
+				#pragma GCC diagnostic push
+				#pragma GCC diagnostic ignored "-Wunused-result"
+				write(f,cutbuf,cutbuf_sz);
+				#pragma GCC diagnostic pop
+				writefilebuf_done:
+				close(f);
+			}
 		}
 	}
 }
