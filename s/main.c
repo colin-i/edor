@@ -2743,7 +2743,7 @@ static void getfilebuf(char*cutbuf_file){//,size_t off){
 			lseek(f,0,SEEK_SET);
 			bar_byte len;
 			if(read(f,&len,extlen_size)==extlen_size&&sz>=(size_t)(extlen_size+len)){//find string is stored first, so it is not lost on exit
-				if(len!=0&&read(f,inputf,len)==len)cursorf=len;
+				if(len!=0&&read(f,inputf,len)==len)cursorf=len;//don't worry about race conditions and inputf not null termination in inputf, alt f is working fine
 				size_t rsz=sz-extlen_size-len;
 				if(rsz!=0){
 					char*v=(char*)malloc(rsz);
