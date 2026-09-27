@@ -240,6 +240,8 @@ static int tot_x;
 
 #define pref_version "1"
 #define pref_version_size (sizeof(pref_version)-1)
+#define cutbuf_version "0"
+#define cutbuf_version_size (sizeof(cutbuf_version)-1)
 
 static char* converted_open;
 
@@ -2742,17 +2744,31 @@ static void getfilebuf(char*cutbuf_file){//,size_t off){
 		if(sz!=(size_t)-1&&sz!=0){
 			lseek(f,0,SEEK_SET);
 			bar_byte len;
-			if(read(f,&len,extlen_size)==extlen_size&&sz>=(size_t)(extlen_size+len)){//find string is stored first, so it is not lost on exit
-				if(len!=0&&read(f,inputf,len)==len)cursorf=len;//don't worry about race conditions and not null termination in inputf, alt f is working fine
-				size_t rsz=sz-extlen_size-len;
-				if(rsz!=0){
-					char*v=(char*)malloc(rsz);
-					if(v){//!=nullptr
-						cutbuf_sz=(size_t)read(f,v,rsz);
-						size_t not_a_clue_at_cutbuf;
-						if(normalize(&v,&cutbuf_sz,&cutbuf_r,&not_a_clue_at_cutbuf)!=normalize_err){
-							cutbuf=v;cutbuf_spc=cutbuf_sz;
-						}else free(v);
+			if(read(f,&len,extlen_size)==extlen_size&&sz>=(size_t)(extlen_size+len)){
+				char cutbu_version[0x100*sizeof(bar_byte)];
+				if(read(f,cutbu_version,len)==len&&len==cutbuf_version_size){
+					if(memcmp(cutbuf_version,cutbu_version,len)!=0){//avoid migration issues from an older file format
+						puts("dropping cutbuf file (version is different)");
+					}else{
+						sz-=extlen_size+len;
+						if(read(f,&len,extlen_size)==extlen_size&&sz>=(size_t)(extlen_size+len)){//find string is stored next, so it is not lost on exit
+							if(len!=0){
+								if(read(f,inputf,len)==len)cursorf=len;
+								else goto getfilebuf_done;
+							}
+							size_t rsz=sz-extlen_size-len;
+							if(rsz!=0){
+								char*v=(char*)malloc(rsz);
+								if(v){//!=nullptr
+									cutbuf_sz=(size_t)read(f,v,rsz);
+									size_t not_a_clue_at_cutbuf;
+									if(normalize(&v,&cutbuf_sz,&cutbuf_r,&not_a_clue_at_cutbuf)!=normalize_err){
+										cutbuf=v;cutbuf_spc=cutbuf_sz;
+									}else free(v);
+								}
+							}
+							getfilebuf_done:
+						}
 					}
 				}
 			}
@@ -2880,14 +2896,19 @@ static void writefilebuf(char*cutbuf_file){
 	if(cutbuf_file[0]!=0){
 		int f=open(cutbuf_file,O_WRONLY|O_TRUNC);
 		if(f!=-1){
-			if(write(f,&cursorf,extlen_size)==extlen_size){
-				if(cursorf!=0)if(write(f,inputf,cursorf)!=cursorf)goto writefilebuf_done;
-				#pragma GCC diagnostic push
-				#pragma GCC diagnostic ignored "-Wunused-result"
-				write(f,cutbuf,cutbuf_sz);
-				#pragma GCC diagnostic pop
-				writefilebuf_done:
-				close(f);
+			bar_byte sz=cutbuf_version_size;
+			if(write(f,&sz,extlen_size)==extlen_size){
+				if(write(f,cutbuf_version,sz)==sz){
+					if(write(f,&cursorf,extlen_size)==extlen_size){
+						if(cursorf!=0)if(write(f,inputf,cursorf)!=cursorf)goto writefilebuf_done;
+						#pragma GCC diagnostic push
+						#pragma GCC diagnostic ignored "-Wunused-result"
+						write(f,cutbuf,cutbuf_sz);
+						#pragma GCC diagnostic pop
+						writefilebuf_done:
+						close(f);
+					}
+				}
 			}
 		}
 	}
