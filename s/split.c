@@ -231,7 +231,7 @@ static char* real_path(char*pathname){
 	return a;
 }
 //0 errors, 1 yes no mix, 2 yes and mix the split_out is at realpath dirname or in an ancestor folder
-static split_char split_conditions_out(char*filename,bool free_paths){
+static split_char split_conditions_out(char*filename,bool free_paths,bool no_ancestors){
 	if(*split_out!='\0'){
 		split_out_alloc1=real_path(filename);
 		if(split_out_alloc1){//!=nullptr
@@ -267,6 +267,7 @@ static split_char split_conditions_out(char*filename,bool free_paths){
 									}
 									return split_yes_mix;
 								}
+								if(no_ancestors)break;//this is .oacf case to not search ancestors, it is stated that mode is not working with ancestors
 								split_out_path2=split_out_path4;//this is for split write to not loop again there
 							}
 							split_out_path4--;
@@ -287,14 +288,14 @@ static split_char split_conditions_out(char*filename,bool free_paths){
 split_char split_conditions(char*filename,bool free_paths){
 	if(splits_flag/*true*/){
 		if(is_extension_ok(split_extension,filename)/*true*/){
-			return split_conditions_out(filename,free_paths);
+			return split_conditions_out(filename,free_paths,false);
 		}
 		if(is_extension_ok_strict(split_dboardext,filename)/*true*/){//dashboard: .oac behaviour (respects splits_flag) but never mix.
 			return split_yes_mixless;//skip the split_out folder lookup entirely
 		}
 	}
 	if(is_extension_ok_strict(split_frameext,filename)/*true*/){//.oacf ignores splits_flag, always split-parsed.
-		return split_yes_mixless;//.oacf is subsplits-only, never mix: skip the split_out folder lookup entirely
+		return split_conditions_out(filename,free_paths,true);
 	}
 	return split_no;
 }
@@ -632,7 +633,7 @@ static bool ext_verify(char*remover,bar_byte outext_size,bar_byte outformatext_s
 
 	comparator[0]=outext_size;
 	bar_byte max=0;
-	for(char i=0;i<n-1;i++){
+	for(char i=0;i<n;i++){// not n-1 for .oacf to also S save
 		if(comparator[i]>max)max=comparator[i];
 	}
 	*size+=1+max+1;//seems that is also working for 0
@@ -650,9 +651,10 @@ bool split_write_init(char*orig_filename){
 
 	if(split_reminder_c==split_yes_mix){
 		split_out_dboardfile=-1;
+		split_out_formatfile=-1;
 
 		size_t ancestors_diff=split_out_path2-split_out_path4;//this appears when mix folder is below orig, ./q/a.oac but osrc is at ./osrc
-		bool is_dash_frames=*split_frameext!='\0'&&*split_dboardext!='\0';
+		bool is_dash_frames=!is_extension_ok_strict(split_frameext,orig_filename)&&*split_frameext!='\0'&&*split_dboardext!='\0';
 		if(ancestors_diff!=0&&is_dash_frames){
 			free(split_out_alloc1);free(split_out_alloc2);
 			//cannot puts and soft return in curses
@@ -673,7 +675,9 @@ bool split_write_init(char*orig_filename){
 			split_out_path2+=sz;split_out_path4+=sz;
 		}while(true);
 
-		if(*split_extension!='\0')//was a.oac/a.oac.oc, is a.oac/a.oc but this change is not because of this but because a.py.oac/a.py is better than changing outext to py
+		if(is_extension_ok_strict(split_frameext,orig_filename)/*true*/){
+			split_out_path1-=1+strlen(split_frameext);
+		}else if(*split_extension!='\0')//was a.oac/a.oac.oc, is a.oac/a.oc but this change is not because of this but because a.py.oac/a.py is better than changing outext to py
 			split_out_path1-=1+strlen(split_extension);//errors if only .oac were tested
 		//and also remove the next extension to not let oaas3 predefine for oc or py
 		char*remover=split_out_path1;
@@ -706,6 +710,11 @@ bool split_write_init(char*orig_filename){
 			free(split_out_alloc1);
 			split_out_file=open_or_new(a);
 			if(split_out_file!=-1){
+				last_split_end=nullptr;
+				if(is_extension_ok_strict(split_frameext,orig_filename)/*true*/){
+					free(a);
+					return true;
+				}
 				if(remover!=split_out_path3)c-=split_out_path1-remover;
 				if(outformatext_size){//!=0
 					*c='.';c++;
@@ -713,7 +722,6 @@ bool split_write_init(char*orig_filename){
 				memcpy(c,split_outformatext,outformatext_size+1);//format + null end
 				split_out_formatfile=open_or_new(a);
 				if(split_out_formatfile!=-1){
-					last_split_end=nullptr;
 					if(is_dash_frames){//frameext is required, it's part of every entry's name
 						memcpy(c,split_dboardext,dboardext_size+1);//same slot as split_outformatext above, reused
 						split_out_dboardfile=open_or_new(a);
@@ -747,7 +755,7 @@ void split_write_free(){
 	//free(fulldelim);
 	if(split_reminder_c==split_yes_mix){
 		close(split_out_file);
-		close(split_out_formatfile);
+		if(split_out_formatfile!=-1)close(split_out_formatfile);
 		if(split_out_dboardfile!=-1){
 			close(split_out_dboardfile);
 			if(dboard_dirs){
@@ -837,7 +845,7 @@ static swrite_char swwrite_if(int f,char*buf,row_dword size,row_dword off){
 //(e.g. "orig/main/d.as" -> "main"), the first time that directory is seen for the file
 //currently being split, opening that directory's own "dirname.oacf" content file at the
 //same time. every call (first time or not) then appends this file's own entry to that
-//directory's .oacf file, as '|||../file|||' (the ".." undoes split_out being one folder
+//directory's .oacf file, as '|||../file|||'+ln_term (the ".." undoes split_out being one folder
 //down from the source file -- see at split error dboard ancestor for why that must hold)
 //true if ok
 static bool split_write_dboard(char*file){
@@ -902,14 +910,17 @@ static bool split_write_dboard(char*file){
 	size_t filelen=strlen(file);
 	if((size_t)write(of,file,filelen)!=filelen)return false;
 	if(write(of,sdelimiter,sdelimiter_size)!=sdelimiter_size)return false;
+	if(write(of,ln_term,ln_term_sz)!=ln_term_sz)return false;
 	return true;
 }
 //true if ok
 static bool split_write_split(char*file,size_t start,size_t end,row_dword size,bool*majorerror){
 	if(split_reminder_c==split_yes_mix){
-		row_dword sz=strlen(file)+1;
-		if((ssize_t)write(split_out_formatfile,file,sz)!=sz){
-			*majorerror=true;return false;
+		if(split_out_formatfile!=-1){
+			row_dword sz=strlen(file)+1;
+			if((ssize_t)write(split_out_formatfile,file,sz)!=sz){
+				*majorerror=true;return false;
+			}
 		}
 		if(split_out_dboardfile!=-1){
 			if(!split_write_dboard(file)){
