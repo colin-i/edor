@@ -3295,6 +3295,7 @@ static void action_go(int argc,char**argv,char*cutbuf_file){
 			WINDOW*w1=initscr();
 			if(w1){//!=nullptr
 				if(reload!=0){
+					erase();//old position text (e.g. 60,1) is still on the terminal, curses thinks it is blank
 					texter_macro("Reloaded");
 					reload=0;
 				}

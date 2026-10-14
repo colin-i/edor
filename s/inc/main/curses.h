@@ -64,6 +64,7 @@ int clrtoeol(void);
 int delwin(WINDOW*);
 //int doupdate(void);
 int endwin(void);
+int erase(void);
 int getmouse(MEVENT*);
 WINDOW*initscr(void);
 int keypad(WINDOW*,bool);
