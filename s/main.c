@@ -2752,11 +2752,12 @@ static void getfilebuf(char*cutbuf_file){//,size_t off){
 					}else{
 						sz-=extlen_size+len;
 						if(read(f,&len,extlen_size)==extlen_size&&sz>=(size_t)(extlen_size+len)){//find string is stored next, so it is not lost on exit
+							size_t rsz;   // declared before the goto so it isn't jumped over
 							if(len!=0){
 								if(read(f,inputf,len)==len)cursorf=len;
 								else goto getfilebuf_done;
 							}
-							size_t rsz=sz-extlen_size-len;
+							rsz=sz-extlen_size-len;
 							if(rsz!=0){
 								char*v=(char*)malloc(rsz);
 								if(v){//!=nullptr
@@ -2767,7 +2768,7 @@ static void getfilebuf(char*cutbuf_file){//,size_t off){
 									}else free(v);
 								}
 							}
-							getfilebuf_done:
+							getfilebuf_done:; // note the ';'
 						}
 					}
 				}
