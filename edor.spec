@@ -1,7 +1,7 @@
 
 Name: edor
-Version: 1.96
-Release: 0
+Version: 1.97
+Release: 0%{?dist}
 License: GPLv3
 Summary: Console user interface text editor
 Url: https://github.com/colin-i/%{name}
@@ -34,6 +34,15 @@ make
 
 #-- CHANGELOG -----------------------------------------------------------------#
 %changelog
+* Tue Oct 20 2026 costin <costin.botescu@gmail.com> 1.97-0
+- fix position at reload (costin.botescu@gmail.com)
+- open .oacf in full (costin.botescu@gmail.com)
+- ~/.edorinfo version (costin.botescu@gmail.com)
+- "up" (costin.botescu@gmail.com)
+- "up" (costin.botescu@gmail.com)
+- "up" (costin.botescu@gmail.com)
+- save find string on exit. remember at start (costin.botescu@gmail.com)
+
 * Fri Sep 18 2026 costin <costin.botescu@gmail.com> 1.96-0
 - justify (costin.botescu@gmail.com)
 - "up" (costin.botescu@gmail.com)
