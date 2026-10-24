@@ -290,9 +290,9 @@ split_char split_conditions(char*filename,bool free_paths){
 		if(is_extension_ok(split_extension,filename)/*true*/){
 			return split_conditions_out(filename,free_paths,false);
 		}
-		if(is_extension_ok_strict(split_dboardext,filename)/*true*/){//dashboard: .oac behaviour (respects splits_flag) but never mix.
-			return split_yes_mixless;//skip the split_out folder lookup entirely
-		}
+	}
+	if(is_extension_ok_strict(split_dboardext,filename)/*true*/){//dashboard(.oacd): ignores splits_flag, but never mix.
+		return split_yes_mixless;//skip the split_out folder lookup entirely
 	}
 	if(is_extension_ok_strict(split_frameext,filename)/*true*/){//.oacf ignores splits_flag, always split-parsed.
 		return split_conditions_out(filename,free_paths,true);
