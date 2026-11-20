@@ -1,3 +1,9 @@
+edor (1-x99) focal; urgency=medium
+
+  * oacd fix and more
+
+ -- bc <bc@ubuntu>  Fri, 20 Nov 2026 19:07:38 +0200
+
 edor (1-x98) focal; urgency=medium
 
   * save find string, buf save version, full oacf, and fixes

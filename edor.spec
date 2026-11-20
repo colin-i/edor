@@ -1,6 +1,6 @@
 
 Name: edor
-Version: 1.98
+Version: 1.99
 Release: 0%{?dist}
 License: GPLv3
 Summary: Console user interface text editor
@@ -34,6 +34,12 @@ make
 
 #-- CHANGELOG -----------------------------------------------------------------#
 %changelog
+* Fri Nov 20 2026 costin <costin.botescu@gmail.com> 1.99-0
+- "up" (costin.botescu@gmail.com)
+- "up" (costin.botescu@gmail.com)
+- "up" (costin.botescu@gmail.com)
+- .oacd always shows splits (costin.botescu@gmail.com)
+
 * Tue Oct 20 2026 costin <costin.botescu@gmail.com> 1.98-0
 - save find string, buf save version, full oacf, and fixes (mail@flashixy.com)
 - fix position at reload (costin.botescu@gmail.com)
