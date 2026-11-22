@@ -2639,7 +2639,7 @@ static bool grab_input(size_t*text_sz){
 	FILE* tty=freopen("/dev/tty","r",stdin);
 	if(tty)//!=nullptr
 		return false;
-	return true;//it was a problem at input, not sure if was here, anyway here is easy to force with sudo chmod 600 /dev/tty
+	return !save_and_exit;//save-exit has no curses UI that needs a controlling terminal
 }
 
 static void getkeys(char kp){
@@ -3290,8 +3290,13 @@ static void action_go(int argc,char**argv,char*cutbuf_file){
 	}
 	if(ok!=normalize_err){
 		if(save_and_exit){
-			if(!textfile)puts("no file for save and exit");
-			else saving();
+			if(!textfile){
+				puts("no file for save and exit");
+				user_return=EXIT_FAILURE;
+			}else if(saving()!=command_ok){
+				puts("save failed");
+				user_return=EXIT_FAILURE;
+			}
 		}else{
 			WINDOW*w1=initscr();
 			if(w1){//!=nullptr
@@ -3331,6 +3336,9 @@ static void action_go(int argc,char**argv,char*cutbuf_file){
 				if(clue!=no_clue)printf("last row where was an error at split write was: " protocol "\n",clue);
 			}
 		}
+	}else if(save_and_exit){
+		puts("failed to load file for save and exit");
+		user_return=EXIT_FAILURE;
 	}
 	if(text_init_b){//!=nullptr
 		if(rows){//!=nullptr
