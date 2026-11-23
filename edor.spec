@@ -1,6 +1,6 @@
 
 Name: edor
-Version: 1.99
+Version: 1.100
 Release: 0%{?dist}
 License: GPLv3
 Summary: Console user interface text editor
@@ -34,6 +34,9 @@ make
 
 #-- CHANGELOG -----------------------------------------------------------------#
 %changelog
+* Mon Nov 23 2026 costin <costin.botescu@gmail.com> 1.100-0
+- --save-exit on consoleless (costin.botescu@gmail.com)
+
 * Fri Nov 20 2026 costin <costin.botescu@gmail.com> 1.99-0
 - "up" (costin.botescu@gmail.com)
 - "up" (costin.botescu@gmail.com)
